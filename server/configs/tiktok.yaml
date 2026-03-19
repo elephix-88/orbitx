@@ -1,0 +1,6 @@
+default:
+  tiktok_app_id:
+  tiktok_app_secret:
+  tiktok_redirect_uri: http://localhost:8080/api/tiktok/oauth2callback
+  tiktok_oauth_url: https://ads.tiktok.com/marketing_api/auth
+  tiktok_token_url: https://business-api.tiktok.com/open_api/v1.3/oauth2/access_token/

@@ -1,0 +1,16 @@
+dynaconf_merge: true
+default:
+  env:
+  # Facebook Graph API configuration
+  facebook_api_base_url: https://graph.facebook.com/
+  facebook_api_version: v22.0
+
+  # Batch / pagination
+  batch_size: 50
+
+  # Async report polling
+  report_wait_timeout: 1000
+  retry_delay: 5
+
+  # Request timeout per HTTP call
+  request_timeout: 30

@@ -1,0 +1,14 @@
+dynaconf_merge: true
+default:
+  env:
+
+  # Google OAuth
+  google_oauth_client_id:
+  google_oauth_client_secret:
+  google_oauth_token_uri: https://oauth2.googleapis.com/token
+  # Google Ads API
+  google_ads_developer_token:
+  google_ads_login_customer_id: "5457868974"
+
+  # Google OAuth Refresh Token
+  google_refresh_token:

@@ -1,0 +1,424 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Bauhaus Primary Palette */
+    --brand-50: 253 237 239;
+    --brand-100: 249 207 212;
+    --brand-200: 243 163 172;
+    --brand-300: 237 119 132;
+    --brand-400: 233 85 100;
+    --brand-500: 230 57 70;    /* #E63946 — Bauhaus Red */
+    --brand-600: 200 45 58;
+    --brand-700: 170 35 48;
+    --brand-800: 140 28 38;
+    --brand-900: 110 20 28;
+
+    /* Surface — Off-White Bauhaus */
+    --surface-primary: 241 250 238;    /* #F1FAEE */
+    --surface-secondary: 255 255 255;  /* White cards */
+    --surface-tertiary: 232 242 228;   /* Slightly darker cream */
+    --surface-dark: 29 53 87;          /* #1D3557 */
+
+    /* Text — Deep Blue hierarchy */
+    --text-primary: 29 53 87;     /* #1D3557 */
+    --text-secondary: 69 123 157; /* #457B9D */
+    --text-tertiary: 168 218 220; /* #A8DADC */
+    --text-inverse: 241 250 238;  /* #F1FAEE */
+
+    /* Borders — Teal */
+    --border-primary: 168 218 220;  /* #A8DADC */
+    --border-secondary: 210 235 236;
+
+    /* Semantic */
+    --success: 34 197 94;
+    --error: 230 57 70;     /* Bauhaus Red */
+    --warning: 244 162 97;  /* #F4A261 — Bauhaus Yellow */
+    --info: 69 123 157;     /* #457B9D */
+  }
+
+  .dark {
+    /* Dark Bauhaus — inverted but same palette */
+    --brand-50: 40 20 24;
+    --brand-100: 60 28 34;
+    --brand-200: 90 35 42;
+    --brand-300: 140 45 55;
+    --brand-400: 200 50 62;
+    --brand-500: 230 57 70;
+    --brand-600: 237 119 132;
+    --brand-700: 243 163 172;
+    --brand-800: 249 207 212;
+    --brand-900: 253 237 239;
+
+    --surface-primary: 20 33 54;     /* Dark navy */
+    --surface-secondary: 29 53 87;   /* #1D3557 */
+    --surface-tertiary: 40 65 100;
+    --surface-dark: 10 18 32;
+
+    --text-primary: 241 250 238;
+    --text-secondary: 168 218 220;
+    --text-tertiary: 69 123 157;
+    --text-inverse: 29 53 87;
+
+    --border-primary: 50 75 110;
+    --border-secondary: 35 55 85;
+
+    --success: 34 197 94;
+    --error: 230 57 70;
+    --warning: 244 162 97;
+    --info: 168 218 220;
+  }
+
+  html, body, #root {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+  }
+
+  body {
+    @apply bg-surface-primary text-text-primary antialiased;
+    font-family: 'DM Sans', 'Inter', ui-sans-serif, system-ui, sans-serif;
+    font-size: 15px;
+    font-weight: 400;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    letter-spacing: 0;
+  }
+
+  /* Bauhaus Typography — geometric, bold hierarchy */
+  h1, h2 {
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+  }
+
+  h3, h4, h5, h6 {
+    font-weight: 700;
+    letter-spacing: 0;
+  }
+
+  button, .btn-base {
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  input, textarea, select {
+    font-size: 15px;
+    font-weight: 400;
+  }
+
+  label {
+    font-weight: 600;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  strong, b {
+    font-weight: 700;
+  }
+}
+
+@layer components {
+  /* === BAUHAUS PANELS === */
+  .glass-panel {
+    @apply bg-surface-secondary border border-border-primary;
+    border-radius: 2px;
+  }
+
+  .glass-panel-hover {
+    @apply hover:bg-surface-tertiary transition-colors duration-150;
+  }
+
+  /* === BAUHAUS BUTTON SYSTEM === */
+  .btn-base {
+    @apply inline-flex items-center justify-center font-semibold uppercase tracking-wider transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500 disabled:opacity-50 disabled:cursor-not-allowed;
+    font-size: 13px;
+    border-radius: 2px;
+  }
+
+  .btn-primary {
+    @apply btn-base text-white border-2 border-transparent;
+    background-color: #E63946;
+  }
+  .btn-primary:hover:not(:disabled) {
+    background-color: #C8313E;
+  }
+
+  .btn-secondary {
+    @apply btn-base bg-transparent text-text-primary;
+    border: 2px solid #1D3557;
+  }
+  .btn-secondary:hover:not(:disabled) {
+    background-color: #1D3557;
+    color: #F1FAEE;
+  }
+
+  .btn-ghost {
+    @apply btn-base bg-transparent text-text-secondary;
+    border: 2px solid transparent;
+  }
+  .btn-ghost:hover:not(:disabled) {
+    @apply text-text-primary bg-surface-tertiary;
+  }
+
+  .btn-destructive {
+    @apply btn-base text-white;
+    background-color: #E63946;
+    border: 2px solid #E63946;
+  }
+  .btn-destructive:hover:not(:disabled) {
+    background-color: #C8313E;
+    border-color: #C8313E;
+  }
+
+  .btn-icon {
+    @apply btn-base p-2 aspect-square;
+  }
+
+  /* === BAUHAUS TYPOGRAPHY === */
+  .text-display {
+    @apply font-display font-bold uppercase tracking-wide;
+  }
+
+  /* === SCROLLBAR — Minimal === */
+  ::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background-color: #A8DADC;
+    border-radius: 0;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: #457B9D;
+  }
+}
+
+/* === BAUHAUS UTILITIES === */
+.text-gradient {
+  color: #E63946;
+}
+
+/* Bauhaus geometric divider */
+.bauhaus-divider {
+  width: 48px;
+  height: 4px;
+  background-color: #E63946;
+}
+
+/* Bauhaus accent bar */
+.bauhaus-accent-bar {
+  width: 4px;
+  background-color: #E63946;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Accessibility */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* === REACT DAY PICKER — Bauhaus Style === */
+.date-range-picker-custom {
+  --rdp-accent-color: #E63946;
+  --rdp-accent-background-color: rgba(230, 57, 70, 0.1);
+  --rdp-background-color: #FFFFFF;
+  --rdp-day-height: 2rem;
+  --rdp-day-width: 2rem;
+  --rdp-day_button-border-radius: 0;
+  --rdp-day_button-height: 2rem;
+  --rdp-day_button-width: 2rem;
+  --rdp-selected-border: none;
+  --rdp-disabled-opacity: 0.3;
+  --rdp-outside-opacity: 0.5;
+  --rdp-today-color: #E63946;
+  --rdp-selected-font: inherit;
+  --rdp-range_start-date-background-color: #E63946;
+  --rdp-range_end-date-background-color: #E63946;
+  --rdp-range_middle-background-color: rgba(230, 57, 70, 0.1);
+}
+
+.date-range-picker-custom .rdp-root {
+  --rdp-font-family: inherit;
+  font-size: 0.875rem;
+}
+
+.date-range-picker-custom .rdp-months {
+  display: flex;
+  gap: 1.5rem;
+}
+
+.date-range-picker-custom .rdp-month {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.date-range-picker-custom .rdp-month_caption {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.25rem 0;
+}
+
+.date-range-picker-custom .rdp-caption_label {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: #1D3557;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.date-range-picker-custom .rdp-nav {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.date-range-picker-custom .rdp-button_previous,
+.date-range-picker-custom .rdp-button_next {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 0;
+  background: transparent;
+  color: #457B9D;
+  transition: all 0.15s ease;
+  cursor: pointer;
+  border: none;
+}
+
+.date-range-picker-custom .rdp-button_previous:hover,
+.date-range-picker-custom .rdp-button_next:hover {
+  background: #A8DADC;
+  color: #1D3557;
+}
+
+.date-range-picker-custom .rdp-weekdays {
+  display: flex;
+}
+
+.date-range-picker-custom .rdp-weekday {
+  width: 2rem;
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #457B9D;
+}
+
+.date-range-picker-custom .rdp-weeks {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.date-range-picker-custom .rdp-week {
+  display: flex;
+}
+
+.date-range-picker-custom .rdp-day {
+  width: 2rem;
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.date-range-picker-custom .rdp-day_button {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 0;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: #1D3557;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.date-range-picker-custom .rdp-day_button:hover:not(:disabled) {
+  background: #A8DADC;
+}
+
+.date-range-picker-custom .rdp-today .rdp-day_button {
+  background: rgba(230, 57, 70, 0.1);
+  font-weight: 700;
+}
+
+.date-range-picker-custom .rdp-selected .rdp-day_button {
+  background: #E63946;
+  color: white;
+  font-weight: 600;
+}
+
+.date-range-picker-custom .rdp-range_start .rdp-day_button,
+.date-range-picker-custom .rdp-range_end .rdp-day_button {
+  background: #E63946;
+  color: white;
+  font-weight: 600;
+}
+
+.date-range-picker-custom .rdp-range_middle .rdp-day_button {
+  background: rgba(230, 57, 70, 0.1);
+  color: #1D3557;
+  border-radius: 0;
+}
+
+.date-range-picker-custom .rdp-range_start .rdp-day_button {
+  border-radius: 0;
+}
+
+.date-range-picker-custom .rdp-range_end .rdp-day_button {
+  border-radius: 0;
+}
+
+.date-range-picker-custom .rdp-range_start.rdp-range_end .rdp-day_button {
+  border-radius: 0;
+}
+
+.date-range-picker-custom .rdp-disabled .rdp-day_button {
+  color: #A8DADC;
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.date-range-picker-custom .rdp-outside .rdp-day_button {
+  color: #A8DADC;
+  opacity: 0.5;
+}
+
+.date-range-picker-custom .rdp-hidden {
+  visibility: hidden;
+}

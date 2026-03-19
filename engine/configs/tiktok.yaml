@@ -1,0 +1,8 @@
+dynaconf_merge: true
+default:
+  env:
+  api_base: https://business-api.tiktok.com/open_api/v1.3
+  default_page_size: 1000
+  default_timeout: 120
+  max_dimensions: 4
+  max_date_range_days: 30

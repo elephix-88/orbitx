@@ -1,0 +1,73 @@
+[project]
+name = "engine"
+version = "0.1.0"
+description = "OrbitX workflow execution engine"
+requires-python = ">=3.13"
+dependencies = [
+    "common",
+    "pandas>=2.3.0",
+    "pydantic>=2.11.0",
+    "motor>=3.7.0",
+    "loguru>=0.7.3",
+    "dynaconf>=3.2.11",
+    "duckdb>=1.3.0",
+    "httpx>=0.27.0",
+    "google-cloud-bigquery>=3.24.0",
+    "google-cloud-bigquery-storage>=2.25.0",
+    "google-cloud-run>=0.11.0",
+    "google-ads>=25.2.0",
+    "google-api-python-client>=2.0.0",
+    "google-auth>=2.0.0",
+    "google-auth-oauthlib>=1.2.0",
+    "sqlalchemy>=2.0.0",
+    "asyncmy>=0.2.9",
+    "aioboto3>=13.0.0",
+    "gspread>=6.2.0",
+    "pygsheets>=2.0.0",
+    "tenacity>=9.0.0",
+    "pyarrow>=20.0.0",
+]
+
+[tool.uv.sources]
+common = { workspace = true }
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_functions = ["test_*"]
+addopts = ["--strict-markers", "--strict-config"]
+markers = [
+    "unit: Unit tests",
+    "integration: Integration tests",
+    "slow: Slow tests",
+]
+
+[tool.mypy]
+python_version = "3.13"
+warn_return_any = true
+strict_optional = true
+show_error_codes = true
+exclude = ["tests"]
+
+[[tool.mypy.overrides]]
+module = [
+    "duckdb", "google.cloud.*", "bson.*", "dynaconf",
+    "loguru", "pandas", "boto3", "google.ads.*",
+    "common.*", "gspread_dataframe", "requests",
+    "aioboto3", "asyncmy",
+]
+ignore_missing_imports = true
+
+[dependency-groups]
+dev = [
+    "pytest>=8.4.0",
+    "pytest-asyncio>=0.23.0",
+    "pytest-mock>=3.12.0",
+    "pytest-cov>=4.0.0",
+    "mypy>=1.18.2",
+    "types-requests>=2.32.4",
+]

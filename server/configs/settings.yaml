@@ -1,0 +1,79 @@
+dynaconf_merge: true
+default:
+  env: DEV
+  region:
+  aws_access_key:
+  aws_secret_key:
+
+  # MongoDB
+  database: cron5
+  workflow_collection: workflow
+  connection_collection: connections
+  platform_tokens: platform_tokens
+  facebook_fields: facebook_fields
+  google_fields: google_fields
+  tiktok_fields: tiktok_fields
+  execution_history_collection: execution_history
+  users_collection: users
+
+  # JWT Auth (MUST be set via environment variable in production)
+  jwt_secret:
+  jwt_algorithm: HS256
+
+  access_token_expire_minutes: 600
+  refresh_token_expire_days: 7
+  access_token_cookie: orbitx_access
+  refresh_token_cookie: orbitx_refresh
+
+  # OrbitX User Auth (Google Sign-In)
+  orbitx_google_oauth_client_id:
+
+  mongo_uri:
+  mongo_port:
+  mongo_username:
+  mongo_password:
+  mongo_database:
+
+  # Google OAuth (MUST be set via environment variable in production)
+  oauth_state_secret:
+  frontend_oauth_success_url: http://localhost:5173/oauth/success.html
+  google_oauth_client_id:
+  google_oauth_client_secret:
+  google_oauth_redirect_uri: http://localhost:8080/oauth2callback
+  google_oauth_scope:
+  google_oauth_ads_scope: https://www.googleapis.com/auth/adwords
+  google_oauth_sheets_scope: https://www.googleapis.com/auth/spreadsheets
+  google_oauth_drive_scope: https://www.googleapis.com/auth/drive.readonly
+  google_oauth_bigquery_scope: https://www.googleapis.com/auth/bigquery
+  google_oauth_token_url: https://oauth2.googleapis.com/token
+  google_ads_developer_token:
+
+  # Google Cloud
+  google_cloud_project_id: cron5-dev
+  google_cloud_project_number: 169852204510
+  google_cloud_location: asia-southeast1
+  google_cloud_job_name: orbitx-workflow-job
+  google_cloud_scheduler_enabled: true
+  google_cloud_scheduler_timezone: Asia/Bangkok
+  google_cloud_service_account_email: cron5-workflow-engine@cron5-dev.iam.gserviceaccount.com
+
+  # Pub/Sub Tracking
+  enable_tracking: true
+  pubsub_topic_id: workflow-status-events
+  pubsub_subscription_id: workflow-status-sub
+
+  # CORS
+  cors_origins:
+    - "http://localhost:5173"
+    - "http://localhost:8080"
+    - "http://127.0.0.1:5173"
+    - "http://127.0.0.1:8080"
+
+  # Rate Limiting
+  rate_limit_enabled: true
+  rate_limit_default: "100/minute"
+  rate_limit_auth: "10/minute"
+  rate_limit_expensive: "10/minute"
+
+  # CSRF Protection
+  csrf_enabled: true

@@ -1,0 +1,12 @@
+dynaconf_merge: true
+default:
+  # Service names for connections and error messages
+  services:
+    facebook_ads: facebook_ads
+    google_ads: google_ads
+    tiktok_ads: tiktok_ads
+    s3: s3
+    bigquery: bigquery
+    bigquery_source: bigquery_source
+    mysql: mysql
+    google_sheet: google_sheet

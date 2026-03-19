@@ -1,0 +1,147 @@
+import time
+from enum import Enum
+from typing import Any
+
+from pydantic import BaseModel, Field
+
+
+class Status(str, Enum):
+    PENDING = "PENDING"
+    RUNNING = "RUNNING"
+    SUCCESS = "SUCCESS"
+    FAILED = "FAILED"
+
+
+class NodeOutputType(str, Enum):
+    """Type of node output for frontend display categorization."""
+
+    EXTRACTOR = "extractor"
+    TRANSFORMER = "transformer"
+    LOADER = "loader"
+
+
+class DataSummary(BaseModel):
+    """Summary of data processed by a node."""
+
+    row_count: int = 0
+    column_count: int = 0
+    columns: list[str] = Field(default_factory=list)
+    sample_data: list[dict[str, Any]] | None = None
+
+    model_config = {"use_enum_values": True}
+
+
+class ExtractorOutput(BaseModel):
+    """Output details specific to extractor nodes."""
+
+    source_type: str
+    records_extracted: int = 0
+    columns_extracted: int = 0
+    connection_id: str | None = None
+    account_id: str | None = None
+    date_range: dict[str, str] | None = None
+    fields: list[str] = Field(default_factory=list)
+    primary_keys: list[str] = Field(default_factory=list)
+    report_level: str | None = None
+
+    model_config = {"use_enum_values": True}
+
+
+class TransformerOutput(BaseModel):
+    """Output details specific to transformer nodes."""
+
+    transform_type: str
+    records_input: int = 0
+    records_output: int = 0
+    records_filtered: int = 0
+    records_added: int = 0
+    query: str | None = None
+    columns_before: int = 0
+    columns_after: int = 0
+
+    model_config = {"use_enum_values": True}
+
+
+class LoaderOutput(BaseModel):
+    """Output details specific to loader nodes."""
+
+    destination_type: str
+    destination_table: str
+    operation: str
+    records_inserted: int = 0
+    records_updated: int = 0
+    records_deleted: int = 0
+    records_unchanged: int = 0
+    records_total: int = 0
+    connection_id: str | None = None
+    merge_keys: list[str] | None = None
+
+    model_config = {"use_enum_values": True}
+
+
+class NodeOutput(BaseModel):
+    """Structured output from node execution for frontend display."""
+
+    title: str
+    summary: str
+    output_type: NodeOutputType
+    duration_seconds: float = 0.0
+    data_summary: DataSummary | None = None
+    extractor_output: ExtractorOutput | None = None
+    transformer_output: TransformerOutput | None = None
+    loader_output: LoaderOutput | None = None
+    error_type: str | None = None
+    error_message: str | None = None
+    error_details: dict[str, Any] | None = None
+    metadata: dict[str, Any] = Field(default_factory=dict)
+
+    model_config = {"use_enum_values": True}
+
+
+class NodeStatusEvent(BaseModel):
+    workflow_id: str
+    node_instance_id: str
+    status: Status
+    timestamp: float = Field(default_factory=time.time)
+    error_message: str | None = None
+    metadata: dict[str, Any] | None = None
+
+
+class ExecutionStep(BaseModel):
+    """Represents a single node's execution within a workflow run."""
+
+    node_instance_id: str
+    node_id: str
+    node_type: str
+    status: Status
+    start_time: float | None = None
+    end_time: float | None = None
+    error: str | None = None
+    error_trace: str | None = None
+    message: str | None = None
+    output: NodeOutput | None = None
+
+    model_config = {"use_enum_values": True}
+
+
+class ExecutionHistory(BaseModel):
+    id: str = Field(alias="_id")
+    execution_id: str
+    workflow_id: str
+    workflow_name: str
+    status: Status
+    triggered_by: str = "manual"
+    start_time: float
+    end_time: float | None = None
+    duration: float | None = None
+    cost_usd: float | None = None
+    steps: dict[str, ExecutionStep] = Field(default_factory=dict)
+    error: str | None = None
+    total_nodes: int = 0
+    successful_nodes: int = 0
+    failed_nodes: int = 0
+
+    model_config = {
+        "populate_by_name": True,
+        "use_enum_values": True,
+    }

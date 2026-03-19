@@ -1,0 +1,8 @@
+default:
+  facebook_app_id:
+  facebook_app_secret:
+  facebook_redirect_uri: http://localhost:8080/api/facebook/oauth2callback
+  facebook_api_version: v24.0
+  facebook_oauth_token_url: https://graph.facebook.com/v24.0/oauth/access_token
+
+  facebook_scope: ["ads_read", "read_insights", "pages_show_list", "ads_management"]

@@ -1,0 +1,142 @@
+from enum import Enum
+from typing import Any, Literal, Union
+
+from pydantic import BaseModel, Field
+
+from common.model.facebook.config import FacebookAdsConfig
+from common.model.google.ads_config import GoogleAdsConfig
+from common.model.google.bigquery import BigQueryDestinationConfig
+from common.model.google.sheets import GoogleSheetsDestinationConfig
+from common.model.mysql.config import MySQLDestinationConfig
+from common.model.s3.config import S3SourceConfig
+from common.model.tiktok.config import TikTokAdsConfig
+from common.model.transform import (
+    JoinTransformConfig,
+    RenameTransformConfig,
+    SQLTransformConfig,
+)
+
+
+class NodeType(Enum):
+    source = "source"
+    transforms = "transform"
+    destinations = "destinations"
+
+
+class BaseNode(BaseModel):
+    node_instance_id: int
+    node_type: str
+    display_name: str | None = None
+
+
+class FacebookAdsNode(BaseNode):
+    node_id: Literal["facebook_ads"]
+    parameters: FacebookAdsConfig
+
+
+class GoogleAdsNode(BaseNode):
+    node_id: Literal["google_ads"]
+    parameters: GoogleAdsConfig
+
+
+class TikTokAdsNode(BaseNode):
+    node_id: Literal["tiktok_ads"]
+    parameters: TikTokAdsConfig
+
+
+class SQLTransformNode(BaseNode):
+    node_id: Literal["sql"]
+    parameters: SQLTransformConfig
+
+
+class RenameTransformNode(BaseNode):
+    node_id: Literal["rename"]
+    parameters: RenameTransformConfig
+
+
+class JoinTransformNode(BaseNode):
+    node_id: Literal["join"]
+    parameters: JoinTransformConfig
+
+
+class MySQLDestinationNode(BaseNode):
+    node_id: Literal["mysql"]
+    parameters: MySQLDestinationConfig
+
+
+class BigQueryDestinationNode(BaseNode):
+    node_id: Literal["bigquery"]
+    parameters: BigQueryDestinationConfig
+
+
+class GoogleSheetsDestinationNode(BaseNode):
+    node_id: Literal["google_sheet"]
+    parameters: GoogleSheetsDestinationConfig
+
+
+class S3SourceNode(BaseNode):
+    node_id: Literal["s3"]
+    parameters: S3SourceConfig
+
+
+class GenericNode(BaseNode):
+    node_id: str
+    parameters: dict[str, Any]
+
+
+Node = Union[
+    FacebookAdsNode,
+    GoogleAdsNode,
+    TikTokAdsNode,
+    S3SourceNode,
+    SQLTransformNode,
+    RenameTransformNode,
+    JoinTransformNode,
+    MySQLDestinationNode,
+    BigQueryDestinationNode,
+    GoogleSheetsDestinationNode,
+    GenericNode,
+]
+
+
+class Connection(BaseModel):
+    from_node: int
+    to_node: int
+
+
+class Workflow(BaseModel):
+    job_name: str = Field(min_length=1, max_length=100)
+    schedule_expression: str = Field(min_length=1, max_length=100)
+    nodes: list[Node]
+    connections: list[Connection]
+
+
+class WorkflowStatus(str, Enum):
+    ACTIVE = "ACTIVE"
+    PAUSED = "PAUSED"
+
+
+class WorkflowData(BaseModel):
+    id: str | None = Field(default=None, alias="_id")
+    user_id: str
+    job_name: str = Field(min_length=1, max_length=100)
+    status: WorkflowStatus
+    created_at: str
+    updated_at: str
+    schedule_expression: str = Field(min_length=1, max_length=100)
+    nodes: list[Node]
+    connections: list[Connection]
+
+
+class WorkflowSummary(BaseModel):
+    id: str | None = Field(alias="_id")
+    user_id: str
+    job_name: str
+    schedule_expression: str
+    status: WorkflowStatus
+    created_at: str
+    updated_at: str
+
+
+class JobIdRequest(BaseModel):
+    id: str | None = Field(alias="_id")

@@ -1,0 +1,23 @@
+[project]
+name = "common"
+version = "0.1.0"
+description = "Shared MongoDB client and Pydantic models for OrbitX"
+requires-python = ">=3.13"
+dependencies = [
+    "pydantic>=2.0",
+    "motor>=3.0",
+    "loguru>=0.7",
+    "pandas>=2.0",
+    "dynaconf>=3.2.11",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[dependency-groups]
+dev = [
+    "mypy>=1.18.2",
+    "pandas-stubs>=2.3.2",
+    "types-requests>=2.32.4",
+]
