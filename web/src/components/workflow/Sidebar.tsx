@@ -12,12 +12,12 @@ interface SidebarProps {
   isMobile?: boolean;
 }
 
-// Map node category to Bauhaus left-border color
+// Map node category to Blueprint left-border color
 const getCategoryBorderColor = (type: string): string => {
-  if (type === 'source') return '#E63946';
-  if (type === 'transform') return '#F4A261';
-  if (type === 'destination') return '#457B9D';
-  return '#A8DADC';
+  if (type === 'source') return '#FF4D6A';     // coral
+  if (type === 'transform') return '#FFB800';   // amber
+  if (type === 'destination') return '#00E5A0'; // mint
+  return 'rgba(0, 212, 255, 0.3)';
 };
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -51,30 +51,30 @@ export const Sidebar: React.FC<SidebarProps> = ({
   }, [search]);
 
   return (
-    <div className="h-full flex flex-col" style={{ backgroundColor: 'white', borderRight: '1px solid #A8DADC' }}>
+    <div className="h-full flex flex-col" style={{ backgroundColor: '#1A2744', borderRight: '1px solid rgba(0, 212, 255, 0.12)' }}>
       {/* Header */}
       <div className={cn(
         "flex flex-col transition-all duration-300",
         isCollapsed ? "p-3 items-center" : "p-4"
       )}
-      style={{ borderBottom: '1px solid #A8DADC' }}
+      style={{ borderBottom: '1px solid rgba(0, 212, 255, 0.12)' }}
       >
         <div className={cn(
           "flex items-center w-full",
           isCollapsed ? "justify-center" : "justify-between mb-2"
         )}>
           {!isCollapsed && (
-            <h3 className="text-sm font-bold uppercase tracking-widest" style={{ color: '#1D3557' }}>
+            <h3 className="text-[11px] font-bold uppercase tracking-widest" style={{ color: '#8896AD' }}>
               Library
             </h3>
           )}
           <button
             onClick={onToggleCollapse}
             className={cn(
-              "hover:bg-gray-100 transition-colors flex items-center justify-center",
+              "transition-colors flex items-center justify-center hover:bg-[rgba(0,212,255,0.08)]",
               isCollapsed ? "w-8 h-8" : "p-1.5"
             )}
-            style={{ borderRadius: '2px', color: '#457B9D' }}
+            style={{ borderRadius: '4px', color: '#8896AD' }}
             title={isCollapsed ? "Expand" : "Collapse"}
           >
             {isCollapsed ? (
@@ -87,7 +87,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
         {!isCollapsed && (
           <div className="relative w-full group">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: '#457B9D' }} />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: '#506080' }} />
             <input
               type="text"
               placeholder="Search nodes..."
@@ -95,10 +95,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
               onChange={(e) => setSearch(e.target.value)}
               className="w-full pl-9 pr-3 py-2 text-xs focus:outline-none transition-all"
               style={{
-                backgroundColor: '#F1FAEE',
-                border: '1px solid #A8DADC',
-                borderRadius: '2px',
-                color: '#1D3557',
+                backgroundColor: '#0F1729',
+                border: '1px solid rgba(0, 212, 255, 0.15)',
+                borderRadius: '4px',
+                color: '#E8ECF4',
               }}
             />
           </div>
@@ -117,14 +117,22 @@ export const Sidebar: React.FC<SidebarProps> = ({
             onDragStart={(e) => handleDragStart(nodeType, e)}
             className={cn(
               "group relative flex items-center gap-3 cursor-grab transition-all duration-300",
-              "hover:shadow-sm active:scale-95",
+              "active:scale-95",
               isCollapsed ? "justify-center p-2 w-10 h-10" : "p-3 h-auto"
             )}
             style={{
-              backgroundColor: 'white',
-              border: '1px solid #A8DADC',
-              borderLeft: isCollapsed ? '1px solid #A8DADC' : `4px solid ${getCategoryBorderColor(nodeType.type)}`,
-              borderRadius: '2px',
+              backgroundColor: '#0F1729',
+              border: '1px solid rgba(0, 212, 255, 0.12)',
+              borderLeft: isCollapsed ? '1px solid rgba(0, 212, 255, 0.12)' : `4px solid ${getCategoryBorderColor(nodeType.type)}`,
+              borderRadius: '4px',
+            }}
+            onMouseEnter={(e) => {
+              (e.currentTarget as HTMLElement).style.borderColor = 'rgba(0, 212, 255, 0.3)';
+              (e.currentTarget as HTMLElement).style.boxShadow = '0 0 8px rgba(0, 212, 255, 0.1)';
+            }}
+            onMouseLeave={(e) => {
+              (e.currentTarget as HTMLElement).style.borderColor = 'rgba(0, 212, 255, 0.12)';
+              (e.currentTarget as HTMLElement).style.boxShadow = 'none';
             }}
           >
             {/* Icon */}
@@ -134,9 +142,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 isCollapsed ? "w-8 h-8" : "w-12 h-12"
               )}
               style={{
-                borderRadius: '2px',
-                background: nodeType.color ? `rgba(${parseInt(nodeType.color.slice(1,3), 16)}, ${parseInt(nodeType.color.slice(3,5), 16)}, ${parseInt(nodeType.color.slice(5,7), 16)}, 0.1)` : '#F1FAEE',
-                color: nodeType.color || '#457B9D'
+                borderRadius: '4px',
+                background: nodeType.color ? `rgba(${parseInt(nodeType.color.slice(1,3), 16)}, ${parseInt(nodeType.color.slice(3,5), 16)}, ${parseInt(nodeType.color.slice(5,7), 16)}, 0.1)` : 'rgba(0, 212, 255, 0.05)',
+                color: nodeType.color || '#00D4FF'
               }}
             >
               {renderIcon(nodeType.icon, isCollapsed ? 28 : 40)}
@@ -144,10 +152,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
             {!isCollapsed && (
               <div className="flex-1 min-w-0">
-                <h4 className="font-medium text-sm truncate transition-colors" style={{ color: '#1D3557' }}>
+                <h4 className="font-medium text-sm truncate transition-colors" style={{ color: '#E8ECF4' }}>
                   {nodeType.name}
                 </h4>
-                <p className="text-[10px] truncate" style={{ color: '#457B9D' }}>
+                <p className="text-[10px] truncate" style={{ color: '#506080' }}>
                   {nodeType.description}
                 </p>
               </div>
@@ -155,7 +163,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
             {/* Drag Handle Hint */}
             {!isCollapsed && (
-              <div className="opacity-0 group-hover:opacity-100 transition-opacity" style={{ color: '#A8DADC' }}>
+              <div className="opacity-0 group-hover:opacity-100 transition-opacity" style={{ color: '#506080' }}>
                 <GripVertical size={14} />
               </div>
             )}

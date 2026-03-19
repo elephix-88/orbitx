@@ -2,14 +2,14 @@ import React from 'react';
 import { cva, type VariantProps } from 'class-variance-authority';
 
 const cardVariants = cva(
-  'rounded-sm border bg-white transition-all duration-200 dark:bg-slate-900 dark:border-slate-800',
+  'rounded-[6px] border bg-[#1A2744] transition-all duration-200',
   {
     variants: {
       variant: {
-        default: 'border-[#A8DADC] dark:border-slate-800 dark:hover:border-slate-700',
-        interactive: 'border-[#A8DADC] hover:border-[#1D3557] cursor-pointer dark:border-slate-800 dark:hover:border-brand-600/60',
-        selected: 'border-[#E63946] border-2 dark:border-[#E63946]',
-        connection: 'border-[#A8DADC] hover:border-[#1D3557] cursor-pointer h-[200px] flex flex-col dark:border-slate-800 dark:hover:border-brand-600/60',
+        default: 'border-[rgba(0,212,255,0.12)]',
+        interactive: 'border-[rgba(0,212,255,0.12)] hover:border-[rgba(0,212,255,0.25)] hover:shadow-[0_0_12px_rgba(0,212,255,0.08)] cursor-pointer',
+        selected: 'border-[#00D4FF] border-2 shadow-[0_0_12px_rgba(0,212,255,0.15)]',
+        connection: 'border-[rgba(0,212,255,0.12)] hover:border-[rgba(0,212,255,0.25)] hover:shadow-[0_0_12px_rgba(0,212,255,0.08)] cursor-pointer h-[200px] flex flex-col',
       },
       padding: {
         none: '',
@@ -66,9 +66,9 @@ export const CardHeader = ({
       {...props}
     >
       <div className="space-y-1">
-        <h3 className="text-base font-bold uppercase tracking-wider text-[#1D3557] dark:text-slate-100">{title}</h3>
+        <h3 className="text-base font-bold uppercase tracking-wider text-[#E8ECF4]">{title}</h3>
         {description && (
-          <p className="text-sm text-gray-500 dark:text-slate-400">{description}</p>
+          <p className="text-sm text-[#8896AD]">{description}</p>
         )}
       </div>
       {action && <div className="flex-shrink-0">{action}</div>}

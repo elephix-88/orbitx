@@ -98,7 +98,7 @@ const AnimatedCounter = ({ value, suffix = '' }: { value: number; suffix?: strin
   return <span ref={ref as any}>{count.toLocaleString()}{suffix}</span>;
 };
 
-// Feature Card - Bauhaus style
+// Feature Card - Blueprint style
 const FeatureCard = ({
   icon: Icon,
   title,
@@ -121,24 +121,26 @@ const FeatureCard = ({
       )}
       style={{
         transitionDelay: `${delay}ms`,
-        backgroundColor: 'white',
-        border: '1px solid #A8DADC',
-        borderRadius: '2px',
+        backgroundColor: '#1A2744',
+        border: '1px solid rgba(0, 212, 255, 0.12)',
+        borderRadius: '6px',
       }}
+      onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(0, 212, 255, 0.3)'; (e.currentTarget as HTMLElement).style.boxShadow = '0 0 20px rgba(0, 212, 255, 0.1)'; }}
+      onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(0, 212, 255, 0.12)'; (e.currentTarget as HTMLElement).style.boxShadow = 'none'; }}
     >
-      {/* Red accent bar */}
-      <div style={{ width: '48px', height: '4px', backgroundColor: '#E63946', marginBottom: '24px' }} />
+      {/* Cyan accent line */}
+      <div style={{ width: '48px', height: '2px', background: 'linear-gradient(to right, #00D4FF, transparent)', marginBottom: '24px' }} />
 
       <div className="relative">
-        <div className="w-12 h-12 flex items-center justify-center mb-6 transition-colors" style={{ backgroundColor: '#F1FAEE', borderRadius: '2px' }}>
-          <Icon className="w-6 h-6" style={{ color: '#E63946' }} />
+        <div className="w-12 h-12 flex items-center justify-center mb-6 transition-colors" style={{ backgroundColor: 'rgba(0, 212, 255, 0.08)', borderRadius: '4px' }}>
+          <Icon className="w-6 h-6" style={{ color: '#00D4FF' }} />
         </div>
 
-        <h3 className="text-xl font-bold mb-3 uppercase tracking-wider transition-colors" style={{ color: '#1D3557' }}>
+        <h3 className="text-xl font-bold mb-3 uppercase tracking-wider transition-colors" style={{ color: '#E8ECF4' }}>
           {title}
         </h3>
 
-        <p style={{ color: '#457B9D' }} className="leading-relaxed">
+        <p style={{ color: '#8896AD' }} className="leading-relaxed">
           {description}
         </p>
       </div>
@@ -153,12 +155,12 @@ const FlowNode = ({ icon: Icon, color, label, isCustomIcon }: { icon: any; color
       className="w-11 h-11 flex items-center justify-center"
       style={{
         backgroundColor: color,
-        borderRadius: '2px',
+        borderRadius: '4px',
       }}
     >
       {isCustomIcon ? <Icon size={20} className="text-white" /> : <Icon className="w-5 h-5 text-white" />}
     </div>
-    <span className="text-[9px] font-medium uppercase tracking-wider" style={{ color: '#457B9D' }}>{label}</span>
+    <span className="text-[9px] font-medium uppercase tracking-wider" style={{ color: '#8896AD' }}>{label}</span>
   </div>
 );
 
@@ -171,9 +173,9 @@ const OrbitAnimation = () => {
   ];
 
   const destinations = [
-    { icon: Database, color: '#00D4AA', label: 'BigQuery' },
-    { icon: Table, color: '#22C55E', label: 'Sheets' },
-    { icon: Server, color: '#E97040', label: 'MySQL' },
+    { icon: Database, color: '#00E5A0', label: 'BigQuery' },
+    { icon: Table, color: '#00D4FF', label: 'Sheets' },
+    { icon: Server, color: '#FFB800', label: 'MySQL' },
   ];
 
   return (
@@ -183,7 +185,7 @@ const OrbitAnimation = () => {
 
         {/* Sources - Left side, vertically stacked */}
         <div className="absolute left-0 top-0 bottom-0 flex flex-col justify-between py-2">
-          <span className="text-[10px] font-semibold uppercase tracking-wider text-center" style={{ color: '#457B9D' }}>
+          <span className="text-[10px] font-semibold uppercase tracking-wider text-center" style={{ color: '#8896AD' }}>
             Sources
           </span>
           {sources.map((source, i) => (
@@ -193,7 +195,7 @@ const OrbitAnimation = () => {
 
         {/* Destinations - Right side, vertically stacked */}
         <div className="absolute right-0 top-0 bottom-0 flex flex-col justify-between py-2">
-          <span className="text-[10px] font-semibold uppercase tracking-wider text-center" style={{ color: '#457B9D' }}>
+          <span className="text-[10px] font-semibold uppercase tracking-wider text-center" style={{ color: '#8896AD' }}>
             Destinations
           </span>
           {destinations.map((dest, i) => (
@@ -212,13 +214,13 @@ const OrbitAnimation = () => {
             {sources.map((s, i) => (
               <linearGradient key={`in-grad-${i}`} id={`in-grad-${i}`} x1="0%" y1="0%" x2="100%" y2="0%">
                 <stop offset="0%" stopColor={s.color} stopOpacity="0.6" />
-                <stop offset="100%" stopColor="#E63946" stopOpacity="0.8" />
+                <stop offset="100%" stopColor="#00D4FF" stopOpacity="0.8" />
               </linearGradient>
             ))}
             {/* Gradients for outgoing lines */}
             {destinations.map((d, i) => (
               <linearGradient key={`out-grad-${i}`} id={`out-grad-${i}`} x1="0%" y1="0%" x2="100%" y2="0%">
-                <stop offset="0%" stopColor="#E63946" stopOpacity="0.8" />
+                <stop offset="0%" stopColor="#00D4FF" stopOpacity="0.8" />
                 <stop offset="100%" stopColor={d.color} stopOpacity="0.6" />
               </linearGradient>
             ))}
@@ -257,7 +259,7 @@ const OrbitAnimation = () => {
               "M 170 100 Q 255 155 340 155"
             ];
             return (
-              <circle key={`out-${i}`} r="4" fill="#E63946">
+              <circle key={`out-${i}`} r="4" fill="#00D4FF">
                 <animateMotion dur="2.5s" repeatCount="indefinite" begin={`${i * 0.4 + 1.25}s`} path={paths[i]} />
                 <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.1;0.9;1" dur="2.5s" repeatCount="indefinite" begin={`${i * 0.4 + 1.25}s`} />
               </circle>
@@ -268,16 +270,16 @@ const OrbitAnimation = () => {
         {/* Center: OrbitX Transform */}
         <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10">
           <div className="flex flex-col items-center">
-            <span className="text-[9px] font-semibold uppercase tracking-wider mb-1" style={{ color: '#457B9D' }}>
+            <span className="text-[9px] font-semibold uppercase tracking-wider mb-1" style={{ color: '#8896AD' }}>
               Transform
             </span>
             <div className="relative">
-              {/* Core - Square, Bauhaus */}
-              <div className="relative w-12 h-12 flex items-center justify-center" style={{ backgroundColor: '#E63946', borderRadius: '2px' }}>
-                <Zap className="w-6 h-6 text-white" />
+              {/* Core - Blueprint style */}
+              <div className="relative w-12 h-12 flex items-center justify-center" style={{ border: '2px solid #00D4FF', borderRadius: '4px', backgroundColor: 'rgba(0, 212, 255, 0.1)', boxShadow: '0 0 20px rgba(0, 212, 255, 0.3)' }}>
+                <Zap className="w-6 h-6" style={{ color: '#00D4FF' }} />
               </div>
             </div>
-            <span className="mt-1 text-[10px] font-bold uppercase tracking-widest" style={{ color: '#E63946' }}>OrbitX</span>
+            <span className="mt-1 text-[10px] font-bold uppercase tracking-widest" style={{ color: '#00D4FF' }}>OrbitX</span>
           </div>
         </div>
       </div>
@@ -314,30 +316,31 @@ const PricingCard = ({
       )}
       style={{
         transitionDelay: `${delay}ms`,
-        backgroundColor: 'white',
-        border: popular ? '2px solid #E63946' : '1px solid #A8DADC',
-        borderRadius: '2px',
+        backgroundColor: '#1A2744',
+        border: popular ? '2px solid #00D4FF' : '1px solid rgba(0, 212, 255, 0.12)',
+        borderRadius: '6px',
+        boxShadow: popular ? '0 0 30px rgba(0, 212, 255, 0.15)' : 'none',
       }}
     >
       {popular && (
-        <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 text-white text-xs font-bold uppercase tracking-widest" style={{ backgroundColor: '#E63946', borderRadius: '2px' }}>
+        <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 text-xs font-bold uppercase tracking-widest" style={{ backgroundColor: '#00D4FF', color: '#0F1729', borderRadius: '4px' }}>
           Most Popular
         </div>
       )}
 
       <div className="text-center mb-8">
-        <h3 className="text-xl font-bold mb-2 uppercase tracking-wider" style={{ color: '#1D3557' }}>{name}</h3>
-        <div className="text-4xl font-bold mb-2" style={{ color: '#E63946' }}>
+        <h3 className="text-xl font-bold mb-2 uppercase tracking-wider" style={{ color: '#E8ECF4' }}>{name}</h3>
+        <div className="text-4xl font-bold font-mono mb-2" style={{ color: '#00D4FF' }}>
           {price}
         </div>
-        <p className="text-sm" style={{ color: '#457B9D' }}>{description}</p>
+        <p className="text-sm" style={{ color: '#8896AD' }}>{description}</p>
       </div>
 
       <ul className="space-y-4 mb-8">
         {features.map((feature, i) => (
           <li key={i} className="flex items-start gap-3">
-            <Check className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: '#E63946' }} />
-            <span style={{ color: '#457B9D' }}>{feature}</span>
+            <Check className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: '#00E5A0' }} />
+            <span style={{ color: '#8896AD' }}>{feature}</span>
           </li>
         ))}
       </ul>
@@ -346,10 +349,10 @@ const PricingCard = ({
         onClick={onGetStarted}
         className="w-full py-3 font-semibold transition-all uppercase tracking-wider"
         style={{
-          backgroundColor: popular ? '#E63946' : 'transparent',
-          color: popular ? 'white' : '#1D3557',
-          border: popular ? 'none' : '2px solid #1D3557',
-          borderRadius: '2px',
+          backgroundColor: popular ? '#00D4FF' : 'transparent',
+          color: popular ? '#0F1729' : '#00D4FF',
+          border: popular ? 'none' : '1px solid rgba(0, 212, 255, 0.3)',
+          borderRadius: '4px',
         }}
       >
         Get Started
@@ -375,17 +378,17 @@ const LandingPage = () => {
   ];
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#F1FAEE' }}>
-      {/* Navigation - Solid top bar */}
-      <nav className="fixed top-0 left-0 right-0 z-50" style={{ backgroundColor: '#1D3557' }}>
+    <div className="min-h-screen" style={{ backgroundColor: '#0F1729' }}>
+      {/* Navigation - Blueprint top bar */}
+      <nav className="fixed top-0 left-0 right-0 z-50" style={{ backgroundColor: '#0F1729', borderBottom: '1px solid rgba(0, 212, 255, 0.15)' }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
             <Link to="/" className="flex items-center gap-3 group">
-              <div className="w-9 h-9 flex items-center justify-center" style={{ backgroundColor: '#E63946', borderRadius: '2px' }}>
-                <span className="text-white font-bold text-lg">O</span>
+              <div className="w-9 h-9 flex items-center justify-center" style={{ border: '2px solid #00D4FF', borderRadius: '4px' }}>
+                <span className="font-bold text-lg" style={{ color: '#00D4FF' }}>O</span>
               </div>
-              <span className="text-xl font-bold text-white uppercase tracking-widest">
+              <span className="text-xl font-bold uppercase tracking-widest" style={{ color: '#E8ECF4' }}>
                 OrbitX
               </span>
             </Link>
@@ -397,7 +400,8 @@ const LandingPage = () => {
                   <Link
                     key={link.href}
                     to={link.href}
-                    className="text-white/70 hover:text-white transition-colors font-medium uppercase tracking-wider text-sm"
+                    className="transition-colors font-medium uppercase tracking-wider text-sm"
+                    style={{ color: '#8896AD' }}
                   >
                     {link.label}
                   </Link>
@@ -405,7 +409,8 @@ const LandingPage = () => {
                   <a
                     key={link.href}
                     href={link.href}
-                    className="text-white/70 hover:text-white transition-colors font-medium uppercase tracking-wider text-sm"
+                    className="transition-colors font-medium uppercase tracking-wider text-sm"
+                    style={{ color: '#8896AD' }}
                   >
                     {link.label}
                   </a>
@@ -418,8 +423,8 @@ const LandingPage = () => {
               {/* Theme Toggle */}
               <button
                 onClick={toggleTheme}
-                className="p-2 text-white/70 hover:text-white transition-all"
-                style={{ borderRadius: '2px' }}
+                className="p-2 transition-all"
+                style={{ borderRadius: '4px', color: '#00D4FF' }}
                 title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
               >
                 {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
@@ -428,8 +433,8 @@ const LandingPage = () => {
               {/* Sign In Button - Desktop */}
               <button
                 onClick={handleGoogleSignIn}
-                className="hidden sm:flex items-center gap-2 px-4 py-2 text-white font-medium transition-all uppercase tracking-wider text-sm"
-                style={{ backgroundColor: '#E63946', borderRadius: '2px' }}
+                className="hidden sm:flex items-center gap-2 px-4 py-2 font-medium transition-all uppercase tracking-wider text-sm"
+                style={{ backgroundColor: '#00D4FF', color: '#0F1729', borderRadius: '4px' }}
               >
                 <GoogleIcon />
                 Sign in
@@ -438,8 +443,8 @@ const LandingPage = () => {
               {/* Mobile Menu Button */}
               <button
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="md:hidden p-2 text-white/70 hover:text-white transition-all"
-                style={{ borderRadius: '2px' }}
+                className="md:hidden p-2 transition-all"
+                style={{ borderRadius: '4px', color: '#8896AD' }}
               >
                 {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
               </button>
@@ -449,14 +454,15 @@ const LandingPage = () => {
 
         {/* Mobile Menu */}
         {mobileMenuOpen && (
-          <div style={{ backgroundColor: '#1D3557', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+          <div style={{ backgroundColor: '#0F1729', borderTop: '1px solid rgba(0, 212, 255, 0.1)' }}>
             <div className="px-4 py-4 space-y-3">
               {navLinks.map((link) => (
                 link.isRoute ? (
                   <Link
                     key={link.href}
                     to={link.href}
-                    className="block py-2 text-white/70 hover:text-white transition-colors font-medium uppercase tracking-wider"
+                    className="block py-2 transition-colors font-medium uppercase tracking-wider"
+                    style={{ color: '#8896AD' }}
                     onClick={() => setMobileMenuOpen(false)}
                   >
                     {link.label}
@@ -465,7 +471,8 @@ const LandingPage = () => {
                   <a
                     key={link.href}
                     href={link.href}
-                    className="block py-2 text-white/70 hover:text-white transition-colors font-medium uppercase tracking-wider"
+                    className="block py-2 transition-colors font-medium uppercase tracking-wider"
+                    style={{ color: '#8896AD' }}
                     onClick={() => setMobileMenuOpen(false)}
                   >
                     {link.label}
@@ -477,8 +484,8 @@ const LandingPage = () => {
                   handleGoogleSignIn();
                   setMobileMenuOpen(false);
                 }}
-                className="w-full flex items-center justify-center gap-2 px-4 py-3 text-white font-medium uppercase tracking-wider"
-                style={{ backgroundColor: '#E63946', borderRadius: '2px' }}
+                className="w-full flex items-center justify-center gap-2 px-4 py-3 font-medium uppercase tracking-wider"
+                style={{ backgroundColor: '#00D4FF', color: '#0F1729', borderRadius: '4px' }}
               >
                 <GoogleIcon />
                 Sign in with Google
@@ -492,14 +499,20 @@ const LandingPage = () => {
       <section
         ref={heroRef as any}
         className="relative min-h-screen flex items-center pt-16"
-        style={{ backgroundColor: '#1D3557' }}
+        style={{ backgroundColor: '#0F1729' }}
       >
-        {/* Geometric decorations */}
-        <div className="absolute top-32 right-16 w-24 h-24 rounded-full hidden lg:block" style={{ backgroundColor: '#E63946', opacity: 0.15 }} />
-        <div className="absolute bottom-24 left-24 w-16 h-16 hidden lg:block" style={{ backgroundColor: '#F4A261', opacity: 0.2 }} />
-        <div className="absolute top-1/2 right-1/3 w-8 h-8 hidden lg:block" style={{ backgroundColor: '#A8DADC', opacity: 0.15, transform: 'rotate(45deg)' }} />
+        {/* Large grid pattern */}
+        <div className="absolute inset-0" style={{
+          backgroundImage: 'linear-gradient(rgba(0, 212, 255, 0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(0, 212, 255, 0.04) 1px, transparent 1px)',
+          backgroundSize: '60px 60px',
+        }} />
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
+        {/* Geometric decorations - blueprint style */}
+        <div className="absolute top-32 right-16 w-32 h-32 rounded-full hidden lg:block" style={{ border: '2px solid rgba(0, 212, 255, 0.15)' }} />
+        <div className="absolute bottom-24 left-24 w-24 h-[2px] hidden lg:block" style={{ background: 'linear-gradient(to right, #FFB800, transparent)' }} />
+        <div className="absolute top-1/2 right-1/3 w-12 h-12 hidden lg:block" style={{ border: '1px solid rgba(255, 77, 106, 0.2)', transform: 'rotate(45deg)' }} />
+
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 relative z-10">
           <div className="grid lg:grid-cols-2 gap-16 items-center">
             {/* Hero Content */}
             <div className={cn(
@@ -507,23 +520,23 @@ const LandingPage = () => {
               heroInView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
             )}>
               {/* Badge */}
-              <div className="inline-flex items-center gap-2 px-4 py-2" style={{ backgroundColor: 'rgba(230,57,70,0.2)', borderRadius: '2px' }}>
-                <Sparkles className="w-4 h-4" style={{ color: '#F4A261' }} />
-                <span className="text-sm font-medium uppercase tracking-wider" style={{ color: '#F4A261' }}>
+              <div className="inline-flex items-center gap-2 px-4 py-2" style={{ backgroundColor: 'rgba(0, 212, 255, 0.08)', border: '1px solid rgba(0, 212, 255, 0.2)', borderRadius: '4px' }}>
+                <Sparkles className="w-4 h-4" style={{ color: '#FFB800' }} />
+                <span className="text-sm font-medium uppercase tracking-wider" style={{ color: '#FFB800' }}>
                   Now in Public Beta
                 </span>
               </div>
 
               {/* Headline */}
-              <h1 className="text-5xl md:text-7xl font-bold text-white leading-[1.1] uppercase tracking-wider">
+              <h1 className="text-5xl md:text-7xl font-bold leading-[1.1] uppercase tracking-wider" style={{ color: '#E8ECF4' }}>
                 Data pipelines,{' '}
-                <span style={{ color: '#E63946' }}>
+                <span style={{ background: 'linear-gradient(135deg, #00D4FF, #00E5A0)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
                   simplified.
                 </span>
               </h1>
 
               {/* Subheadline */}
-              <p className="text-xl max-w-lg leading-relaxed" style={{ color: '#A8DADC' }}>
+              <p className="text-xl max-w-lg leading-relaxed" style={{ color: '#8896AD' }}>
                 Build, automate, and monitor your data workflows with a beautiful visual interface. No code required.
               </p>
 
@@ -531,8 +544,8 @@ const LandingPage = () => {
               <div className="flex flex-wrap gap-4">
                 <button
                   onClick={handleGoogleSignIn}
-                  className="flex items-center gap-3 px-6 py-4 text-white font-semibold transition-all group uppercase tracking-wider"
-                  style={{ backgroundColor: '#E63946', borderRadius: '2px' }}
+                  className="flex items-center gap-3 px-6 py-4 font-semibold transition-all group uppercase tracking-wider"
+                  style={{ background: 'linear-gradient(135deg, #00D4FF, #00B4D8)', color: '#0F1729', borderRadius: '4px' }}
                 >
                   <GoogleIcon />
                   Continue with Google
@@ -542,7 +555,7 @@ const LandingPage = () => {
                 <button
                   onClick={() => navigate('/workflows/builder')}
                   className="flex items-center gap-2 px-6 py-4 font-semibold group uppercase tracking-wider"
-                  style={{ color: 'white', border: '2px solid #A8DADC', borderRadius: '2px', backgroundColor: 'transparent' }}
+                  style={{ color: '#E8ECF4', border: '1px solid rgba(0, 212, 255, 0.3)', borderRadius: '4px', backgroundColor: 'transparent' }}
                 >
                   <Play className="w-5 h-5" />
                   Try Demo
@@ -555,11 +568,12 @@ const LandingPage = () => {
                   {[...Array(4)].map((_, i) => (
                     <div
                       key={i}
-                      className="w-10 h-10 flex items-center justify-center text-white text-xs font-bold"
+                      className="w-10 h-10 flex items-center justify-center text-xs font-bold"
                       style={{
-                        backgroundColor: ['#E63946', '#F4A261', '#457B9D', '#1D3557'][i],
-                        borderRadius: '2px',
-                        border: '2px solid #1D3557',
+                        backgroundColor: ['#00D4FF', '#FFB800', '#00E5A0', '#FF4D6A'][i],
+                        borderRadius: '4px',
+                        border: '2px solid #0F1729',
+                        color: '#0F1729',
                         marginLeft: i > 0 ? '-8px' : '0',
                         position: 'relative',
                         zIndex: 4 - i,
@@ -570,8 +584,8 @@ const LandingPage = () => {
                   ))}
                 </div>
                 <div className="text-sm">
-                  <span className="text-white font-semibold">500+</span>
-                  <span style={{ color: '#A8DADC' }}> teams already building</span>
+                  <span className="font-semibold font-mono" style={{ color: '#E8ECF4' }}>500+</span>
+                  <span style={{ color: '#8896AD' }}> teams already building</span>
                 </div>
               </div>
             </div>
@@ -591,50 +605,50 @@ const LandingPage = () => {
       </section>
 
       {/* Stats Section */}
-      <section className="relative py-20" style={{ backgroundColor: 'white', borderTop: '4px solid #E63946', borderBottom: '1px solid #A8DADC' }}>
+      <section className="relative py-20" style={{ backgroundColor: '#1A2744', borderTop: '1px solid rgba(0, 212, 255, 0.15)', borderBottom: '1px solid rgba(0, 212, 255, 0.15)' }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
             <div className="text-center">
-              <div className="text-4xl md:text-5xl font-bold mb-2" style={{ color: '#E63946' }}>
+              <div className="text-4xl md:text-5xl font-bold font-mono mb-2" style={{ color: '#00D4FF' }}>
                 <AnimatedCounter value={10} suffix="M+" />
               </div>
-              <p className="uppercase tracking-wider text-sm" style={{ color: '#457B9D' }}>Events processed</p>
+              <p className="uppercase tracking-wider text-[11px]" style={{ color: '#8896AD' }}>Events processed</p>
             </div>
             <div className="text-center">
-              <div className="text-4xl md:text-5xl font-bold mb-2" style={{ color: '#E63946' }}>
+              <div className="text-4xl md:text-5xl font-bold font-mono mb-2" style={{ color: '#00D4FF' }}>
                 <AnimatedCounter value={99} suffix="%" />
               </div>
-              <p className="uppercase tracking-wider text-sm" style={{ color: '#457B9D' }}>Uptime SLA</p>
+              <p className="uppercase tracking-wider text-[11px]" style={{ color: '#8896AD' }}>Uptime SLA</p>
             </div>
             <div className="text-center">
-              <div className="text-4xl md:text-5xl font-bold mb-2" style={{ color: '#E63946' }}>
+              <div className="text-4xl md:text-5xl font-bold font-mono mb-2" style={{ color: '#00D4FF' }}>
                 <AnimatedCounter value={50} suffix="+" />
               </div>
-              <p className="uppercase tracking-wider text-sm" style={{ color: '#457B9D' }}>Integrations</p>
+              <p className="uppercase tracking-wider text-[11px]" style={{ color: '#8896AD' }}>Integrations</p>
             </div>
             <div className="text-center">
-              <div className="text-4xl md:text-5xl font-bold mb-2" style={{ color: '#E63946' }}>
+              <div className="text-4xl md:text-5xl font-bold font-mono mb-2" style={{ color: '#00D4FF' }}>
                 <AnimatedCounter value={500} suffix="+" />
               </div>
-              <p className="uppercase tracking-wider text-sm" style={{ color: '#457B9D' }}>Active teams</p>
+              <p className="uppercase tracking-wider text-[11px]" style={{ color: '#8896AD' }}>Active teams</p>
             </div>
           </div>
         </div>
       </section>
 
       {/* Features Section */}
-      <section id="features" className="relative py-32" style={{ backgroundColor: '#F1FAEE' }}>
+      <section id="features" className="relative py-32" style={{ backgroundColor: '#0F1729' }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Section Header */}
           <div className="text-center max-w-3xl mx-auto mb-20">
             <div className="flex justify-center mb-6">
-              <div style={{ width: '48px', height: '4px', backgroundColor: '#E63946' }} />
+              <div style={{ width: '48px', height: '2px', background: 'linear-gradient(to right, #00D4FF, transparent)' }} />
             </div>
-            <h2 className="text-4xl md:text-5xl font-bold mb-6 uppercase tracking-wider" style={{ color: '#1D3557' }}>
+            <h2 className="text-4xl md:text-5xl font-bold mb-6 uppercase tracking-wider" style={{ color: '#E8ECF4' }}>
               Everything you need to{' '}
-              <span style={{ color: '#E63946' }}>automate</span>
+              <span style={{ color: '#00D4FF' }}>automate</span>
             </h2>
-            <p className="text-xl" style={{ color: '#457B9D' }}>
+            <p className="text-xl" style={{ color: '#8896AD' }}>
               From data extraction to transformation and loading, OrbitX handles your entire pipeline.
             </p>
           </div>
@@ -682,17 +696,17 @@ const LandingPage = () => {
       </section>
 
       {/* Pricing Section */}
-      <section id="pricing" className="relative py-32" style={{ backgroundColor: 'white' }}>
+      <section id="pricing" className="relative py-32" style={{ backgroundColor: '#1A2744' }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Section Header */}
           <div className="text-center max-w-3xl mx-auto mb-20">
             <div className="flex justify-center mb-6">
-              <div style={{ width: '48px', height: '4px', backgroundColor: '#E63946' }} />
+              <div style={{ width: '48px', height: '2px', background: 'linear-gradient(to right, #00D4FF, transparent)' }} />
             </div>
-            <h2 className="text-4xl md:text-5xl font-bold mb-6 uppercase tracking-wider" style={{ color: '#1D3557' }}>
+            <h2 className="text-4xl md:text-5xl font-bold mb-6 uppercase tracking-wider" style={{ color: '#E8ECF4' }}>
               Simple, transparent pricing
             </h2>
-            <p className="text-xl" style={{ color: '#457B9D' }}>
+            <p className="text-xl" style={{ color: '#8896AD' }}>
               Start free, scale as you grow. No hidden fees.
             </p>
           </div>
@@ -746,27 +760,27 @@ const LandingPage = () => {
       </section>
 
       {/* CTA Section */}
-      <section className="relative py-32" style={{ backgroundColor: '#F1FAEE' }}>
+      <section className="relative py-32" style={{ backgroundColor: '#0F1729' }}>
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           {/* Geometric decoration */}
           <div className="flex justify-center mb-8">
             <div className="flex items-center gap-3">
-              <div className="w-4 h-4 rounded-full" style={{ backgroundColor: '#E63946' }} />
-              <div className="w-4 h-4" style={{ backgroundColor: '#F4A261' }} />
-              <div className="w-4 h-4" style={{ backgroundColor: '#1D3557', transform: 'rotate(45deg)' }} />
+              <div className="w-4 h-4 rounded-full" style={{ border: '2px solid #00D4FF' }} />
+              <div className="w-4 h-4" style={{ border: '2px solid #FFB800' }} />
+              <div className="w-4 h-4" style={{ border: '2px solid #FF4D6A', transform: 'rotate(45deg)' }} />
             </div>
           </div>
-          <h2 className="text-4xl md:text-5xl font-bold mb-6 uppercase tracking-wider" style={{ color: '#1D3557' }}>
+          <h2 className="text-4xl md:text-5xl font-bold mb-6 uppercase tracking-wider" style={{ color: '#E8ECF4' }}>
             Ready to get started?
           </h2>
-          <p className="text-xl mb-10" style={{ color: '#457B9D' }}>
+          <p className="text-xl mb-10" style={{ color: '#8896AD' }}>
             Join hundreds of teams automating their data pipelines with OrbitX.
           </p>
 
           <button
             onClick={handleGoogleSignIn}
-            className="inline-flex items-center gap-3 px-8 py-5 text-white font-semibold text-lg transition-all group uppercase tracking-wider"
-            style={{ backgroundColor: '#E63946', borderRadius: '2px' }}
+            className="inline-flex items-center gap-3 px-8 py-5 font-semibold text-lg transition-all group uppercase tracking-wider"
+            style={{ background: 'linear-gradient(135deg, #00D4FF, #00B4D8)', color: '#0F1729', borderRadius: '4px' }}
           >
             <GoogleIcon />
             Sign up with Google
@@ -776,67 +790,67 @@ const LandingPage = () => {
       </section>
 
       {/* Footer */}
-      <footer className="relative py-12" style={{ backgroundColor: '#1D3557' }}>
+      <footer className="relative py-12" style={{ backgroundColor: '#0F1729', borderTop: '1px solid rgba(0, 212, 255, 0.1)' }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid md:grid-cols-4 gap-8 mb-8">
             {/* Brand */}
             <div className="md:col-span-1">
               <Link to="/" className="flex items-center gap-3 mb-4">
-                <div className="w-8 h-8 flex items-center justify-center" style={{ backgroundColor: '#E63946', borderRadius: '2px' }}>
-                  <span className="text-white font-bold text-sm">O</span>
+                <div className="w-8 h-8 flex items-center justify-center" style={{ border: '2px solid #00D4FF', borderRadius: '4px' }}>
+                  <span className="font-bold text-sm" style={{ color: '#00D4FF' }}>O</span>
                 </div>
-                <span className="text-lg font-bold text-white uppercase tracking-widest">
+                <span className="text-lg font-bold uppercase tracking-widest" style={{ color: '#E8ECF4' }}>
                   OrbitX
                 </span>
               </Link>
-              <p className="text-sm" style={{ color: '#A8DADC' }}>
+              <p className="text-sm" style={{ color: '#506080' }}>
                 The modern data automation platform for teams of all sizes.
               </p>
             </div>
 
             {/* Product */}
             <div>
-              <h4 className="font-semibold text-white mb-4 uppercase tracking-wider text-sm">Product</h4>
+              <h4 className="font-semibold mb-4 uppercase tracking-wider text-[11px]" style={{ color: '#8896AD' }}>Product</h4>
               <ul className="space-y-2 text-sm">
-                <li><a href="#features" className="transition-colors hover:text-white" style={{ color: '#A8DADC' }}>Features</a></li>
-                <li><a href="#pricing" className="transition-colors hover:text-white" style={{ color: '#A8DADC' }}>Pricing</a></li>
-                <li><Link to="/dashboard" className="transition-colors hover:text-white" style={{ color: '#A8DADC' }}>Dashboard</Link></li>
-                <li><Link to="/workflows" className="transition-colors hover:text-white" style={{ color: '#A8DADC' }}>Workflows</Link></li>
+                <li><a href="#features" className="transition-colors hover:text-[#00D4FF]" style={{ color: '#506080' }}>Features</a></li>
+                <li><a href="#pricing" className="transition-colors hover:text-[#00D4FF]" style={{ color: '#506080' }}>Pricing</a></li>
+                <li><Link to="/dashboard" className="transition-colors hover:text-[#00D4FF]" style={{ color: '#506080' }}>Dashboard</Link></li>
+                <li><Link to="/workflows" className="transition-colors hover:text-[#00D4FF]" style={{ color: '#506080' }}>Workflows</Link></li>
               </ul>
             </div>
 
             {/* Resources */}
             <div>
-              <h4 className="font-semibold text-white mb-4 uppercase tracking-wider text-sm">Resources</h4>
+              <h4 className="font-semibold mb-4 uppercase tracking-wider text-[11px]" style={{ color: '#8896AD' }}>Resources</h4>
               <ul className="space-y-2 text-sm">
-                <li><a href="#" className="transition-colors hover:text-white" style={{ color: '#A8DADC' }}>Documentation</a></li>
-                <li><a href="#" className="transition-colors hover:text-white" style={{ color: '#A8DADC' }}>API Reference</a></li>
-                <li><a href="#" className="transition-colors hover:text-white" style={{ color: '#A8DADC' }}>Changelog</a></li>
-                <li><a href="#" className="transition-colors hover:text-white" style={{ color: '#A8DADC' }}>Status</a></li>
+                <li><a href="#" className="transition-colors hover:text-[#00D4FF]" style={{ color: '#506080' }}>Documentation</a></li>
+                <li><a href="#" className="transition-colors hover:text-[#00D4FF]" style={{ color: '#506080' }}>API Reference</a></li>
+                <li><a href="#" className="transition-colors hover:text-[#00D4FF]" style={{ color: '#506080' }}>Changelog</a></li>
+                <li><a href="#" className="transition-colors hover:text-[#00D4FF]" style={{ color: '#506080' }}>Status</a></li>
               </ul>
             </div>
 
             {/* Company */}
             <div>
-              <h4 className="font-semibold text-white mb-4 uppercase tracking-wider text-sm">Company</h4>
+              <h4 className="font-semibold mb-4 uppercase tracking-wider text-[11px]" style={{ color: '#8896AD' }}>Company</h4>
               <ul className="space-y-2 text-sm">
-                <li><a href="#" className="transition-colors hover:text-white" style={{ color: '#A8DADC' }}>About</a></li>
-                <li><a href="#" className="transition-colors hover:text-white" style={{ color: '#A8DADC' }}>Blog</a></li>
-                <li><a href="#" className="transition-colors hover:text-white" style={{ color: '#A8DADC' }}>Careers</a></li>
-                <li><a href="#" className="transition-colors hover:text-white" style={{ color: '#A8DADC' }}>Contact</a></li>
+                <li><a href="#" className="transition-colors hover:text-[#00D4FF]" style={{ color: '#506080' }}>About</a></li>
+                <li><a href="#" className="transition-colors hover:text-[#00D4FF]" style={{ color: '#506080' }}>Blog</a></li>
+                <li><a href="#" className="transition-colors hover:text-[#00D4FF]" style={{ color: '#506080' }}>Careers</a></li>
+                <li><a href="#" className="transition-colors hover:text-[#00D4FF]" style={{ color: '#506080' }}>Contact</a></li>
               </ul>
             </div>
           </div>
 
           {/* Bottom Bar */}
-          <div className="pt-8 flex flex-col md:flex-row items-center justify-between gap-4" style={{ borderTop: '1px solid rgba(168,218,220,0.2)' }}>
-            <p className="text-sm" style={{ color: '#A8DADC' }}>
+          <div className="pt-8 flex flex-col md:flex-row items-center justify-between gap-4" style={{ borderTop: '1px solid rgba(0, 212, 255, 0.08)' }}>
+            <p className="text-sm" style={{ color: '#506080' }}>
               &copy; {new Date().getFullYear()} OrbitX. All rights reserved.
             </p>
             <div className="flex items-center gap-6 text-sm">
-              <a href="#" className="transition-colors hover:text-white" style={{ color: '#A8DADC' }}>Privacy Policy</a>
-              <a href="#" className="transition-colors hover:text-white" style={{ color: '#A8DADC' }}>Terms of Service</a>
-              <a href="#" className="transition-colors hover:text-white" style={{ color: '#A8DADC' }}>Cookie Policy</a>
+              <a href="#" className="transition-colors hover:text-[#00D4FF]" style={{ color: '#506080' }}>Privacy Policy</a>
+              <a href="#" className="transition-colors hover:text-[#00D4FF]" style={{ color: '#506080' }}>Terms of Service</a>
+              <a href="#" className="transition-colors hover:text-[#00D4FF]" style={{ color: '#506080' }}>Cookie Policy</a>
             </div>
           </div>
         </div>

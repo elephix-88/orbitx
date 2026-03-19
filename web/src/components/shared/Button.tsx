@@ -11,12 +11,12 @@ const buttonVariants = cva("btn-base relative overflow-hidden", {
       ghost: "btn-ghost",
       destructive: "btn-destructive",
       outline:
-        "bg-transparent border-2 border-[#1D3557] text-[#1D3557] hover:bg-[#1D3557] hover:text-[#F1FAEE] uppercase tracking-wider rounded-sm",
-      link: "text-[#1D3557] hover:underline p-0 h-auto shadow-none hover:shadow-none hover:translate-y-0 active:scale-100 uppercase tracking-wider",
+        "bg-transparent border border-[rgba(0,212,255,0.2)] text-[#00D4FF] hover:bg-[rgba(0,212,255,0.08)] hover:border-[rgba(0,212,255,0.35)] uppercase tracking-wider rounded-[4px]",
+      link: "text-[#00D4FF] hover:underline p-0 h-auto shadow-none hover:shadow-none hover:translate-y-0 active:scale-100 uppercase tracking-wider",
       warning:
-        "bg-[#F4A261] hover:bg-[#E08C4A] text-[#1D3557] uppercase tracking-wider rounded-sm border-2 border-transparent",
+        "bg-[#FFB800] hover:bg-[#E5A600] text-[#0F1729] uppercase tracking-wider rounded-[4px] border border-[rgba(255,184,0,0.3)] hover:shadow-[0_0_12px_rgba(255,184,0,0.2)]",
       success:
-        "bg-emerald-600 hover:bg-emerald-700 text-white uppercase tracking-wider rounded-sm border-2 border-transparent",
+        "bg-[#00E5A0] hover:bg-[#00CC8E] text-[#0F1729] uppercase tracking-wider rounded-[4px] border border-[rgba(0,229,160,0.3)] hover:shadow-[0_0_12px_rgba(0,229,160,0.2)]",
     },
     size: {
       xs: "h-7 px-2 text-sm font-semibold",

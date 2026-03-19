@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -6,71 +6,67 @@
 
 @layer base {
   :root {
-    /* Bauhaus Primary Palette */
-    --brand-50: 253 237 239;
-    --brand-100: 249 207 212;
-    --brand-200: 243 163 172;
-    --brand-300: 237 119 132;
-    --brand-400: 233 85 100;
-    --brand-500: 230 57 70;    /* #E63946 — Bauhaus Red */
-    --brand-600: 200 45 58;
-    --brand-700: 170 35 48;
-    --brand-800: 140 28 38;
-    --brand-900: 110 20 28;
+    /* Blueprint Dark (Default) — The control room */
+    --brand-50: 10 20 35;
+    --brand-100: 15 28 48;
+    --brand-200: 26 39 68;
+    --brand-300: 0 153 187;
+    --brand-400: 0 180 220;
+    --brand-500: 0 212 255;      /* Cyan — primary accent */
+    --brand-600: 51 222 255;
+    --brand-700: 102 233 255;
+    --brand-800: 153 243 255;
+    --brand-900: 204 250 255;
 
-    /* Surface — Off-White Bauhaus */
-    --surface-primary: 241 250 238;    /* #F1FAEE */
-    --surface-secondary: 255 255 255;  /* White cards */
-    --surface-tertiary: 232 242 228;   /* Slightly darker cream */
-    --surface-dark: 29 53 87;          /* #1D3557 */
+    /* Surface — Deep navy layers */
+    --surface-primary: 15 23 41;    /* #0F1729 */
+    --surface-secondary: 26 39 68;  /* #1A2744 */
+    --surface-tertiary: 34 51 85;   /* #223355 */
+    --surface-dark: 8 14 28;
 
-    /* Text — Deep Blue hierarchy */
-    --text-primary: 29 53 87;     /* #1D3557 */
-    --text-secondary: 69 123 157; /* #457B9D */
-    --text-tertiary: 168 218 220; /* #A8DADC */
-    --text-inverse: 241 250 238;  /* #F1FAEE */
+    /* Text — Chalk on blueprint */
+    --text-primary: 232 236 244;    /* #E8ECF4 */
+    --text-secondary: 136 150 173;  /* #8896AD */
+    --text-tertiary: 80 96 128;     /* #506080 */
+    --text-inverse: 15 23 41;
 
-    /* Borders — Teal */
-    --border-primary: 168 218 220;  /* #A8DADC */
-    --border-secondary: 210 235 236;
+    /* Borders — Cyan wire */
+    --border-primary: 0 212 255 0.15;
+    --border-secondary: 0 212 255 0.08;
 
-    /* Semantic */
-    --success: 34 197 94;
-    --error: 230 57 70;     /* Bauhaus Red */
-    --warning: 244 162 97;  /* #F4A261 — Bauhaus Yellow */
-    --info: 69 123 157;     /* #457B9D */
+    /* Semantic — LED indicators */
+    --success: 0 229 160;     /* Mint #00E5A0 */
+    --error: 255 77 106;      /* Coral #FF4D6A */
+    --warning: 255 184 0;     /* Amber #FFB800 */
+    --info: 0 212 255;        /* Cyan #00D4FF */
   }
 
   .dark {
-    /* Dark Bauhaus — inverted but same palette */
-    --brand-50: 40 20 24;
-    --brand-100: 60 28 34;
-    --brand-200: 90 35 42;
-    --brand-300: 140 45 55;
-    --brand-400: 200 50 62;
-    --brand-500: 230 57 70;
-    --brand-600: 237 119 132;
-    --brand-700: 243 163 172;
-    --brand-800: 249 207 212;
-    --brand-900: 253 237 239;
+    /* Dark IS the default — same values */
+    --brand-500: 0 212 255;
+    --surface-primary: 15 23 41;
+    --surface-secondary: 26 39 68;
+    --surface-tertiary: 34 51 85;
+    --text-primary: 232 236 244;
+    --text-secondary: 136 150 173;
+    --text-tertiary: 80 96 128;
+    --border-primary: 0 212 255 0.15;
+    --border-secondary: 0 212 255 0.08;
+  }
 
-    --surface-primary: 20 33 54;     /* Dark navy */
-    --surface-secondary: 29 53 87;   /* #1D3557 */
-    --surface-tertiary: 40 65 100;
-    --surface-dark: 10 18 32;
-
-    --text-primary: 241 250 238;
-    --text-secondary: 168 218 220;
-    --text-tertiary: 69 123 157;
-    --text-inverse: 29 53 87;
-
-    --border-primary: 50 75 110;
-    --border-secondary: 35 55 85;
-
-    --success: 34 197 94;
-    --error: 230 57 70;
-    --warning: 244 162 97;
-    --info: 168 218 220;
+  /* Light mode — Inverted blueprint (white paper, blue lines) */
+  .light-mode {
+    --brand-500: 0 153 187;
+    --surface-primary: 248 250 255;
+    --surface-secondary: 255 255 255;
+    --surface-tertiary: 240 244 255;
+    --surface-dark: 15 23 41;
+    --text-primary: 15 23 41;
+    --text-secondary: 80 96 128;
+    --text-tertiary: 136 150 173;
+    --text-inverse: 248 250 255;
+    --border-primary: 0 100 140 0.15;
+    --border-secondary: 0 100 140 0.08;
   }
 
   html, body, #root {
@@ -81,150 +77,230 @@
   }
 
   body {
-    @apply bg-surface-primary text-text-primary antialiased;
-    font-family: 'DM Sans', 'Inter', ui-sans-serif, system-ui, sans-serif;
-    font-size: 15px;
+    background-color: #0F1729;
+    color: #E8ECF4;
+    font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
+    font-size: 14px;
     font-weight: 400;
     line-height: 1.6;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
-    letter-spacing: 0;
+    letter-spacing: 0.01em;
+    /* Blueprint grid background */
+    background-image:
+      linear-gradient(rgba(0, 212, 255, 0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0, 212, 255, 0.03) 1px, transparent 1px);
+    background-size: 24px 24px;
   }
 
-  /* Bauhaus Typography — geometric, bold hierarchy */
+  /* Typography — Technical precision */
   h1, h2 {
     font-weight: 700;
-    text-transform: uppercase;
     letter-spacing: 0.02em;
+    color: #E8ECF4;
   }
 
   h3, h4, h5, h6 {
-    font-weight: 700;
-    letter-spacing: 0;
+    font-weight: 600;
+    color: #E8ECF4;
   }
 
-  button, .btn-base {
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
+  button {
+    font-weight: 500;
+    letter-spacing: 0.03em;
   }
 
   input, textarea, select {
-    font-size: 15px;
+    font-size: 14px;
     font-weight: 400;
+    font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
   }
 
   label {
-    font-weight: 600;
-    font-size: 12px;
+    font-weight: 500;
+    font-size: 11px;
     text-transform: uppercase;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.1em;
+    color: #8896AD;
   }
 
   strong, b {
     font-weight: 700;
   }
+
+  /* Monospace for data values */
+  [data-mono], .font-mono {
+    font-family: 'JetBrains Mono', 'Fira Code', ui-monospace, monospace;
+  }
 }
 
 @layer components {
-  /* === BAUHAUS PANELS === */
+  /* === BLUEPRINT PANELS === */
   .glass-panel {
-    @apply bg-surface-secondary border border-border-primary;
-    border-radius: 2px;
+    background-color: #1A2744;
+    border: 1px solid rgba(0, 212, 255, 0.12);
+    border-radius: 6px;
   }
 
   .glass-panel-hover {
-    @apply hover:bg-surface-tertiary transition-colors duration-150;
+    transition: all 0.2s ease;
+  }
+  .glass-panel-hover:hover {
+    border-color: rgba(0, 212, 255, 0.25);
+    box-shadow: 0 0 12px rgba(0, 212, 255, 0.06);
   }
 
-  /* === BAUHAUS BUTTON SYSTEM === */
+  /* === BLUEPRINT BUTTON SYSTEM === */
   .btn-base {
-    @apply inline-flex items-center justify-center font-semibold uppercase tracking-wider transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500 disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply inline-flex items-center justify-center font-medium transition-all duration-200 focus:outline-none disabled:opacity-40 disabled:cursor-not-allowed;
     font-size: 13px;
-    border-radius: 2px;
+    letter-spacing: 0.04em;
+    border-radius: 4px;
   }
 
   .btn-primary {
-    @apply btn-base text-white border-2 border-transparent;
-    background-color: #E63946;
+    @apply btn-base text-white;
+    background: linear-gradient(135deg, #00B8DC, #00D4FF);
+    border: 1px solid rgba(0, 212, 255, 0.3);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
   }
   .btn-primary:hover:not(:disabled) {
-    background-color: #C8313E;
+    background: linear-gradient(135deg, #00D4FF, #33DFFF);
+    box-shadow: 0 0 16px rgba(0, 212, 255, 0.3);
+  }
+  .btn-primary:active:not(:disabled) {
+    transform: scale(0.98);
   }
 
   .btn-secondary {
-    @apply btn-base bg-transparent text-text-primary;
-    border: 2px solid #1D3557;
+    @apply btn-base;
+    background-color: transparent;
+    border: 1px solid rgba(0, 212, 255, 0.2);
+    color: #00D4FF;
   }
   .btn-secondary:hover:not(:disabled) {
-    background-color: #1D3557;
-    color: #F1FAEE;
+    background-color: rgba(0, 212, 255, 0.08);
+    border-color: rgba(0, 212, 255, 0.35);
   }
 
   .btn-ghost {
-    @apply btn-base bg-transparent text-text-secondary;
-    border: 2px solid transparent;
+    @apply btn-base;
+    background-color: transparent;
+    border: 1px solid transparent;
+    color: #8896AD;
   }
   .btn-ghost:hover:not(:disabled) {
-    @apply text-text-primary bg-surface-tertiary;
+    color: #E8ECF4;
+    background-color: rgba(0, 212, 255, 0.06);
   }
 
   .btn-destructive {
     @apply btn-base text-white;
-    background-color: #E63946;
-    border: 2px solid #E63946;
+    background-color: #FF4D6A;
+    border: 1px solid rgba(255, 77, 106, 0.3);
   }
   .btn-destructive:hover:not(:disabled) {
-    background-color: #C8313E;
-    border-color: #C8313E;
+    background-color: #FF6680;
+    box-shadow: 0 0 12px rgba(255, 77, 106, 0.2);
   }
 
   .btn-icon {
     @apply btn-base p-2 aspect-square;
   }
 
-  /* === BAUHAUS TYPOGRAPHY === */
+  /* === BLUEPRINT TYPOGRAPHY === */
   .text-display {
-    @apply font-display font-bold uppercase tracking-wide;
+    @apply font-display font-bold;
+    letter-spacing: 0.02em;
   }
 
-  /* === SCROLLBAR — Minimal === */
+  /* === SCROLLBAR — Wire thin === */
   ::-webkit-scrollbar {
-    width: 4px;
-    height: 4px;
+    width: 5px;
+    height: 5px;
   }
 
   ::-webkit-scrollbar-track {
-    background: transparent;
+    background: rgba(0, 212, 255, 0.03);
   }
 
   ::-webkit-scrollbar-thumb {
-    background-color: #A8DADC;
-    border-radius: 0;
+    background-color: rgba(0, 212, 255, 0.15);
+    border-radius: 2px;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background-color: #457B9D;
+    background-color: rgba(0, 212, 255, 0.3);
+  }
+
+  /* === STATUS LED INDICATORS === */
+  .led-success {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: #00E5A0;
+    box-shadow: 0 0 6px rgba(0, 229, 160, 0.4);
+  }
+
+  .led-error {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: #FF4D6A;
+    box-shadow: 0 0 6px rgba(255, 77, 106, 0.4);
+  }
+
+  .led-warning {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: #FFB800;
+    box-shadow: 0 0 6px rgba(255, 184, 0, 0.4);
+  }
+
+  .led-info {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: #00D4FF;
+    box-shadow: 0 0 6px rgba(0, 212, 255, 0.4);
+  }
+
+  .led-idle {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: #506080;
   }
 }
 
-/* === BAUHAUS UTILITIES === */
+/* === BLUEPRINT UTILITIES === */
 .text-gradient {
-  color: #E63946;
+  background: linear-gradient(135deg, #00D4FF, #00E5A0);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
-/* Bauhaus geometric divider */
-.bauhaus-divider {
-  width: 48px;
-  height: 4px;
-  background-color: #E63946;
-}
+.text-cyan { color: #00D4FF; }
+.text-amber { color: #FFB800; }
+.text-coral { color: #FF4D6A; }
+.text-mint { color: #00E5A0; }
+.text-chalk { color: #E8ECF4; }
+.text-chalk-dim { color: #8896AD; }
 
-/* Bauhaus accent bar */
-.bauhaus-accent-bar {
-  width: 4px;
-  background-color: #E63946;
+.border-wire { border-color: rgba(0, 212, 255, 0.15); }
+.border-wire-bright { border-color: rgba(0, 212, 255, 0.3); }
+
+.bg-panel { background-color: #1A2744; }
+.bg-panel-light { background-color: #223355; }
+.bg-blueprint { background-color: #0F1729; }
+
+/* Blueprint accent line */
+.blueprint-accent {
+  height: 2px;
+  background: linear-gradient(90deg, #00D4FF, transparent);
 }
 
 @keyframes fadeIn {
@@ -243,24 +319,24 @@
   }
 }
 
-/* === REACT DAY PICKER — Bauhaus Style === */
+/* === REACT DAY PICKER — Blueprint Style === */
 .date-range-picker-custom {
-  --rdp-accent-color: #E63946;
-  --rdp-accent-background-color: rgba(230, 57, 70, 0.1);
-  --rdp-background-color: #FFFFFF;
+  --rdp-accent-color: #00D4FF;
+  --rdp-accent-background-color: rgba(0, 212, 255, 0.1);
+  --rdp-background-color: #1A2744;
   --rdp-day-height: 2rem;
   --rdp-day-width: 2rem;
-  --rdp-day_button-border-radius: 0;
+  --rdp-day_button-border-radius: 4px;
   --rdp-day_button-height: 2rem;
   --rdp-day_button-width: 2rem;
   --rdp-selected-border: none;
   --rdp-disabled-opacity: 0.3;
   --rdp-outside-opacity: 0.5;
-  --rdp-today-color: #E63946;
+  --rdp-today-color: #00D4FF;
   --rdp-selected-font: inherit;
-  --rdp-range_start-date-background-color: #E63946;
-  --rdp-range_end-date-background-color: #E63946;
-  --rdp-range_middle-background-color: rgba(230, 57, 70, 0.1);
+  --rdp-range_start-date-background-color: #00D4FF;
+  --rdp-range_end-date-background-color: #00D4FF;
+  --rdp-range_middle-background-color: rgba(0, 212, 255, 0.1);
 }
 
 .date-range-picker-custom .rdp-root {
@@ -268,157 +344,49 @@
   font-size: 0.875rem;
 }
 
-.date-range-picker-custom .rdp-months {
-  display: flex;
-  gap: 1.5rem;
-}
-
-.date-range-picker-custom .rdp-month {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-.date-range-picker-custom .rdp-month_caption {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.25rem 0;
-}
-
-.date-range-picker-custom .rdp-caption_label {
-  font-size: 0.875rem;
-  font-weight: 700;
-  color: #1D3557;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.date-range-picker-custom .rdp-nav {
-  display: flex;
-  gap: 0.25rem;
-}
+.date-range-picker-custom .rdp-months { display: flex; gap: 1.5rem; }
+.date-range-picker-custom .rdp-month { display: flex; flex-direction: column; gap: 0.75rem; }
+.date-range-picker-custom .rdp-month_caption { display: flex; align-items: center; justify-content: center; padding: 0.25rem 0; }
+.date-range-picker-custom .rdp-caption_label { font-size: 0.875rem; font-weight: 600; color: #E8ECF4; }
+.date-range-picker-custom .rdp-nav { display: flex; gap: 0.25rem; }
 
 .date-range-picker-custom .rdp-button_previous,
 .date-range-picker-custom .rdp-button_next {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 1.75rem;
-  height: 1.75rem;
-  border-radius: 0;
-  background: transparent;
-  color: #457B9D;
-  transition: all 0.15s ease;
-  cursor: pointer;
-  border: none;
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 1.75rem; height: 1.75rem; border-radius: 4px;
+  background: transparent; color: #8896AD;
+  transition: all 0.15s ease; cursor: pointer; border: none;
 }
-
 .date-range-picker-custom .rdp-button_previous:hover,
 .date-range-picker-custom .rdp-button_next:hover {
-  background: #A8DADC;
-  color: #1D3557;
+  background: rgba(0, 212, 255, 0.1); color: #00D4FF;
 }
 
-.date-range-picker-custom .rdp-weekdays {
-  display: flex;
-}
-
+.date-range-picker-custom .rdp-weekdays { display: flex; }
 .date-range-picker-custom .rdp-weekday {
-  width: 2rem;
-  height: 2rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.65rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: #457B9D;
+  width: 2rem; height: 2rem; display: flex; align-items: center; justify-content: center;
+  font-size: 0.6rem; font-weight: 600; text-transform: uppercase;
+  letter-spacing: 0.1em; color: #506080;
 }
 
-.date-range-picker-custom .rdp-weeks {
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-}
-
-.date-range-picker-custom .rdp-week {
-  display: flex;
-}
-
-.date-range-picker-custom .rdp-day {
-  width: 2rem;
-  height: 2rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
+.date-range-picker-custom .rdp-weeks { display: flex; flex-direction: column; gap: 0.125rem; }
+.date-range-picker-custom .rdp-week { display: flex; }
+.date-range-picker-custom .rdp-day { width: 2rem; height: 2rem; display: flex; align-items: center; justify-content: center; }
 .date-range-picker-custom .rdp-day_button {
-  width: 2rem;
-  height: 2rem;
-  border-radius: 0;
-  font-size: 0.8125rem;
-  font-weight: 500;
-  color: #1D3557;
-  background: transparent;
-  border: none;
-  cursor: pointer;
+  width: 2rem; height: 2rem; border-radius: 4px;
+  font-size: 0.8125rem; font-weight: 400; color: #E8ECF4;
+  background: transparent; border: none; cursor: pointer;
   transition: all 0.15s ease;
 }
-
-.date-range-picker-custom .rdp-day_button:hover:not(:disabled) {
-  background: #A8DADC;
-}
-
-.date-range-picker-custom .rdp-today .rdp-day_button {
-  background: rgba(230, 57, 70, 0.1);
-  font-weight: 700;
-}
-
-.date-range-picker-custom .rdp-selected .rdp-day_button {
-  background: #E63946;
-  color: white;
-  font-weight: 600;
-}
-
+.date-range-picker-custom .rdp-day_button:hover:not(:disabled) { background: rgba(0, 212, 255, 0.1); }
+.date-range-picker-custom .rdp-today .rdp-day_button { color: #00D4FF; font-weight: 600; border: 1px solid rgba(0, 212, 255, 0.3); }
+.date-range-picker-custom .rdp-selected .rdp-day_button { background: #00D4FF; color: #0F1729; font-weight: 600; }
 .date-range-picker-custom .rdp-range_start .rdp-day_button,
-.date-range-picker-custom .rdp-range_end .rdp-day_button {
-  background: #E63946;
-  color: white;
-  font-weight: 600;
-}
-
-.date-range-picker-custom .rdp-range_middle .rdp-day_button {
-  background: rgba(230, 57, 70, 0.1);
-  color: #1D3557;
-  border-radius: 0;
-}
-
-.date-range-picker-custom .rdp-range_start .rdp-day_button {
-  border-radius: 0;
-}
-
-.date-range-picker-custom .rdp-range_end .rdp-day_button {
-  border-radius: 0;
-}
-
-.date-range-picker-custom .rdp-range_start.rdp-range_end .rdp-day_button {
-  border-radius: 0;
-}
-
-.date-range-picker-custom .rdp-disabled .rdp-day_button {
-  color: #A8DADC;
-  opacity: 0.3;
-  cursor: not-allowed;
-}
-
-.date-range-picker-custom .rdp-outside .rdp-day_button {
-  color: #A8DADC;
-  opacity: 0.5;
-}
-
-.date-range-picker-custom .rdp-hidden {
-  visibility: hidden;
-}
+.date-range-picker-custom .rdp-range_end .rdp-day_button { background: #00D4FF; color: #0F1729; font-weight: 600; }
+.date-range-picker-custom .rdp-range_middle .rdp-day_button { background: rgba(0, 212, 255, 0.1); color: #E8ECF4; border-radius: 0; }
+.date-range-picker-custom .rdp-range_start .rdp-day_button { border-radius: 4px 0 0 4px; }
+.date-range-picker-custom .rdp-range_end .rdp-day_button { border-radius: 0 4px 4px 0; }
+.date-range-picker-custom .rdp-range_start.rdp-range_end .rdp-day_button { border-radius: 4px; }
+.date-range-picker-custom .rdp-disabled .rdp-day_button { color: #506080; opacity: 0.3; cursor: not-allowed; }
+.date-range-picker-custom .rdp-outside .rdp-day_button { color: #506080; opacity: 0.5; }
+.date-range-picker-custom .rdp-hidden { visibility: hidden; }

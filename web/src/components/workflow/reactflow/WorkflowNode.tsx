@@ -29,31 +29,46 @@ interface WorkflowNodeProps {
   selected?: boolean;
 }
 
-// Category styling - Bauhaus: colored left border by type
+// Category styling - Blueprint: colored left bar by type
 const categoryStyles: Record<string, {
   borderColor: string;
   iconBg: string;
   dot: string;
 }> = {
   source: {
-    borderColor: '#E63946',
-    iconBg: '#E63946',
-    dot: '#E63946',
+    borderColor: '#FF4D6A',   // coral
+    iconBg: '#FF4D6A',
+    dot: '#FF4D6A',
   },
   transform: {
-    borderColor: '#F4A261',
-    iconBg: '#F4A261',
-    dot: '#F4A261',
+    borderColor: '#FFB800',   // amber
+    iconBg: '#FFB800',
+    dot: '#FFB800',
   },
   destination: {
-    borderColor: '#457B9D',
-    iconBg: '#457B9D',
-    dot: '#457B9D',
+    borderColor: '#00E5A0',   // mint
+    iconBg: '#00E5A0',
+    dot: '#00E5A0',
   },
+};
+
+// Status border styles
+const getStatusBorderStyle = (status?: string, baseColor?: string) => {
+  switch (status) {
+    case 'running':
+      return { borderColor: '#FFB800', boxShadow: '0 0 8px rgba(255, 184, 0, 0.3)' };
+    case 'success':
+      return { borderColor: '#00E5A0', boxShadow: 'none' };
+    case 'error':
+      return { borderColor: '#FF4D6A', boxShadow: '0 0 8px rgba(255, 77, 106, 0.3)' };
+    default:
+      return { borderColor: 'rgba(0, 212, 255, 0.2)', boxShadow: 'none' };
+  }
 };
 
 const WorkflowNode = ({ data, selected }: WorkflowNodeProps) => {
   const styles = categoryStyles[data.category] || categoryStyles.transform;
+  const statusBorder = getStatusBorderStyle(data.status);
 
   const renderIcon = (iconName: string) => {
     const Icon = getIcon(iconName);
@@ -77,25 +92,25 @@ const WorkflowNode = ({ data, selected }: WorkflowNodeProps) => {
       case 'valid':
         return (
           <div title={tooltip} className="flex-shrink-0">
-            <CheckCircle size={iconSize} className="text-green-500" />
+            <CheckCircle size={iconSize} style={{ color: '#00E5A0' }} />
           </div>
         );
       case 'warning':
         return (
           <div title={tooltip} className="flex-shrink-0">
-            <AlertTriangle size={iconSize} className="text-amber-500" />
+            <AlertTriangle size={iconSize} style={{ color: '#FFB800' }} />
           </div>
         );
       case 'error':
         return (
           <div title={tooltip} className="flex-shrink-0">
-            <XCircle size={iconSize} className="text-red-500" />
+            <XCircle size={iconSize} style={{ color: '#FF4D6A' }} />
           </div>
         );
       case 'unconfigured':
         return (
           <div title={tooltip} className="flex-shrink-0">
-            <div className="w-2 h-2 rounded-full bg-slate-300" />
+            <div className="w-2 h-2 rounded-full" style={{ backgroundColor: '#506080' }} />
           </div>
         );
       default:
@@ -110,15 +125,16 @@ const WorkflowNode = ({ data, selected }: WorkflowNodeProps) => {
         'flex items-center gap-2',
         'transition-all duration-300 ease-out',
         'w-[144px] h-[47px]',
-        selected && 'ring-2 ring-offset-1 scale-[1.02]'
       )}
       style={{
-        backgroundColor: 'white',
-        border: '1px solid #A8DADC',
+        backgroundColor: '#1A2744',
+        border: `1px solid ${selected ? '#00D4FF' : statusBorder.borderColor}`,
         borderLeft: `4px solid ${styles.borderColor}`,
-        borderRadius: '2px',
-        boxShadow: selected ? '0 1px 2px rgba(0,0,0,0.08)' : 'none',
-        ringColor: selected ? styles.borderColor : undefined,
+        borderRadius: '6px',
+        boxShadow: selected
+          ? '0 0 12px rgba(0, 212, 255, 0.3)'
+          : statusBorder.boxShadow,
+        transform: selected ? 'scale(1.02)' : 'none',
       }}
       onDoubleClick={(e) => {
         e.stopPropagation();
@@ -135,11 +151,12 @@ const WorkflowNode = ({ data, selected }: WorkflowNodeProps) => {
             position={Position.Left}
             style={{
               top: data.inputs.length === 1 ? '50%' : `${((index + 1) / (data.inputs.length + 1)) * 100}%`,
+              backgroundColor: '#00D4FF',
+              border: '2px solid #0F1729',
             }}
             className={cn(
               '!w-3 !h-3 !rounded-full',
-              '!bg-slate-300 dark:!bg-slate-600 !border-2 !border-white dark:!border-slate-800',
-              'hover:!bg-slate-500 hover:!scale-125',
+              'hover:!scale-125',
               '!transition-all !duration-200'
             )}
           />
@@ -149,10 +166,13 @@ const WorkflowNode = ({ data, selected }: WorkflowNodeProps) => {
           id="in"
           type="target"
           position={Position.Left}
+          style={{
+            backgroundColor: '#00D4FF',
+            border: '2px solid #0F1729',
+          }}
           className={cn(
             '!w-3 !h-3 !rounded-full',
-            '!bg-slate-300 dark:!bg-slate-600 !border-2 !border-white dark:!border-slate-800',
-            'hover:!bg-slate-500 hover:!scale-125',
+            'hover:!scale-125',
             '!transition-all !duration-200'
           )}
         />
@@ -161,11 +181,11 @@ const WorkflowNode = ({ data, selected }: WorkflowNodeProps) => {
       {/* Running State Overlay */}
       {data.status === 'running' && (
         <div
-          className="absolute inset-0 z-50 flex items-center justify-center bg-white/60 dark:bg-slate-900/60"
-          style={{ borderRadius: '2px' }}
+          className="absolute inset-0 z-50 flex items-center justify-center"
+          style={{ borderRadius: '6px', backgroundColor: 'rgba(26, 39, 68, 0.7)' }}
         >
           <div className="relative">
-            <Loader2 className="w-5 h-5 animate-spin" style={{ color: styles.iconBg }} />
+            <Loader2 className="w-5 h-5 animate-spin" style={{ color: '#FFB800' }} />
           </div>
         </div>
       )}
@@ -180,7 +200,7 @@ const WorkflowNode = ({ data, selected }: WorkflowNodeProps) => {
         {/* Icon Container */}
         <div
           className="flex-shrink-0 flex items-center justify-center w-9 h-9"
-          style={{ borderRadius: '2px' }}
+          style={{ borderRadius: '4px' }}
         >
           {renderIcon(data.icon || 'Circle')}
         </div>
@@ -190,7 +210,7 @@ const WorkflowNode = ({ data, selected }: WorkflowNodeProps) => {
           {/* Actual node type name (always shown) */}
           <h4
             className="font-medium truncate leading-tight text-xs"
-            style={{ color: '#1D3557' }}
+            style={{ color: '#E8ECF4' }}
             title={data.display_name ? `${data.name} - ${data.display_name}` : data.name}
           >
             {data.name}
@@ -198,8 +218,8 @@ const WorkflowNode = ({ data, selected }: WorkflowNodeProps) => {
           {/* Alias (shown if set) */}
           {data.display_name && (
             <p
-              className="text-[10px] truncate leading-tight"
-              style={{ color: '#457B9D' }}
+              className="text-[10px] truncate leading-tight uppercase tracking-wider"
+              style={{ color: '#8896AD' }}
               title={data.display_name}
             >
               {data.display_name}
@@ -207,13 +227,18 @@ const WorkflowNode = ({ data, selected }: WorkflowNodeProps) => {
           )}
         </div>
 
-        {/* Status Indicator - circle in top-right area */}
+        {/* Status Indicator - LED-style dot with glow */}
         {data.status && data.status !== 'idle' && data.status !== 'running' && data.status !== 'pending' ? (
           <div className="flex-shrink-0">
             <div
               className="w-2 h-2 rounded-full"
               style={{
-                backgroundColor: data.status === 'error' ? '#E63946' : data.status === 'success' ? '#34d399' : '#A8DADC',
+                backgroundColor: data.status === 'error' ? '#FF4D6A' : data.status === 'success' ? '#00E5A0' : '#506080',
+                boxShadow: data.status === 'error'
+                  ? '0 0 6px rgba(255, 77, 106, 0.5)'
+                  : data.status === 'success'
+                  ? '0 0 6px rgba(0, 229, 160, 0.5)'
+                  : 'none',
               }}
             />
           </div>
@@ -232,11 +257,11 @@ const WorkflowNode = ({ data, selected }: WorkflowNodeProps) => {
             position={Position.Right}
             style={{
               top: data.outputs.length === 1 ? '50%' : `${((index + 1) / (data.outputs.length + 1)) * 100}%`,
-              backgroundColor: styles.dot,
+              backgroundColor: '#00D4FF',
+              border: '2px solid #0F1729',
             }}
             className={cn(
               '!w-3 !h-3 !rounded-full',
-              '!border-2 !border-white dark:!border-slate-800',
               'hover:!scale-125',
               '!transition-all !duration-200'
             )}
@@ -250,9 +275,10 @@ const WorkflowNode = ({ data, selected }: WorkflowNodeProps) => {
           <button
             className="w-5 h-5 flex items-center justify-center transition-all duration-200"
             style={{
-              backgroundColor: '#A8DADC',
-              color: '#1D3557',
-              borderRadius: '2px',
+              backgroundColor: '#1A2744',
+              color: '#00D4FF',
+              border: '1px solid rgba(0, 212, 255, 0.3)',
+              borderRadius: '4px',
             }}
             onClick={(e) => {
               e.stopPropagation();
@@ -268,9 +294,9 @@ const WorkflowNode = ({ data, selected }: WorkflowNodeProps) => {
           <button
             className="w-5 h-5 flex items-center justify-center transition-all duration-200"
             style={{
-              backgroundColor: '#E63946',
+              backgroundColor: '#FF4D6A',
               color: 'white',
-              borderRadius: '2px',
+              borderRadius: '4px',
             }}
             onClick={(e) => {
               e.stopPropagation();

@@ -264,27 +264,27 @@ const ConnectionsPage = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
           <div className="flex items-center justify-between">
             <div>
-              <div className="h-7 w-32 animate-pulse" style={{ backgroundColor: '#A8DADC', borderRadius: '2px' }} />
-              <div className="h-4 w-48 mt-2 animate-pulse" style={{ backgroundColor: '#A8DADC', borderRadius: '2px' }} />
+              <div className="h-7 w-32 animate-pulse" style={{ backgroundColor: 'rgba(0, 212, 255, 0.08)', borderRadius: '4px' }} />
+              <div className="h-4 w-48 mt-2 animate-pulse" style={{ backgroundColor: 'rgba(0, 212, 255, 0.05)', borderRadius: '4px' }} />
             </div>
-            <div className="h-9 w-24 animate-pulse" style={{ backgroundColor: '#A8DADC', borderRadius: '2px' }} />
+            <div className="h-9 w-24 animate-pulse" style={{ backgroundColor: 'rgba(0, 212, 255, 0.08)', borderRadius: '4px' }} />
           </div>
 
-          <div className="h-12 animate-pulse" style={{ backgroundColor: 'white', border: '1px solid #A8DADC', borderRadius: '2px' }} />
+          <div className="h-12 animate-pulse" style={{ backgroundColor: '#1A2744', border: '1px solid rgba(0, 212, 255, 0.12)', borderRadius: '6px' }} />
 
           {/* Row-based loading skeleton */}
           <div className="space-y-2">
             {[1, 2, 3, 4, 5].map((i) => (
-              <div key={i} className="p-3 animate-pulse" style={{ backgroundColor: 'white', border: '1px solid #A8DADC', borderRadius: '2px' }}>
+              <div key={i} className="p-3 animate-pulse" style={{ backgroundColor: '#1A2744', border: '1px solid rgba(0, 212, 255, 0.12)', borderRadius: '6px' }}>
                 <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 flex-shrink-0" style={{ backgroundColor: '#A8DADC', borderRadius: '2px' }} />
+                  <div className="w-10 h-10 flex-shrink-0" style={{ backgroundColor: 'rgba(0, 212, 255, 0.08)', borderRadius: '4px' }} />
                   <div className="flex-1 space-y-2">
-                    <div className="h-4 w-32" style={{ backgroundColor: '#A8DADC', borderRadius: '2px' }} />
-                    <div className="h-3 w-48" style={{ backgroundColor: '#A8DADC', borderRadius: '2px' }} />
+                    <div className="h-4 w-32" style={{ backgroundColor: 'rgba(0, 212, 255, 0.08)', borderRadius: '4px' }} />
+                    <div className="h-3 w-48" style={{ backgroundColor: 'rgba(0, 212, 255, 0.05)', borderRadius: '4px' }} />
                   </div>
                   <div className="flex items-center gap-3">
-                    <div className="h-5 w-20" style={{ backgroundColor: '#A8DADC', borderRadius: '2px' }} />
-                    <div className="w-6 h-6" style={{ backgroundColor: '#A8DADC', borderRadius: '2px' }} />
+                    <div className="h-5 w-20" style={{ backgroundColor: 'rgba(0, 212, 255, 0.08)', borderRadius: '4px' }} />
+                    <div className="w-6 h-6" style={{ backgroundColor: 'rgba(0, 212, 255, 0.08)', borderRadius: '4px' }} />
                   </div>
                 </div>
               </div>
@@ -302,11 +302,11 @@ const ConnectionsPage = () => {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-3 mb-2">
-              <div style={{ width: '48px', height: '4px', backgroundColor: '#E63946' }} />
+              <div style={{ width: '48px', height: '2px', background: 'linear-gradient(to right, #00D4FF, transparent)' }} />
             </div>
-            <h1 className="text-2xl font-bold uppercase tracking-wider" style={{ color: '#1D3557' }}>Connections</h1>
-            <p className="text-sm mt-0.5" style={{ color: '#457B9D' }}>
-              {totalConnections} connected &#9632; {connectionTypes.length} available
+            <h1 className="text-2xl font-bold uppercase tracking-wider" style={{ color: '#E8ECF4' }}>Connections</h1>
+            <p className="text-sm mt-0.5" style={{ color: '#8896AD' }}>
+              <span className="font-mono">{totalConnections}</span> connected &middot; <span className="font-mono">{connectionTypes.length}</span> available
             </p>
           </div>
 
@@ -314,7 +314,7 @@ const ConnectionsPage = () => {
             onClick={() => loadConnections()}
             disabled={loading}
             className="h-9 px-3 flex items-center gap-2 text-sm transition-colors"
-            style={{ color: '#457B9D', backgroundColor: 'white', border: '1px solid #A8DADC', borderRadius: '2px' }}
+            style={{ color: '#8896AD', backgroundColor: '#1A2744', border: '1px solid rgba(0, 212, 255, 0.12)', borderRadius: '4px' }}
           >
             <RefreshCw className={cn("w-4 h-4", loading && "animate-spin")} />
             <span className="hidden sm:inline uppercase tracking-wider text-xs">Refresh</span>
@@ -322,22 +322,22 @@ const ConnectionsPage = () => {
         </div>
 
         {/* Search Bar */}
-        <div className="p-3" style={{ backgroundColor: 'white', border: '1px solid #A8DADC', borderRadius: '2px' }}>
+        <div className="p-3" style={{ backgroundColor: '#1A2744', border: '1px solid rgba(0, 212, 255, 0.12)', borderRadius: '6px' }}>
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: '#457B9D' }} />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: '#506080' }} />
             <input
               type="text"
               placeholder="Search connectors..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full h-9 pl-9 pr-9 text-sm focus:outline-none transition-all"
-              style={{ backgroundColor: '#F1FAEE', border: '1px solid #A8DADC', borderRadius: '2px', color: '#1D3557' }}
+              style={{ backgroundColor: '#0F1729', border: '1px solid rgba(0, 212, 255, 0.15)', borderRadius: '4px', color: '#E8ECF4' }}
             />
             {searchTerm && (
               <button
                 onClick={() => setSearchTerm("")}
                 className="absolute right-3 top-1/2 -translate-y-1/2"
-                style={{ color: '#457B9D' }}
+                style={{ color: '#8896AD' }}
               >
                 <X className="w-4 h-4" />
               </button>
@@ -349,8 +349,8 @@ const ConnectionsPage = () => {
         {totalConnections === 0 && !searchTerm && (
           <section className="space-y-4">
             <div className="flex items-center gap-3">
-              <Info className="w-4 h-4" style={{ color: '#457B9D' }} />
-              <h2 className="text-sm font-medium uppercase tracking-wider" style={{ color: '#1D3557' }}>Setup Guides</h2>
+              <Info className="w-4 h-4" style={{ color: '#00D4FF' }} />
+              <h2 className="text-[11px] font-medium uppercase tracking-wider" style={{ color: '#8896AD' }}>Setup Guides</h2>
             </div>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               {connectionTypes.slice(0, 4).map((type) => (
@@ -364,13 +364,16 @@ const ConnectionsPage = () => {
         {connectedTypes.length > 0 && (
           <section className="space-y-4">
             <div className="flex items-center gap-3">
-              {/* Green circle for connected */}
-              <span className="inline-block w-3 h-3 rounded-full" style={{ backgroundColor: '#34d399' }} />
-              <h2 className="text-sm font-medium uppercase tracking-wider" style={{ color: '#1D3557' }}>Active Connections</h2>
-              <span className="text-xs px-2 py-0.5" style={{ color: '#457B9D', backgroundColor: '#F1FAEE', border: '1px solid #A8DADC', borderRadius: '2px' }}>
+              {/* Mint LED dot for connected */}
+              <span className="inline-block w-3 h-3 rounded-full" style={{ backgroundColor: '#00E5A0', boxShadow: '0 0 6px rgba(0, 229, 160, 0.5)' }} />
+              <h2 className="text-[11px] font-medium uppercase tracking-wider" style={{ color: '#8896AD' }}>Active Connections</h2>
+              <span className="text-xs font-mono px-2 py-0.5" style={{ color: '#00D4FF', backgroundColor: 'rgba(0, 212, 255, 0.08)', border: '1px solid rgba(0, 212, 255, 0.15)', borderRadius: '4px' }}>
                 {totalConnections}
               </span>
             </div>
+
+            {/* Thin cyan gradient divider */}
+            <div style={{ height: '1px', background: 'linear-gradient(to right, rgba(0, 212, 255, 0.3), transparent)' }} />
 
             <div className="space-y-2">
               {connectedTypes.map((type) => {
@@ -403,18 +406,21 @@ const ConnectionsPage = () => {
         {/* Available Connectors - Clean Row View */}
         <section className="space-y-4">
           <div className="flex items-center gap-3">
-            {/* Gray circle for available */}
-            <span className="inline-block w-3 h-3 rounded-full" style={{ backgroundColor: '#A8DADC' }} />
-            <h2 className="text-sm font-medium uppercase tracking-wider" style={{ color: '#1D3557' }}>Available Connectors</h2>
-            <span className="text-xs px-2 py-0.5" style={{ color: '#457B9D', backgroundColor: '#F1FAEE', border: '1px solid #A8DADC', borderRadius: '2px' }}>
+            {/* Dim gray dot for available */}
+            <span className="inline-block w-3 h-3 rounded-full" style={{ backgroundColor: '#506080' }} />
+            <h2 className="text-[11px] font-medium uppercase tracking-wider" style={{ color: '#8896AD' }}>Available Connectors</h2>
+            <span className="text-xs font-mono px-2 py-0.5" style={{ color: '#8896AD', backgroundColor: 'rgba(0, 212, 255, 0.05)', border: '1px solid rgba(0, 212, 255, 0.1)', borderRadius: '4px' }}>
               {availableTypes.length}
             </span>
           </div>
 
+          {/* Thin cyan gradient divider */}
+          <div style={{ height: '1px', background: 'linear-gradient(to right, rgba(0, 212, 255, 0.2), transparent)' }} />
+
           {availableTypes.length === 0 ? (
-            <div className="p-8 text-center" style={{ backgroundColor: 'white', border: '2px dashed #A8DADC', borderRadius: '2px' }}>
-              <Search className="w-8 h-8 mx-auto mb-3" style={{ color: '#457B9D' }} />
-              <p className="text-sm" style={{ color: '#457B9D' }}>No connectors match "{searchTerm}"</p>
+            <div className="p-8 text-center" style={{ backgroundColor: '#1A2744', border: '2px dashed rgba(0, 212, 255, 0.15)', borderRadius: '6px' }}>
+              <Search className="w-8 h-8 mx-auto mb-3" style={{ color: '#506080' }} />
+              <p className="text-sm" style={{ color: '#8896AD' }}>No connectors match "{searchTerm}"</p>
             </div>
           ) : (
             <div className="space-y-2">
@@ -438,38 +444,38 @@ const ConnectionsPage = () => {
       {viewing && createPortal(
         <div
           className="fixed inset-0 z-50 flex items-center justify-center p-4"
-          style={{ backgroundColor: 'rgba(29,53,87,0.5)' }}
+          style={{ backgroundColor: 'rgba(15, 23, 41, 0.8)' }}
           onClick={() => setViewing(null)}
         >
           <div
             className="w-full max-w-md"
-            style={{ backgroundColor: 'white', border: '1px solid #A8DADC', borderRadius: '2px', boxShadow: '0 2px 4px rgba(0,0,0,0.1)' }}
+            style={{ backgroundColor: '#1A2744', border: '1px solid rgba(0, 212, 255, 0.2)', borderRadius: '6px', boxShadow: '0 0 30px rgba(0, 212, 255, 0.1)' }}
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="flex justify-between items-center px-5 py-4" style={{ borderBottom: '1px solid #A8DADC' }}>
+            <div className="flex justify-between items-center px-5 py-4" style={{ borderBottom: '1px solid rgba(0, 212, 255, 0.12)' }}>
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 flex items-center justify-center text-white" style={{ backgroundColor: '#E63946', borderRadius: '2px' }}>
+                <div className="w-10 h-10 flex items-center justify-center" style={{ backgroundColor: 'rgba(0, 212, 255, 0.08)', borderRadius: '4px' }}>
                   {React.cloneElement(
                     (connectionTypes.find((t) => t.id === viewing.type)?.icon || <Link2 className="w-5 h-5" />) as React.ReactElement,
                     { className: 'w-5 h-5' }
                   )}
                 </div>
                 <div>
-                  <h2 className="text-base font-semibold uppercase tracking-wider" style={{ color: '#1D3557' }}>
+                  <h2 className="text-base font-semibold uppercase tracking-wider" style={{ color: '#E8ECF4' }}>
                     {connectionTypes.find((t) => t.id === viewing.type)?.name || viewing.type}
                   </h2>
                   <div className="flex items-center gap-1.5 mt-0.5">
-                    <span className="w-2 h-2 rounded-full" style={{ backgroundColor: '#34d399' }} />
-                    <span className="text-xs font-medium" style={{ color: '#34d399' }}>Connected</span>
+                    <span className="w-2 h-2 rounded-full" style={{ backgroundColor: '#00E5A0', boxShadow: '0 0 4px rgba(0, 229, 160, 0.5)' }} />
+                    <span className="text-xs font-medium" style={{ color: '#00E5A0' }}>Connected</span>
                   </div>
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => setViewing(null)}
-                className="p-2 hover:bg-gray-100 transition-colors"
-                style={{ color: '#457B9D', borderRadius: '2px' }}
+                className="p-2 transition-colors"
+                style={{ color: '#8896AD', borderRadius: '4px' }}
                 title="Close"
               >
                 <X size={18} />
@@ -488,29 +494,29 @@ const ConnectionsPage = () => {
                 />
               ) : (
                 <div className="space-y-3">
-                  <div className="flex items-center justify-between py-2" style={{ borderBottom: '1px solid #A8DADC' }}>
-                    <span className="text-sm" style={{ color: '#457B9D' }}>Service</span>
-                    <span className="text-sm font-medium" style={{ color: '#1D3557' }}>
+                  <div className="flex items-center justify-between py-2" style={{ borderBottom: '1px solid rgba(0, 212, 255, 0.08)' }}>
+                    <span className="text-sm" style={{ color: '#8896AD' }}>Service</span>
+                    <span className="text-sm font-medium" style={{ color: '#E8ECF4' }}>
                       {connectionTypes.find((t) => t.id === viewing.type)?.name || viewing.type}
                     </span>
                   </div>
-                  <div className="flex items-center justify-between py-2" style={{ borderBottom: '1px solid #A8DADC' }}>
-                    <span className="text-sm" style={{ color: '#457B9D' }}>Account</span>
-                    <span className="text-sm font-medium" style={{ color: '#1D3557' }}>{viewing.accountInfo}</span>
+                  <div className="flex items-center justify-between py-2" style={{ borderBottom: '1px solid rgba(0, 212, 255, 0.08)' }}>
+                    <span className="text-sm" style={{ color: '#8896AD' }}>Account</span>
+                    <span className="text-sm font-medium" style={{ color: '#E8ECF4' }}>{viewing.accountInfo}</span>
                   </div>
                   {viewing.createdAt && (
-                    <div className="flex items-center justify-between py-2" style={{ borderBottom: '1px solid #A8DADC' }}>
-                      <span className="text-sm" style={{ color: '#457B9D' }}>Created</span>
-                      <span className="text-sm font-medium" style={{ color: '#1D3557' }}>
+                    <div className="flex items-center justify-between py-2" style={{ borderBottom: '1px solid rgba(0, 212, 255, 0.08)' }}>
+                      <span className="text-sm" style={{ color: '#8896AD' }}>Created</span>
+                      <span className="text-sm font-medium font-mono" style={{ color: '#E8ECF4' }}>
                         {new Date(viewing.createdAt).toLocaleDateString()}
                       </span>
                     </div>
                   )}
                   <div className="flex items-center justify-between py-2">
-                    <span className="text-sm" style={{ color: '#457B9D' }}>Status</span>
+                    <span className="text-sm" style={{ color: '#8896AD' }}>Status</span>
                     <div className="flex items-center gap-1.5">
-                      <span className="w-2 h-2 rounded-full" style={{ backgroundColor: '#34d399' }} />
-                      <span className="text-sm font-medium" style={{ color: '#34d399' }}>Active</span>
+                      <span className="w-2 h-2 rounded-full" style={{ backgroundColor: '#00E5A0', boxShadow: '0 0 4px rgba(0, 229, 160, 0.5)' }} />
+                      <span className="text-sm font-medium" style={{ color: '#00E5A0' }}>Active</span>
                     </div>
                   </div>
                 </div>
@@ -518,7 +524,7 @@ const ConnectionsPage = () => {
             </div>
 
             {/* Footer */}
-            <div className="flex gap-3 px-5 py-4" style={{ borderTop: '1px solid #A8DADC' }}>
+            <div className="flex gap-3 px-5 py-4" style={{ borderTop: '1px solid rgba(0, 212, 255, 0.12)' }}>
               <Button
                 variant="destructive"
                 onClick={() => {

@@ -16,9 +16,9 @@ import { cn } from '@/lib/utils';
 const modalVariants = cva(
   [
     'relative w-full flex flex-col',
-    'bg-white dark:bg-slate-950',
-    'rounded-sm shadow-sm',
-    'border border-[#A8DADC] dark:border-slate-800',
+    'bg-[#1A2744]',
+    'rounded-[6px] shadow-[0_0_24px_rgba(0,212,255,0.08)]',
+    'border border-[rgba(0,212,255,0.12)]',
   ],
   {
     variants: {
@@ -119,7 +119,7 @@ export const Modal = ({
       <div
         className={cn(
           "fixed inset-0 z-50",
-          "bg-black/70",
+          "bg-[#0F1729]/80 backdrop-blur-sm",
           "data-[state=open]:animate-in data-[state=closed]:animate-out",
           "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0"
         )}
@@ -148,11 +148,11 @@ export const Modal = ({
       >
         {/* Header */}
         {!headerless && (title || showCloseButton) && (
-          <div className="flex flex-col space-y-1.5 text-left bg-[#1D3557] text-white -m-6 mb-0 px-6 py-4">
+          <div className="flex flex-col space-y-1.5 text-left -m-6 mb-0 px-6 py-4 border-b border-[rgba(0,212,255,0.12)]" style={{ borderImage: 'linear-gradient(90deg, #00D4FF, transparent) 1' }}>
             {title && (
               <h2
                 id="modal-title"
-                className="text-lg font-bold uppercase tracking-wider leading-none text-white"
+                className="text-lg font-bold uppercase tracking-wider leading-none text-[#E8ECF4]"
               >
                 {title}
               </h2>
@@ -160,7 +160,7 @@ export const Modal = ({
             {description && (
               <p
                 id="modal-description"
-                className="text-sm text-[#A8DADC]"
+                className="text-sm text-[#8896AD]"
               >
                 {description}
               </p>
@@ -174,11 +174,10 @@ export const Modal = ({
             onClick={onClose}
             className={cn(
               "absolute right-4 top-4",
-              "rounded-sm opacity-90 ring-offset-white transition-opacity",
-              "hover:opacity-100 text-white",
-              "focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-[#1D3557]",
-              "disabled:pointer-events-none",
-              "dark:ring-offset-slate-950 dark:focus:ring-slate-300"
+              "rounded-[4px] opacity-90 transition-opacity",
+              "hover:opacity-100 text-[#8896AD] hover:text-[#E8ECF4]",
+              "focus:outline-none focus:ring-2 focus:ring-[rgba(0,212,255,0.4)]",
+              "disabled:pointer-events-none"
             )}
             aria-label="Close"
           >
@@ -232,20 +231,20 @@ export const Dialog = ({
 }: DialogProps) => {
   const variantStyles = {
     default: {
-      iconBg: 'bg-slate-100 dark:bg-slate-800',
-      iconColor: 'text-slate-600 dark:text-slate-400',
+      iconBg: 'bg-[rgba(0,212,255,0.08)] border border-[rgba(0,212,255,0.12)]',
+      iconColor: 'text-[#8896AD]',
     },
     danger: {
-      iconBg: 'bg-red-100 dark:bg-red-900/20',
-      iconColor: 'text-red-600 dark:text-red-500',
+      iconBg: 'bg-[rgba(255,77,106,0.1)] border border-[rgba(255,77,106,0.2)]',
+      iconColor: 'text-[#FF4D6A]',
     },
     warning: {
-      iconBg: 'bg-amber-100 dark:bg-amber-900/20',
-      iconColor: 'text-amber-600 dark:text-amber-500',
+      iconBg: 'bg-[rgba(255,184,0,0.1)] border border-[rgba(255,184,0,0.2)]',
+      iconColor: 'text-[#FFB800]',
     },
     success: {
-      iconBg: 'bg-emerald-100 dark:bg-emerald-900/20',
-      iconColor: 'text-emerald-600 dark:text-emerald-500',
+      iconBg: 'bg-[rgba(0,229,160,0.1)] border border-[rgba(0,229,160,0.2)]',
+      iconColor: 'text-[#00E5A0]',
     },
   };
 
@@ -265,18 +264,18 @@ export const Dialog = ({
         <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-start">
           {icon && (
             <div className={cn(
-              "flex h-10 w-10 shrink-0 items-center justify-center rounded-sm",
+              "flex h-10 w-10 shrink-0 items-center justify-center rounded-[4px]",
               styles.iconBg
             )}>
               <div className={styles.iconColor}>{icon}</div>
             </div>
           )}
           <div className="flex-1 text-center sm:text-left">
-            <h3 className="text-lg font-semibold text-slate-950 dark:text-slate-50">
+            <h3 className="text-lg font-semibold text-[#E8ECF4]">
               {title}
             </h3>
             {description && (
-              <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+              <p className="mt-2 text-sm text-[#8896AD]">
                 {description}
               </p>
             )}

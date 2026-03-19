@@ -68,7 +68,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
   return (
     <div
       className="h-16 flex items-center justify-between px-6 z-50"
-      style={{ backgroundColor: '#1D3557', borderBottom: '2px solid #E63946' }}
+      style={{ backgroundColor: '#1A2744', borderBottom: '1px solid rgba(0, 212, 255, 0.2)' }}
     >
       {/* Left Side */}
       <div className="flex items-center gap-4">
@@ -77,14 +77,15 @@ export const Toolbar: React.FC<ToolbarProps> = ({
           size="sm"
           onClick={() => navigate("/workflows")}
           leftIcon={<ArrowLeft size={16} />}
-          className="text-white/70 hover:text-white hover:bg-white/10"
+          className="hover:bg-[rgba(0,212,255,0.08)]"
+          style={{ color: '#8896AD' }}
         >
           Back
         </Button>
 
         {onToggleLeftSidebar && (
           <>
-            <div className="h-6 w-px bg-white/20" />
+            <div className="h-6 w-px" style={{ backgroundColor: 'rgba(0, 212, 255, 0.12)' }} />
             <Button
               variant="ghost"
               size="icon-sm"
@@ -92,7 +93,8 @@ export const Toolbar: React.FC<ToolbarProps> = ({
               title={`${
                 leftSidebarCollapsed ? "Expand" : "Collapse"
               } Node Types`}
-              className="text-white/70 hover:text-white hover:bg-white/10"
+              className="hover:bg-[rgba(0,212,255,0.08)]"
+              style={{ color: '#8896AD' }}
             >
               {leftSidebarCollapsed ? (
                 <PanelLeftOpen size={18} />
@@ -103,23 +105,27 @@ export const Toolbar: React.FC<ToolbarProps> = ({
           </>
         )}
 
-        <div className="h-6 w-px bg-white/20" />
+        <div className="h-6 w-px" style={{ backgroundColor: 'rgba(0, 212, 255, 0.12)' }} />
 
         {/* Workflow Name */}
         <div className="flex items-center gap-2.5">
-          <div className="p-1.5" style={{ backgroundColor: '#E63946', borderRadius: '2px' }}>
-            <Zap className="text-white" size={16} />
+          <div className="p-1.5" style={{ border: '1px solid rgba(0, 212, 255, 0.3)', borderRadius: '4px' }}>
+            <Zap size={16} style={{ color: '#00D4FF' }} />
           </div>
           <div>
-            <h1 className="text-sm font-semibold text-white uppercase tracking-wider">
+            <h1 className="text-sm font-semibold uppercase tracking-wider" style={{ color: '#E8ECF4' }}>
               {workflow.name}
             </h1>
             <div className="flex items-center gap-1.5">
+              {/* LED-style status dot */}
               <span
                 className="w-1.5 h-1.5 rounded-full"
-                style={{ backgroundColor: workflow.isActive ? '#34d399' : '#94a3b8' }}
+                style={{
+                  backgroundColor: workflow.isActive ? '#00E5A0' : '#506080',
+                  boxShadow: workflow.isActive ? '0 0 6px rgba(0, 229, 160, 0.5)' : 'none',
+                }}
               />
-              <span className="text-[10px] font-medium text-white/50 uppercase tracking-wider">
+              <span className="text-[10px] font-medium uppercase tracking-wider" style={{ color: '#506080' }}>
                 {workflow.isActive ? "ACTIVE" : "DRAFT"}
               </span>
             </div>
@@ -127,12 +133,12 @@ export const Toolbar: React.FC<ToolbarProps> = ({
         </div>
       </div>
 
-      {/* Center - Run Button */}
+      {/* Center - Run Button (Amber - THE action) */}
       <button
         onClick={onExecute}
         disabled={workflow.nodes.length === 0 || executing}
-        className="px-8 py-2 flex items-center gap-2 text-white font-semibold uppercase tracking-wider text-sm transition-colors disabled:opacity-50"
-        style={{ backgroundColor: '#E63946', borderRadius: '2px' }}
+        className="px-8 py-2 flex items-center gap-2 font-semibold uppercase tracking-wider text-sm transition-colors disabled:opacity-50"
+        style={{ backgroundColor: '#FFB800', color: '#0F1729', borderRadius: '4px' }}
       >
         {executing ? (
           <Loader2 size={18} className="animate-spin" />
@@ -146,17 +152,17 @@ export const Toolbar: React.FC<ToolbarProps> = ({
       <div className="flex items-center gap-3">
         {/* Status Indicators */}
         {hasUnsavedChanges ? (
-          <span className="flex items-center gap-1.5 text-xs font-medium" style={{ color: '#F4A261' }}>
+          <span className="flex items-center gap-1.5 text-xs font-medium" style={{ color: '#FFB800' }}>
             <Clock size={14} /> Unsaved changes
           </span>
         ) : lastSavedAt ? (
-          <span className="flex items-center gap-1.5 text-xs font-medium" style={{ color: '#34d399' }}>
+          <span className="flex items-center gap-1.5 text-xs font-medium" style={{ color: '#00E5A0' }}>
             <CheckCircle2 size={14} /> Saved
           </span>
         ) : null}
 
         {(hasUnsavedChanges || lastSavedAt) && (
-          <div className="h-6 w-px bg-white/20" />
+          <div className="h-6 w-px" style={{ backgroundColor: 'rgba(0, 212, 255, 0.12)' }} />
         )}
 
         <Button
@@ -167,9 +173,10 @@ export const Toolbar: React.FC<ToolbarProps> = ({
           isLoading={saving}
           leftIcon={<Save size={16} />}
           className={cn(
-            "text-white/70 hover:text-white hover:bg-white/10",
-            hasUnsavedChanges && "text-white"
+            "hover:bg-[rgba(0,212,255,0.08)]",
+            hasUnsavedChanges ? "" : ""
           )}
+          style={{ color: hasUnsavedChanges ? '#00D4FF' : '#506080', border: hasUnsavedChanges ? '1px solid rgba(0, 212, 255, 0.3)' : '1px solid transparent', borderRadius: '4px' }}
         >
           Save
         </Button>
@@ -179,7 +186,8 @@ export const Toolbar: React.FC<ToolbarProps> = ({
           size="sm"
           onClick={onExportJson}
           leftIcon={<Download size={16} />}
-          className="text-white/70 hover:text-white hover:bg-white/10"
+          className="hover:bg-[rgba(0,212,255,0.08)]"
+          style={{ color: '#8896AD', border: '1px solid rgba(0, 212, 255, 0.12)', borderRadius: '4px' }}
         >
           Export
         </Button>
@@ -189,7 +197,8 @@ export const Toolbar: React.FC<ToolbarProps> = ({
           size="sm"
           onClick={onSettings}
           leftIcon={<Settings size={16} />}
-          className="text-white/70 hover:text-white hover:bg-white/10"
+          className="hover:bg-[rgba(0,212,255,0.08)]"
+          style={{ color: '#8896AD' }}
         >
           Settings
         </Button>
@@ -199,7 +208,8 @@ export const Toolbar: React.FC<ToolbarProps> = ({
           size="icon-sm"
           onClick={toggleTheme}
           title={isDark ? "Switch to light mode" : "Switch to dark mode"}
-          className="text-white/70 hover:text-white hover:bg-white/10"
+          className="hover:bg-[rgba(0,212,255,0.08)]"
+          style={{ color: '#00D4FF' }}
         >
           {isDark ? <Sun size={16} /> : <Moon size={16} />}
         </Button>
@@ -222,7 +232,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
 
         {onToggleRightSidebar && (
           <>
-            <div className="h-6 w-px bg-white/20" />
+            <div className="h-6 w-px" style={{ backgroundColor: 'rgba(0, 212, 255, 0.12)' }} />
             <Button
               variant="ghost"
               size="icon-sm"
@@ -230,7 +240,8 @@ export const Toolbar: React.FC<ToolbarProps> = ({
               title={`${
                 rightSidebarCollapsed ? "Expand" : "Collapse"
               } Properties`}
-              className="text-white/70 hover:text-white hover:bg-white/10"
+              className="hover:bg-[rgba(0,212,255,0.08)]"
+              style={{ color: '#8896AD' }}
             >
               {rightSidebarCollapsed ? (
                 <PanelRightOpen size={18} />

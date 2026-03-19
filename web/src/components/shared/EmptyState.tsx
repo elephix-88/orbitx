@@ -48,18 +48,18 @@ export const EmptyState: React.FC<EmptyStateProps> = ({
     )}>
       {icon && (
         <div className={cn(
-          'flex items-center justify-center rounded-sm bg-[#F1FAEE] text-[#1D3557] mb-4 dark:bg-slate-800 dark:text-slate-500 border border-[#A8DADC]',
+          'flex items-center justify-center rounded-full bg-[#1A2744] text-[#8896AD] mb-4 border border-[rgba(0,212,255,0.12)]',
           iconSizeClasses[size]
         )}>
           {icon}
         </div>
       )}
       
-      <h3 className="text-lg font-bold uppercase tracking-wider text-[#1D3557] dark:text-slate-100 mb-2">
+      <h3 className="text-lg font-bold uppercase tracking-wider text-[#E8ECF4] mb-2">
         {title}
       </h3>
-      
-      <p className="text-[#457B9D] dark:text-slate-400 max-w-md mb-6">
+
+      <p className="text-[#8896AD] max-w-md mb-6">
         {description}
       </p>
       

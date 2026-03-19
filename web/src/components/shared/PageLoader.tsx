@@ -37,7 +37,7 @@ export function PageLoader({
   };
 
   const containerClasses = fullScreen
-    ? 'fixed inset-0 flex items-center justify-center bg-[#F1FAEE]/90 dark:bg-slate-900/90 z-50'
+    ? 'fixed inset-0 flex items-center justify-center bg-[#0F1729]/95 z-50'
     : 'flex items-center justify-center p-8';
 
   return (
@@ -48,17 +48,16 @@ export function PageLoader({
           className={`
             ${sizeClasses[size]}
             animate-spin
-            rounded-none
-            border-[#A8DADC]
-            border-t-[#E63946]
-            dark:border-slate-700
-            dark:border-t-[#E63946]
+            rounded-full
+            border-[rgba(0,212,255,0.15)]
+            border-t-[#00D4FF]
           `}
+          style={{ filter: 'drop-shadow(0 0 8px rgba(0, 212, 255, 0.3))' }}
         />
 
         {/* Message */}
         {message && (
-          <p className="text-sm text-slate-600 dark:text-slate-400 animate-pulse">
+          <p className="text-sm text-[#8896AD] animate-pulse">
             {message}
           </p>
         )}
@@ -76,9 +75,9 @@ export function PageLoader({
 export function InlineLoader({ message }: { message?: string }) {
   return (
     <div className="flex items-center justify-center p-4 gap-2">
-      <div className="h-4 w-4 animate-spin rounded-none border-2 border-[#A8DADC] border-t-[#E63946] dark:border-slate-700 dark:border-t-[#E63946]" />
+      <div className="h-4 w-4 animate-spin rounded-full border-2 border-[rgba(0,212,255,0.15)] border-t-[#00D4FF]" style={{ filter: 'drop-shadow(0 0 4px rgba(0, 212, 255, 0.3))' }} />
       {message && (
-        <span className="text-sm text-slate-500 dark:text-slate-400">{message}</span>
+        <span className="text-sm text-[#8896AD]">{message}</span>
       )}
     </div>
   );

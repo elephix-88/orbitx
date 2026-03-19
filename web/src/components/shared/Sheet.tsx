@@ -21,17 +21,17 @@ import { cn } from '@/lib/utils';
 
 const sheetVariants = cva(
   [
-    'fixed z-50 gap-4 bg-white dark:bg-slate-950 shadow-sm',
+    'fixed z-50 gap-4 bg-[#1A2744] shadow-[0_0_24px_rgba(0,212,255,0.08)]',
     'transition-transform duration-300 ease-in-out',
     'flex flex-col',
   ],
   {
     variants: {
       side: {
-        top: 'inset-x-0 top-0 border-b border-[#A8DADC] dark:border-slate-800',
-        bottom: 'inset-x-0 bottom-0 border-t border-[#A8DADC] dark:border-slate-800',
-        left: 'inset-y-0 left-0 h-full border-r border-[#A8DADC] dark:border-slate-800',
-        right: 'inset-y-0 right-0 h-full border-l border-[#A8DADC] dark:border-slate-800',
+        top: 'inset-x-0 top-0 border-b border-[rgba(0,212,255,0.12)]',
+        bottom: 'inset-x-0 bottom-0 border-t border-[rgba(0,212,255,0.12)]',
+        left: 'inset-y-0 left-0 h-full border-r border-[rgba(0,212,255,0.12)]',
+        right: 'inset-y-0 right-0 h-full border-l border-[rgba(0,212,255,0.12)]',
       },
       size: {
         sm: '',
@@ -157,7 +157,7 @@ export const Sheet = ({
     >
       {/* Overlay */}
       <div
-        className="fixed inset-0 z-50 bg-black/70"
+        className="fixed inset-0 z-50 bg-[#0F1729]/80 backdrop-blur-sm"
         aria-hidden="true"
       />
 
@@ -176,13 +176,13 @@ export const Sheet = ({
         tabIndex={-1}
       >
         {/* Header */}
-        <div className="flex flex-col space-y-2 p-6 bg-[#1D3557] text-white">
+        <div className="flex flex-col space-y-2 p-6 border-b border-[rgba(0,212,255,0.12)]" style={{ borderImage: 'linear-gradient(90deg, #00D4FF, transparent) 1' }}>
           <div className="flex items-start justify-between">
             <div className="flex-1">
               {title && (
                 <h2
                   id="sheet-title"
-                  className="text-lg font-bold uppercase tracking-wider text-white"
+                  className="text-lg font-bold uppercase tracking-wider text-[#E8ECF4]"
                 >
                   {title}
                 </h2>
@@ -190,7 +190,7 @@ export const Sheet = ({
               {description && (
                 <p
                   id="sheet-description"
-                  className="mt-1 text-sm text-[#A8DADC]"
+                  className="mt-1 text-sm text-[#8896AD]"
                 >
                   {description}
                 </p>
@@ -200,9 +200,8 @@ export const Sheet = ({
               <button
                 onClick={onClose}
                 className={cn(
-                  "rounded-sm opacity-90 transition-opacity hover:opacity-100 text-white",
-                  "focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-[#1D3557]",
-                  "dark:focus:ring-slate-300"
+                  "rounded-[4px] opacity-90 transition-opacity hover:opacity-100 text-[#8896AD] hover:text-[#E8ECF4]",
+                  "focus:outline-none focus:ring-2 focus:ring-[rgba(0,212,255,0.4)]"
                 )}
                 aria-label="Close"
               >
@@ -219,7 +218,7 @@ export const Sheet = ({
 
         {/* Footer */}
         {footer && (
-          <div className="flex flex-col-reverse gap-2 p-6 border-t border-[#A8DADC] dark:border-slate-800 sm:flex-row sm:justify-end">
+          <div className="flex flex-col-reverse gap-2 p-6 border-t border-[rgba(0,212,255,0.12)] sm:flex-row sm:justify-end">
             {footer}
           </div>
         )}
@@ -249,7 +248,7 @@ export const SheetTitle: React.FC<{
   children: React.ReactNode;
   className?: string;
 }> = ({ children, className }) => (
-  <h2 className={cn("text-lg font-semibold text-slate-950 dark:text-slate-50", className)}>
+  <h2 className={cn("text-lg font-semibold text-[#E8ECF4]", className)}>
     {children}
   </h2>
 );
@@ -261,7 +260,7 @@ export const SheetDescription: React.FC<{
   children: React.ReactNode;
   className?: string;
 }> = ({ children, className }) => (
-  <p className={cn("text-sm text-slate-500 dark:text-slate-400", className)}>
+  <p className={cn("text-sm text-[#8896AD]", className)}>
     {children}
   </p>
 );

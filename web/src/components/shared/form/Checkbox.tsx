@@ -29,14 +29,14 @@ export const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
           
           {/* Checkbox Background */}
           <div className={cn(
-            "w-5 h-5 rounded-none border-2 transition-all duration-200 ease-out",
-            "bg-white dark:bg-slate-900",
-            "border-[#1D3557] dark:border-slate-600",
-            "peer-focus:ring-2 peer-focus:ring-[#1D3557]/20 peer-focus:border-[#1D3557]",
+            "w-5 h-5 rounded-[4px] border transition-all duration-200 ease-out",
+            "bg-[#0F1729]",
+            "border-[rgba(0,212,255,0.2)]",
+            "peer-focus:ring-2 peer-focus:ring-[rgba(0,212,255,0.2)] peer-focus:border-[rgba(0,212,255,0.4)]",
             checked
-              ? "bg-[#E63946] border-[#E63946] dark:bg-[#E63946] dark:border-[#E63946]"
-              : "group-hover:border-[#457B9D] dark:group-hover:border-[#457B9D]",
-            error && "border-red-500"
+              ? "bg-[#00D4FF] border-[#00D4FF]"
+              : "group-hover:border-[rgba(0,212,255,0.35)]",
+            error && "border-[#FF4D6A]"
           )} />
 
           {/* Checkmark Icon */}
@@ -57,9 +57,9 @@ export const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
 
         {label && (
           <span className={cn(
-            "text-sm text-slate-700 dark:text-slate-300 transition-colors",
-            checked && "text-slate-900 dark:text-slate-100 font-medium",
-            error && "text-red-500"
+            "text-sm text-[#8896AD] transition-colors",
+            checked && "text-[#E8ECF4] font-medium",
+            error && "text-[#FF4D6A]"
           )}>
             {label}
           </span>

@@ -5,14 +5,14 @@ import { CheckCircle, XCircle, AlertTriangle, Info, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const notificationVariants = cva(
-  'pointer-events-auto relative flex items-center justify-between space-x-4 overflow-hidden rounded-sm p-5 shadow-sm transition-all duration-300 bg-white dark:bg-slate-900 border border-[#A8DADC] dark:border-slate-700',
+  'pointer-events-auto relative flex items-center justify-between space-x-4 overflow-hidden rounded-[6px] p-5 shadow-[0_0_12px_rgba(0,212,255,0.08)] transition-all duration-300 bg-[#1A2744] border border-[rgba(0,212,255,0.12)]',
   {
     variants: {
       type: {
-        success: 'border-l-4 border-l-emerald-600',
-        error: 'border-l-4 border-l-[#E63946]',
-        warning: 'border-l-4 border-l-[#F4A261]',
-        info: 'border-l-4 border-l-[#457B9D]',
+        success: 'border-l-4 border-l-[#00E5A0] shadow-[0_0_12px_rgba(0,229,160,0.1)]',
+        error: 'border-l-4 border-l-[#FF4D6A] shadow-[0_0_12px_rgba(255,77,106,0.1)]',
+        warning: 'border-l-4 border-l-[#FFB800] shadow-[0_0_12px_rgba(255,184,0,0.1)]',
+        info: 'border-l-4 border-l-[#00D4FF] shadow-[0_0_12px_rgba(0,212,255,0.1)]',
       },
       layout: {
         banner: 'w-[420px] sm:w-[460px]',
@@ -28,10 +28,10 @@ const notificationVariants = cva(
 );
 
 const iconColors = {
-  success: 'text-emerald-600 dark:text-emerald-400',
-  error: 'text-[#E63946] dark:text-red-400',
-  warning: 'text-[#F4A261] dark:text-amber-400',
-  info: 'text-[#457B9D] dark:text-blue-400',
+  success: 'text-[#00E5A0]',
+  error: 'text-[#FF4D6A]',
+  warning: 'text-[#FFB800]',
+  info: 'text-[#00D4FF]',
 };
 
 interface NotificationItemProps
@@ -68,16 +68,16 @@ const NotificationItem = ({
           )}
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-base font-semibold text-slate-900 dark:text-slate-100 truncate" title={title}>
+          <p className="text-base font-semibold text-[#E8ECF4] truncate" title={title}>
             {title}
           </p>
           {message && (
-            <p className="mt-1 text-sm text-slate-600 dark:text-slate-400 break-words" title={message}>
+            <p className="mt-1 text-sm text-[#8896AD] break-words" title={message}>
               {message}
             </p>
           )}
           {Array.isArray(details) && details.length > 0 && (
-            <ul className="mt-2 space-y-1 text-sm text-slate-600 dark:text-slate-400 list-disc list-inside">
+            <ul className="mt-2 space-y-1 text-sm text-[#8896AD] list-disc list-inside">
               {details.map((d, i) => (
                 <li key={i} className="break-words">{d}</li>
               ))}
@@ -88,7 +88,7 @@ const NotificationItem = ({
       <div className="ml-4 flex flex-shrink-0">
         <button
           type="button"
-          className="inline-flex rounded-sm p-1 text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:text-slate-500 dark:hover:text-slate-300 dark:hover:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-[#1D3557] transition-colors"
+          className="inline-flex rounded-[4px] p-1 text-[#8896AD] hover:text-[#E8ECF4] hover:bg-[rgba(0,212,255,0.08)] focus:outline-none focus:ring-2 focus:ring-[rgba(0,212,255,0.4)] transition-colors"
           onClick={onClose}
           aria-label="Close notification"
         >

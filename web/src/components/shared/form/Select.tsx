@@ -115,12 +115,12 @@ export const Select: React.FC<SelectProps> = ({
           exit={{ opacity: 0, y: -10, scale: 0.95 }}
           transition={{ duration: 0.15, ease: "easeOut" }}
           style={dropdownStyle}
-          className="overflow-hidden rounded-sm bg-white dark:bg-slate-900 shadow-sm border border-[#A8DADC] dark:border-slate-700 focus:outline-none"
+          className="overflow-hidden rounded-[4px] bg-[#1A2744] shadow-[0_0_12px_rgba(0,212,255,0.08)] border border-[rgba(0,212,255,0.12)] focus:outline-none"
           onClick={stopPropagation}
           onMouseDown={stopPropagation}
           onMouseUp={stopPropagation}
         >
-          <div className="max-h-60 overflow-auto py-1 scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-700">
+          <div className="max-h-60 overflow-auto py-1">
             {options.map((option) => {
               const isSelected = String(option.value) === String(value);
               return (
@@ -133,15 +133,15 @@ export const Select: React.FC<SelectProps> = ({
                   onMouseDown={stopPropagation}
                   className={`
                     relative cursor-pointer select-none py-2.5 pl-4 pr-9 text-sm transition-colors
-                    ${option.disabled ? 'opacity-50 cursor-not-allowed' : 'hover:bg-brand-50 dark:hover:bg-brand-900/20'}
-                    ${isSelected ? 'bg-brand-50/50 dark:bg-brand-900/10 text-brand-600 dark:text-brand-400 font-medium' : 'text-slate-700 dark:text-slate-300'}
+                    ${option.disabled ? 'opacity-50 cursor-not-allowed' : 'hover:bg-[rgba(0,212,255,0.08)]'}
+                    ${isSelected ? 'bg-[rgba(0,212,255,0.08)] text-[#00D4FF] font-medium' : 'text-[#E8ECF4]'}
                   `}
                 >
                   <span className="block truncate">
                     {option.label}
                   </span>
                   {isSelected && (
-                    <span className="absolute inset-y-0 right-0 flex items-center pr-4 text-brand-600 dark:text-brand-400">
+                    <span className="absolute inset-y-0 right-0 flex items-center pr-4 text-[#00D4FF]">
                       <Check className="h-4 w-4" />
                     </span>
                   )}
@@ -161,7 +161,7 @@ export const Select: React.FC<SelectProps> = ({
       {label && (
         <label
           htmlFor={inputId}
-          className="block text-xs font-bold uppercase tracking-wider text-[#1D3557] dark:text-slate-200 mb-2"
+          className="block text-[11px] font-bold uppercase tracking-wider text-[#8896AD] mb-2"
         >
           {label}
         </label>
@@ -182,23 +182,22 @@ export const Select: React.FC<SelectProps> = ({
           className={`
             relative w-full text-left cursor-pointer
             flex items-center justify-between
-            rounded-sm px-4 py-3 text-sm font-medium transition-all duration-200
-            bg-white dark:bg-slate-900
-            border border-[#A8DADC] dark:border-slate-700/50
-            hover:bg-white dark:hover:bg-slate-800
-            hover:border-[#457B9D] dark:hover:border-[#457B9D]
-            focus:outline-none focus:border-[#1D3557] focus:border-2 focus:ring-0
-            ${isOpen ? 'border-2 border-[#1D3557]' : ''}
-            ${error ? 'border-[#E63946] focus:border-[#E63946]' : ''}
-            ${disabled ? 'opacity-50 cursor-not-allowed bg-slate-100 dark:bg-slate-800' : ''}
+            rounded-[4px] px-4 py-3 text-sm font-medium transition-all duration-200
+            bg-[#0F1729]
+            border border-[rgba(0,212,255,0.12)]
+            hover:border-[rgba(0,212,255,0.25)]
+            focus:outline-none focus:border-[rgba(0,212,255,0.4)] focus:shadow-[0_0_8px_rgba(0,212,255,0.1)] focus:ring-0
+            ${isOpen ? 'border-[rgba(0,212,255,0.4)] shadow-[0_0_8px_rgba(0,212,255,0.1)]' : ''}
+            ${error ? 'border-[#FF4D6A] focus:border-[#FF4D6A]' : ''}
+            ${disabled ? 'opacity-50 cursor-not-allowed bg-[#0F1729]/50' : ''}
           `}
         >
-          <span className={`block truncate ${!selectedOption ? 'text-slate-400 dark:text-slate-500' : 'text-slate-900 dark:text-slate-100'}`}>
+          <span className={`block truncate ${!selectedOption ? 'text-[#506080]' : 'text-[#E8ECF4]'}`}>
             {selectedOption ? selectedOption.label : placeholder}
           </span>
           <span className="pointer-events-none flex items-center pl-2">
             <ChevronDown
-              className={`h-4 w-4 text-slate-400 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
+              className={`h-4 w-4 text-[#8896AD] transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
             />
           </span>
         </button>
@@ -210,7 +209,7 @@ export const Select: React.FC<SelectProps> = ({
       {(error || helperText) && (
         <p
           className={`mt-1.5 text-sm ${
-            error ? 'text-red-500 font-medium' : 'text-slate-500 dark:text-slate-400'
+            error ? 'text-[#FF4D6A] font-medium' : 'text-[#8896AD]'
           }`}
         >
           {error || helperText}

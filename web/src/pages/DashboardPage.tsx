@@ -161,7 +161,7 @@ const getRecordsCount = (output?: NodeOutput): number | null => {
   return null;
 };
 
-// Status configuration
+// Status configuration - Blueprint LED dots
 const statusConfig = {
   SUCCESS: { bg: 'bg-emerald-500/10', text: 'text-emerald-500', icon: CheckCircle2 },
   FAILED: { bg: 'bg-red-500/10', text: 'text-red-500', icon: XCircle },
@@ -190,58 +190,66 @@ const ExecutionTreeRow = ({
     return sum + (count || 0);
   }, 0);
 
-  // Status dot color
-  const statusDotColor = exec.status === 'SUCCESS' ? '#34d399' : exec.status === 'FAILED' ? '#E63946' : exec.status === 'RUNNING' ? '#3b82f6' : '#F4A261';
+  // LED-style status dot color with glow
+  const statusDotStyle = exec.status === 'SUCCESS'
+    ? { backgroundColor: '#00E5A0', boxShadow: '0 0 6px rgba(0, 229, 160, 0.5)' }
+    : exec.status === 'FAILED'
+    ? { backgroundColor: '#FF4D6A', boxShadow: '0 0 6px rgba(255, 77, 106, 0.5)' }
+    : exec.status === 'RUNNING'
+    ? { backgroundColor: '#00D4FF', boxShadow: '0 0 6px rgba(0, 212, 255, 0.5)' }
+    : { backgroundColor: '#FFB800', boxShadow: '0 0 6px rgba(255, 184, 0, 0.5)' };
 
   return (
     <>
       <div
-        className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors cursor-pointer group"
-        style={{ borderBottom: '1px solid #A8DADC' }}
+        className="flex items-center gap-3 px-4 py-3 transition-colors cursor-pointer group"
+        style={{ borderBottom: '1px solid rgba(0, 212, 255, 0.08)' }}
         onClick={() => setIsExpanded(!isExpanded)}
+        onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.backgroundColor = 'rgba(0, 212, 255, 0.04)'; }}
+        onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'; }}
       >
         <button
-          className="p-0.5 hover:bg-gray-100 transition-colors flex-shrink-0"
-          style={{ borderRadius: '2px' }}
+          className="p-0.5 transition-colors flex-shrink-0"
+          style={{ borderRadius: '4px', color: '#8896AD' }}
           onClick={(e) => {
             e.stopPropagation();
             setIsExpanded(!isExpanded);
           }}
         >
           {isExpanded ? (
-            <ChevronDown className="w-4 h-4" style={{ color: '#457B9D' }} />
+            <ChevronDown className="w-4 h-4" />
           ) : (
-            <ChevronRight className="w-4 h-4" style={{ color: '#457B9D' }} />
+            <ChevronRight className="w-4 h-4" />
           )}
         </button>
 
-        {/* Status circle */}
+        {/* LED Status dot */}
         <div className="flex-shrink-0">
-          <span className="inline-block w-3 h-3 rounded-full" style={{ backgroundColor: statusDotColor }} />
+          <span className="inline-block w-3 h-3 rounded-full" style={statusDotStyle} />
         </div>
 
         <div className="flex-1 min-w-0">
-          <p className="font-medium truncate text-sm" style={{ color: '#1D3557' }}>
+          <p className="font-medium truncate text-sm" style={{ color: '#E8ECF4' }}>
             {exec.workflow_name || 'Unknown Workflow'}
           </p>
-          <p className="text-xs" style={{ color: '#457B9D' }}>
+          <p className="text-xs" style={{ color: '#506080' }}>
             {formatRelativeTime(exec.start_time)}
           </p>
         </div>
 
         <div className="flex items-center gap-4 flex-shrink-0">
           {totalRecords > 0 && (
-            <span className="text-xs hidden sm:inline" style={{ color: '#457B9D' }}>
+            <span className="text-xs font-mono hidden sm:inline" style={{ color: '#8896AD' }}>
               {formatNumber(totalRecords)} records
             </span>
           )}
-          <span className="px-2 py-0.5 text-xs font-medium uppercase tracking-wider" style={{ color: '#1D3557', backgroundColor: '#F1FAEE', border: '1px solid #A8DADC', borderRadius: '2px' }}>
+          <span className="px-2 py-0.5 text-xs font-medium font-mono uppercase tracking-wider" style={{ color: '#E8ECF4', backgroundColor: 'rgba(0, 212, 255, 0.08)', border: '1px solid rgba(0, 212, 255, 0.15)', borderRadius: '4px' }}>
             {exec.status}
           </span>
-          <span className="text-xs w-16 text-right" style={{ color: '#457B9D' }}>
+          <span className="text-xs font-mono w-16 text-right" style={{ color: '#8896AD' }}>
             {formatDuration(exec.duration)}
           </span>
-          <span className="text-xs" style={{ color: '#457B9D' }}>
+          <span className="text-xs font-mono" style={{ color: '#8896AD' }}>
             {exec.successful_nodes}/{exec.total_nodes}
           </span>
           <button
@@ -250,7 +258,7 @@ const ExecutionTreeRow = ({
               onNavigate(exec.workflow_id);
             }}
             className="p-1.5 transition-colors opacity-0 group-hover:opacity-100"
-            style={{ borderRadius: '2px', color: '#457B9D' }}
+            style={{ borderRadius: '4px', color: '#00D4FF' }}
             title="Go to workflow"
           >
             <ArrowRight className="w-4 h-4" />
@@ -266,10 +274,10 @@ const ExecutionTreeRow = ({
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.2 }}
             className="overflow-hidden"
-            style={{ backgroundColor: '#F1FAEE' }}
+            style={{ backgroundColor: 'rgba(0, 212, 255, 0.02)' }}
           >
             {/* Table Header */}
-            <div className="flex items-center gap-3 px-4 py-2 ml-8 text-[10px] font-semibold uppercase tracking-wider" style={{ borderBottom: '1px solid #A8DADC', borderLeft: '2px solid #A8DADC', color: '#457B9D' }}>
+            <div className="flex items-center gap-3 px-4 py-2 ml-8 text-[10px] font-semibold uppercase tracking-wider" style={{ borderBottom: '1px solid rgba(0, 212, 255, 0.08)', borderLeft: '2px solid rgba(0, 212, 255, 0.15)', color: '#8896AD' }}>
               <div className="w-4" />
               <div className="flex-1">Node</div>
               <div className="w-24">Type</div>
@@ -286,17 +294,17 @@ const ExecutionTreeRow = ({
                 <div
                   key={idx}
                   className="flex items-center gap-3 px-4 py-2 ml-8"
-                  style={{ borderLeft: '2px solid #A8DADC' }}
+                  style={{ borderLeft: '2px solid rgba(0, 212, 255, 0.15)' }}
                 >
                   <StepIcon className={cn("w-4 h-4 flex-shrink-0", stepConfig.text, step.status === 'RUNNING' && "animate-spin")} />
                   <span className={cn("flex-1 text-sm font-medium truncate", getNodeTypeColor(step.node_type))}>
                     {step.node_id}
                   </span>
-                  <span className="w-24 text-xs" style={{ color: '#457B9D' }}>{step.node_type}</span>
-                  <span className="w-20 text-xs text-right font-medium" style={{ color: '#1D3557' }}>
+                  <span className="w-24 text-xs uppercase" style={{ color: '#8896AD' }}>{step.node_type}</span>
+                  <span className="w-20 text-xs text-right font-mono font-medium" style={{ color: '#E8ECF4' }}>
                     {recordsCount !== null ? formatNumber(recordsCount) : '-'}
                   </span>
-                  <span className="w-14 text-xs text-right" style={{ color: '#457B9D' }}>
+                  <span className="w-14 text-xs text-right font-mono" style={{ color: '#8896AD' }}>
                     {stepDuration !== null ? `${stepDuration.toFixed(1)}s` : '-'}
                   </span>
                 </div>
@@ -427,21 +435,21 @@ const DashboardPage = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
           <div className="flex items-center justify-between">
             <div>
-              <div className="h-7 w-32 animate-pulse" style={{ backgroundColor: '#A8DADC', borderRadius: '2px' }} />
-              <div className="h-4 w-48 mt-2 animate-pulse" style={{ backgroundColor: '#A8DADC', borderRadius: '2px' }} />
+              <div className="h-7 w-32 animate-pulse" style={{ backgroundColor: 'rgba(0, 212, 255, 0.08)', borderRadius: '4px' }} />
+              <div className="h-4 w-48 mt-2 animate-pulse" style={{ backgroundColor: 'rgba(0, 212, 255, 0.05)', borderRadius: '4px' }} />
             </div>
-            <div className="h-9 w-24 animate-pulse" style={{ backgroundColor: '#A8DADC', borderRadius: '2px' }} />
+            <div className="h-9 w-24 animate-pulse" style={{ backgroundColor: 'rgba(0, 212, 255, 0.08)', borderRadius: '4px' }} />
           </div>
 
           <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
             {[1, 2, 3, 4, 5].map((i) => (
-              <div key={i} className="p-4 h-24 animate-pulse" style={{ backgroundColor: 'white', border: '1px solid #A8DADC', borderRadius: '2px' }} />
+              <div key={i} className="p-4 h-24 animate-pulse" style={{ backgroundColor: '#1A2744', border: '1px solid rgba(0, 212, 255, 0.12)', borderRadius: '6px' }} />
             ))}
           </div>
 
           <div className="grid lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2 h-96 animate-pulse" style={{ backgroundColor: 'white', border: '1px solid #A8DADC', borderRadius: '2px' }} />
-            <div className="h-96 animate-pulse" style={{ backgroundColor: 'white', border: '1px solid #A8DADC', borderRadius: '2px' }} />
+            <div className="lg:col-span-2 h-96 animate-pulse" style={{ backgroundColor: '#1A2744', border: '1px solid rgba(0, 212, 255, 0.12)', borderRadius: '6px' }} />
+            <div className="h-96 animate-pulse" style={{ backgroundColor: '#1A2744', border: '1px solid rgba(0, 212, 255, 0.12)', borderRadius: '6px' }} />
           </div>
         </div>
       </Layout>
@@ -462,13 +470,13 @@ const DashboardPage = () => {
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            {/* Section accent bar */}
+            {/* Section accent line - cyan gradient */}
             <div className="flex items-center gap-3 mb-2">
-              <div style={{ width: '48px', height: '4px', backgroundColor: '#E63946' }} />
+              <div style={{ width: '48px', height: '2px', background: 'linear-gradient(to right, #00D4FF, transparent)' }} />
             </div>
-            <h1 className="text-2xl font-bold uppercase tracking-wider" style={{ color: '#1D3557' }}>Dashboard</h1>
-            <p className="text-sm mt-0.5" style={{ color: '#457B9D' }}>
-              {workflowCount} workflows &#9632; {stats.totalExecutions} executions
+            <h1 className="text-2xl font-bold uppercase tracking-wider" style={{ color: '#E8ECF4' }}>Dashboard</h1>
+            <p className="text-sm mt-0.5" style={{ color: '#8896AD' }}>
+              <span className="font-mono">{workflowCount}</span> workflows &middot; <span className="font-mono">{stats.totalExecutions}</span> executions
             </p>
           </div>
 
@@ -476,7 +484,7 @@ const DashboardPage = () => {
             onClick={() => fetchData(true)}
             disabled={refreshing}
             className="h-9 px-3 flex items-center gap-2 text-sm transition-colors"
-            style={{ color: '#457B9D', backgroundColor: 'white', border: '1px solid #A8DADC', borderRadius: '2px' }}
+            style={{ color: '#8896AD', backgroundColor: '#1A2744', border: '1px solid rgba(0, 212, 255, 0.12)', borderRadius: '4px' }}
           >
             <RefreshCw className={cn("w-4 h-4", refreshing && "animate-spin")} />
             <span className="hidden sm:inline uppercase tracking-wider text-xs">Refresh</span>
@@ -485,62 +493,72 @@ const DashboardPage = () => {
 
         {/* Stats Grid */}
         <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
-          <div className="p-4" style={{ backgroundColor: 'white', border: '1px solid #A8DADC', borderRadius: '2px' }}>
+          {/* Total Executions */}
+          <div className="p-4" style={{ backgroundColor: '#1A2744', border: '1px solid rgba(0, 212, 255, 0.12)', borderRadius: '6px' }}>
             <div className="flex items-center gap-3">
-              <div className="p-2" style={{ backgroundColor: '#F1FAEE', borderRadius: '2px' }}>
-                <Activity className="w-5 h-5" style={{ color: '#1D3557' }} />
+              <div className="p-2" style={{ backgroundColor: 'rgba(0, 212, 255, 0.08)', borderRadius: '4px' }}>
+                <Activity className="w-5 h-5" style={{ color: '#00D4FF' }} />
               </div>
               <div>
-                <p className="text-2xl font-bold" style={{ color: '#1D3557' }}>{stats.totalExecutions}</p>
-                <p className="text-xs uppercase tracking-wider" style={{ color: '#457B9D' }}>Total Executions</p>
+                <p className="text-2xl font-bold font-mono" style={{ color: '#E8ECF4' }}>{stats.totalExecutions}</p>
+                <p className="text-[11px] uppercase tracking-wider" style={{ color: '#8896AD' }}>Total Executions</p>
               </div>
             </div>
           </div>
 
-          <div className="p-4" style={{ backgroundColor: 'white', border: '1px solid #A8DADC', borderRadius: '2px' }}>
+          {/* Success Rate */}
+          <div className="p-4" style={{ backgroundColor: '#1A2744', border: '1px solid rgba(0, 212, 255, 0.12)', borderRadius: '6px' }}>
             <div className="flex items-center gap-3">
-              <div className="p-2" style={{ backgroundColor: '#F1FAEE', borderRadius: '2px' }}>
-                <TrendingUp className="w-5 h-5" style={{ color: '#34d399' }} />
+              <div className="relative p-2" style={{ backgroundColor: 'rgba(0, 229, 160, 0.08)', borderRadius: '4px' }}>
+                <TrendingUp className="w-5 h-5" style={{ color: '#00E5A0' }} />
+                {/* LED dot */}
+                <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full" style={{ backgroundColor: '#00E5A0', boxShadow: '0 0 4px rgba(0, 229, 160, 0.5)' }} />
               </div>
               <div>
-                <p className="text-2xl font-bold" style={{ color: '#1D3557' }}>{stats.successRate}%</p>
-                <p className="text-xs uppercase tracking-wider" style={{ color: '#457B9D' }}>Success Rate</p>
+                <p className="text-2xl font-bold font-mono" style={{ color: '#E8ECF4' }}>{stats.successRate}%</p>
+                <p className="text-[11px] uppercase tracking-wider" style={{ color: '#8896AD' }}>Success Rate</p>
               </div>
             </div>
           </div>
 
-          <div className="p-4" style={{ backgroundColor: 'white', border: '1px solid #A8DADC', borderRadius: '2px' }}>
+          {/* Failed */}
+          <div className="p-4" style={{ backgroundColor: '#1A2744', border: '1px solid rgba(0, 212, 255, 0.12)', borderRadius: '6px' }}>
             <div className="flex items-center gap-3">
-              <div className="p-2" style={{ backgroundColor: '#F1FAEE', borderRadius: '2px' }}>
-                <XCircle className="w-5 h-5" style={{ color: '#E63946' }} />
+              <div className="relative p-2" style={{ backgroundColor: 'rgba(255, 77, 106, 0.08)', borderRadius: '4px' }}>
+                <XCircle className="w-5 h-5" style={{ color: '#FF4D6A' }} />
+                {stats.failedExecutions > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 w-2 h-2 rounded-full" style={{ backgroundColor: '#FF4D6A', boxShadow: '0 0 4px rgba(255, 77, 106, 0.5)' }} />
+                )}
               </div>
               <div>
-                <p className="text-2xl font-bold" style={{ color: '#1D3557' }}>{stats.failedExecutions}</p>
-                <p className="text-xs uppercase tracking-wider" style={{ color: '#457B9D' }}>Failed</p>
+                <p className="text-2xl font-bold font-mono" style={{ color: '#E8ECF4' }}>{stats.failedExecutions}</p>
+                <p className="text-[11px] uppercase tracking-wider" style={{ color: '#8896AD' }}>Failed</p>
               </div>
             </div>
           </div>
 
-          <div className="p-4" style={{ backgroundColor: 'white', border: '1px solid #A8DADC', borderRadius: '2px' }}>
+          {/* Avg Duration */}
+          <div className="p-4" style={{ backgroundColor: '#1A2744', border: '1px solid rgba(0, 212, 255, 0.12)', borderRadius: '6px' }}>
             <div className="flex items-center gap-3">
-              <div className="p-2" style={{ backgroundColor: '#F1FAEE', borderRadius: '2px' }}>
-                <Timer className="w-5 h-5" style={{ color: '#457B9D' }} />
+              <div className="p-2" style={{ backgroundColor: 'rgba(0, 212, 255, 0.08)', borderRadius: '4px' }}>
+                <Timer className="w-5 h-5" style={{ color: '#00D4FF' }} />
               </div>
               <div>
-                <p className="text-2xl font-bold" style={{ color: '#1D3557' }}>{formatDuration(stats.avgDuration)}</p>
-                <p className="text-xs uppercase tracking-wider" style={{ color: '#457B9D' }}>Avg Duration</p>
+                <p className="text-2xl font-bold font-mono" style={{ color: '#E8ECF4' }}>{formatDuration(stats.avgDuration)}</p>
+                <p className="text-[11px] uppercase tracking-wider" style={{ color: '#8896AD' }}>Avg Duration</p>
               </div>
             </div>
           </div>
 
-          <div className="p-4" style={{ backgroundColor: 'white', border: '1px solid #A8DADC', borderRadius: '2px' }}>
+          {/* Total Cost */}
+          <div className="p-4" style={{ backgroundColor: '#1A2744', border: '1px solid rgba(0, 212, 255, 0.12)', borderRadius: '6px' }}>
             <div className="flex items-center gap-3">
-              <div className="p-2" style={{ backgroundColor: '#F1FAEE', borderRadius: '2px' }}>
-                <DollarSign className="w-5 h-5" style={{ color: '#F4A261' }} />
+              <div className="p-2" style={{ backgroundColor: 'rgba(255, 184, 0, 0.08)', borderRadius: '4px' }}>
+                <DollarSign className="w-5 h-5" style={{ color: '#FFB800' }} />
               </div>
               <div>
-                <p className="text-2xl font-bold" style={{ color: '#F4A261' }}>{formatCost(stats.totalCost)}</p>
-                <p className="text-xs uppercase tracking-wider" style={{ color: '#457B9D' }}>Total Cost</p>
+                <p className="text-2xl font-bold font-mono" style={{ color: '#FFB800' }}>{formatCost(stats.totalCost)}</p>
+                <p className="text-[11px] uppercase tracking-wider" style={{ color: '#8896AD' }}>Total Cost</p>
               </div>
             </div>
           </div>
@@ -549,14 +567,14 @@ const DashboardPage = () => {
         {/* Main Content */}
         <div className="grid lg:grid-cols-3 gap-6">
           {/* Recent Executions */}
-          <div className="lg:col-span-2 overflow-hidden" style={{ backgroundColor: 'white', border: '1px solid #A8DADC', borderRadius: '2px' }}>
-            <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: '1px solid #A8DADC' }}>
+          <div className="lg:col-span-2 overflow-hidden" style={{ backgroundColor: '#1A2744', border: '1px solid rgba(0, 212, 255, 0.12)', borderRadius: '6px' }}>
+            <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: '1px solid rgba(0, 212, 255, 0.12)' }}>
               <div className="flex items-center gap-2">
-                <Clock className="w-4 h-4" style={{ color: '#E63946' }} />
-                <h2 className="text-sm font-medium uppercase tracking-wider" style={{ color: '#1D3557' }}>
+                <Clock className="w-4 h-4" style={{ color: '#00D4FF' }} />
+                <h2 className="text-[11px] font-medium uppercase tracking-wider" style={{ color: '#8896AD' }}>
                   Recent Executions
                   {hasActiveFilters && (
-                    <span className="ml-2 text-xs font-normal" style={{ color: '#457B9D' }}>
+                    <span className="ml-2 text-xs font-normal font-mono" style={{ color: '#506080' }}>
                       ({filteredExecutions.length}/{stats.recentExecutions.length})
                     </span>
                   )}
@@ -564,23 +582,18 @@ const DashboardPage = () => {
               </div>
               <div className="flex items-center gap-2">
                 {filteredStats.running > 0 && (
-                  <span className="flex items-center gap-1.5 text-xs text-blue-500">
+                  <span className="flex items-center gap-1.5 text-xs" style={{ color: '#00D4FF' }}>
                     <Loader2 className="w-3 h-3 animate-spin" />
                     {filteredStats.running} running
                   </span>
                 )}
                 <button
                   onClick={() => setShowFilters(!showFilters)}
-                  className={cn(
-                    'p-1.5 transition-colors',
-                    showFilters || hasActiveFilters
-                      ? 'text-white'
-                      : 'hover:bg-gray-100'
-                  )}
+                  className="p-1.5 transition-colors"
                   style={{
-                    borderRadius: '2px',
-                    backgroundColor: showFilters || hasActiveFilters ? '#E63946' : 'transparent',
-                    color: showFilters || hasActiveFilters ? 'white' : '#457B9D',
+                    borderRadius: '4px',
+                    backgroundColor: showFilters || hasActiveFilters ? 'rgba(0, 212, 255, 0.15)' : 'transparent',
+                    color: showFilters || hasActiveFilters ? '#00D4FF' : '#8896AD',
                   }}
                   title="Filter executions"
                 >
@@ -598,22 +611,22 @@ const DashboardPage = () => {
                   exit={{ height: 0, opacity: 0 }}
                   transition={{ duration: 0.15 }}
                   className="overflow-hidden"
-                  style={{ borderBottom: '1px solid #A8DADC' }}
+                  style={{ borderBottom: '1px solid rgba(0, 212, 255, 0.08)' }}
                 >
-                  <div className="p-3 flex flex-wrap items-center gap-3" style={{ backgroundColor: '#F1FAEE' }}>
+                  <div className="p-3 flex flex-wrap items-center gap-3" style={{ backgroundColor: 'rgba(0, 212, 255, 0.02)' }}>
                     {/* Time Range - Button Pills */}
                     <div className="flex items-center gap-1.5">
-                      <Calendar className="w-3.5 h-3.5" style={{ color: '#457B9D' }} />
-                      <div className="flex items-center p-0.5" style={{ backgroundColor: 'white', border: '1px solid #A8DADC', borderRadius: '2px' }}>
+                      <Calendar className="w-3.5 h-3.5" style={{ color: '#506080' }} />
+                      <div className="flex items-center p-0.5" style={{ backgroundColor: '#0F1729', border: '1px solid rgba(0, 212, 255, 0.12)', borderRadius: '4px' }}>
                         {timeRangeOptions.map(opt => (
                           <button
                             key={opt.value}
                             onClick={() => setTimeRange(opt.value)}
                             className="px-2.5 py-1 text-xs font-medium transition-all"
                             style={{
-                              borderRadius: '2px',
-                              backgroundColor: timeRange === opt.value ? '#1D3557' : 'transparent',
-                              color: timeRange === opt.value ? 'white' : '#457B9D',
+                              borderRadius: '4px',
+                              backgroundColor: timeRange === opt.value ? 'rgba(0, 212, 255, 0.15)' : 'transparent',
+                              color: timeRange === opt.value ? '#00D4FF' : '#8896AD',
                             }}
                           >
                             {opt.label}
@@ -645,19 +658,19 @@ const DashboardPage = () => {
                       )}
                     </AnimatePresence>
 
-                    <div className="w-px h-5" style={{ backgroundColor: '#A8DADC' }} />
+                    <div className="w-px h-5" style={{ backgroundColor: 'rgba(0, 212, 255, 0.12)' }} />
 
                     {/* Status Filter */}
-                    <div className="flex items-center p-0.5" style={{ backgroundColor: 'white', border: '1px solid #A8DADC', borderRadius: '2px' }}>
+                    <div className="flex items-center p-0.5" style={{ backgroundColor: '#0F1729', border: '1px solid rgba(0, 212, 255, 0.12)', borderRadius: '4px' }}>
                       {statusFilterOptions.map(opt => (
                         <button
                           key={opt.value}
                           onClick={() => setStatusFilter(opt.value)}
                           className="px-2.5 py-1 text-xs font-medium transition-all"
                           style={{
-                            borderRadius: '2px',
-                            backgroundColor: statusFilter === opt.value ? '#1D3557' : 'transparent',
-                            color: statusFilter === opt.value ? 'white' : '#457B9D',
+                            borderRadius: '4px',
+                            backgroundColor: statusFilter === opt.value ? 'rgba(0, 212, 255, 0.15)' : 'transparent',
+                            color: statusFilter === opt.value ? '#00D4FF' : '#8896AD',
                           }}
                         >
                           {opt.label}
@@ -668,7 +681,7 @@ const DashboardPage = () => {
                     {/* Clear Filters */}
                     {hasActiveFilters && (
                       <>
-                        <div className="w-px h-5" style={{ backgroundColor: '#A8DADC' }} />
+                        <div className="w-px h-5" style={{ backgroundColor: 'rgba(0, 212, 255, 0.12)' }} />
                         <button
                           onClick={() => {
                             setTimeRange('all');
@@ -676,7 +689,7 @@ const DashboardPage = () => {
                             setCustomDateError(null);
                           }}
                           className="px-2.5 py-1 text-xs font-medium transition-colors"
-                          style={{ color: '#E63946', borderRadius: '2px' }}
+                          style={{ color: '#FF4D6A', borderRadius: '4px' }}
                         >
                           Reset
                         </button>
@@ -688,19 +701,19 @@ const DashboardPage = () => {
             </AnimatePresence>
 
             {filteredExecutions.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-12" style={{ color: '#457B9D' }}>
+              <div className="flex flex-col items-center justify-center py-12" style={{ color: '#8896AD' }}>
                 <Activity className="w-10 h-10 mb-3 opacity-30" />
                 <p className="text-sm font-medium">
                   {hasActiveFilters ? 'No matching executions' : 'No executions yet'}
                 </p>
-                <p className="text-xs mt-1">
+                <p className="text-xs mt-1" style={{ color: '#506080' }}>
                   {hasActiveFilters ? 'Try adjusting your filters' : 'Run a workflow to see history'}
                 </p>
                 {!hasActiveFilters && (
                   <button
                     onClick={() => navigate('/workflows')}
-                    className="mt-4 h-8 px-4 text-xs font-medium text-white transition-colors uppercase tracking-wider"
-                    style={{ backgroundColor: '#E63946', borderRadius: '2px' }}
+                    className="mt-4 h-8 px-4 text-xs font-medium transition-colors uppercase tracking-wider"
+                    style={{ backgroundColor: 'rgba(0, 212, 255, 0.15)', color: '#00D4FF', borderRadius: '4px', border: '1px solid rgba(0, 212, 255, 0.3)' }}
                   >
                     Go to Workflows
                   </button>
@@ -712,7 +725,7 @@ const DashboardPage = () => {
                       setStatusFilter('all');
                     }}
                     className="mt-4 h-8 px-4 text-xs font-medium transition-colors"
-                    style={{ color: '#E63946', borderRadius: '2px' }}
+                    style={{ color: '#00D4FF', borderRadius: '4px' }}
                   >
                     Clear filters
                   </button>
@@ -748,17 +761,17 @@ const DashboardPage = () => {
             )}
 
             {/* Workflows Panel */}
-            <div className="overflow-hidden" style={{ backgroundColor: 'white', border: '1px solid #A8DADC', borderRadius: '2px' }}>
-              <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: '1px solid #A8DADC' }}>
+            <div className="overflow-hidden" style={{ backgroundColor: '#1A2744', border: '1px solid rgba(0, 212, 255, 0.12)', borderRadius: '6px' }}>
+              <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: '1px solid rgba(0, 212, 255, 0.12)' }}>
                 <div className="flex items-center gap-2">
-                  <BarChart3 className="w-4 h-4" style={{ color: '#E63946' }} />
-                  <h2 className="text-sm font-medium uppercase tracking-wider" style={{ color: '#1D3557' }}>Workflows</h2>
+                  <BarChart3 className="w-4 h-4" style={{ color: '#00D4FF' }} />
+                  <h2 className="text-[11px] font-medium uppercase tracking-wider" style={{ color: '#8896AD' }}>Workflows</h2>
                 </div>
-                <span className="text-xs" style={{ color: '#457B9D' }}>{workflowCount} total</span>
+                <span className="text-xs font-mono" style={{ color: '#506080' }}>{workflowCount} total</span>
               </div>
 
             {Object.keys(stats.executionsByWorkflow).length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-12" style={{ color: '#457B9D' }}>
+              <div className="flex flex-col items-center justify-center py-12" style={{ color: '#506080' }}>
                 <Zap className="w-10 h-10 mb-3 opacity-30" />
                 <p className="text-sm">No workflow data</p>
               </div>
@@ -770,28 +783,30 @@ const DashboardPage = () => {
                   .map(([workflowId, data]) => (
                     <div
                       key={workflowId}
-                      className="px-4 py-3 hover:bg-gray-50 transition-colors cursor-pointer"
-                      style={{ borderBottom: '1px solid #A8DADC' }}
+                      className="px-4 py-3 transition-colors cursor-pointer"
+                      style={{ borderBottom: '1px solid rgba(0, 212, 255, 0.08)' }}
                       onClick={() => navigate(`/workflows/builder?id=${workflowId}`)}
+                      onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.backgroundColor = 'rgba(0, 212, 255, 0.04)'; }}
+                      onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'; }}
                     >
                       <div className="flex items-center justify-between mb-2">
-                        <p className="text-sm font-medium truncate flex-1 mr-3" style={{ color: '#1D3557' }}>
+                        <p className="text-sm font-medium truncate flex-1 mr-3" style={{ color: '#E8ECF4' }}>
                           {data.name}
                         </p>
-                        <span className="text-xs" style={{ color: '#457B9D' }}>{data.count} runs</span>
+                        <span className="text-xs font-mono" style={{ color: '#506080' }}>{data.count} runs</span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <div className="flex-1 h-1.5 overflow-hidden" style={{ backgroundColor: '#A8DADC', borderRadius: '2px' }}>
+                        <div className="flex-1 h-1.5 overflow-hidden" style={{ backgroundColor: 'rgba(0, 212, 255, 0.08)', borderRadius: '4px' }}>
                           <div
                             className="h-full transition-all"
                             style={{
                               width: `${data.successRate}%`,
-                              backgroundColor: data.successRate >= 80 ? '#34d399' : data.successRate >= 50 ? '#F4A261' : '#E63946',
-                              borderRadius: '2px',
+                              backgroundColor: data.successRate >= 80 ? '#00E5A0' : data.successRate >= 50 ? '#FFB800' : '#FF4D6A',
+                              borderRadius: '4px',
                             }}
                           />
                         </div>
-                        <span className="text-xs font-medium w-10 text-right" style={{ color: '#1D3557' }}>
+                        <span className="text-xs font-mono font-medium w-10 text-right" style={{ color: '#E8ECF4' }}>
                           {data.successRate}%
                         </span>
                       </div>
@@ -800,11 +815,11 @@ const DashboardPage = () => {
               </div>
             )}
 
-            <div className="px-4 py-3" style={{ borderTop: '1px solid #A8DADC' }}>
+            <div className="px-4 py-3" style={{ borderTop: '1px solid rgba(0, 212, 255, 0.08)' }}>
               <button
                 onClick={() => navigate('/workflows')}
                 className="w-full flex items-center justify-center gap-2 py-2 text-xs font-medium transition-colors uppercase tracking-wider"
-                style={{ color: '#E63946' }}
+                style={{ color: '#00D4FF' }}
               >
                 View all workflows
                 <ArrowRight className="w-3 h-3" />
@@ -819,15 +834,17 @@ const DashboardPage = () => {
           <button
             onClick={() => navigate('/workflows/builder')}
             className="p-4 transition-all group text-left"
-            style={{ backgroundColor: 'white', border: '1px solid #A8DADC', borderRadius: '2px' }}
+            style={{ backgroundColor: '#1A2744', border: '1px solid rgba(0, 212, 255, 0.12)', borderRadius: '6px' }}
+            onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(0, 212, 255, 0.3)'; (e.currentTarget as HTMLElement).style.boxShadow = '0 0 12px rgba(0, 212, 255, 0.1)'; }}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(0, 212, 255, 0.12)'; (e.currentTarget as HTMLElement).style.boxShadow = 'none'; }}
           >
             <div className="flex items-center gap-3">
-              <div className="p-2 transition-colors" style={{ backgroundColor: '#E63946', borderRadius: '2px' }}>
-                <Plus className="w-5 h-5 text-white" />
+              <div className="p-2 transition-colors" style={{ backgroundColor: 'rgba(0, 212, 255, 0.1)', borderRadius: '4px' }}>
+                <Plus className="w-5 h-5" style={{ color: '#00D4FF' }} />
               </div>
               <div>
-                <h3 className="font-medium text-sm uppercase tracking-wider" style={{ color: '#1D3557' }}>Create Workflow</h3>
-                <p className="text-xs" style={{ color: '#457B9D' }}>Build a new pipeline</p>
+                <h3 className="font-medium text-sm uppercase tracking-wider" style={{ color: '#E8ECF4' }}>Create Workflow</h3>
+                <p className="text-xs" style={{ color: '#506080' }}>Build a new pipeline</p>
               </div>
             </div>
           </button>
@@ -835,15 +852,17 @@ const DashboardPage = () => {
           <button
             onClick={() => navigate('/workflows')}
             className="p-4 transition-all group text-left"
-            style={{ backgroundColor: 'white', border: '1px solid #A8DADC', borderRadius: '2px' }}
+            style={{ backgroundColor: '#1A2744', border: '1px solid rgba(0, 212, 255, 0.12)', borderRadius: '6px' }}
+            onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(0, 212, 255, 0.3)'; (e.currentTarget as HTMLElement).style.boxShadow = '0 0 12px rgba(0, 212, 255, 0.1)'; }}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(0, 212, 255, 0.12)'; (e.currentTarget as HTMLElement).style.boxShadow = 'none'; }}
           >
             <div className="flex items-center gap-3">
-              <div className="p-2 transition-colors" style={{ backgroundColor: '#1D3557', borderRadius: '2px' }}>
-                <PlayCircle className="w-5 h-5 text-white" />
+              <div className="p-2 transition-colors" style={{ backgroundColor: 'rgba(255, 184, 0, 0.1)', borderRadius: '4px' }}>
+                <PlayCircle className="w-5 h-5" style={{ color: '#FFB800' }} />
               </div>
               <div>
-                <h3 className="font-medium text-sm uppercase tracking-wider" style={{ color: '#1D3557' }}>Run Workflow</h3>
-                <p className="text-xs" style={{ color: '#457B9D' }}>Execute pipelines</p>
+                <h3 className="font-medium text-sm uppercase tracking-wider" style={{ color: '#E8ECF4' }}>Run Workflow</h3>
+                <p className="text-xs" style={{ color: '#506080' }}>Execute pipelines</p>
               </div>
             </div>
           </button>
@@ -851,15 +870,17 @@ const DashboardPage = () => {
           <button
             onClick={() => navigate('/connections')}
             className="p-4 transition-all group text-left"
-            style={{ backgroundColor: 'white', border: '1px solid #A8DADC', borderRadius: '2px' }}
+            style={{ backgroundColor: '#1A2744', border: '1px solid rgba(0, 212, 255, 0.12)', borderRadius: '6px' }}
+            onMouseEnter={(e) => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(0, 212, 255, 0.3)'; (e.currentTarget as HTMLElement).style.boxShadow = '0 0 12px rgba(0, 212, 255, 0.1)'; }}
+            onMouseLeave={(e) => { (e.currentTarget as HTMLElement).style.borderColor = 'rgba(0, 212, 255, 0.12)'; (e.currentTarget as HTMLElement).style.boxShadow = 'none'; }}
           >
             <div className="flex items-center gap-3">
-              <div className="p-2 transition-colors" style={{ backgroundColor: '#457B9D', borderRadius: '2px' }}>
-                <Link2 className="w-5 h-5 text-white" />
+              <div className="p-2 transition-colors" style={{ backgroundColor: 'rgba(0, 229, 160, 0.1)', borderRadius: '4px' }}>
+                <Link2 className="w-5 h-5" style={{ color: '#00E5A0' }} />
               </div>
               <div>
-                <h3 className="font-medium text-sm uppercase tracking-wider" style={{ color: '#1D3557' }}>Connections</h3>
-                <p className="text-xs" style={{ color: '#457B9D' }}>Manage data sources</p>
+                <h3 className="font-medium text-sm uppercase tracking-wider" style={{ color: '#E8ECF4' }}>Connections</h3>
+                <p className="text-xs" style={{ color: '#506080' }}>Manage data sources</p>
               </div>
             </div>
           </button>

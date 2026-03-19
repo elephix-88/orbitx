@@ -92,40 +92,46 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="min-h-screen flex" style={{ backgroundColor: '#F1FAEE' }}>
-      {/* Left Side — Bauhaus geometric branding */}
-      <div className="hidden lg:flex lg:w-5/12 relative overflow-hidden" style={{ backgroundColor: '#1D3557' }}>
-        {/* Geometric decorations */}
-        <div className="absolute top-0 right-0 w-48 h-48" style={{ backgroundColor: '#E63946' }} />
-        <div className="absolute bottom-16 left-16 w-32 h-32 rounded-full" style={{ backgroundColor: '#F4A261' }} />
-        <div className="absolute top-1/3 left-1/4 w-24 h-24 rotate-45" style={{ backgroundColor: '#A8DADC', opacity: 0.4 }} />
+    <div className="min-h-screen flex" style={{ backgroundColor: '#0F1729' }}>
+      {/* Left Side -- Blueprint geometric branding */}
+      <div className="hidden lg:flex lg:w-5/12 relative overflow-hidden" style={{ backgroundColor: '#0F1729' }}>
+        {/* Blueprint grid pattern */}
+        <div className="absolute inset-0" style={{
+          backgroundImage: 'linear-gradient(rgba(0, 212, 255, 0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(0, 212, 255, 0.06) 1px, transparent 1px)',
+          backgroundSize: '40px 40px',
+        }} />
+
+        {/* Geometric decorations - blueprint style */}
+        <div className="absolute top-32 right-16 w-32 h-32 rounded-full hidden lg:block" style={{ border: '2px solid rgba(0, 212, 255, 0.2)' }} />
+        <div className="absolute bottom-24 left-16 w-24 h-[2px]" style={{ background: 'linear-gradient(to right, #FFB800, transparent)' }} />
+        <div className="absolute top-1/3 left-1/4 w-16 h-16 rotate-45" style={{ border: '1px solid rgba(0, 212, 255, 0.15)' }} />
 
         <div className="relative z-10 flex flex-col justify-between p-16 w-full">
           <Link to="/" className="flex items-center gap-3">
-            <div className="w-12 h-12 flex items-center justify-center" style={{ backgroundColor: '#E63946' }}>
-              <span className="text-2xl font-bold text-white tracking-tight">O</span>
+            <div className="w-12 h-12 flex items-center justify-center" style={{ border: '2px solid #00D4FF', borderRadius: '4px' }}>
+              <span className="text-2xl font-bold tracking-tight" style={{ color: '#00D4FF' }}>O</span>
             </div>
-            <span className="text-2xl font-bold text-white uppercase tracking-widest">OrbitX</span>
+            <span className="text-2xl font-bold uppercase tracking-widest" style={{ color: '#E8ECF4' }}>OrbitX</span>
           </Link>
 
           <div>
-            <h1 className="text-4xl font-bold text-white uppercase tracking-tight leading-tight mb-8">
+            <h1 className="text-4xl font-bold uppercase tracking-tight leading-tight mb-8" style={{ color: '#E8ECF4' }}>
               Automate<br />your data<br />workflows
             </h1>
-            <div className="w-16 h-1 mb-8" style={{ backgroundColor: '#E63946' }} />
-            <p className="text-lg leading-relaxed" style={{ color: '#A8DADC' }}>
+            <div className="w-16 h-[2px] mb-8" style={{ background: 'linear-gradient(to right, #00D4FF, transparent)' }} />
+            <p className="text-lg leading-relaxed" style={{ color: '#8896AD' }}>
               Connect your data sources, transform your data, and load it into your destinations.
             </p>
           </div>
 
-          <p className="text-sm uppercase tracking-widest" style={{ color: '#457B9D' }}>
-            © 2024 OrbitX
+          <p className="text-sm uppercase tracking-widest" style={{ color: '#506080' }}>
+            &copy; 2024 OrbitX
           </p>
         </div>
       </div>
 
-      {/* Right Side — Login */}
-      <div className="flex-1 flex items-center justify-center p-8">
+      {/* Right Side -- Login */}
+      <div className="flex-1 flex items-center justify-center p-8" style={{ backgroundColor: '#1A2744' }}>
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
@@ -135,21 +141,21 @@ const LoginPage = () => {
           {/* Mobile Logo */}
           <div className="lg:hidden mb-16">
             <Link to="/" className="inline-flex items-center gap-3">
-              <div className="w-10 h-10 flex items-center justify-center" style={{ backgroundColor: '#E63946' }}>
-                <span className="text-xl font-bold text-white">O</span>
+              <div className="w-10 h-10 flex items-center justify-center" style={{ border: '2px solid #00D4FF', borderRadius: '4px' }}>
+                <span className="text-xl font-bold" style={{ color: '#00D4FF' }}>O</span>
               </div>
-              <span className="text-xl font-bold uppercase tracking-widest" style={{ color: '#1D3557' }}>
+              <span className="text-xl font-bold uppercase tracking-widest" style={{ color: '#E8ECF4' }}>
                 OrbitX
               </span>
             </Link>
           </div>
 
           <div className="mb-12">
-            <h2 className="text-3xl font-bold uppercase tracking-tight mb-3" style={{ color: '#1D3557' }}>
+            <h2 className="text-3xl font-bold uppercase tracking-tight mb-3" style={{ color: '#E8ECF4' }}>
               Welcome
             </h2>
-            <div className="w-12 h-1 mb-4" style={{ backgroundColor: '#E63946' }} />
-            <p className="text-base" style={{ color: '#457B9D' }}>
+            <div className="w-12 h-[2px] mb-4" style={{ background: 'linear-gradient(to right, #00D4FF, transparent)' }} />
+            <p className="text-base" style={{ color: '#8896AD' }}>
               Sign in with your Google account to continue
             </p>
           </div>
@@ -161,18 +167,19 @@ const LoginPage = () => {
               animate={{ opacity: 1, y: 0 }}
               className="mb-8 p-4 flex items-center gap-3"
               style={{
-                backgroundColor: '#FEF2F2',
-                borderLeft: '4px solid #E63946',
+                backgroundColor: 'rgba(255, 77, 106, 0.1)',
+                borderLeft: '4px solid #FF4D6A',
+                borderRadius: '4px',
               }}
             >
-              <AlertCircle className="w-5 h-5 flex-shrink-0" style={{ color: '#E63946' }} />
-              <p className="text-sm" style={{ color: '#E63946' }}>{error}</p>
+              <AlertCircle className="w-5 h-5 flex-shrink-0" style={{ color: '#FF4D6A' }} />
+              <p className="text-sm" style={{ color: '#FF4D6A' }}>{error}</p>
               <button
                 onClick={clearError}
                 className="ml-auto font-bold"
-                style={{ color: '#E63946' }}
+                style={{ color: '#FF4D6A' }}
               >
-                ×
+                x
               </button>
             </motion.div>
           )}
@@ -181,7 +188,7 @@ const LoginPage = () => {
           <div className="mb-12">
             {isLoading ? (
               <div className="flex items-center justify-center py-6">
-                <Loader2 className="w-8 h-8 animate-spin" style={{ color: '#E63946' }} />
+                <Loader2 className="w-8 h-8 animate-spin" style={{ color: '#00D4FF' }} />
               </div>
             ) : GOOGLE_CLIENT_ID ? (
               <div id="google-signin-button" className="flex justify-center" />
@@ -190,9 +197,10 @@ const LoginPage = () => {
                 onClick={() => navigate('/dashboard')}
                 className="w-full flex items-center justify-center gap-3 px-6 py-4 font-bold uppercase tracking-wider text-sm transition-colors"
                 style={{
-                  backgroundColor: '#FFFFFF',
-                  border: '2px solid #1D3557',
-                  color: '#1D3557',
+                  backgroundColor: 'transparent',
+                  border: '1px solid rgba(0, 212, 255, 0.3)',
+                  color: '#E8ECF4',
+                  borderRadius: '4px',
                 }}
               >
                 <GoogleIcon />
@@ -202,13 +210,13 @@ const LoginPage = () => {
           </div>
 
           <div className="mb-8">
-            <p className="text-xs uppercase tracking-wider" style={{ color: '#457B9D' }}>
+            <p className="text-xs uppercase tracking-wider" style={{ color: '#506080' }}>
               By continuing, you agree to our{' '}
-              <Link to="/terms" className="font-bold underline" style={{ color: '#1D3557' }}>
+              <Link to="/terms" className="font-bold underline" style={{ color: '#00D4FF' }}>
                 Terms
               </Link>{' '}
               and{' '}
-              <Link to="/privacy" className="font-bold underline" style={{ color: '#1D3557' }}>
+              <Link to="/privacy" className="font-bold underline" style={{ color: '#00D4FF' }}>
                 Privacy Policy
               </Link>
             </p>
@@ -217,9 +225,9 @@ const LoginPage = () => {
           <Link
             to="/"
             className="inline-flex items-center gap-2 text-sm font-bold uppercase tracking-wider transition-colors"
-            style={{ color: '#E63946' }}
+            style={{ color: '#00D4FF' }}
           >
-            ← Back to home
+            &larr; Back to home
           </Link>
         </motion.div>
       </div>
