@@ -53,8 +53,6 @@ default:
   google_cloud_project_number: 169852204510
   google_cloud_location: asia-southeast1
   google_cloud_job_name: orbitx-workflow-job
-  google_cloud_scheduler_enabled: true
-  google_cloud_scheduler_timezone: Asia/Bangkok
   google_cloud_service_account_email: cron5-workflow-engine@cron5-dev.iam.gserviceaccount.com
 
   # Pub/Sub Tracking
@@ -77,3 +75,7 @@ default:
 
   # CSRF Protection
   csrf_enabled: true
+
+  # Dagster Integration
+  dagster_host: dagster
+  dagster_port: 3000

@@ -1,6 +1,23 @@
 from pydantic import BaseModel
 
 
+class BaseToken(BaseModel):
+    access_token: str
+
+
+class FacebookToken(BaseToken):
+    scopes: list[str] | None = None
+
+
+class GoogleToken(BaseToken):
+    refresh_token: str
+    scopes: list[str] | None = None
+
+
+class TikTokToken(BaseToken):
+    advertiser_ids: list[str] | None = None
+
+
 class BaseConnectionParams(BaseModel):
     """Base model for OAuth connection parameters."""
 

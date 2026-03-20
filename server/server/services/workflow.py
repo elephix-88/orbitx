@@ -5,7 +5,7 @@ from common.database import get_mongodb
 from common.model.workflow import JobIdRequest, WorkflowData, WorkflowSummary
 from server.configs.config import settings
 from server.services.auth.context import get_current_user
-from server.services.google.scheduler import scheduler_service
+from server.services import dagster_client
 from server.services.utils import generate_uuid
 
 
@@ -69,24 +69,8 @@ async def update_workflow(workflow_data: WorkflowData) -> bool:
             },
         )
 
-    try:
-        scheduler_success = scheduler_service.update_workflow_schedule(
-            job_id=workflow_data.id,
-            job_name=workflow_data.job_name,
-            schedule_expression=workflow_data.schedule_expression,
-        )
-
-        if scheduler_success:
-            logger.info(f"Updated scheduler job for workflow: {workflow_data.id}")
-        else:
-            logger.warning(
-                f"Failed to update scheduler job for workflow: {workflow_data.id}"
-            )
-
-    except Exception as e:
-        logger.error(
-            f"Error updating scheduler job for workflow {workflow_data.id}: {e}"
-        )
+    # Dagster picks up schedule changes via code location reload
+    dagster_client.reload_code_location()
 
     logger.success(f"Workflow {workflow_data.id} updated successfully")
     return True
@@ -100,110 +84,75 @@ async def delete_workflow(id: str) -> bool:
     user = get_current_user()
     query = {"_id": id, "user_id": user.id}
 
-    # Get workflow data before deletion to get job_id for scheduler cleanup
-    try:
-        workflow = await get_mongodb().get_document(
-            collection_name=settings.workflow_collection,
-            query=query,
-            model_cls=WorkflowData,
-        )
+    workflow = await get_mongodb().get_document(
+        collection_name=settings.workflow_collection,
+        query=query,
+        model_cls=WorkflowData,
+    )
 
-        if workflow:
-            # Delete Google Cloud Scheduler job
-            try:
-                scheduler_success = scheduler_service.delete_workflow_schedule(
-                    job_id=workflow.id
-                )
-
-                if scheduler_success:
-                    logger.info(f"Deleted scheduler job for workflow: {workflow.id}")
-                else:
-                    logger.warning(
-                        f"Failed to delete scheduler job for workflow: {workflow.id}"
-                    )
-
-            except Exception as e:
-                logger.error(
-                    f"Error deleting scheduler job for workflow {workflow.id}: {e}"
-                )
-                # Continue with workflow deletion even if scheduler cleanup fails
-        else:
-            # Workflow not found or access denied
-            return False
-
-    except Exception as e:
-        logger.error(f"Error retrieving workflow data for deletion: {e}")
+    if not workflow:
         return False
 
-    # Delete workflow from MongoDB with user_id filter
-    return await get_mongodb().delete_document(
+    deleted = await get_mongodb().delete_document(
         collection_name=settings.workflow_collection,
         query=query,
     )
+
+    if deleted:
+        # Dagster will drop the schedule on next code location reload
+        dagster_client.reload_code_location()
+        logger.info(f"Workflow {id} deleted")
+
+    return deleted
 
 
 async def create_new_workflow(workflow_data: WorkflowData) -> WorkflowData:
     if not workflow_data.id:
         workflow_data.id = generate_uuid()
 
-    # Set user_id from context
     user = get_current_user()
     workflow_data.user_id = user.id
 
-    # Insert workflow into MongoDB
     inserted_id = await get_mongodb().insert_document(
         collection_name=settings.workflow_collection,
         data=workflow_data,
     )
 
-    # Update the workflow data with the inserted ID
     workflow_data.id = inserted_id
 
-    # Create Google Cloud Scheduler job
-    try:
-        scheduler_success = scheduler_service.create_workflow_schedule(
-            job_id=inserted_id,
-            job_name=workflow_data.job_name,
-            schedule_expression=workflow_data.schedule_expression,
-        )
-
-        if scheduler_success:
-            logger.info(f"Created scheduler job for workflow: {inserted_id}")
-        else:
-            logger.warning(
-                f"Failed to create scheduler job for workflow: {inserted_id}"
-            )
-
-    except Exception as e:
-        logger.error(f"Error creating scheduler job for workflow {inserted_id}: {e}")
-        # Don't fail the workflow creation if scheduler fails
+    # Dagster will pick up the new schedule on code location reload
+    dagster_client.reload_code_location()
+    logger.info(f"Workflow {inserted_id} created")
 
     return workflow_data
 
 
 async def execute_workflow(job_id: str) -> bool:
-    """Execute a workflow by triggering its Cloud Scheduler job with ownership check."""
+    """Execute a workflow with ownership check."""
     if not job_id:
         raise HTTPException(status_code=400, detail="Workflow ID is required")
 
-    # Verify ownership
     user = get_current_user()
     workflow = await get_mongodb().get_document(
         collection_name=settings.workflow_collection,
         query={"_id": job_id, "user_id": user.id},
+        model_cls=WorkflowData,
     )
 
     if not workflow:
         raise HTTPException(status_code=404, detail="Workflow not found")
 
-    logger.info(f"Triggering immediate execution for workflow: {job_id}")
-    try:
-        success = scheduler_service.run_workflow_schedule(job_id)
-        if success:
-            logger.info(f"Successfully triggered scheduler for workflow: {job_id}")
-        else:
-            logger.warning(f"Failed to trigger scheduler for workflow: {job_id}")
-        return success
-    except Exception as e:
-        logger.error(f"Error executing workflow: {e}")
-        raise HTTPException(status_code=500, detail="Failed to execute workflow")
+    run_id = dagster_client.launch_run(
+        workflow_id=job_id,
+        workflow_name=workflow.job_name,
+        run_type="all",
+        user_id=user.id,
+    )
+
+    if not run_id:
+        raise HTTPException(
+            status_code=500, detail="Failed to execute workflow"
+        )
+
+    logger.info(f"Dagster run {run_id} launched for workflow: {job_id}")
+    return True

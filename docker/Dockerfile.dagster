@@ -1,0 +1,35 @@
+FROM python:3.13-bookworm
+
+WORKDIR /app
+
+ENV VIRTUAL_ENV=/app/.venv
+ENV PATH="$VIRTUAL_ENV/bin:$PATH"
+
+RUN python -m venv $VIRTUAL_ENV
+RUN pip install uv
+
+# Install supervisord
+RUN apt-get update && apt-get install -y --no-install-recommends supervisor && rm -rf /var/lib/apt/lists/*
+
+# Copy workspace root files
+COPY pyproject.toml uv.lock ./
+
+# Copy all workspace members needed by dagster
+COPY common/ common/
+COPY engine/ engine/
+COPY dagster/ dagster/
+
+# Install dagster package and all dependencies
+RUN cd dagster && uv sync --frozen
+
+ENV PYTHONPATH="$VIRTUAL_ENV/lib/python3.13/site-packages:/app"
+
+# Copy supervisord config
+COPY docker/dagster-supervisord.conf /etc/supervisor/conf.d/dagster.conf
+
+# Copy dagster instance config
+RUN mkdir -p /app/dagster/compute_logs /app/dagster/storage
+
+EXPOSE 3000 4000
+
+CMD ["supervisord", "-n", "-c", "/etc/supervisor/conf.d/dagster.conf"]

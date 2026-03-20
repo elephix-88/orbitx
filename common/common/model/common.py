@@ -25,6 +25,17 @@ class DateTimeConfig(BaseModel):
     time_increment: int = 1
 
 
+class ConnectionParamsConfig(BaseModel):
+    refresh_token: str
+    access_token: str
+
+
+class ConnectionConfig(BaseModel):
+    connection_name: str
+    connection_type: str
+    params: ConnectionParamsConfig
+
+
 class BaseConnectedConfig(BaseModel):
     connection_id: str
 

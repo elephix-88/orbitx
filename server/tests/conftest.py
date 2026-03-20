@@ -402,19 +402,6 @@ def mock_google_oauth() -> Iterator[Mock]:
         yield mock_client
 
 
-@pytest.fixture
-def mock_google_cloud_run() -> Iterator[Mock]:
-    """Mock Google Cloud Run client."""
-    with patch("server.services.workflow.run_v2.JobsClient") as mock_client_class:
-        mock_client = Mock()
-        mock_operation = Mock()
-        mock_response = Mock()
-        mock_response.name = "test_execution_name"
-        mock_operation.result.return_value = mock_response
-        mock_client.run_job.return_value = mock_operation
-        mock_client_class.return_value = mock_client
-        yield mock_client
-
 
 # =============================================================================
 # Settings Mock (autouse for all tests)
@@ -428,8 +415,6 @@ def mock_settings_fixture() -> Iterator[Mock]:
     mock_settings.connection_collection = "test_connections"
     mock_settings.workflow_collection = "test_workflows"
     mock_settings.google_fields = "google_fields"
-    mock_settings.google_cloud_project_id = "test_project"
-    mock_settings.google_cloud_location = "test_location"
-    mock_settings.google_cloud_job_name = "test_job"
-    mock_settings.google_cloud_scheduler_timezone = "UTC"
+    mock_settings.dagster_host = "localhost"
+    mock_settings.dagster_port = 3000
     yield mock_settings

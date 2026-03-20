@@ -1,0 +1,23 @@
+FROM python:3.13-bookworm
+
+WORKDIR /app
+
+ENV VIRTUAL_ENV=/app/.venv
+ENV PATH="$VIRTUAL_ENV/bin:$PATH"
+
+RUN python -m venv $VIRTUAL_ENV
+RUN pip install uv
+
+COPY pyproject.toml uv.lock ./
+COPY common/ common/
+COPY server/ server/
+
+RUN cd server && uv sync --frozen
+
+ENV PYTHONPATH="$VIRTUAL_ENV/lib/python3.13/site-packages:/app"
+
+WORKDIR /app/server
+
+EXPOSE 8080
+
+CMD ["uvicorn", "server.main:app", "--reload", "--host", "0.0.0.0", "--port", "8080"]
