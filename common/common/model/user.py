@@ -34,17 +34,6 @@ class UserResponse(UserBase):
     created_at: datetime
 
 
-class LoginRequest(BaseModel):
-    email: EmailStr
-    password: str
-
-
-class RegisterRequest(BaseModel):
-    email: EmailStr
-    password: str = Field(min_length=8, max_length=128)
-    name: str = Field(min_length=1, max_length=100)
-
-
 class GoogleAuthRequest(BaseModel):
     credential: str = Field(min_length=1)
 
@@ -53,7 +42,3 @@ class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
     user: UserResponse
-
-
-class RefreshTokenRequest(BaseModel):
-    refresh_token: str

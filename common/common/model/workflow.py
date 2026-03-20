@@ -104,13 +104,6 @@ class Connection(BaseModel):
     to_node: int
 
 
-class Workflow(BaseModel):
-    job_name: str = Field(min_length=1, max_length=100)
-    schedule_expression: str = Field(min_length=1, max_length=100)
-    nodes: list[Node]
-    connections: list[Connection]
-
-
 class WorkflowStatus(str, Enum):
     ACTIVE = "ACTIVE"
     PAUSED = "PAUSED"

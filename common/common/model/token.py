@@ -1,46 +1,39 @@
 from pydantic import BaseModel
 
 
-class BaseToken(BaseModel):
+class FacebookToken(BaseModel):
     access_token: str
-
-
-class FacebookToken(BaseToken):
     scopes: list[str] | None = None
 
 
-class GoogleToken(BaseToken):
+class GoogleToken(BaseModel):
+    access_token: str
     refresh_token: str
     scopes: list[str] | None = None
 
 
-class TikTokToken(BaseToken):
+class TikTokToken(BaseModel):
+    access_token: str
     advertiser_ids: list[str] | None = None
 
 
-class BaseConnectionParams(BaseModel):
-    """Base model for OAuth connection parameters."""
+class GoogleConnectionParams(BaseModel):
+    access_token: str
+    token_type: str | None = None
+    expires_in: int | None = None
+    refresh_token: str
+    scope: str
 
+
+class FacebookConnectionParams(BaseModel):
     access_token: str
     token_type: str | None = None
     expires_in: int | None = None
 
 
-class GoogleConnectionParams(BaseConnectionParams):
-    """OAuth connection parameters for Google services."""
-
-    refresh_token: str
-    scope: str
-
-
-class FacebookConnectionParams(BaseConnectionParams):
-    """OAuth connection parameters for Facebook services."""
-
-    pass
-
-
-class TikTokConnectionParams(BaseConnectionParams):
-    """OAuth connection parameters for TikTok services."""
-
+class TikTokConnectionParams(BaseModel):
+    access_token: str
+    token_type: str | None = None
+    expires_in: int | None = None
     advertiser_ids: list[str]
     refresh_token: str | None = None

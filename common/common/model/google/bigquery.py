@@ -21,25 +21,6 @@ class BigQueryDataset(BaseModel):
     last_modified_time: str | None = None
 
 
-class BigQueryTableField(BaseModel):
-    name: str
-    type: str
-    mode: str
-    description: str | None = None
-
-
-class BigQueryTable(BaseModel):
-    table_id: str
-    friendly_name: str | None = None
-    description: str | None = None
-    type: str
-    creation_time: str | None = None
-    last_modified_time: str | None = None
-    num_rows: int | None = None
-    num_bytes: int | None = None
-    schema_fields: list[BigQueryTableField] | None = None
-
-
 class BigQuerySourceConfig(BaseConnectedConfig):
     """Configuration for BigQuery as a data source."""
 

@@ -9,11 +9,6 @@ class TikTokReportLevel(str, Enum):
     AUCTION_AD = "AUCTION_AD"
 
 
-class TikTokReportType(str, Enum):
-    BASIC = "BASIC"
-    AUDIENCE = "AUDIENCE"
-
-
 class TikTokField(BaseModel):
     field: str
     display_name: str | None = None
