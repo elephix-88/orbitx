@@ -16,13 +16,13 @@ export const Skeleton: React.FC<SkeletonProps> = ({
   height,
   lines = 1,
 }) => {
-  const baseClasses = 'animate-pulse bg-[#A8DADC]/40 dark:bg-slate-700';
+  const baseClasses = 'animate-pulse bg-neutral-200 dark:bg-neutral-700';
 
   const variantClasses = {
-    text: 'h-4 rounded-sm',
+    text: 'h-4 rounded-md',
     circular: 'rounded-full',
-    rectangular: 'rounded-sm',
-    card: 'rounded-sm',
+    rectangular: 'rounded-md',
+    card: 'rounded-md',
   };
 
   if (variant === 'text' && lines > 1) {
@@ -55,7 +55,7 @@ export const Skeleton: React.FC<SkeletonProps> = ({
 
 // Pre-built skeleton components for common use cases
 export const CardSkeleton: React.FC<{ className?: string }> = ({ className }) => (
-  <div className={cn('p-6 border border-[#A8DADC] rounded-sm dark:border-slate-700', className)}>
+  <div className={cn('p-6 border border-border rounded-md', className)}>
     <div className="flex items-center space-x-4 mb-4">
       <Skeleton variant="circular" width={40} height={40} />
       <div className="flex-1">
@@ -68,7 +68,7 @@ export const CardSkeleton: React.FC<{ className?: string }> = ({ className }) =>
 );
 
 export const WorkflowCardSkeleton: React.FC<{ className?: string }> = ({ className }) => (
-  <div className={cn('p-6 border border-[#A8DADC] rounded-sm dark:border-slate-700', className)}>
+  <div className={cn('p-6 border border-border rounded-md', className)}>
     <div className="flex items-start justify-between mb-4">
       <div className="flex items-center space-x-3">
         <Skeleton variant="circular" width={32} height={32} />
@@ -91,9 +91,9 @@ export const WorkflowCardSkeleton: React.FC<{ className?: string }> = ({ classNa
 );
 
 export const ConnectionCardSkeleton: React.FC<{ className?: string }> = ({ className }) => (
-  <div className={cn('p-6 border border-[#A8DADC] rounded-sm dark:border-slate-700', className)}>
+  <div className={cn('p-6 border border-border rounded-md', className)}>
     <div className="flex items-center space-x-4 mb-4">
-      <Skeleton variant="rectangular" width={48} height={48} className="rounded-sm" />
+      <Skeleton variant="rectangular" width={48} height={48} className="rounded-md" />
       <div className="flex-1">
         <Skeleton variant="text" width="140px" />
         <Skeleton variant="text" width="200px" className="mt-2" />

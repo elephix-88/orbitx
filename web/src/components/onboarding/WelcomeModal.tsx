@@ -149,9 +149,9 @@ export const WelcomeModal: React.FC<WelcomeModalProps> = ({
       {/* Modal */}
       <div className={cn(
         "relative z-50 w-full max-w-lg",
-        "bg-white dark:bg-slate-950",
+        "bg-surface-primary",
         "rounded-lg shadow-lg",
-        "border border-slate-200 dark:border-slate-800",
+        "border border-border",
         "overflow-hidden"
       )}>
         {/* Header with brand color */}
@@ -179,7 +179,7 @@ export const WelcomeModal: React.FC<WelcomeModalProps> = ({
 
         {/* Step indicators */}
         <div className="flex justify-center -mt-4 relative z-10">
-          <div className="flex items-center gap-2 rounded-full bg-white dark:bg-slate-900 px-3 py-2 shadow-lg border border-slate-200 dark:border-slate-800">
+          <div className="flex items-center gap-2 rounded-full bg-surface-primary px-3 py-2 shadow-lg border border-border">
             {ONBOARDING_STEPS.map((s, idx) => (
               <button
                 key={s.id}
@@ -187,9 +187,9 @@ export const WelcomeModal: React.FC<WelcomeModalProps> = ({
                 aria-label={`Step ${idx + 1}: ${s.title}`}
                 className={cn(
                   "flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium transition-all",
-                  idx === currentStep && "bg-slate-900 text-white dark:bg-white dark:text-slate-900",
+                  idx === currentStep && "bg-neutral-900 text-white dark:bg-white dark:text-neutral-900",
                   idx < currentStep && "bg-emerald-500 text-white",
-                  idx > currentStep && "bg-slate-100 text-slate-500 hover:bg-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:hover:bg-slate-700"
+                  idx > currentStep && "bg-surface-secondary text-text-secondary hover:bg-surface-tertiary"
                 )}
               >
                 {idx < currentStep ? <Check className="h-4 w-4" /> : idx + 1}
@@ -212,10 +212,10 @@ export const WelcomeModal: React.FC<WelcomeModalProps> = ({
 
           {/* Step content */}
           <div className="mt-4 text-center">
-            <h3 className="text-lg font-semibold text-slate-950 dark:text-slate-50">
+            <h3 className="text-lg font-semibold text-text-primary">
               Step {currentStep + 1}: {step.title}
             </h3>
-            <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+            <p className="mt-2 text-sm text-text-secondary">
               {step.description}
             </p>
           </div>
@@ -233,7 +233,7 @@ export const WelcomeModal: React.FC<WelcomeModalProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-between border-t border-slate-200 dark:border-slate-800 px-6 py-4">
+        <div className="flex items-center justify-between border-t border-border px-6 py-4">
           <div>
             {currentStep > 0 ? (
               <Button
@@ -247,14 +247,14 @@ export const WelcomeModal: React.FC<WelcomeModalProps> = ({
             ) : (
               <button
                 onClick={handleSkip}
-                className="text-sm text-slate-500 hover:text-slate-700 dark:hover:text-slate-300"
+                className="text-sm text-text-secondary hover:text-text-primary"
               >
                 Skip
               </button>
             )}
           </div>
           <div className="flex items-center gap-3">
-            <span className="hidden text-xs text-slate-400 sm:inline">
+            <span className="hidden text-xs text-text-tertiary sm:inline">
               ← → to navigate
             </span>
             <Button variant="ghost" size="sm" onClick={handleNext}>
@@ -284,14 +284,14 @@ export const OnboardingChecklist: React.FC<{
   if (completedCount === 3) return null;
 
   return (
-    <div className="mb-6 overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-950">
+    <div className="mb-6 overflow-hidden rounded-lg border border-border bg-surface-primary shadow-sm">
       <div className="p-4">
         <div className="flex items-center justify-between">
-          <h3 className="text-sm font-semibold text-slate-950 dark:text-slate-50">
+          <h3 className="text-sm font-semibold text-text-primary">
             Getting Started
           </h3>
           <div className="flex items-center gap-2">
-            <span className="text-xs text-slate-500">{completedCount}/3</span>
+            <span className="text-xs text-text-secondary">{completedCount}/3</span>
             <button
               onClick={onDismiss}
               className="rounded-sm opacity-70 hover:opacity-100"
@@ -321,7 +321,7 @@ export const OnboardingChecklist: React.FC<{
       </div>
 
       {/* Progress bar */}
-      <div className="h-1 bg-slate-100 dark:bg-slate-800">
+      <div className="h-1 bg-surface-secondary">
         <div
           className="h-full bg-brand-600 transition-all duration-500"
           style={{ width: `${(completedCount / 3) * 100}%` }}
@@ -343,7 +343,7 @@ const ChecklistItem: React.FC<{
     className={cn(
       'flex w-full items-center gap-3 rounded-md p-2 text-left transition-colors',
       completed && 'bg-emerald-50 dark:bg-emerald-900/10',
-      !completed && !disabled && 'hover:bg-slate-50 dark:hover:bg-slate-900',
+      !completed && !disabled && 'hover:bg-surface-secondary',
       disabled && 'cursor-not-allowed opacity-50'
     )}
   >
@@ -352,7 +352,7 @@ const ChecklistItem: React.FC<{
         'flex h-5 w-5 shrink-0 items-center justify-center rounded-full',
         completed
           ? 'bg-emerald-500 text-white'
-          : 'border-2 border-slate-300 dark:border-slate-600'
+          : 'border-2 border-border'
       )}
     >
       {completed && <Check className="h-3 w-3" />}
@@ -362,7 +362,7 @@ const ChecklistItem: React.FC<{
         'text-sm',
         completed
           ? 'text-emerald-700 line-through dark:text-emerald-400'
-          : 'text-slate-700 dark:text-slate-300'
+          : 'text-text-secondary'
       )}
     >
       {label}

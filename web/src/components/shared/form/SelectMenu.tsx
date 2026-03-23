@@ -90,8 +90,8 @@ export const SelectMenu: React.FC<SelectMenuProps> = ({
       <button
         ref={btnRef}
         type="button"
-        className={`w-full h-11 px-3 pr-9 text-left rounded-2xl ring-1 ring-slate-200 bg-white shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-          open ? 'ring-blue-300' : ''
+        className={`w-full h-11 px-3 pr-9 text-left rounded-2xl ring-1 ring-border bg-surface-primary shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 ${
+          open ? 'ring-primary-300' : ''
         }`}
         onClick={(e) => {
           e.stopPropagation();
@@ -101,23 +101,23 @@ export const SelectMenu: React.FC<SelectMenuProps> = ({
         aria-haspopup="listbox"
         aria-expanded={open}
       >
-        <span className={`block truncate ${current ? 'text-slate-900' : 'text-slate-400'}`}>
+        <span className={`block truncate ${current ? 'text-text-primary' : 'text-text-tertiary'}`}>
           {current ? current.label : placeholder}
         </span>
-        <svg className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-500" viewBox="0 0 20 20" fill="currentColor">
+        <svg className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-text-tertiary" viewBox="0 0 20 20" fill="currentColor">
           <path fillRule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 10.94l3.71-3.71a.75.75 0 111.06 1.06l-4.24 4.24a.75.75 0 01-1.06 0L5.21 8.29a.75.75 0 01.02-1.08z" clipRule="evenodd" />
         </svg>
       </button>
       {open && (
         <div
           ref={listRef}
-          className="absolute z-[100] mt-2 w-full rounded-2xl border border-slate-200 bg-white shadow-lg overflow-hidden"
+          className="absolute z-[100] mt-2 w-full rounded-2xl border border-border bg-surface-primary shadow-lg overflow-hidden"
           role="listbox"
           onClick={stopPropagation}
           onMouseDown={stopPropagation}
         >
           {searchable && (
-            <div className="p-2 border-b border-slate-100">
+            <div className="p-2 border-b border-border">
               <input
                 autoFocus
                 value={query}
@@ -125,7 +125,7 @@ export const SelectMenu: React.FC<SelectMenuProps> = ({
                 onClick={stopPropagation}
                 onMouseDown={stopPropagation}
                 placeholder="Search…"
-                className="w-full h-9 px-3 rounded-xl ring-1 ring-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                className="w-full h-9 px-3 rounded-xl ring-1 ring-border focus:outline-none focus:ring-2 focus:ring-primary-500 bg-surface-primary"
               />
             </div>
           )}
@@ -143,14 +143,14 @@ export const SelectMenu: React.FC<SelectMenuProps> = ({
                 }}
                 onMouseDown={stopPropagation}
                 className={`w-full text-left px-3 py-2 text-[14px] ${
-                  idx === activeIndex ? 'bg-blue-50 text-blue-700' : 'text-slate-800'
-                } ${opt.disabled ? 'opacity-50 cursor-not-allowed' : 'hover:bg-slate-50'} `}
+                  idx === activeIndex ? 'bg-blue-50 text-blue-700' : 'text-text-primary'
+                } ${opt.disabled ? 'opacity-50 cursor-not-allowed' : 'hover:bg-surface-tertiary'} `}
               >
                 {opt.label}
               </button>
             ))}
             {filtered.length === 0 && (
-              <div className="px-3 py-3 text-sm text-slate-500">No results</div>
+              <div className="px-3 py-3 text-sm text-text-tertiary">No results</div>
             )}
           </div>
         </div>

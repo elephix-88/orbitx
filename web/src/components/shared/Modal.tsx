@@ -16,9 +16,9 @@ import { cn } from '@/lib/utils';
 const modalVariants = cva(
   [
     'relative w-full flex flex-col',
-    'bg-white dark:bg-slate-950',
-    'rounded-sm shadow-sm',
-    'border border-[#A8DADC] dark:border-slate-800',
+    'bg-surface-primary',
+    'rounded-lg shadow-md',
+    'border border-border',
   ],
   {
     variants: {
@@ -148,11 +148,11 @@ export const Modal = ({
       >
         {/* Header */}
         {!headerless && (title || showCloseButton) && (
-          <div className="flex flex-col space-y-1.5 text-left bg-[#1D3557] text-white -m-6 mb-0 px-6 py-4">
+          <div className="flex flex-col space-y-1.5 text-left border-b border-border pb-4">
             {title && (
               <h2
                 id="modal-title"
-                className="text-lg font-bold uppercase tracking-wider leading-none text-white"
+                className="text-lg font-semibold leading-none text-text-primary"
               >
                 {title}
               </h2>
@@ -160,7 +160,7 @@ export const Modal = ({
             {description && (
               <p
                 id="modal-description"
-                className="text-sm text-[#A8DADC]"
+                className="text-sm text-text-secondary"
               >
                 {description}
               </p>
@@ -174,11 +174,10 @@ export const Modal = ({
             onClick={onClose}
             className={cn(
               "absolute right-4 top-4",
-              "rounded-sm opacity-90 ring-offset-white transition-opacity",
-              "hover:opacity-100 text-white",
-              "focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-[#1D3557]",
-              "disabled:pointer-events-none",
-              "dark:ring-offset-slate-950 dark:focus:ring-slate-300"
+              "rounded-md transition-colors",
+              "text-text-tertiary hover:text-text-primary hover:bg-surface-tertiary",
+              "focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2",
+              "disabled:pointer-events-none"
             )}
             aria-label="Close"
           >
@@ -232,20 +231,20 @@ export const Dialog = ({
 }: DialogProps) => {
   const variantStyles = {
     default: {
-      iconBg: 'bg-slate-100 dark:bg-slate-800',
-      iconColor: 'text-slate-600 dark:text-slate-400',
+      iconBg: 'bg-surface-tertiary',
+      iconColor: 'text-text-secondary',
     },
     danger: {
-      iconBg: 'bg-red-100 dark:bg-red-900/20',
-      iconColor: 'text-red-600 dark:text-red-500',
+      iconBg: 'bg-error-light',
+      iconColor: 'text-error-dark',
     },
     warning: {
-      iconBg: 'bg-amber-100 dark:bg-amber-900/20',
-      iconColor: 'text-amber-600 dark:text-amber-500',
+      iconBg: 'bg-warning-light',
+      iconColor: 'text-warning-dark',
     },
     success: {
-      iconBg: 'bg-emerald-100 dark:bg-emerald-900/20',
-      iconColor: 'text-emerald-600 dark:text-emerald-500',
+      iconBg: 'bg-success-light',
+      iconColor: 'text-success-dark',
     },
   };
 
@@ -265,18 +264,18 @@ export const Dialog = ({
         <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-start">
           {icon && (
             <div className={cn(
-              "flex h-10 w-10 shrink-0 items-center justify-center rounded-sm",
+              "flex h-10 w-10 shrink-0 items-center justify-center rounded-md",
               styles.iconBg
             )}>
               <div className={styles.iconColor}>{icon}</div>
             </div>
           )}
           <div className="flex-1 text-center sm:text-left">
-            <h3 className="text-lg font-semibold text-slate-950 dark:text-slate-50">
+            <h3 className="text-lg font-semibold text-text-primary">
               {title}
             </h3>
             {description && (
-              <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+              <p className="mt-2 text-sm text-text-secondary">
                 {description}
               </p>
             )}

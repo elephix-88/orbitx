@@ -579,7 +579,7 @@ export const NodeValidationIndicator: React.FC<NodeValidationIndicatorProps> = (
           className={cn('flex items-center justify-center', sizeClasses)}
           title={showTooltip ? tooltip : undefined}
         >
-          <div className={cn('rounded-full bg-slate-300', dotSize)} />
+          <div className={cn('rounded-full bg-neutral-300', dotSize)} />
         </div>
       );
   }
@@ -629,8 +629,8 @@ export const ValidationSummary: React.FC<ValidationSummaryProps> = ({
         </span>
       )}
       {summary.unconfigured > 0 && (
-        <span className="flex items-center gap-1 text-slate-500">
-          <div className="w-2 h-2 rounded-full bg-slate-300" />
+        <span className="flex items-center gap-1 text-text-secondary">
+          <div className="w-2 h-2 rounded-full bg-neutral-300" />
           {summary.unconfigured}
         </span>
       )}

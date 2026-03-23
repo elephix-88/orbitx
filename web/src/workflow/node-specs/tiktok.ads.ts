@@ -10,7 +10,7 @@ export const tiktokAdsSpec: NodeSpec = {
   displayName: 'TikTok Ads',
   category: 'SOURCE',
   icon: 'TikTok',
-  color: '#EE1D52',
+  color: '#3B82F6',
   ports: [{ id: 'out', name: 'Output', io: 'output', dataType: 'records' }],
   defaults: { connection_id: '', ad_account_id: [], fields: [], time_config: { time_preset: 'last_7_days', time_increment: 1 } },
   paramsSchema: z.object({

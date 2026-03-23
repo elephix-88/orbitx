@@ -381,7 +381,7 @@ export const ExecutionLogPanel = ({ workflowId }: ExecutionLogPanelProps) => {
             animate={{ height: panelHeight }}
             exit={{ height: 0 }}
             transition={{ type: 'spring', damping: 30, stiffness: 400 }}
-            className="bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-700 relative"
+            className="bg-surface-primary border-t border-border relative"
             style={{ height: panelHeight }}
           >
             {/* Resize Handle */}
@@ -394,7 +394,7 @@ export const ExecutionLogPanel = ({ workflowId }: ExecutionLogPanelProps) => {
               )}
             >
               <GripHorizontal className={cn(
-                'w-8 h-3 text-slate-300 dark:text-slate-600 transition-colors',
+                'w-8 h-3 text-text-tertiary transition-colors',
                 'group-hover:text-blue-500',
                 isResizing && 'text-blue-500'
               )} />
@@ -402,9 +402,9 @@ export const ExecutionLogPanel = ({ workflowId }: ExecutionLogPanelProps) => {
 
             <div className="h-full flex pt-2 overflow-hidden">
               {/* Execution List */}
-              <div className="w-72 border-r border-slate-200 dark:border-slate-700 flex flex-col h-full overflow-hidden">
-                <div className="flex items-center justify-between px-3 py-2 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50">
-                  <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+              <div className="w-72 border-r border-border flex flex-col h-full overflow-hidden">
+                <div className="flex items-center justify-between px-3 py-2 border-b border-border-subtle bg-surface-secondary">
+                  <span className="text-xs font-semibold text-text-secondary uppercase tracking-wider">
                     Runs {hasActiveFilters && `(${filteredExecutions.length}/${executions.length})`}
                   </span>
                   <div className="flex items-center gap-1">
@@ -413,8 +413,8 @@ export const ExecutionLogPanel = ({ workflowId }: ExecutionLogPanelProps) => {
                       className={cn(
                         'p-1 rounded transition-colors',
                         showFilters || hasActiveFilters
-                          ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-500'
-                          : 'hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-400'
+                          ? 'bg-info-light text-info'
+                          : 'hover:bg-surface-tertiary text-text-tertiary'
                       )}
                       title="Filter"
                     >
@@ -423,9 +423,9 @@ export const ExecutionLogPanel = ({ workflowId }: ExecutionLogPanelProps) => {
                     <button
                       onClick={fetchData}
                       disabled={loading}
-                      className="p-1 hover:bg-slate-200 dark:hover:bg-slate-700 rounded transition-colors"
+                      className="p-1 hover:bg-surface-tertiary rounded transition-colors"
                     >
-                      <RotateCcw className={cn('w-3.5 h-3.5 text-slate-400', loading && 'animate-spin')} />
+                      <RotateCcw className={cn('w-3.5 h-3.5 text-text-tertiary', loading && 'animate-spin')} />
                     </button>
                   </div>
                 </div>
@@ -438,12 +438,12 @@ export const ExecutionLogPanel = ({ workflowId }: ExecutionLogPanelProps) => {
                       animate={{ height: 'auto', opacity: 1 }}
                       exit={{ height: 0, opacity: 0 }}
                       transition={{ duration: 0.15 }}
-                      className="overflow-hidden border-b border-slate-100 dark:border-slate-800"
+                      className="overflow-hidden border-b border-border-subtle"
                     >
-                      <div className="p-2.5 space-y-2 bg-slate-50/50 dark:bg-slate-800/30">
+                      <div className="p-2.5 space-y-2 bg-surface-secondary/50">
                         {/* Time Range - Button Pills */}
                         <div>
-                          <label className="flex items-center gap-1 text-[10px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
+                          <label className="flex items-center gap-1 text-[10px] font-medium text-text-secondary uppercase tracking-wider mb-1">
                             <Calendar className="w-3 h-3" />
                             Time
                           </label>
@@ -455,8 +455,8 @@ export const ExecutionLogPanel = ({ workflowId }: ExecutionLogPanelProps) => {
                                 className={cn(
                                   'px-2 py-0.5 text-[11px] font-medium rounded transition-all',
                                   timeRange === opt.value
-                                    ? 'bg-blue-500 text-white shadow-sm'
-                                    : 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'
+                                    ? 'bg-primary-600 text-white shadow-sm'
+                                    : 'bg-surface-primary border border-border text-text-secondary hover:bg-surface-secondary'
                                 )}
                               >
                                 {opt.label}
@@ -492,7 +492,7 @@ export const ExecutionLogPanel = ({ workflowId }: ExecutionLogPanelProps) => {
 
                         {/* Status Filter */}
                         <div>
-                          <label className="flex items-center gap-1 text-[10px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
+                          <label className="flex items-center gap-1 text-[10px] font-medium text-text-secondary uppercase tracking-wider mb-1">
                             <CheckCircle2 className="w-3 h-3" />
                             Status
                           </label>
@@ -504,8 +504,8 @@ export const ExecutionLogPanel = ({ workflowId }: ExecutionLogPanelProps) => {
                                 className={cn(
                                   'px-2 py-0.5 text-[11px] font-medium rounded transition-all',
                                   statusFilter === opt.value
-                                    ? 'bg-blue-500 text-white shadow-sm'
-                                    : 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'
+                                    ? 'bg-primary-600 text-white shadow-sm'
+                                    : 'bg-surface-primary border border-border text-text-secondary hover:bg-surface-secondary'
                                 )}
                               >
                                 {opt.label}
@@ -533,7 +533,7 @@ export const ExecutionLogPanel = ({ workflowId }: ExecutionLogPanelProps) => {
                 </AnimatePresence>
                 <div className="flex-1 overflow-y-auto">
                   {!workflowId ? (
-                    <div className="flex flex-col items-center justify-center h-full text-slate-400 text-sm p-4 text-center">
+                    <div className="flex flex-col items-center justify-center h-full text-text-tertiary text-sm p-4 text-center">
                       <List className="w-8 h-8 mb-2 opacity-50" />
                       Save workflow to see logs
                     </div>
@@ -547,7 +547,7 @@ export const ExecutionLogPanel = ({ workflowId }: ExecutionLogPanelProps) => {
                       {error}
                     </div>
                   ) : filteredExecutions.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center h-full text-slate-400 text-sm p-4 text-center">
+                    <div className="flex flex-col items-center justify-center h-full text-text-tertiary text-sm p-4 text-center">
                       <Clock className="w-8 h-8 mb-2 opacity-50" />
                       {hasActiveFilters ? 'No matching executions' : 'No executions yet'}
                     </div>
@@ -564,10 +564,10 @@ export const ExecutionLogPanel = ({ workflowId }: ExecutionLogPanelProps) => {
                             isSelected ? null : exec.execution_id
                           )}
                           className={cn(
-                            'w-full px-3 py-2.5 flex items-center gap-3 text-left transition-colors border-b border-slate-100 dark:border-slate-800',
+                            'w-full px-3 py-2.5 flex items-center gap-3 text-left transition-colors border-b border-border-subtle',
                             isSelected 
-                              ? 'bg-blue-50 dark:bg-blue-900/20' 
-                              : 'hover:bg-slate-50 dark:hover:bg-slate-800/50'
+                              ? 'bg-primary-50'
+                              : 'hover:bg-surface-secondary'
                           )}
                         >
                           <div className={cn('p-1.5 rounded-lg', config.bg)}>
@@ -582,11 +582,11 @@ export const ExecutionLogPanel = ({ workflowId }: ExecutionLogPanelProps) => {
                               <span className={cn('text-sm font-medium', config.color)}>
                                 {config.text}
                               </span>
-                              <span className="text-xs text-slate-400">
+                              <span className="text-xs text-text-tertiary">
                                 {formatDuration(exec.duration)}
                               </span>
                             </div>
-                            <span className="text-xs text-slate-500">
+                            <span className="text-xs text-text-secondary">
                               {formatRelativeTime(exec.start_time)}
                             </span>
                           </div>
@@ -600,7 +600,7 @@ export const ExecutionLogPanel = ({ workflowId }: ExecutionLogPanelProps) => {
               {/* Detail View */}
               <div className="flex-1 overflow-y-auto overflow-x-hidden p-4">
                 {!selectedData ? (
-                  <div className="h-full flex flex-col items-center justify-center text-slate-400">
+                  <div className="h-full flex flex-col items-center justify-center text-text-tertiary">
                     <Zap className="w-10 h-10 mb-3 opacity-30" />
                     <p className="text-sm">Select an execution to view details</p>
                   </div>
@@ -609,20 +609,20 @@ export const ExecutionLogPanel = ({ workflowId }: ExecutionLogPanelProps) => {
                     {/* Summary */}
                     <div className="flex items-center gap-6 text-sm flex-wrap">
                       <div className="flex items-center gap-2">
-                        <Play className="w-4 h-4 text-slate-400" />
-                        <span className="text-slate-600 dark:text-slate-300">
+                        <Play className="w-4 h-4 text-text-tertiary" />
+                        <span className="text-text-secondary">
                           {selectedData.triggered_by}
                         </span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Clock className="w-4 h-4 text-slate-400" />
-                        <span className="text-slate-600 dark:text-slate-300">
+                        <Clock className="w-4 h-4 text-text-tertiary" />
+                        <span className="text-text-secondary">
                           {formatTimestamp(selectedData.start_time)}
                         </span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Timer className="w-4 h-4 text-slate-400" />
-                        <span className="text-slate-600 dark:text-slate-300">
+                        <Timer className="w-4 h-4 text-text-tertiary" />
+                        <span className="text-text-secondary">
                           {formatDuration(selectedData.duration)}
                         </span>
                       </div>
@@ -636,7 +636,7 @@ export const ExecutionLogPanel = ({ workflowId }: ExecutionLogPanelProps) => {
                       )}
                       <div className="flex items-center gap-2">
                         <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                        <span className="text-slate-600 dark:text-slate-300">
+                        <span className="text-text-secondary">
                           {selectedData.successful_nodes}/{selectedData.total_nodes}
                         </span>
                         {selectedData.failed_nodes > 0 && (
@@ -661,12 +661,12 @@ export const ExecutionLogPanel = ({ workflowId }: ExecutionLogPanelProps) => {
                       <div className="overflow-x-auto">
                         <table className="w-full text-sm">
                           <thead>
-                            <tr className="border-b border-slate-200 dark:border-slate-700">
-                              <th className="text-left py-2 px-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</th>
-                              <th className="text-left py-2 px-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Node</th>
-                              <th className="text-left py-2 px-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Type</th>
-                              <th className="text-right py-2 px-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Records</th>
-                              <th className="text-right py-2 px-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Duration</th>
+                            <tr className="border-b border-border">
+                              <th className="text-left py-2 px-3 text-xs font-semibold text-text-secondary uppercase tracking-wider">Status</th>
+                              <th className="text-left py-2 px-3 text-xs font-semibold text-text-secondary uppercase tracking-wider">Node</th>
+                              <th className="text-left py-2 px-3 text-xs font-semibold text-text-secondary uppercase tracking-wider">Type</th>
+                              <th className="text-right py-2 px-3 text-xs font-semibold text-text-secondary uppercase tracking-wider">Records</th>
+                              <th className="text-right py-2 px-3 text-xs font-semibold text-text-secondary uppercase tracking-wider">Duration</th>
                             </tr>
                           </thead>
                           <tbody>
@@ -679,7 +679,7 @@ export const ExecutionLogPanel = ({ workflowId }: ExecutionLogPanelProps) => {
                               const recordsCount = getRecordsCount(step.output);
 
                               return (
-                                <tr key={step.node_instance_id} className="border-b border-slate-100 dark:border-slate-800">
+                                <tr key={step.node_instance_id} className="border-b border-border-subtle">
                                   <td className="py-2 px-3">
                                     <div className="flex items-center gap-2">
                                       <StepIcon className={cn(
@@ -692,18 +692,18 @@ export const ExecutionLogPanel = ({ workflowId }: ExecutionLogPanelProps) => {
                                       </span>
                                     </div>
                                   </td>
-                                  <td className="py-2 px-3 font-medium text-slate-900 dark:text-slate-100">
+                                  <td className="py-2 px-3 font-medium text-text-primary">
                                     {step.node_id}
                                   </td>
                                   <td className="py-2 px-3">
-                                    <span className="px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-700 text-xs text-slate-600 dark:text-slate-300">
+                                    <span className="px-2 py-0.5 rounded bg-surface-secondary text-xs text-text-secondary">
                                       {step.node_type}
                                     </span>
                                   </td>
-                                  <td className="py-2 px-3 text-right text-slate-600 dark:text-slate-300 font-medium">
+                                  <td className="py-2 px-3 text-right text-text-secondary font-medium">
                                     {recordsCount !== null ? formatNumber(recordsCount) : '-'}
                                   </td>
-                                  <td className="py-2 px-3 text-right text-slate-500">
+                                  <td className="py-2 px-3 text-right text-text-secondary">
                                     {formatDuration(stepDuration)}
                                   </td>
                                 </tr>
@@ -726,16 +726,16 @@ export const ExecutionLogPanel = ({ workflowId }: ExecutionLogPanelProps) => {
         onClick={() => setExpanded(!expanded)}
         className={cn(
           'w-full h-8 flex items-center justify-center gap-2 transition-colors',
-          'bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700',
-          'border-t border-slate-200 dark:border-slate-700'
+          'bg-surface-secondary hover:bg-surface-tertiary',
+          'border-t border-border'
         )}
       >
         {expanded ? (
-          <ChevronDown className="w-4 h-4 text-slate-500" />
+          <ChevronDown className="w-4 h-4 text-text-secondary" />
         ) : (
-          <ChevronUp className="w-4 h-4 text-slate-500" />
+          <ChevronUp className="w-4 h-4 text-text-secondary" />
         )}
-        <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
+        <span className="text-xs font-medium text-text-secondary">
           Execution Logs
         </span>
         {!expanded && stats.total > 0 && (
@@ -747,8 +747,8 @@ export const ExecutionLogPanel = ({ workflowId }: ExecutionLogPanelProps) => {
               </span>
             )}
             <span className="text-xs text-emerald-500">{stats.success}</span>
-            <span className="text-xs text-slate-400">/</span>
-            <span className="text-xs text-slate-500">{stats.total}</span>
+            <span className="text-xs text-text-tertiary">/</span>
+            <span className="text-xs text-text-secondary">{stats.total}</span>
             {stats.failed > 0 && (
               <span className="text-xs text-red-500">({stats.failed} failed)</span>
             )}

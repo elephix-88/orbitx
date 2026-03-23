@@ -49,7 +49,7 @@ export const RouteProgressBar: React.FC<RouteProgressBarProps> = ({ minDurationM
   return (
     <div className="fixed top-0 left-0 right-0 z-[1100] h-0.5">
       <div
-        className="h-full bg-blue-500 transition-[width] duration-200 ease-out"
+        className="h-full bg-primary-600 transition-[width] duration-200 ease-out"
         style={{ width: `${width}%` }}
       />
     </div>

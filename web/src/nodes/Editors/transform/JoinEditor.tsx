@@ -171,10 +171,10 @@ const SortableSourceCard: React.FC<SortableSourceCardProps> = ({
         isDragging && 'opacity-50 shadow-lg z-50',
         isOverlayDragging && 'shadow-2xl',
         isBase
-          ? 'border-emerald-200 dark:border-emerald-800/50 bg-gradient-to-br from-emerald-50/50 to-white dark:from-emerald-900/10 dark:to-slate-900/50'
+          ? 'border-emerald-200 dark:border-emerald-800/50 bg-gradient-to-br from-emerald-50/50 to-white dark:from-emerald-900/10 dark:to-surface-primary/50'
           : isConfigured
             ? 'border-blue-200 dark:border-blue-800/50 bg-blue-50/30 dark:bg-blue-900/10'
-            : 'border-slate-200 dark:border-slate-700/50 bg-white dark:bg-slate-900/30'
+            : 'border-border bg-surface-primary dark:bg-surface-primary/30'
       )}
     >
       {/* Header */}
@@ -184,7 +184,7 @@ const SortableSourceCard: React.FC<SortableSourceCardProps> = ({
           ? 'border-emerald-200/50 dark:border-emerald-800/30 bg-emerald-50/50 dark:bg-emerald-900/20'
           : isConfigured
             ? 'border-blue-200/50 dark:border-blue-800/30 bg-blue-50/50 dark:bg-blue-900/20'
-            : 'border-slate-200/50 dark:border-slate-700/30'
+            : 'border-border/50'
       )}>
         <div className="flex items-center gap-3">
           {/* Drag Handle */}
@@ -192,7 +192,7 @@ const SortableSourceCard: React.FC<SortableSourceCardProps> = ({
             type="button"
             {...attributes}
             {...listeners}
-            className="touch-none text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors cursor-grab active:cursor-grabbing p-1 -ml-1 rounded hover:bg-slate-100 dark:hover:bg-slate-800"
+            className="touch-none text-text-tertiary hover:text-text-secondary transition-colors cursor-grab active:cursor-grabbing p-1 -ml-1 rounded hover:bg-surface-tertiary"
           >
             <GripVertical size={16} />
           </button>
@@ -204,15 +204,15 @@ const SortableSourceCard: React.FC<SortableSourceCardProps> = ({
               ? 'bg-emerald-500 text-white'
               : isConfigured
                 ? 'bg-blue-500 text-white'
-                : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-400'
+                : 'bg-surface-secondary text-text-secondary'
           )}>
             {isBase ? <Crown size={14} /> : index}
           </div>
 
           {/* Source Name */}
           <div className="flex items-center gap-2">
-            {!isBase && <ArrowRight size={14} className="text-slate-400" />}
-            <span className="font-medium text-slate-900 dark:text-slate-200">{source.name}</span>
+            {!isBase && <ArrowRight size={14} className="text-text-tertiary" />}
+            <span className="font-medium text-text-primary">{source.name}</span>
           </div>
         </div>
 
@@ -253,7 +253,7 @@ const SortableSourceCard: React.FC<SortableSourceCardProps> = ({
                   <button
                     type="button"
                     onClick={() => handleRemoveKey(keyIndex)}
-                    className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                    className="p-2 text-text-tertiary hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
                   >
                     <X size={16} />
                   </button>
@@ -287,7 +287,7 @@ const SortableSourceCard: React.FC<SortableSourceCardProps> = ({
                     disabled={baseColumns.length === 0}
                   />
                 </div>
-                <span className="pb-2 text-slate-400">=</span>
+                <span className="pb-2 text-text-tertiary">=</span>
                 <div className="flex-1">
                   <Select
                     label={keyIndex === 0 ? "Source Key" : undefined}
@@ -305,7 +305,7 @@ const SortableSourceCard: React.FC<SortableSourceCardProps> = ({
                   <button
                     type="button"
                     onClick={() => handleRemoveKey(keyIndex)}
-                    className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                    className="p-2 text-text-tertiary hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
                   >
                     <X size={16} />
                   </button>
@@ -354,7 +354,7 @@ const DragOverlayCard: React.FC<{ source: SourceItem; index: number; isConfigure
         ? 'border-emerald-300 bg-emerald-50 dark:bg-emerald-900/30'
         : isConfigured
           ? 'border-blue-300 bg-blue-50 dark:bg-blue-900/30'
-          : 'border-slate-300 bg-white dark:bg-slate-800'
+          : 'border-border bg-surface-primary'
     )}>
       <div className={cn(
         'px-4 py-3 flex items-center gap-3',
@@ -362,9 +362,9 @@ const DragOverlayCard: React.FC<{ source: SourceItem; index: number; isConfigure
           ? 'bg-emerald-100/50 dark:bg-emerald-900/40'
           : isConfigured
             ? 'bg-blue-100/50 dark:bg-blue-900/40'
-            : 'bg-slate-50 dark:bg-slate-700/50'
+            : 'bg-surface-secondary'
       )}>
-        <div className="text-slate-400">
+        <div className="text-text-tertiary">
           <GripVertical size={16} />
         </div>
         <div className={cn(
@@ -373,11 +373,11 @@ const DragOverlayCard: React.FC<{ source: SourceItem; index: number; isConfigure
             ? 'bg-emerald-500 text-white'
             : isConfigured
               ? 'bg-blue-500 text-white'
-              : 'bg-slate-200 dark:bg-slate-600 text-slate-600 dark:text-slate-300'
+              : 'bg-surface-secondary text-text-secondary'
         )}>
           {isBase ? <Crown size={14} /> : index}
         </div>
-        <span className="font-medium text-slate-900 dark:text-slate-100">{source.name}</span>
+        <span className="font-medium text-text-primary">{source.name}</span>
       </div>
     </div>
   );
@@ -715,14 +715,14 @@ const JoinEditor: React.FC<JoinEditorProps> = ({
         {hasEnoughUpstream ? (
           <>
             {/* Connected Sources Info */}
-            <div className="flex items-center justify-between px-3 py-2 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/50">
+            <div className="flex items-center justify-between px-3 py-2 rounded-xl bg-surface-secondary border border-border">
               <div className="flex items-center gap-2">
-                <Database size={16} className="text-slate-500" />
-                <span className="text-sm text-slate-600 dark:text-slate-400">
-                  <span className="font-semibold text-slate-900 dark:text-slate-200">{upstreamNodes.length}</span> sources connected
+                <Database size={16} className="text-text-tertiary" />
+                <span className="text-sm text-text-secondary">
+                  <span className="font-semibold text-text-primary">{upstreamNodes.length}</span> sources connected
                 </span>
               </div>
-              <span className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1">
+              <span className="text-xs text-text-tertiary flex items-center gap-1">
                 <GripVertical size={12} />
                 Drag to reorder
               </span>
@@ -774,22 +774,22 @@ const JoinEditor: React.FC<JoinEditorProps> = ({
 
             {/* Join Preview */}
             {hasBaseKeys && otherSources.some((s) => sourceConfigs[s.id]?.keys?.some(k => k.left && k.right)) && (
-              <div className="rounded-xl border border-slate-200 dark:border-slate-700/50 bg-gradient-to-br from-slate-50 to-transparent dark:from-slate-800/30 overflow-hidden">
-                <div className="px-4 py-2.5 border-b border-slate-200/50 dark:border-slate-700/30 bg-slate-50/50 dark:bg-slate-800/30">
+              <div className="rounded-xl border border-border bg-gradient-to-br from-surface-secondary to-transparent overflow-hidden">
+                <div className="px-4 py-2.5 border-b border-border/50 bg-surface-secondary/50">
                   <div className="flex items-center gap-2">
-                    <Columns3 size={14} className="text-slate-500" />
-                    <span className="text-xs font-semibold text-slate-600 dark:text-slate-400 uppercase tracking-wider">Join Preview</span>
+                    <Columns3 size={14} className="text-text-tertiary" />
+                    <span className="text-xs font-semibold text-text-secondary uppercase tracking-wider">Join Preview</span>
                   </div>
                 </div>
                 <div className="p-4 space-y-2">
                   {/* Base table row */}
                   <div className="flex items-center gap-2 text-sm flex-wrap">
-                    <span className="text-xs font-medium text-slate-500 w-12">Start</span>
+                    <span className="text-xs font-medium text-text-tertiary w-12">Start</span>
                     <code className="px-2 py-1 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 font-mono text-xs">
                       {baseSource?.name}
                     </code>
-                    <span className="text-slate-400">on</span>
-                    <code className="px-2 py-0.5 rounded bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 font-mono text-xs">
+                    <span className="text-text-tertiary">on</span>
+                    <code className="px-2 py-0.5 rounded bg-surface-secondary text-text-secondary font-mono text-xs">
                       {baseKeys.filter(k => k.left).map(k => k.left).join(', ')}
                     </code>
                   </div>
@@ -805,13 +805,13 @@ const JoinEditor: React.FC<JoinEditorProps> = ({
                         .join(' AND ');
                       return (
                         <div key={source.id} className="flex items-center gap-2 text-sm flex-wrap">
-                          <span className="text-xs font-medium text-slate-500 w-12">{idx === 0 ? 'Join' : 'Then'}</span>
+                          <span className="text-xs font-medium text-text-tertiary w-12">{idx === 0 ? 'Join' : 'Then'}</span>
                           <JoinTypeBadge type={config.joinType} compact />
                           <code className="px-2 py-1 rounded-lg bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 font-mono text-xs">
                             {source.name}
                           </code>
-                          <span className="text-slate-400">on</span>
-                          <code className="px-2 py-0.5 rounded bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 font-mono text-xs">
+                          <span className="text-text-tertiary">on</span>
+                          <code className="px-2 py-0.5 rounded bg-surface-secondary text-text-secondary font-mono text-xs">
                             {keyConditions}
                           </code>
                         </div>
@@ -823,16 +823,16 @@ const JoinEditor: React.FC<JoinEditorProps> = ({
 
             {/* Join Type Reference */}
             <details className="group">
-              <summary className="flex items-center gap-2 text-xs text-slate-500 cursor-pointer hover:text-slate-700 dark:hover:text-slate-300 transition-colors">
+              <summary className="flex items-center gap-2 text-xs text-text-tertiary cursor-pointer hover:text-text-secondary transition-colors">
                 <span className="group-open:rotate-90 transition-transform">▶</span>
                 Join type reference
               </summary>
-              <div className="mt-3 p-3 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700/50">
+              <div className="mt-3 p-3 rounded-xl bg-surface-secondary border border-border">
                 <div className="grid grid-cols-1 gap-2">
                   {JOIN_TYPES.map((jt) => (
                     <div key={jt.value} className="flex items-center gap-3">
                       <JoinTypeBadge type={jt.value} />
-                      <span className="text-xs text-slate-600 dark:text-slate-400">{jt.description}</span>
+                      <span className="text-xs text-text-secondary">{jt.description}</span>
                     </div>
                   ))}
                 </div>
@@ -853,18 +853,18 @@ const JoinEditor: React.FC<JoinEditorProps> = ({
           </>
         ) : (
           <div className="text-center py-12">
-            <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-700 flex items-center justify-center">
-              <Database size={28} className="text-slate-400" />
+            <div className="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-surface-secondary to-surface-tertiary flex items-center justify-center">
+              <Database size={28} className="text-text-tertiary" />
             </div>
-            <p className="text-base font-medium text-slate-900 dark:text-slate-200 mb-1">
+            <p className="text-base font-medium text-text-primary mb-1">
               Connect at least 2 sources
             </p>
-            <p className="text-sm text-slate-500 dark:text-slate-400 max-w-xs mx-auto">
+            <p className="text-sm text-text-tertiary max-w-xs mx-auto">
               Drag connections from multiple source nodes to this Join node to configure your join.
             </p>
-            <div className="mt-6 inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800">
-              <span className="text-sm text-slate-600 dark:text-slate-400">Currently connected:</span>
-              <span className="text-sm font-semibold text-slate-900 dark:text-slate-200">{upstreamNodes.length} source(s)</span>
+            <div className="mt-6 inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-surface-secondary">
+              <span className="text-sm text-text-secondary">Currently connected:</span>
+              <span className="text-sm font-semibold text-text-primary">{upstreamNodes.length} source(s)</span>
             </div>
           </div>
         )}

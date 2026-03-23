@@ -498,26 +498,25 @@ const ReactFlowCanvasInner: React.FC<ReactFlowCanvasProps> = ({
           animated: true,
         }}
         connectionLineStyle={{
-          stroke: '#94a3b8',
+          stroke: 'rgb(var(--text-tertiary))',
           strokeWidth: 2,
           strokeDasharray: '6 6',
         }}
         proOptions={{ hideAttribution: true }}
-        className="bg-slate-50 dark:bg-slate-900"
+        className="bg-surface-secondary"
       >
         <Background
           variant={BackgroundVariant.Dots}
           gap={24}
           size={1}
-          color="rgba(148, 163, 184, 0.3)"
-          className="dark:opacity-60"
+          color="rgb(var(--text-tertiary) / 0.3)"
         />
         <Controls
           showZoom={true}
           showFitView={true}
           showInteractive={false}
           position="bottom-right"
-          className="!bg-white dark:!bg-slate-900 !border-slate-200/50 dark:!border-slate-700/50 !rounded-xl !shadow-sm"
+          className="!bg-surface-primary !border-border !rounded-xl !shadow-sm"
         />
 
         {/* Auto-arrange button panel */}
@@ -529,9 +528,9 @@ const ReactFlowCanvasInner: React.FC<ReactFlowCanvasProps> = ({
             onClick={handleAutoArrange}
             disabled={workflowNodes.length === 0}
             className={cn(
-              'p-1.5 rounded-lg text-slate-500 hover:text-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800',
+              'p-1.5 rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-tertiary',
               'disabled:opacity-30 disabled:cursor-not-allowed transition-all duration-200',
-              'bg-white dark:bg-slate-900 border border-slate-200/50 dark:border-slate-700/50 shadow-sm'
+              'bg-surface-primary border border-border shadow-sm'
             )}
             title="Auto Arrange"
           >
@@ -543,26 +542,26 @@ const ReactFlowCanvasInner: React.FC<ReactFlowCanvasProps> = ({
         {workflowNodes.length === 0 && (
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
             <div className="text-center max-w-sm">
-              <div className="w-14 h-14 mx-auto mb-5 bg-slate-100 dark:bg-slate-800 rounded-2xl flex items-center justify-center">
-                <Zap className="w-6 h-6 text-slate-400" />
+              <div className="w-14 h-14 mx-auto mb-5 bg-surface-tertiary rounded-2xl flex items-center justify-center">
+                <Zap className="w-6 h-6 text-text-tertiary" />
               </div>
-              <h3 className="text-lg font-semibold text-slate-700 dark:text-slate-200 mb-2">
+              <h3 className="text-lg font-semibold text-text-primary mb-2">
                 Start your pipeline
               </h3>
-              <p className="text-sm text-slate-500 dark:text-slate-400 mb-5">
+              <p className="text-sm text-text-secondary mb-5">
                 Drag nodes from the left panel to build your data workflow
               </p>
-              <div className="flex justify-center gap-6 text-xs text-slate-400">
+              <div className="flex justify-center gap-6 text-xs text-text-tertiary">
                 <span className="flex items-center gap-1.5">
-                  <div className="w-2 h-2 rounded-full bg-blue-500" />
+                  <div className="w-2 h-2 rounded-full bg-info" />
                   Source
                 </span>
                 <span className="flex items-center gap-1.5">
-                  <div className="w-2 h-2 rounded-full bg-violet-500" />
+                  <div className="w-2 h-2 rounded-full bg-warning" />
                   Transform
                 </span>
                 <span className="flex items-center gap-1.5">
-                  <div className="w-2 h-2 rounded-full bg-emerald-500" />
+                  <div className="w-2 h-2 rounded-full bg-success" />
                   Destination
                 </span>
               </div>

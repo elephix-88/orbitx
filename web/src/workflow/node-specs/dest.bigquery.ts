@@ -18,7 +18,7 @@ export const bigQueryDestSpec: NodeSpec = {
   displayName: 'BigQuery',
   category: 'DESTINATION',
   icon: 'BigQuery',
-  color: '#4285F4',
+  color: '#10B981',
   ports: [{ id: 'in', name: 'Input', io: 'input', dataType: 'records' }],
   defaults: { project_id: '', dataset: '', destination_table: '', location: 'US', insert_mode: 'append', pass_through: false },
   paramsSchema: z.object({ projectId: z.string().default(''), pass_through: z.boolean().default(false) }),

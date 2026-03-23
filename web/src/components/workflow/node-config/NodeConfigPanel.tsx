@@ -112,7 +112,7 @@ const PanelHeader: React.FC<{
       case 'destination':
         return { label: 'Destination', color: 'bg-orange-500/10 text-orange-600 dark:text-orange-400' };
       default:
-        return { label: 'Node', color: 'bg-slate-500/10 text-slate-600 dark:text-slate-400' };
+        return { label: 'Node', color: 'bg-neutral-500/10 text-text-secondary' };
     }
   };
 
@@ -122,13 +122,13 @@ const PanelHeader: React.FC<{
   const hasPlatformIcon = spec?.typeId && getNodeIcon(spec.typeId, 28) !== null;
 
   return (
-    <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-slate-700/50">
+    <div className="flex items-center justify-between px-6 py-4 border-b border-border">
       <div className="flex items-center gap-4">
         <div
           className={cn(
             "w-12 h-12 rounded-xl flex items-center justify-center shadow-lg",
             hasPlatformIcon
-              ? "bg-slate-100 dark:bg-slate-700" // Neutral background for platform logos
+              ? "bg-surface-secondary" // Neutral background for platform logos
               : cn("text-white bg-gradient-to-br", spec?.color ? '' : getNodeTypeColor())
           )}
           style={!hasPlatformIcon && spec?.color ? { background: `linear-gradient(135deg, ${spec.color}, ${spec.color}dd)` } : undefined}
@@ -138,14 +138,14 @@ const PanelHeader: React.FC<{
 
         <div>
           <div className="flex items-center gap-3">
-            <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+            <h2 className="text-lg font-semibold text-text-primary">
               {node.name}
             </h2>
             {statusIcon}
           </div>
           {/* Show alias below the main name if set */}
           {node.display_name && (
-            <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
+            <p className="text-sm text-text-secondary mt-0.5">
               {node.display_name}
             </p>
           )}
@@ -154,7 +154,7 @@ const PanelHeader: React.FC<{
               {badge.label}
             </span>
             {spec?.typeId && (
-              <span className="text-xs text-slate-400 dark:text-slate-500">
+              <span className="text-xs text-text-tertiary">
                 {spec.typeId}
               </span>
             )}
@@ -186,7 +186,7 @@ const PanelHeader: React.FC<{
 
         <button
           onClick={onClose}
-          className="p-2 text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
+          className="p-2 text-text-tertiary hover:text-text-primary hover:bg-surface-secondary rounded-lg transition-colors"
         >
           <X className="w-5 h-5" />
         </button>
@@ -208,8 +208,8 @@ const TabNavigation: React.FC<{
   ];
 
   return (
-    <div className="px-6 py-3 border-b border-slate-200 dark:border-slate-700/50">
-      <div className="flex items-center gap-1 p-1 bg-slate-100 dark:bg-slate-700/50 rounded-xl w-fit">
+    <div className="px-6 py-3 border-b border-border">
+      <div className="flex items-center gap-1 p-1 bg-surface-secondary rounded-xl w-fit">
         {tabs.map((tab) => (
           <button
             key={tab.id}
@@ -217,14 +217,14 @@ const TabNavigation: React.FC<{
             className={cn(
               "relative flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-all",
               activeTab === tab.id
-                ? "bg-white dark:bg-slate-600 text-slate-900 dark:text-slate-100 shadow-sm"
-                : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
+                ? "bg-surface-primary text-text-primary shadow-sm"
+                : "text-text-secondary hover:text-text-primary"
             )}
           >
             {tab.icon}
             <span>{tab.label}</span>
             {tab.id === 'parameters' && hasErrors && (
-              <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white dark:border-slate-800" />
+              <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-error rounded-full border-2 border-surface-primary" />
             )}
           </button>
         ))}
@@ -334,8 +334,8 @@ export const NodeConfigPanel: React.FC<NodeConfigPanelProps> = ({
         className={cn(
           "relative z-10 w-full max-w-3xl flex flex-col",
           "h-[85vh] sm:h-[80vh]", // Fixed height
-          "bg-white dark:bg-slate-800 rounded-2xl shadow-2xl",
-          "border border-slate-200 dark:border-slate-700/50",
+          "bg-surface-primary rounded-2xl shadow-2xl",
+          "border border-border",
           "overflow-hidden"
         )}
       >
@@ -377,10 +377,10 @@ export const NodeConfigPanel: React.FC<NodeConfigPanelProps> = ({
                     />
                   ) : (
                     <div className="flex flex-col items-center justify-center h-64 text-center">
-                      <div className="w-16 h-16 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center mb-4">
-                        <Settings2 className="w-8 h-8 text-slate-400" />
+                      <div className="w-16 h-16 rounded-2xl bg-surface-secondary flex items-center justify-center mb-4">
+                        <Settings2 className="w-8 h-8 text-text-tertiary" />
                       </div>
-                      <p className="text-sm text-slate-500 dark:text-slate-400">
+                      <p className="text-sm text-text-secondary">
                         No configuration available for this node type.
                       </p>
                     </div>
@@ -423,9 +423,9 @@ export const NodeConfigPanel: React.FC<NodeConfigPanelProps> = ({
                 <div className="p-6 space-y-6">
                   {/* Node Alias */}
                   <div className="space-y-2">
-                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+                    <label className="block text-sm font-medium text-text-secondary">
                       Alias
-                      <span className="ml-2 text-xs font-normal text-slate-400">(optional)</span>
+                      <span className="ml-2 text-xs font-normal text-text-tertiary">(optional)</span>
                     </label>
                     <input
                       type="text"
@@ -433,22 +433,22 @@ export const NodeConfigPanel: React.FC<NodeConfigPanelProps> = ({
                       onChange={(e) => setPendingDisplayName(e.target.value)}
                       className={cn(
                         "w-full px-4 py-3 rounded-xl text-sm transition-all",
-                        "bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700",
+                        "bg-surface-secondary border border-border",
                         "focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500",
-                        "placeholder:text-slate-400"
+                        "placeholder:text-text-tertiary"
                       )}
                       placeholder={`e.g., "${node.name} - Campaign Data"`}
                     />
-                    <p className="text-xs text-slate-400">
+                    <p className="text-xs text-text-tertiary">
                       Custom name shown on the node. Leave empty to auto-generate from configuration.
                     </p>
                   </div>
 
                   {/* Node Description */}
                   <div className="space-y-2">
-                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+                    <label className="block text-sm font-medium text-text-secondary">
                       Description
-                      <span className="ml-2 text-xs font-normal text-slate-400">(optional)</span>
+                      <span className="ml-2 text-xs font-normal text-text-tertiary">(optional)</span>
                     </label>
                     <textarea
                       value={pendingDescription}
@@ -456,51 +456,51 @@ export const NodeConfigPanel: React.FC<NodeConfigPanelProps> = ({
                       rows={3}
                       className={cn(
                         "w-full px-4 py-3 rounded-xl text-sm transition-all resize-none",
-                        "bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700",
+                        "bg-surface-secondary border border-border",
                         "focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500",
-                        "placeholder:text-slate-400"
+                        "placeholder:text-text-tertiary"
                       )}
                       placeholder="Add a description to help you remember what this node does..."
                     />
                   </div>
 
                   {/* Execution Settings */}
-                  <div className="pt-4 border-t border-slate-200 dark:border-slate-700">
-                    <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+                  <div className="pt-4 border-t border-border">
+                    <h3 className="text-sm font-semibold text-text-primary mb-4 flex items-center gap-2">
                       <Zap className="w-4 h-4 text-brand-500" />
                       Execution Behavior
                     </h3>
 
                     <div className="space-y-4">
-                      <label className="flex items-start gap-4 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                      <label className="flex items-start gap-4 p-4 bg-surface-secondary rounded-xl cursor-pointer hover:bg-surface-tertiary transition-colors">
                         <input
                           type="checkbox"
                           checked={pendingContinueOnFail}
                           onChange={(e) => setPendingContinueOnFail(e.target.checked)}
-                          className="mt-0.5 w-5 h-5 rounded border-slate-300 dark:border-slate-600 text-brand-500 focus:ring-brand-500/50"
+                          className="mt-0.5 w-5 h-5 rounded border-border text-brand-500 focus:ring-brand-500/50"
                         />
                         <div>
-                          <span className="text-sm font-medium text-slate-700 dark:text-slate-300 block">
+                          <span className="text-sm font-medium text-text-secondary block">
                             Continue on Failure
                           </span>
-                          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                          <p className="text-xs text-text-secondary mt-1">
                             If this node fails, the workflow will continue executing subsequent nodes instead of stopping.
                           </p>
                         </div>
                       </label>
 
-                      <label className="flex items-start gap-4 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                      <label className="flex items-start gap-4 p-4 bg-surface-secondary rounded-xl cursor-pointer hover:bg-surface-tertiary transition-colors">
                         <input
                           type="checkbox"
                           checked={pendingRetryOnFail}
                           onChange={(e) => setPendingRetryOnFail(e.target.checked)}
-                          className="mt-0.5 w-5 h-5 rounded border-slate-300 dark:border-slate-600 text-brand-500 focus:ring-brand-500/50"
+                          className="mt-0.5 w-5 h-5 rounded border-border text-brand-500 focus:ring-brand-500/50"
                         />
                         <div>
-                          <span className="text-sm font-medium text-slate-700 dark:text-slate-300 block">
+                          <span className="text-sm font-medium text-text-secondary block">
                             Retry on Failure
                           </span>
-                          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                          <p className="text-xs text-text-secondary mt-1">
                             Automatically retry this node up to 3 times if it fails before marking as failed.
                           </p>
                         </div>
@@ -551,8 +551,8 @@ export const NodeConfigPanel: React.FC<NodeConfigPanelProps> = ({
                         </div>
 
                         <div className="space-y-3">
-                          <h4 className="text-sm font-semibold text-slate-900 dark:text-white">Key Features</h4>
-                          <ul className="text-sm text-slate-600 dark:text-slate-400 space-y-2">
+                          <h4 className="text-sm font-semibold text-text-primary">Key Features</h4>
+                          <ul className="text-sm text-text-secondary space-y-2">
                             <li className="flex items-start gap-2">
                               <ChevronRight className="w-4 h-4 text-brand-500 flex-shrink-0 mt-0.5" />
                               Connects to external data sources securely
@@ -583,8 +583,8 @@ export const NodeConfigPanel: React.FC<NodeConfigPanelProps> = ({
                         </div>
 
                         <div className="space-y-3">
-                          <h4 className="text-sm font-semibold text-slate-900 dark:text-white">Common Operations</h4>
-                          <ul className="text-sm text-slate-600 dark:text-slate-400 space-y-2">
+                          <h4 className="text-sm font-semibold text-text-primary">Common Operations</h4>
+                          <ul className="text-sm text-text-secondary space-y-2">
                             <li className="flex items-start gap-2">
                               <ChevronRight className="w-4 h-4 text-brand-500 flex-shrink-0 mt-0.5" />
                               Filter records based on conditions
@@ -619,8 +619,8 @@ export const NodeConfigPanel: React.FC<NodeConfigPanelProps> = ({
                         </div>
 
                         <div className="space-y-3">
-                          <h4 className="text-sm font-semibold text-slate-900 dark:text-white">Supported Destinations</h4>
-                          <ul className="text-sm text-slate-600 dark:text-slate-400 space-y-2">
+                          <h4 className="text-sm font-semibold text-text-primary">Supported Destinations</h4>
+                          <ul className="text-sm text-text-secondary space-y-2">
                             <li className="flex items-start gap-2">
                               <ChevronRight className="w-4 h-4 text-brand-500 flex-shrink-0 mt-0.5" />
                               BigQuery data warehouse
@@ -645,14 +645,14 @@ export const NodeConfigPanel: React.FC<NodeConfigPanelProps> = ({
         </div>
 
         {/* Footer with Save/Cancel buttons */}
-        <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-slate-200 dark:border-slate-700/50 bg-slate-50 dark:bg-slate-800/50">
+        <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-border bg-surface-secondary">
           <button
             onClick={onClose}
             className={cn(
               "px-5 py-2.5 rounded-xl text-sm font-medium transition-all",
-              "text-slate-700 dark:text-slate-300",
-              "hover:bg-slate-200 dark:hover:bg-slate-700",
-              "border border-slate-300 dark:border-slate-600"
+              "text-text-secondary",
+              "hover:bg-surface-tertiary",
+              "border border-border"
             )}
           >
             Cancel

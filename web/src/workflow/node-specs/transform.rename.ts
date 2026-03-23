@@ -9,7 +9,7 @@ export const renameTransformSpec: NodeSpec = {
   displayName: 'Rename Columns',
   category: 'TRANSFORM',
   icon: 'PenLine',
-  color: '#8B5CF6',
+  color: '#F59E0B',
   ports: [
     { id: 'in', name: 'Input', io: 'input', dataType: 'records' },
     { id: 'out', name: 'Output', io: 'output', dataType: 'records' },

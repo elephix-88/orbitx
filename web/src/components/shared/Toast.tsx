@@ -59,23 +59,23 @@ const Toast: React.FC<ToastProps> = ({
   };
 
   const typeClasses = {
-    success: 'bg-green-50 border-green-200 text-green-800 dark:bg-green-900/20 dark:border-green-800 dark:text-green-200',
-    error: 'bg-red-50 border-red-200 text-red-800 dark:bg-red-900/20 dark:border-red-800 dark:text-red-200',
-    warning: 'bg-yellow-50 border-yellow-200 text-yellow-800 dark:bg-yellow-900/20 dark:border-yellow-800 dark:text-yellow-200',
-    info: 'bg-blue-50 border-blue-200 text-blue-800 dark:bg-blue-900/20 dark:border-blue-800 dark:text-blue-200',
+    success: 'bg-success-light border-success/20 text-success-dark',
+    error: 'bg-error-light border-error/20 text-error-dark',
+    warning: 'bg-warning-light border-warning/20 text-warning-dark',
+    info: 'bg-info-light border-info/20 text-info-dark',
   };
 
   const iconColorClasses = {
-    success: 'text-green-500 dark:text-green-400',
-    error: 'text-red-500 dark:text-red-400',
-    warning: 'text-yellow-500 dark:text-yellow-400',
-    info: 'text-blue-500 dark:text-blue-400',
+    success: 'text-success',
+    error: 'text-error',
+    warning: 'text-warning',
+    info: 'text-info',
   };
 
   return (
     <div
       className={cn(
-        'flex items-start gap-3 p-4 rounded-lg border shadow-lg transition-all duration-300 ease-out max-w-md',
+        'flex items-start gap-3 p-4 rounded-md border shadow-lg transition-all duration-300 ease-out max-w-md',
         typeClasses[type],
         isVisible && !isLeaving
           ? 'translate-x-0 opacity-100 scale-100'
@@ -85,7 +85,7 @@ const Toast: React.FC<ToastProps> = ({
       <div className={cn('flex-shrink-0 mt-0.5', iconColorClasses[type])}>
         {icons[type]}
       </div>
-      
+
       <div className="flex-1 min-w-0">
         <p className="font-medium text-sm">{title}</p>
         {description && (
@@ -100,10 +100,10 @@ const Toast: React.FC<ToastProps> = ({
           </button>
         )}
       </div>
-      
+
       <button
         onClick={handleClose}
-        className="flex-shrink-0 p-1 rounded-md hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
+        className="flex-shrink-0 p-1 rounded-md hover:bg-black/5 transition-colors"
       >
         <X className="w-4 h-4" />
       </button>

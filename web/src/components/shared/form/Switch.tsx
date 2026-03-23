@@ -46,9 +46,9 @@ export const Switch: React.FC<SwitchProps> = ({
       disabled={disabled}
       onClick={() => !disabled && onChange(!checked)}
       className={cn(
-        "relative inline-flex items-center rounded-sm transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#1D3557]",
+        "relative inline-flex items-center rounded-full transition-colors duration-200 ease-in-out focus:outline-none focus:ring-1 focus:ring-primary-500/20 focus:ring-offset-2",
         sizes[size].switch,
-        checked ? "bg-[#E63946]" : "bg-[#A8DADC] dark:bg-slate-700",
+        checked ? "bg-primary-600" : "bg-neutral-300",
         disabled && "opacity-50 cursor-not-allowed",
         className
       )}
@@ -56,7 +56,7 @@ export const Switch: React.FC<SwitchProps> = ({
       <span className="sr-only">Use setting</span>
       <span
         className={cn(
-          "pointer-events-none inline-block transform rounded-sm bg-white shadow-sm ring-0 transition duration-200 ease-in-out",
+          "pointer-events-none inline-block transform rounded-full bg-white shadow-sm ring-0 transition duration-200 ease-in-out",
           sizes[size].thumb,
           checked ? sizes[size].translate : "translate-x-0.5",
           "flex items-center justify-center"

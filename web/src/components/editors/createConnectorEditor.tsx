@@ -364,7 +364,7 @@ export function createConnectorEditor<TFormData, TNodeData = unknown>(
                 value={String(value || '')}
                 onChange={(e) => setFieldValue(field.key, e.target.value as TFormData[keyof TFormData])}
                 placeholder={field.placeholder}
-                className="w-full px-4 py-3 rounded-xl bg-white/50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700/50 focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all"
+                className="w-full px-4 py-3 rounded-xl bg-surface-primary/50 border border-border focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all"
               />
               {field.helperText && (
                 <p className="text-xs text-text-tertiary">{field.helperText}</p>
@@ -384,7 +384,7 @@ export function createConnectorEditor<TFormData, TNodeData = unknown>(
                 value={Number(value) || 0}
                 onChange={(e) => setFieldValue(field.key, Number(e.target.value) as TFormData[keyof TFormData])}
                 placeholder={field.placeholder}
-                className="w-full px-4 py-3 rounded-xl bg-white/50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700/50 focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all"
+                className="w-full px-4 py-3 rounded-xl bg-surface-primary/50 border border-border focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all"
               />
               {field.helperText && (
                 <p className="text-xs text-text-tertiary">{field.helperText}</p>
@@ -406,7 +406,7 @@ export function createConnectorEditor<TFormData, TNodeData = unknown>(
                 <select
                   value={String(value || '')}
                   onChange={(e) => setFieldValue(field.key, e.target.value as TFormData[keyof TFormData])}
-                  className="w-full px-4 py-3 rounded-xl bg-white/50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700/50 focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all"
+                  className="w-full px-4 py-3 rounded-xl bg-surface-primary/50 border border-border focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all"
                 >
                   <option value="">{field.placeholder || 'Select...'}</option>
                   {fieldOptions.map((opt) => (
@@ -432,7 +432,7 @@ export function createConnectorEditor<TFormData, TNodeData = unknown>(
                 type="checkbox"
                 checked={Boolean(value)}
                 onChange={(e) => setFieldValue(field.key, e.target.checked as TFormData[keyof TFormData])}
-                className="w-5 h-5 rounded border-slate-300 text-brand-500 focus:ring-brand-500"
+                className="w-5 h-5 rounded border-border text-brand-500 focus:ring-brand-500"
               />
               <label className="text-sm font-medium text-text-secondary">
                 {field.label}

@@ -951,10 +951,10 @@ const WorkflowBuilderPage: React.FC = () => {
   // Loading state - show minimal spinner without re-rendering entire page
   if (isLoading) {
     return (
-      <div className="flex flex-col h-screen w-full items-center justify-center" style={{ backgroundColor: '#F1FAEE' }}>
+      <div className="flex flex-col h-screen w-full items-center justify-center bg-surface-secondary">
         <div className="text-center">
-          <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4" style={{ color: '#E63946' }} />
-          <p className="text-sm uppercase tracking-wider" style={{ color: '#457B9D' }}>Loading workflow...</p>
+          <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-primary-600" />
+          <p className="text-sm text-text-secondary">Loading workflow...</p>
         </div>
       </div>
     );
@@ -962,15 +962,15 @@ const WorkflowBuilderPage: React.FC = () => {
 
   if (error) {
     return (
-      <div className="flex flex-col h-screen w-full items-center justify-center" style={{ backgroundColor: '#F1FAEE' }}>
+      <div className="flex flex-col h-screen w-full items-center justify-center bg-surface-secondary">
         <div className="text-center max-w-md p-8">
-          <div className="w-16 h-16 mx-auto mb-6 flex items-center justify-center" style={{ backgroundColor: '#E63946', borderRadius: '2px' }}>
-            <AlertTriangle className="text-white w-8 h-8" />
+          <div className="w-16 h-16 mx-auto mb-6 flex items-center justify-center bg-error rounded-sm">
+            <AlertTriangle className="text-text-inverse w-8 h-8" />
           </div>
-          <h2 className="text-xl font-bold mb-2 uppercase tracking-wider" style={{ color: '#1D3557' }}>
+          <h2 className="text-xl font-semibold mb-2 text-text-primary">
             Failed to Load Workflow
           </h2>
-          <p className="mb-6" style={{ color: '#457B9D' }}>{error}</p>
+          <p className="mb-6 text-text-secondary">{error}</p>
           <div className="flex justify-center gap-3">
             <Button onClick={() => window.location.reload()} variant="primary">
               Try Again
@@ -985,9 +985,9 @@ const WorkflowBuilderPage: React.FC = () => {
   }
 
   return (
-    <div className="flex flex-col h-screen overflow-hidden" style={{ backgroundColor: '#F1FAEE' }}>
-      {/* Solid Bauhaus Background */}
-      <div className="absolute inset-0 z-0 pointer-events-none" style={{ backgroundColor: '#F1FAEE' }} />
+    <div className="flex flex-col h-screen overflow-hidden bg-surface-secondary">
+      {/* Background layer */}
+      <div className="absolute inset-0 z-0 pointer-events-none bg-surface-secondary" />
 
       <div className="relative z-10 flex flex-col h-full">
         <Toolbar
@@ -1037,8 +1037,7 @@ const WorkflowBuilderPage: React.FC = () => {
             )}
           >
             <div
-              className="h-full w-full overflow-hidden"
-              style={{ backgroundColor: 'white', border: '1px solid #A8DADC', borderRadius: '2px' }}
+              className="h-full w-full overflow-hidden bg-surface-primary border border-border rounded-sm"
             >
               <Sidebar
                 onNodeDragStart={() => {}}
@@ -1052,14 +1051,7 @@ const WorkflowBuilderPage: React.FC = () => {
           {/* Main Canvas */}
           <div
             ref={canvasRef}
-            className="flex-1 overflow-hidden relative"
-            style={{
-              backgroundColor: '#F1FAEE',
-              border: '1px solid #A8DADC',
-              borderRadius: '2px',
-              backgroundImage: 'radial-gradient(circle, #A8DADC 1px, transparent 1px)',
-              backgroundSize: '24px 24px',
-            }}
+            className="flex-1 overflow-hidden relative bg-surface-secondary border border-border rounded-sm"
           >
             <ReactFlowCanvas
               nodes={Array.isArray(nodes) ? nodes : []}
@@ -1080,7 +1072,7 @@ const WorkflowBuilderPage: React.FC = () => {
 
           {/* Node Configuration Panel - n8n-inspired full-screen panel */}
           {editorNode && (
-            <Suspense fallback={<div className="fixed inset-0 z-50 flex items-center justify-center" style={{ backgroundColor: 'rgba(29,53,87,0.5)' }}><Loader2 className="w-8 h-8 animate-spin" style={{ color: '#E63946' }} /></div>}>
+            <Suspense fallback={<div className="fixed inset-0 z-50 flex items-center justify-center bg-neutral-900/50"><Loader2 className="w-8 h-8 animate-spin text-primary-600" /></div>}>
               <NodeConfigPanel
                 node={editorNode}
                 onUpdate={handleNodeUpdate}
@@ -1092,7 +1084,7 @@ const WorkflowBuilderPage: React.FC = () => {
 
           {/* Workflow Settings Modal */}
           {metaOpen && (
-            <Suspense fallback={<div className="fixed inset-0 z-50 flex items-center justify-center" style={{ backgroundColor: 'rgba(29,53,87,0.5)' }}><Loader2 className="w-6 h-6 animate-spin text-white" /></div>}>
+            <Suspense fallback={<div className="fixed inset-0 z-50 flex items-center justify-center bg-neutral-900/50"><Loader2 className="w-6 h-6 animate-spin text-text-inverse" /></div>}>
               <WorkflowMetaForm
                 initial={{
                   _id: extractMongoId(originalBackendWorkflow?._id),
@@ -1110,11 +1102,11 @@ const WorkflowBuilderPage: React.FC = () => {
 
           {/* Triggering Modal - Blocks user interaction during Cloud Run head-up */}
           {triggering && (
-            <div className="fixed inset-0 z-[100] flex items-center justify-center" style={{ backgroundColor: 'rgba(29,53,87,0.6)' }}>
-              <div className="p-8 flex flex-col items-center gap-4" style={{ backgroundColor: 'white', border: '2px solid #E63946', borderRadius: '2px' }}>
-                <Loader2 className="w-10 h-10 animate-spin" style={{ color: '#E63946' }} />
-                <p className="text-lg font-medium uppercase tracking-wider" style={{ color: '#1D3557' }}>Triggering...</p>
-                <p className="text-sm" style={{ color: '#457B9D' }}>Starting workflow execution</p>
+            <div className="fixed inset-0 z-[100] flex items-center justify-center bg-neutral-900/60">
+              <div className="p-8 flex flex-col items-center gap-4 bg-surface-primary border-2 border-primary-600 rounded-sm">
+                <Loader2 className="w-10 h-10 animate-spin text-primary-600" />
+                <p className="text-lg font-medium text-text-primary">Triggering...</p>
+                <p className="text-sm text-text-secondary">Starting workflow execution</p>
               </div>
             </div>
           )}

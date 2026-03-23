@@ -115,12 +115,12 @@ export const Select: React.FC<SelectProps> = ({
           exit={{ opacity: 0, y: -10, scale: 0.95 }}
           transition={{ duration: 0.15, ease: "easeOut" }}
           style={dropdownStyle}
-          className="overflow-hidden rounded-sm bg-white dark:bg-slate-900 shadow-sm border border-[#A8DADC] dark:border-slate-700 focus:outline-none"
+          className="overflow-hidden rounded-md bg-surface-primary shadow-sm border border-border focus:outline-none"
           onClick={stopPropagation}
           onMouseDown={stopPropagation}
           onMouseUp={stopPropagation}
         >
-          <div className="max-h-60 overflow-auto py-1 scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-slate-700">
+          <div className="max-h-60 overflow-auto py-1">
             {options.map((option) => {
               const isSelected = String(option.value) === String(value);
               return (
@@ -133,15 +133,15 @@ export const Select: React.FC<SelectProps> = ({
                   onMouseDown={stopPropagation}
                   className={`
                     relative cursor-pointer select-none py-2.5 pl-4 pr-9 text-sm transition-colors
-                    ${option.disabled ? 'opacity-50 cursor-not-allowed' : 'hover:bg-brand-50 dark:hover:bg-brand-900/20'}
-                    ${isSelected ? 'bg-brand-50/50 dark:bg-brand-900/10 text-brand-600 dark:text-brand-400 font-medium' : 'text-slate-700 dark:text-slate-300'}
+                    ${option.disabled ? 'opacity-50 cursor-not-allowed' : 'hover:bg-primary-50'}
+                    ${isSelected ? 'bg-primary-50 text-primary-600 font-medium' : 'text-text-primary'}
                   `}
                 >
                   <span className="block truncate">
                     {option.label}
                   </span>
                   {isSelected && (
-                    <span className="absolute inset-y-0 right-0 flex items-center pr-4 text-brand-600 dark:text-brand-400">
+                    <span className="absolute inset-y-0 right-0 flex items-center pr-4 text-primary-600">
                       <Check className="h-4 w-4" />
                     </span>
                   )}
@@ -161,7 +161,7 @@ export const Select: React.FC<SelectProps> = ({
       {label && (
         <label
           htmlFor={inputId}
-          className="block text-xs font-bold uppercase tracking-wider text-[#1D3557] dark:text-slate-200 mb-2"
+          className="block text-sm font-medium text-text-primary mb-2"
         >
           {label}
         </label>
@@ -182,23 +182,22 @@ export const Select: React.FC<SelectProps> = ({
           className={`
             relative w-full text-left cursor-pointer
             flex items-center justify-between
-            rounded-sm px-4 py-3 text-sm font-medium transition-all duration-200
-            bg-white dark:bg-slate-900
-            border border-[#A8DADC] dark:border-slate-700/50
-            hover:bg-white dark:hover:bg-slate-800
-            hover:border-[#457B9D] dark:hover:border-[#457B9D]
-            focus:outline-none focus:border-[#1D3557] focus:border-2 focus:ring-0
-            ${isOpen ? 'border-2 border-[#1D3557]' : ''}
-            ${error ? 'border-[#E63946] focus:border-[#E63946]' : ''}
-            ${disabled ? 'opacity-50 cursor-not-allowed bg-slate-100 dark:bg-slate-800' : ''}
+            rounded-md px-4 py-3 text-sm font-medium transition-all duration-200
+            bg-surface-primary
+            border border-border
+            hover:border-neutral-400
+            focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500/20
+            ${isOpen ? 'border-primary-500 ring-1 ring-primary-500/20' : ''}
+            ${error ? 'border-error focus:border-error' : ''}
+            ${disabled ? 'opacity-50 cursor-not-allowed bg-surface-tertiary' : ''}
           `}
         >
-          <span className={`block truncate ${!selectedOption ? 'text-slate-400 dark:text-slate-500' : 'text-slate-900 dark:text-slate-100'}`}>
+          <span className={`block truncate ${!selectedOption ? 'text-text-tertiary' : 'text-text-primary'}`}>
             {selectedOption ? selectedOption.label : placeholder}
           </span>
           <span className="pointer-events-none flex items-center pl-2">
             <ChevronDown
-              className={`h-4 w-4 text-slate-400 transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
+              className={`h-4 w-4 text-text-tertiary transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
             />
           </span>
         </button>
@@ -210,7 +209,7 @@ export const Select: React.FC<SelectProps> = ({
       {(error || helperText) && (
         <p
           className={`mt-1.5 text-sm ${
-            error ? 'text-red-500 font-medium' : 'text-slate-500 dark:text-slate-400'
+            error ? 'text-error font-medium' : 'text-text-secondary'
           }`}
         >
           {error || helperText}

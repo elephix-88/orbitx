@@ -26,17 +26,17 @@ export const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
             ref={ref}
             {...props}
           />
-          
+
           {/* Checkbox Background */}
           <div className={cn(
-            "w-5 h-5 rounded-none border-2 transition-all duration-200 ease-out",
-            "bg-white dark:bg-slate-900",
-            "border-[#1D3557] dark:border-slate-600",
-            "peer-focus:ring-2 peer-focus:ring-[#1D3557]/20 peer-focus:border-[#1D3557]",
+            "w-5 h-5 rounded-md border-2 transition-all duration-200 ease-out",
+            "bg-surface-primary",
+            "border-border",
+            "peer-focus:ring-1 peer-focus:ring-primary-500/20 peer-focus:border-primary-500",
             checked
-              ? "bg-[#E63946] border-[#E63946] dark:bg-[#E63946] dark:border-[#E63946]"
-              : "group-hover:border-[#457B9D] dark:group-hover:border-[#457B9D]",
-            error && "border-red-500"
+              ? "bg-primary-600 border-primary-600"
+              : "group-hover:border-neutral-400",
+            error && "border-error"
           )} />
 
           {/* Checkmark Icon */}
@@ -57,9 +57,9 @@ export const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
 
         {label && (
           <span className={cn(
-            "text-sm text-slate-700 dark:text-slate-300 transition-colors",
-            checked && "text-slate-900 dark:text-slate-100 font-medium",
-            error && "text-red-500"
+            "text-sm text-text-secondary transition-colors",
+            checked && "text-text-primary font-medium",
+            error && "text-error"
           )}>
             {label}
           </span>

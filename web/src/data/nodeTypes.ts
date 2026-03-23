@@ -19,7 +19,7 @@ export const nodeTypes: NodeTypeDefinition[] = [
     description: 'Import data from Facebook Ads platform',
     category: NodeCategory.SOURCE,
     icon: 'Facebook',
-    color: '#1877F2',
+    color: '#3B82F6',
     inputs: [],
     outputs: [{ id: 'out', name: 'Output' }],
     defaultData: {
@@ -37,7 +37,7 @@ export const nodeTypes: NodeTypeDefinition[] = [
     description: 'Import data from Google Ads platform',
     category: NodeCategory.SOURCE,
     icon: 'GoogleAds',
-    color: '#4285F4',
+    color: '#3B82F6',
     inputs: [],
     outputs: [{ id: 'out', name: 'Output' }],
     defaultData: {
@@ -53,7 +53,7 @@ export const nodeTypes: NodeTypeDefinition[] = [
     description: 'Import data from TikTok Ads platform',
     category: NodeCategory.SOURCE,
     icon: 'TikTok',
-    color: '#EE1D52',
+    color: '#3B82F6',
     inputs: [],
     outputs: [{ id: 'out', name: 'Output' }],
     defaultData: {
@@ -69,7 +69,7 @@ export const nodeTypes: NodeTypeDefinition[] = [
     description: 'Transform data using SQL queries',
     category: NodeCategory.TRANSFORM,
     icon: 'Database',
-    color: '#16A34A',
+    color: '#F59E0B',
     inputs: [{ id: 'in', name: 'Input' }],
     outputs: [{ id: 'out', name: 'Output' }],
     defaultData: {
@@ -82,7 +82,7 @@ export const nodeTypes: NodeTypeDefinition[] = [
     description: 'Join multiple data sources on a common key',
     category: NodeCategory.TRANSFORM,
     icon: 'Merge',
-    color: '#10B981',
+    color: '#F59E0B',
     inputs: [{ id: 'in', name: 'Input' }],
     outputs: [{ id: 'out', name: 'Output' }],
     defaultData: {
@@ -98,7 +98,7 @@ export const nodeTypes: NodeTypeDefinition[] = [
     description: 'Rename columns and change data types',
     category: NodeCategory.TRANSFORM,
     icon: 'Columns3',
-    color: '#8B5CF6',
+    color: '#F59E0B',
     inputs: [{ id: 'in', name: 'Input' }],
     outputs: [{ id: 'out', name: 'Output' }],
     defaultData: {
@@ -111,7 +111,7 @@ export const nodeTypes: NodeTypeDefinition[] = [
     description: 'Export data to MySQL database',
     category: NodeCategory.DESTINATION,
     icon: 'MySQL',
-    color: '#00758F',
+    color: '#10B981',
     inputs: [{ id: 'in', name: 'Input' }],
     outputs: [],
     defaultData: {
@@ -129,7 +129,7 @@ export const nodeTypes: NodeTypeDefinition[] = [
     description: 'Export data to Google BigQuery',
     category: NodeCategory.DESTINATION,
     icon: 'BigQuery',
-    color: '#4285F4',
+    color: '#10B981',
     inputs: [{ id: 'in', name: 'Input' }],
     outputs: [],
     defaultData: {
@@ -147,7 +147,7 @@ export const nodeTypes: NodeTypeDefinition[] = [
     description: 'Export data to Google Sheets',
     category: NodeCategory.DESTINATION,
     icon: 'GoogleSheets',
-    color: '#0F9D58',
+    color: '#10B981',
     inputs: [{ id: 'in', name: 'Input' }],
     outputs: [],
     defaultData: {

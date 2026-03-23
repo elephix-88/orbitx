@@ -44,7 +44,7 @@ interface StatusConfig {
   bg: string;
   icon: React.ComponentType<{ className?: string }>;
   dot: string;
-  borderColor: string;
+  borderClass: string;
 }
 
 const WorkflowsPage = () => {
@@ -97,20 +97,20 @@ const WorkflowsPage = () => {
 
   const statusConfig: Record<string, StatusConfig> = {
     [WorkflowStatus.ACTIVE]: {
-      color: "text-emerald-600",
+      color: "text-success-dark",
       text: "Active",
-      bg: "bg-emerald-500/10",
+      bg: "bg-success/10",
       icon: Zap,
-      dot: "bg-emerald-500",
-      borderColor: "#34d399",
+      dot: "bg-success",
+      borderClass: "border-l-success",
     },
     [WorkflowStatus.PAUSED]: {
-      color: "text-amber-600",
+      color: "text-warning-dark",
       text: "Paused",
-      bg: "bg-amber-500/10",
+      bg: "bg-warning/10",
       icon: Pause,
-      dot: "bg-amber-500",
-      borderColor: "#F4A261",
+      dot: "bg-warning",
+      borderClass: "border-l-warning",
     },
   };
 
@@ -182,13 +182,13 @@ const WorkflowsPage = () => {
     return (
       <Layout>
         <div className="min-h-screen flex items-center justify-center">
-          <div className="p-8 text-center max-w-md mx-4" style={{ backgroundColor: 'white', border: '1px solid #A8DADC', borderRadius: '2px' }}>
-            <div className="w-16 h-16 flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: '#E63946', borderRadius: '2px' }}>
+          <div className="p-8 text-center max-w-md mx-4 bg-surface-primary border border-border rounded-lg">
+            <div className="w-16 h-16 flex items-center justify-center mx-auto mb-4 bg-error rounded-lg">
               <Activity className="w-8 h-8 text-white" />
             </div>
-            <h2 className="text-xl font-bold mb-2 uppercase tracking-wider" style={{ color: '#1D3557' }}>Failed to load workflows</h2>
-            <p className="mb-6" style={{ color: '#457B9D' }}>{error}</p>
-            <button onClick={refreshWorkflows} className="px-6 py-2 text-white font-medium uppercase tracking-wider" style={{ backgroundColor: '#E63946', borderRadius: '2px' }}>
+            <h2 className="text-xl font-semibold mb-2 text-text-primary">Failed to load workflows</h2>
+            <p className="mb-6 text-text-secondary">{error}</p>
+            <button onClick={refreshWorkflows} className="px-6 py-2 text-white font-medium bg-primary-600 hover:bg-primary-700 rounded-md transition-colors">
               Try Again
             </button>
           </div>
@@ -205,10 +205,10 @@ const WorkflowsPage = () => {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
               <div className="flex items-center gap-3 mb-2">
-                <div style={{ width: '48px', height: '4px', backgroundColor: '#E63946' }} />
+                <div className="w-12 h-1 bg-primary-600" />
               </div>
-              <h1 className="text-2xl font-bold uppercase tracking-wider" style={{ color: '#1D3557' }}>Workflows</h1>
-              <p className="text-sm mt-0.5" style={{ color: '#457B9D' }}>
+              <h1 className="text-2xl font-semibold text-text-primary">Workflows</h1>
+              <p className="text-sm mt-0.5 text-text-secondary">
                 {workflows.length} workflows &#9632; {activeCount} active &#9632; {pausedCount} paused
               </p>
             </div>
@@ -217,17 +217,15 @@ const WorkflowsPage = () => {
               <button
                 onClick={refreshWorkflows}
                 disabled={loading}
-                className="h-9 px-3 flex items-center gap-2 text-sm transition-colors"
-                style={{ color: '#457B9D', backgroundColor: 'white', border: '1px solid #A8DADC', borderRadius: '2px' }}
+                className="h-9 px-3 flex items-center gap-2 text-sm transition-colors text-text-secondary bg-surface-primary border border-border rounded-md hover:bg-surface-secondary"
               >
                 <RefreshCw className={cn("w-4 h-4", loading && "animate-spin")} />
-                <span className="hidden sm:inline uppercase tracking-wider text-xs">Refresh</span>
+                <span className="hidden sm:inline text-xs">Refresh</span>
               </button>
               <div className="relative">
                 <button
                   onClick={() => setShowNewWorkflowMenu(!showNewWorkflowMenu)}
-                  className="h-9 px-4 flex items-center gap-2 text-sm font-medium text-white transition-colors uppercase tracking-wider"
-                  style={{ backgroundColor: '#E63946', borderRadius: '2px' }}
+                  className="h-9 px-4 flex items-center gap-2 text-sm font-medium text-white transition-colors bg-primary-600 hover:bg-primary-700 rounded-md"
                 >
                   <Plus className="w-4 h-4" />
                   New Workflow
@@ -241,20 +239,20 @@ const WorkflowsPage = () => {
                       className="fixed inset-0 z-40"
                       onClick={() => setShowNewWorkflowMenu(false)}
                     />
-                    <div className="absolute right-0 mt-2 w-56 overflow-hidden z-50" style={{ backgroundColor: 'white', border: '1px solid #A8DADC', borderRadius: '2px' }}>
+                    <div className="absolute right-0 mt-2 w-56 overflow-hidden z-50 bg-surface-primary border border-border rounded-lg shadow-md">
                       <button
                         onClick={() => {
                           navigate("/workflows/builder");
                           setShowNewWorkflowMenu(false);
                         }}
-                        className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-gray-50 transition-colors"
+                        className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-surface-secondary transition-colors"
                       >
-                        <div className="p-2" style={{ backgroundColor: '#F1FAEE', borderRadius: '2px' }}>
-                          <FileText className="w-4 h-4" style={{ color: '#457B9D' }} />
+                        <div className="p-2 bg-surface-secondary rounded-md">
+                          <FileText className="w-4 h-4 text-text-secondary" />
                         </div>
                         <div>
-                          <div className="text-sm font-medium" style={{ color: '#1D3557' }}>Blank Workflow</div>
-                          <div className="text-xs" style={{ color: '#457B9D' }}>Start from scratch</div>
+                          <div className="text-sm font-medium text-text-primary">Blank Workflow</div>
+                          <div className="text-xs text-text-secondary">Start from scratch</div>
                         </div>
                       </button>
                       <button
@@ -262,15 +260,14 @@ const WorkflowsPage = () => {
                           setShowTemplateSelector(true);
                           setShowNewWorkflowMenu(false);
                         }}
-                        className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-gray-50 transition-colors"
-                        style={{ borderTop: '1px solid #A8DADC' }}
+                        className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-surface-secondary transition-colors border-t border-border"
                       >
-                        <div className="p-2" style={{ backgroundColor: '#E63946', borderRadius: '2px' }}>
+                        <div className="p-2 bg-primary-600 rounded-md">
                           <Sparkles className="w-4 h-4 text-white" />
                         </div>
                         <div>
-                          <div className="text-sm font-medium" style={{ color: '#1D3557' }}>From Template</div>
-                          <div className="text-xs" style={{ color: '#457B9D' }}>Use a pre-built workflow</div>
+                          <div className="text-sm font-medium text-text-primary">From Template</div>
+                          <div className="text-xs text-text-secondary">Use a pre-built workflow</div>
                         </div>
                       </button>
                     </div>
@@ -281,23 +278,21 @@ const WorkflowsPage = () => {
           </div>
 
           {/* Filters Bar */}
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 p-3" style={{ backgroundColor: 'white', border: '1px solid #A8DADC', borderRadius: '2px' }}>
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 p-3 bg-surface-primary border border-border rounded-lg">
             {/* Search */}
             <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: '#457B9D' }} />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-secondary" />
               <input
                 type="text"
                 placeholder="Search workflows..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full h-9 pl-9 pr-9 text-sm focus:outline-none transition-all"
-                style={{ backgroundColor: '#F1FAEE', border: '1px solid #A8DADC', borderRadius: '2px', color: '#1D3557' }}
+                className="w-full h-9 pl-9 pr-9 text-sm focus:outline-none transition-all bg-surface-secondary border border-border rounded-md text-text-primary placeholder:text-text-tertiary focus:border-primary-400 focus:ring-1 focus:ring-primary-400"
               />
               {searchTerm && (
                 <button
                   onClick={() => setSearchTerm("")}
-                  className="absolute right-3 top-1/2 -translate-y-1/2"
-                  style={{ color: '#457B9D' }}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary hover:text-text-primary"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -309,14 +304,13 @@ const WorkflowsPage = () => {
               <div className="relative">
                 <button
                   onClick={() => setCategoryDropdownOpen(!categoryDropdownOpen)}
-                  className="h-9 px-3 flex items-center gap-2 text-sm transition-colors min-w-[120px]"
-                  style={{ backgroundColor: 'white', border: '1px solid #A8DADC', borderRadius: '2px', color: '#1D3557' }}
+                  className="h-9 px-3 flex items-center gap-2 text-sm transition-colors min-w-[120px] bg-surface-primary border border-border rounded-md text-text-primary hover:bg-surface-secondary"
                 >
                   <span>{selectedCategory}</span>
-                  <ChevronDown className={cn("w-4 h-4 ml-auto transition-transform", categoryDropdownOpen && "rotate-180")} style={{ color: '#457B9D' }} />
+                  <ChevronDown className={cn("w-4 h-4 ml-auto transition-transform text-text-secondary", categoryDropdownOpen && "rotate-180")} />
                 </button>
                 {categoryDropdownOpen && (
-                  <div className="absolute z-50 mt-1 w-full overflow-hidden" style={{ backgroundColor: 'white', border: '1px solid #A8DADC', borderRadius: '2px' }}>
+                  <div className="absolute z-50 mt-1 w-full overflow-hidden bg-surface-primary border border-border rounded-lg shadow-md">
                     {categories.map((cat) => (
                       <button
                         key={cat}
@@ -324,11 +318,13 @@ const WorkflowsPage = () => {
                           setSelectedCategory(cat);
                           setCategoryDropdownOpen(false);
                         }}
-                        className="w-full px-3 py-2 text-left text-sm hover:bg-gray-50 transition-colors flex items-center justify-between"
-                        style={{ color: '#1D3557', backgroundColor: cat === selectedCategory ? '#F1FAEE' : 'transparent' }}
+                        className={cn(
+                          "w-full px-3 py-2 text-left text-sm hover:bg-surface-secondary transition-colors flex items-center justify-between text-text-primary",
+                          cat === selectedCategory && "bg-surface-secondary"
+                        )}
                       >
                         <span>{cat}</span>
-                        {cat === selectedCategory && <Check className="w-4 h-4" style={{ color: '#E63946' }} />}
+                        {cat === selectedCategory && <Check className="w-4 h-4 text-primary-600" />}
                       </button>
                     ))}
                   </div>
@@ -336,7 +332,7 @@ const WorkflowsPage = () => {
               </div>
 
               {/* Status Tabs */}
-              <div className="flex p-0.5" style={{ backgroundColor: 'white', border: '1px solid #A8DADC', borderRadius: '2px' }}>
+              <div className="flex p-0.5 bg-surface-primary border border-border rounded-md">
                 {([
                   { key: "All", label: "All" },
                   { key: WorkflowStatus.ACTIVE, label: "Active" },
@@ -345,12 +341,12 @@ const WorkflowsPage = () => {
                   <button
                     key={tab.key}
                     onClick={() => setSelectedStatus(tab.key as "All" | WorkflowStatus)}
-                    className="px-3 py-1.5 text-sm font-medium transition-all uppercase tracking-wider"
-                    style={{
-                      borderRadius: '2px',
-                      backgroundColor: selectedStatus === tab.key ? '#1D3557' : 'transparent',
-                      color: selectedStatus === tab.key ? 'white' : '#457B9D',
-                    }}
+                    className={cn(
+                      "px-3 py-1.5 text-sm font-medium transition-all rounded-md",
+                      selectedStatus === tab.key
+                        ? "bg-neutral-800 text-white"
+                        : "text-text-secondary hover:text-text-primary hover:bg-surface-secondary"
+                    )}
                   >
                     {tab.label}
                   </button>
@@ -358,26 +354,26 @@ const WorkflowsPage = () => {
               </div>
 
               {/* View Toggle */}
-              <div className="flex p-0.5" style={{ backgroundColor: 'white', border: '1px solid #A8DADC', borderRadius: '2px' }}>
+              <div className="flex p-0.5 bg-surface-primary border border-border rounded-md">
                 <button
                   onClick={() => setIsGridView(true)}
-                  className="p-1.5 transition-all"
-                  style={{
-                    borderRadius: '2px',
-                    backgroundColor: isGridView ? '#1D3557' : 'transparent',
-                    color: isGridView ? 'white' : '#457B9D',
-                  }}
+                  className={cn(
+                    "p-1.5 transition-all rounded-md",
+                    isGridView
+                      ? "bg-neutral-800 text-white"
+                      : "text-text-secondary hover:text-text-primary hover:bg-surface-secondary"
+                  )}
                 >
                   <GridIcon className="w-4 h-4" />
                 </button>
                 <button
                   onClick={() => setIsGridView(false)}
-                  className="p-1.5 transition-all"
-                  style={{
-                    borderRadius: '2px',
-                    backgroundColor: !isGridView ? '#1D3557' : 'transparent',
-                    color: !isGridView ? 'white' : '#457B9D',
-                  }}
+                  className={cn(
+                    "p-1.5 transition-all rounded-md",
+                    !isGridView
+                      ? "bg-neutral-800 text-white"
+                      : "text-text-secondary hover:text-text-primary hover:bg-surface-secondary"
+                  )}
                 >
                   <ListIcon className="w-4 h-4" />
                 </button>
@@ -403,16 +399,15 @@ const WorkflowsPage = () => {
                   <div
                     key={i}
                     className={cn(
-                      "animate-pulse",
+                      "animate-pulse bg-surface-primary border border-border rounded-lg",
                       isGridView ? "p-4 h-48" : "p-4 h-20"
                     )}
-                    style={{ backgroundColor: 'white', border: '1px solid #A8DADC', borderRadius: '2px' }}
                   >
                     <div className="flex items-start gap-3">
-                      <div className="w-10 h-10" style={{ backgroundColor: '#A8DADC', borderRadius: '2px' }} />
+                      <div className="w-10 h-10 bg-neutral-200 rounded-md" />
                       <div className="flex-1 space-y-2">
-                        <div className="h-4 w-32" style={{ backgroundColor: '#A8DADC', borderRadius: '2px' }} />
-                        <div className="h-3 w-24" style={{ backgroundColor: '#A8DADC', borderRadius: '2px' }} />
+                        <div className="h-4 w-32 bg-neutral-200 rounded-md" />
+                        <div className="h-3 w-24 bg-neutral-200 rounded-md" />
                       </div>
                     </div>
                   </div>
@@ -422,22 +417,20 @@ const WorkflowsPage = () => {
               <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
-                className="p-12 text-center"
-                style={{ backgroundColor: 'white', border: '2px dashed #A8DADC', borderRadius: '2px' }}
+                className="p-12 text-center bg-surface-primary border-2 border-dashed border-border rounded-lg"
               >
-                <div className="w-16 h-16 flex items-center justify-center mx-auto mb-4" style={{ backgroundColor: '#F1FAEE', borderRadius: '2px' }}>
-                  <Search className="w-8 h-8" style={{ color: '#457B9D' }} />
+                <div className="w-16 h-16 flex items-center justify-center mx-auto mb-4 bg-surface-secondary rounded-lg">
+                  <Search className="w-8 h-8 text-text-secondary" />
                 </div>
-                <h3 className="text-lg font-medium mb-2 uppercase tracking-wider" style={{ color: '#1D3557' }}>No workflows found</h3>
-                <p className="text-sm mb-6 max-w-sm mx-auto" style={{ color: '#457B9D' }}>
+                <h3 className="text-lg font-medium mb-2 text-text-primary">No workflows found</h3>
+                <p className="text-sm mb-6 max-w-sm mx-auto text-text-secondary">
                   {searchTerm || selectedCategory !== "All" || selectedStatus !== "All"
                     ? "Try adjusting your filters to find what you're looking for."
                     : "Get started by creating your first workflow."}
                 </p>
                 <button
                   onClick={() => navigate("/workflows/builder")}
-                  className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white transition-colors uppercase tracking-wider"
-                  style={{ backgroundColor: '#E63946', borderRadius: '2px' }}
+                  className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white transition-colors bg-primary-600 hover:bg-primary-700 rounded-md"
                 >
                   <Plus className="w-4 h-4" />
                   Create Workflow
@@ -458,36 +451,32 @@ const WorkflowsPage = () => {
                       key={workflow.id}
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
-                      className="group overflow-hidden transition-all"
-                      style={{
-                        backgroundColor: 'white',
-                        border: '1px solid #A8DADC',
-                        borderLeft: `4px solid ${config.borderColor}`,
-                        borderRadius: '2px',
-                      }}
+                      className={cn(
+                        "group overflow-hidden transition-all bg-surface-primary border border-border border-l-4 rounded-lg",
+                        config.borderClass
+                      )}
                     >
                       {/* Card Header */}
                       <div className="p-4 pb-3">
                         <div className="flex items-start justify-between gap-3">
                           <div className="flex items-start gap-3 min-w-0 flex-1">
-                            <div className="p-2 flex-shrink-0" style={{ backgroundColor: '#F1FAEE', borderRadius: '2px' }}>
+                            <div className="p-2 flex-shrink-0 bg-surface-secondary rounded-md">
                               <config.icon className={cn("w-5 h-5", config.color)} />
                             </div>
                             <div className="min-w-0 flex-1">
                               <h3
-                                className="font-medium truncate cursor-pointer transition-colors"
-                                style={{ color: '#1D3557' }}
+                                className="font-medium truncate cursor-pointer transition-colors text-text-primary hover:text-primary-600"
                                 onClick={() => handleEditWorkflow(workflow.id)}
                               >
                                 {workflow.name}
                               </h3>
                               <div className="flex items-center gap-2 mt-1">
-                                <span className={cn("inline-flex items-center gap-1 text-xs font-medium uppercase tracking-wider", config.color)}>
+                                <span className={cn("inline-flex items-center gap-1 text-xs font-medium", config.color)}>
                                   <span className={cn("w-1.5 h-1.5 rounded-full", config.dot)} />
                                   {config.text}
                                 </span>
-                                <span className="text-xs" style={{ color: '#457B9D' }}>&#9632;</span>
-                                <span className="text-xs" style={{ color: '#457B9D' }}>{workflow.category}</span>
+                                <span className="text-xs text-text-tertiary">&#9632;</span>
+                                <span className="text-xs text-text-secondary">{workflow.category}</span>
                               </div>
                             </div>
                           </div>
@@ -496,31 +485,28 @@ const WorkflowsPage = () => {
                           <div className="relative">
                             <button
                               onClick={() => setOpenMenuId(openMenuId === workflow.id ? null : workflow.id)}
-                              className="p-1.5 transition-colors"
-                              style={{ color: '#457B9D', borderRadius: '2px' }}
+                              className="p-1.5 transition-colors text-text-secondary hover:text-text-primary rounded-md hover:bg-surface-secondary"
                             >
                               <MoreHorizontal className="w-4 h-4" />
                             </button>
                             {openMenuId === workflow.id && (
-                              <div className="absolute right-0 top-8 z-50 w-40 overflow-hidden" style={{ backgroundColor: 'white', border: '1px solid #A8DADC', borderRadius: '2px' }}>
+                              <div className="absolute right-0 top-8 z-50 w-40 overflow-hidden bg-surface-primary border border-border rounded-lg shadow-md">
                                 <button
                                   onClick={() => {
                                     setLogsWorkflow({ id: workflow.id, name: workflow.name });
                                     setOpenMenuId(null);
                                   }}
-                                  className="w-full px-3 py-2 text-left text-sm hover:bg-gray-50 transition-colors flex items-center gap-2"
-                                  style={{ color: '#1D3557' }}
+                                  className="w-full px-3 py-2 text-left text-sm hover:bg-surface-secondary transition-colors flex items-center gap-2 text-text-primary"
                                 >
-                                  <History className="w-4 h-4 text-purple-500" />
+                                  <History className="w-4 h-4 text-info" />
                                   View Logs
                                 </button>
                                 <button
                                   onClick={() => handleDuplicateWorkflow(workflow.id)}
                                   disabled={duplicatingWorkflowId === workflow.id}
-                                  className="w-full px-3 py-2 text-left text-sm hover:bg-gray-50 transition-colors flex items-center gap-2 disabled:opacity-50"
-                                  style={{ color: '#1D3557' }}
+                                  className="w-full px-3 py-2 text-left text-sm hover:bg-surface-secondary transition-colors flex items-center gap-2 disabled:opacity-50 text-text-primary"
                                 >
-                                  <Copy className="w-4 h-4 text-teal-500" />
+                                  <Copy className="w-4 h-4 text-success" />
                                   {duplicatingWorkflowId === workflow.id ? "Duplicating..." : "Duplicate"}
                                 </button>
                                 <button
@@ -528,16 +514,14 @@ const WorkflowsPage = () => {
                                     handleEditWorkflow(workflow.id);
                                     setOpenMenuId(null);
                                   }}
-                                  className="w-full px-3 py-2 text-left text-sm hover:bg-gray-50 transition-colors flex items-center gap-2"
-                                  style={{ color: '#1D3557' }}
+                                  className="w-full px-3 py-2 text-left text-sm hover:bg-surface-secondary transition-colors flex items-center gap-2 text-text-primary"
                                 >
-                                  <Edit className="w-4 h-4 text-blue-500" />
+                                  <Edit className="w-4 h-4 text-primary-500" />
                                   Edit
                                 </button>
                                 <button
                                   onClick={() => handleDeleteWorkflow(workflow.id)}
-                                  className="w-full px-3 py-2 text-left text-sm hover:bg-red-50 transition-colors flex items-center gap-2"
-                                  style={{ color: '#E63946' }}
+                                  className="w-full px-3 py-2 text-left text-sm hover:bg-error-light transition-colors flex items-center gap-2 text-error"
                                 >
                                   <Trash2 className="w-4 h-4" />
                                   Delete
@@ -547,14 +531,14 @@ const WorkflowsPage = () => {
                           </div>
                         </div>
 
-                        <p className="text-xs line-clamp-2 mt-3 leading-relaxed" style={{ color: '#457B9D' }}>
+                        <p className="text-xs line-clamp-2 mt-3 leading-relaxed text-text-secondary">
                           {workflow.description || "No description"}
                         </p>
                       </div>
 
                       {/* Card Footer */}
-                      <div className="px-4 py-3 flex items-center justify-between" style={{ backgroundColor: '#F1FAEE', borderTop: '1px solid #A8DADC' }}>
-                        <div className="flex items-center gap-4 text-xs" style={{ color: '#457B9D' }}>
+                      <div className="px-4 py-3 flex items-center justify-between bg-surface-secondary border-t border-border">
+                        <div className="flex items-center gap-4 text-xs text-text-secondary">
                           <span className="flex items-center gap-1">
                             <Clock className="w-3.5 h-3.5" />
                             {workflow.lastRun === "Never" ? "Never run" : getRelativeTime(workflow.updatedAt)}
@@ -596,11 +580,10 @@ const WorkflowsPage = () => {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="overflow-hidden"
-                style={{ backgroundColor: 'white', border: '1px solid #A8DADC', borderRadius: '2px' }}
+                className="overflow-hidden bg-surface-primary border border-border rounded-lg"
               >
                 {/* Table Header */}
-                <div className="grid grid-cols-12 gap-4 px-4 py-3 text-xs font-medium uppercase tracking-wider" style={{ backgroundColor: '#F1FAEE', borderBottom: '1px solid #A8DADC', color: '#457B9D' }}>
+                <div className="grid grid-cols-12 gap-4 px-4 py-3 text-xs font-medium bg-surface-secondary border-b border-border text-text-secondary">
                   <div className="col-span-4">Workflow</div>
                   <div className="col-span-2">Status</div>
                   <div className="col-span-2">Schedule</div>
@@ -615,48 +598,45 @@ const WorkflowsPage = () => {
                     return (
                       <div
                         key={workflow.id}
-                        className="grid grid-cols-12 gap-4 px-4 py-3 hover:bg-gray-50 transition-colors group"
-                        style={{ borderBottom: '1px solid #A8DADC' }}
+                        className="grid grid-cols-12 gap-4 px-4 py-3 hover:bg-surface-secondary transition-colors group border-b border-border"
                       >
                         <div className="col-span-4 flex items-center gap-3 min-w-0">
-                          <div className="p-1.5 flex-shrink-0" style={{ backgroundColor: '#F1FAEE', borderRadius: '2px' }}>
+                          <div className="p-1.5 flex-shrink-0 bg-surface-secondary rounded-md">
                             <config.icon className={cn("w-4 h-4", config.color)} />
                           </div>
                           <div className="min-w-0">
                             <p
-                              className="font-medium truncate cursor-pointer transition-colors text-sm"
-                              style={{ color: '#1D3557' }}
+                              className="font-medium truncate cursor-pointer transition-colors text-sm text-text-primary hover:text-primary-600"
                               onClick={() => handleEditWorkflow(workflow.id)}
                             >
                               {workflow.name}
                             </p>
-                            <p className="text-xs truncate" style={{ color: '#457B9D' }}>{workflow.category}</p>
+                            <p className="text-xs truncate text-text-secondary">{workflow.category}</p>
                           </div>
                         </div>
 
                         <div className="col-span-2 flex items-center">
-                          <span className={cn("inline-flex items-center gap-1.5 text-xs font-medium uppercase tracking-wider", config.color)}>
+                          <span className={cn("inline-flex items-center gap-1.5 text-xs font-medium", config.color)}>
                             <span className={cn("w-1.5 h-1.5 rounded-full", config.dot)} />
                             {config.text}
                           </span>
                         </div>
 
                         <div className="col-span-2 flex items-center">
-                          <span className="text-sm truncate" style={{ color: '#457B9D' }}>{workflow.nextRun}</span>
+                          <span className="text-sm truncate text-text-secondary">{workflow.nextRun}</span>
                         </div>
 
                         <div className="col-span-2 flex items-center">
-                          <span className="text-sm" style={{ color: '#457B9D' }}>
+                          <span className="text-sm text-text-secondary">
                             {workflow.lastRun === "Never" ? "-" : getRelativeTime(workflow.updatedAt)}
                           </span>
                         </div>
 
                         <div className="col-span-2 flex items-center justify-end gap-2">
-                          <div className="flex items-center gap-0.5 p-0.5" style={{ backgroundColor: '#F1FAEE', borderRadius: '2px' }}>
+                          <div className="flex items-center gap-0.5 p-0.5 bg-surface-secondary rounded-md">
                             <button
                               onClick={() => setLogsWorkflow({ id: workflow.id, name: workflow.name })}
-                              className="p-1.5 text-text-tertiary hover:text-purple-500 hover:bg-purple-500/10 transition-colors"
-                              style={{ borderRadius: '2px' }}
+                              className="p-1.5 text-text-tertiary hover:text-info hover:bg-info/10 transition-colors rounded-md"
                               title="View Logs"
                             >
                               <History className="w-4 h-4" />
@@ -664,8 +644,7 @@ const WorkflowsPage = () => {
                             <button
                               onClick={() => handleExecuteWorkflow(workflow.id)}
                               disabled={executingWorkflowId === workflow.id || workflow.status !== WorkflowStatus.ACTIVE}
-                              className="p-1.5 text-text-tertiary hover:text-emerald-500 hover:bg-emerald-500/10 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
-                              style={{ borderRadius: '2px' }}
+                              className="p-1.5 text-text-tertiary hover:text-success hover:bg-success/10 transition-colors disabled:opacity-30 disabled:cursor-not-allowed rounded-md"
                               title="Run Now"
                             >
                               <Play className="w-4 h-4" />
@@ -673,24 +652,21 @@ const WorkflowsPage = () => {
                             <button
                               onClick={() => handleDuplicateWorkflow(workflow.id)}
                               disabled={duplicatingWorkflowId === workflow.id}
-                              className="p-1.5 text-text-tertiary hover:text-teal-500 hover:bg-teal-500/10 transition-colors disabled:opacity-30"
-                              style={{ borderRadius: '2px' }}
+                              className="p-1.5 text-text-tertiary hover:text-success hover:bg-success/10 transition-colors disabled:opacity-30 rounded-md"
                               title="Duplicate"
                             >
                               <Copy className="w-4 h-4" />
                             </button>
                             <button
                               onClick={() => handleEditWorkflow(workflow.id)}
-                              className="p-1.5 text-text-tertiary hover:text-blue-500 hover:bg-blue-500/10 transition-colors"
-                              style={{ borderRadius: '2px' }}
+                              className="p-1.5 text-text-tertiary hover:text-primary-500 hover:bg-primary-500/10 transition-colors rounded-md"
                               title="Edit"
                             >
                               <Edit className="w-4 h-4" />
                             </button>
                             <button
                               onClick={() => handleDeleteWorkflow(workflow.id)}
-                              className="p-1.5 text-text-tertiary hover:text-red-500 hover:bg-red-500/10 transition-colors"
-                              style={{ borderRadius: '2px' }}
+                              className="p-1.5 text-text-tertiary hover:text-error hover:bg-error/10 transition-colors rounded-md"
                               title="Delete"
                             >
                               <Trash2 className="w-4 h-4" />

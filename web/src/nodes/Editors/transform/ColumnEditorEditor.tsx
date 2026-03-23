@@ -414,22 +414,22 @@ const ColumnEditorEditor: React.FC<ColumnEditorEditorProps> = ({
                           handleCastChange(columnName, e.target.value as DataType | '')
                         }
                         disabled={isDropped}
-                        className={`w-full h-9 px-2 text-sm rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent ${
+                        className={`w-full h-9 px-2 text-sm rounded-md border border-border bg-surface-primary focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent ${
                           isDropped
                             ? 'opacity-50 cursor-not-allowed'
                             : hasSelectedCast
-                            ? 'text-slate-900 dark:text-slate-100'
-                            : 'text-slate-400 dark:text-slate-500'
+                            ? 'text-text-primary'
+                            : 'text-text-tertiary'
                         }`}
                       >
-                        <option value="" className="text-slate-400 dark:text-slate-500">
+                        <option value="" className="text-text-tertiary">
                           -
                         </option>
                         {DATA_TYPES.map((type) => (
                           <option
                             key={type.value}
                             value={type.value}
-                            className="text-slate-900 dark:text-slate-100"
+                            className="text-text-primary"
                           >
                             {type.label}
                           </option>
@@ -445,7 +445,7 @@ const ColumnEditorEditor: React.FC<ColumnEditorEditorProps> = ({
                         className={`w-7 h-7 rounded-md flex items-center justify-center transition-colors ${
                           isDropped
                             ? 'bg-red-500 text-white hover:bg-red-600'
-                            : 'text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30'
+                            : 'text-text-tertiary hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30'
                         }`}
                         title={isDropped ? 'Restore column' : 'Drop column'}
                       >
@@ -544,7 +544,7 @@ const ColumnEditorEditor: React.FC<ColumnEditorEditorProps> = ({
                           onChange={(e) =>
                             handleNewColumnChange(nc.id, 'data_type', e.target.value)
                           }
-                          className="w-full h-9 px-2 text-sm rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+                          className="w-full h-9 px-2 text-sm rounded-md border border-border bg-surface-primary text-text-primary focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
                         >
                           {DATA_TYPES.map((type) => (
                             <option key={type.value} value={type.value}>
@@ -559,7 +559,7 @@ const ColumnEditorEditor: React.FC<ColumnEditorEditorProps> = ({
                         <button
                           type="button"
                           onClick={() => handleRemoveNewColumn(nc.id)}
-                          className="w-7 h-7 rounded-md flex items-center justify-center text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors"
+                          className="w-7 h-7 rounded-md flex items-center justify-center text-text-tertiary hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors"
                           title="Remove column"
                         >
                           <Trash2 size={14} />

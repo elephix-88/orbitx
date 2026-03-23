@@ -220,28 +220,28 @@ export const ConnectionHelp: React.FC<ConnectionHelpProps> = ({
   if (!help) return null;
 
   return (
-    <div className={cn('border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden', className)}>
+    <div className={cn('border border-border rounded-xl overflow-hidden', className)}>
       <button
         onClick={() => setExpanded(!expanded)}
-        className="w-full flex items-center justify-between px-4 py-3 bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+        className="w-full flex items-center justify-between px-4 py-3 bg-surface-secondary hover:bg-surface-tertiary transition-colors"
       >
         <div className="flex items-center gap-2">
           <HelpCircle className="w-4 h-4 text-brand-500" />
-          <span className="text-sm font-medium text-slate-900 dark:text-white">
+          <span className="text-sm font-medium text-text-primary">
             How to set up {help.title.replace(' Setup', '')}
           </span>
         </div>
         <ChevronDown
           className={cn(
-            'w-4 h-4 text-slate-500 transition-transform',
+            'w-4 h-4 text-text-secondary transition-transform',
             expanded && 'rotate-180'
           )}
         />
       </button>
 
       {expanded && (
-        <div className="px-4 py-4 bg-white dark:bg-slate-900 space-y-4">
-          <p className="text-sm text-slate-600 dark:text-slate-400">
+        <div className="px-4 py-4 bg-surface-primary space-y-4">
+          <p className="text-sm text-text-secondary">
             {help.description}
           </p>
 
@@ -255,10 +255,10 @@ export const ConnectionHelp: React.FC<ConnectionHelpProps> = ({
                   </span>
                 </div>
                 <div className="flex-1">
-                  <h4 className="text-sm font-medium text-slate-900 dark:text-white">
+                  <h4 className="text-sm font-medium text-text-primary">
                     {step.title}
                   </h4>
-                  <p className="text-xs text-slate-600 dark:text-slate-400 mt-0.5">
+                  <p className="text-xs text-text-secondary mt-0.5">
                     {step.description}
                   </p>
                   {step.link && (
@@ -279,16 +279,16 @@ export const ConnectionHelp: React.FC<ConnectionHelpProps> = ({
 
           {/* Tips */}
           {help.tips && help.tips.length > 0 && (
-            <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+            <div className="p-3 bg-info-light rounded-lg">
               <div className="flex items-center gap-2 mb-2">
-                <Info className="w-4 h-4 text-blue-500" />
-                <span className="text-xs font-medium text-blue-700 dark:text-blue-400">
+                <Info className="w-4 h-4 text-info" />
+                <span className="text-xs font-medium text-info-dark">
                   Tips
                 </span>
               </div>
               <ul className="space-y-1">
                 {help.tips.map((tip, index) => (
-                  <li key={index} className="flex items-start gap-2 text-xs text-blue-600 dark:text-blue-400">
+                  <li key={index} className="flex items-start gap-2 text-xs text-info-dark">
                     <CheckCircle className="w-3 h-3 mt-0.5 flex-shrink-0" />
                     {tip}
                   </li>
@@ -299,7 +299,7 @@ export const ConnectionHelp: React.FC<ConnectionHelpProps> = ({
 
           {/* Documentation Link */}
           {help.documentation && (
-            <div className="pt-2 border-t border-slate-200 dark:border-slate-700">
+            <div className="pt-2 border-t border-border">
               <a
                 href={help.documentation.url}
                 target="_blank"

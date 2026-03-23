@@ -29,26 +29,26 @@ interface WorkflowNodeProps {
   selected?: boolean;
 }
 
-// Category styling - Bauhaus: colored left border by type
+// Category styling using design tokens
 const categoryStyles: Record<string, {
-  borderColor: string;
-  iconBg: string;
-  dot: string;
+  borderClass: string;
+  textClass: string;
+  bgClass: string;
 }> = {
   source: {
-    borderColor: '#E63946',
-    iconBg: '#E63946',
-    dot: '#E63946',
+    borderClass: 'border-l-info',
+    textClass: 'text-info',
+    bgClass: 'bg-info',
   },
   transform: {
-    borderColor: '#F4A261',
-    iconBg: '#F4A261',
-    dot: '#F4A261',
+    borderClass: 'border-l-warning',
+    textClass: 'text-warning',
+    bgClass: 'bg-warning',
   },
   destination: {
-    borderColor: '#457B9D',
-    iconBg: '#457B9D',
-    dot: '#457B9D',
+    borderClass: 'border-l-success',
+    textClass: 'text-success',
+    bgClass: 'bg-success',
   },
 };
 
@@ -77,25 +77,25 @@ const WorkflowNode = ({ data, selected }: WorkflowNodeProps) => {
       case 'valid':
         return (
           <div title={tooltip} className="flex-shrink-0">
-            <CheckCircle size={iconSize} className="text-green-500" />
+            <CheckCircle size={iconSize} className="text-success" />
           </div>
         );
       case 'warning':
         return (
           <div title={tooltip} className="flex-shrink-0">
-            <AlertTriangle size={iconSize} className="text-amber-500" />
+            <AlertTriangle size={iconSize} className="text-warning" />
           </div>
         );
       case 'error':
         return (
           <div title={tooltip} className="flex-shrink-0">
-            <XCircle size={iconSize} className="text-red-500" />
+            <XCircle size={iconSize} className="text-error" />
           </div>
         );
       case 'unconfigured':
         return (
           <div title={tooltip} className="flex-shrink-0">
-            <div className="w-2 h-2 rounded-full bg-slate-300" />
+            <div className="w-2 h-2 rounded-full bg-neutral-300" />
           </div>
         );
       default:
@@ -110,16 +110,11 @@ const WorkflowNode = ({ data, selected }: WorkflowNodeProps) => {
         'flex items-center gap-2',
         'transition-all duration-300 ease-out',
         'w-[144px] h-[47px]',
-        selected && 'ring-2 ring-offset-1 scale-[1.02]'
+        'bg-surface-primary border border-border rounded-sm',
+        'border-l-4',
+        styles.borderClass,
+        selected && 'ring-2 ring-offset-1 scale-[1.02] shadow-sm'
       )}
-      style={{
-        backgroundColor: 'white',
-        border: '1px solid #A8DADC',
-        borderLeft: `4px solid ${styles.borderColor}`,
-        borderRadius: '2px',
-        boxShadow: selected ? '0 1px 2px rgba(0,0,0,0.08)' : 'none',
-        ringColor: selected ? styles.borderColor : undefined,
-      }}
       onDoubleClick={(e) => {
         e.stopPropagation();
         data.onOpenEditor?.();
@@ -138,8 +133,8 @@ const WorkflowNode = ({ data, selected }: WorkflowNodeProps) => {
             }}
             className={cn(
               '!w-3 !h-3 !rounded-full',
-              '!bg-slate-300 dark:!bg-slate-600 !border-2 !border-white dark:!border-slate-800',
-              'hover:!bg-slate-500 hover:!scale-125',
+              '!bg-neutral-300 !border-2 !border-surface-primary',
+              'hover:!bg-neutral-500 hover:!scale-125',
               '!transition-all !duration-200'
             )}
           />
@@ -151,8 +146,8 @@ const WorkflowNode = ({ data, selected }: WorkflowNodeProps) => {
           position={Position.Left}
           className={cn(
             '!w-3 !h-3 !rounded-full',
-            '!bg-slate-300 dark:!bg-slate-600 !border-2 !border-white dark:!border-slate-800',
-            'hover:!bg-slate-500 hover:!scale-125',
+            '!bg-neutral-300 !border-2 !border-surface-primary',
+            'hover:!bg-neutral-500 hover:!scale-125',
             '!transition-all !duration-200'
           )}
         />
@@ -160,12 +155,9 @@ const WorkflowNode = ({ data, selected }: WorkflowNodeProps) => {
 
       {/* Running State Overlay */}
       {data.status === 'running' && (
-        <div
-          className="absolute inset-0 z-50 flex items-center justify-center bg-white/60 dark:bg-slate-900/60"
-          style={{ borderRadius: '2px' }}
-        >
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-surface-primary/60 rounded-sm">
           <div className="relative">
-            <Loader2 className="w-5 h-5 animate-spin" style={{ color: styles.iconBg }} />
+            <Loader2 className={cn('w-5 h-5 animate-spin', styles.textClass)} />
           </div>
         </div>
       )}
@@ -178,10 +170,7 @@ const WorkflowNode = ({ data, selected }: WorkflowNodeProps) => {
         )}
       >
         {/* Icon Container */}
-        <div
-          className="flex-shrink-0 flex items-center justify-center w-9 h-9"
-          style={{ borderRadius: '2px' }}
-        >
+        <div className="flex-shrink-0 flex items-center justify-center w-9 h-9 rounded-sm">
           {renderIcon(data.icon || 'Circle')}
         </div>
 
@@ -189,8 +178,7 @@ const WorkflowNode = ({ data, selected }: WorkflowNodeProps) => {
         <div className="flex-1 min-w-0">
           {/* Actual node type name (always shown) */}
           <h4
-            className="font-medium truncate leading-tight text-xs"
-            style={{ color: '#1D3557' }}
+            className="font-medium truncate leading-tight text-xs text-text-primary"
             title={data.display_name ? `${data.name} - ${data.display_name}` : data.name}
           >
             {data.name}
@@ -198,8 +186,7 @@ const WorkflowNode = ({ data, selected }: WorkflowNodeProps) => {
           {/* Alias (shown if set) */}
           {data.display_name && (
             <p
-              className="text-[10px] truncate leading-tight"
-              style={{ color: '#457B9D' }}
+              className="text-[10px] truncate leading-tight text-text-secondary"
               title={data.display_name}
             >
               {data.display_name}
@@ -211,10 +198,10 @@ const WorkflowNode = ({ data, selected }: WorkflowNodeProps) => {
         {data.status && data.status !== 'idle' && data.status !== 'running' && data.status !== 'pending' ? (
           <div className="flex-shrink-0">
             <div
-              className="w-2 h-2 rounded-full"
-              style={{
-                backgroundColor: data.status === 'error' ? '#E63946' : data.status === 'success' ? '#34d399' : '#A8DADC',
-              }}
+              className={cn(
+                'w-2 h-2 rounded-full',
+                data.status === 'error' ? 'bg-error' : data.status === 'success' ? 'bg-success' : 'bg-border'
+              )}
             />
           </div>
         ) : (
@@ -232,11 +219,11 @@ const WorkflowNode = ({ data, selected }: WorkflowNodeProps) => {
             position={Position.Right}
             style={{
               top: data.outputs.length === 1 ? '50%' : `${((index + 1) / (data.outputs.length + 1)) * 100}%`,
-              backgroundColor: styles.dot,
             }}
             className={cn(
               '!w-3 !h-3 !rounded-full',
-              '!border-2 !border-white dark:!border-slate-800',
+              styles.bgClass,
+              '!border-2 !border-surface-primary',
               'hover:!scale-125',
               '!transition-all !duration-200'
             )}
@@ -248,12 +235,7 @@ const WorkflowNode = ({ data, selected }: WorkflowNodeProps) => {
         {/* Duplicate Button */}
         {data.onDuplicate && (
           <button
-            className="w-5 h-5 flex items-center justify-center transition-all duration-200"
-            style={{
-              backgroundColor: '#A8DADC',
-              color: '#1D3557',
-              borderRadius: '2px',
-            }}
+            className="w-5 h-5 flex items-center justify-center transition-all duration-200 bg-neutral-200 text-text-primary rounded-sm"
             onClick={(e) => {
               e.stopPropagation();
               data.onDuplicate?.();
@@ -266,12 +248,7 @@ const WorkflowNode = ({ data, selected }: WorkflowNodeProps) => {
         {/* Delete Button */}
         {data.onDelete && (
           <button
-            className="w-5 h-5 flex items-center justify-center transition-all duration-200"
-            style={{
-              backgroundColor: '#E63946',
-              color: 'white',
-              borderRadius: '2px',
-            }}
+            className="w-5 h-5 flex items-center justify-center transition-all duration-200 bg-error text-text-inverse rounded-sm"
             onClick={(e) => {
               e.stopPropagation();
               data.onDelete?.();

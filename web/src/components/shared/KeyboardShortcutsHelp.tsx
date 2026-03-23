@@ -66,23 +66,23 @@ export const KeyboardShortcutsHelp: React.FC<KeyboardShortcutsHelpProps> = ({
       />
 
       {/* Modal */}
-      <div className="relative bg-white dark:bg-slate-900 rounded-2xl shadow-xl max-w-lg w-full mx-4 max-h-[80vh] overflow-hidden animate-in zoom-in-95 duration-200">
+      <div className="relative bg-surface-primary rounded-lg shadow-xl max-w-lg w-full mx-4 max-h-[80vh] overflow-hidden animate-in zoom-in-95 duration-200">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-slate-700">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-border">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-brand-100 dark:bg-brand-900/30">
-              <Keyboard className="w-5 h-5 text-brand-600 dark:text-brand-400" />
+            <div className="p-2 rounded-lg bg-primary-100 dark:bg-primary-700/30">
+              <Keyboard className="w-5 h-5 text-primary-600 dark:text-primary-400" />
             </div>
-            <h2 id="shortcuts-title" className="text-lg font-semibold text-slate-900 dark:text-white">
-              Keyboard Shortcuts
+            <h2 id="shortcuts-title" className="text-lg font-semibold text-text-primary">
+              Keyboard shortcuts
             </h2>
           </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            className="p-2 rounded-lg hover:bg-surface-secondary transition-colors"
             aria-label="Close"
           >
-            <X className="w-5 h-5 text-slate-500" />
+            <X className="w-5 h-5 text-text-tertiary" />
           </button>
         </div>
 
@@ -91,16 +91,16 @@ export const KeyboardShortcutsHelp: React.FC<KeyboardShortcutsHelpProps> = ({
           <div className="space-y-6">
             {shortcutGroups.map((group) => (
               <div key={group.title}>
-                <h3 className="text-sm font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3">
+                <h3 className="text-sm font-semibold text-text-tertiary mb-3">
                   {group.title}
                 </h3>
                 <div className="space-y-2">
                   {group.shortcuts.map((shortcut) => (
                     <div
                       key={shortcut.description}
-                      className="flex items-center justify-between py-2 px-3 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/50"
+                      className="flex items-center justify-between py-2 px-3 rounded-lg hover:bg-surface-secondary"
                     >
-                      <span className="text-sm text-slate-700 dark:text-slate-300">
+                      <span className="text-sm text-text-primary">
                         {shortcut.description}
                       </span>
                       <ShortcutBadge shortcut={shortcut} />
@@ -113,8 +113,8 @@ export const KeyboardShortcutsHelp: React.FC<KeyboardShortcutsHelpProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-4 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50">
-          <p className="text-xs text-slate-500 dark:text-slate-400 text-center">
+        <div className="px-6 py-4 border-t border-border bg-surface-secondary">
+          <p className="text-xs text-text-tertiary text-center">
             Press <ShortcutBadge shortcut={{ key: '?', description: '' }} size="sm" /> to show this help
           </p>
         </div>
@@ -145,7 +145,7 @@ export const ShortcutBadge: React.FC<{
       {parts.map((part, idx) => {
         if (part === '+') {
           return (
-            <span key={idx} className="text-slate-400">
+            <span key={idx} className="text-text-tertiary">
               +
             </span>
           );
@@ -154,9 +154,9 @@ export const ShortcutBadge: React.FC<{
           <span
             key={idx}
             className={cn(
-              'px-1.5 py-0.5 rounded bg-slate-100 dark:bg-slate-700',
-              'border border-slate-200 dark:border-slate-600',
-              'text-slate-700 dark:text-slate-300',
+              'px-1.5 py-0.5 rounded-md bg-surface-secondary',
+              'border border-border-subtle',
+              'text-text-primary',
               'shadow-sm'
             )}
           >
@@ -179,8 +179,8 @@ export const ShortcutsHelpButton: React.FC<{
     <button
       onClick={onClick}
       className={cn(
-        'p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800',
-        'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200',
+        'p-2 rounded-lg hover:bg-surface-secondary',
+        'text-text-tertiary hover:text-text-primary',
         'transition-colors',
         className
       )}

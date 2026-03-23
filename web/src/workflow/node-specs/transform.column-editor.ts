@@ -31,7 +31,7 @@ export const columnEditorTransformSpec: NodeSpec = {
   displayName: 'Column Editor',
   category: 'TRANSFORM',
   icon: 'Columns3',
-  color: '#8B5CF6',
+  color: '#F59E0B',
   ports: [
     { id: 'in', name: 'Input', io: 'input', dataType: 'records' },
     { id: 'out', name: 'Output', io: 'output', dataType: 'records' },

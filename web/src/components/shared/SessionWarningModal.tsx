@@ -53,9 +53,9 @@ export function SessionWarningModal({
       {/* Modal */}
       <div className={cn(
         "relative z-50 w-full max-w-md",
-        "bg-white dark:bg-slate-950",
+        "bg-surface-primary",
         "rounded-lg shadow-lg",
-        "border border-slate-200 dark:border-slate-800",
+        "border border-border",
         "p-6"
       )}>
         {/* Close button */}
@@ -63,9 +63,8 @@ export function SessionWarningModal({
           onClick={onDismiss}
           className={cn(
             "absolute right-4 top-4",
-            "rounded-sm opacity-70 transition-opacity hover:opacity-100",
-            "focus:outline-none focus:ring-2 focus:ring-slate-950 focus:ring-offset-2",
-            "dark:focus:ring-slate-300"
+            "rounded-md opacity-70 transition-opacity hover:opacity-100",
+            "focus:outline-none focus:ring-2 focus:ring-primary-600 focus:ring-offset-2"
           )}
           aria-label="Dismiss"
         >
@@ -75,22 +74,22 @@ export function SessionWarningModal({
         <div className="flex flex-col gap-4">
           {/* Icon + Title */}
           <div className="flex items-start gap-4">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-900/20">
-              <Clock className="h-5 w-5 text-amber-600 dark:text-amber-500" />
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-warning-light dark:bg-warning-dark/20">
+              <Clock className="h-5 w-5 text-warning dark:text-warning" />
             </div>
             <div className="flex-1">
               <h2
                 id="session-warning-title"
-                className="text-lg font-semibold text-slate-950 dark:text-slate-50"
+                className="text-lg font-semibold text-text-primary"
               >
                 Session Expiring Soon
               </h2>
               <div className="mt-1.5 flex items-center gap-2">
                 <span className="relative flex h-2 w-2">
-                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-amber-500 opacity-75" />
-                  <span className="relative inline-flex h-2 w-2 rounded-full bg-amber-500" />
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-warning opacity-75" />
+                  <span className="relative inline-flex h-2 w-2 rounded-full bg-warning" />
                 </span>
-                <span className="text-sm font-medium text-amber-600 dark:text-amber-500">
+                <span className="text-sm font-medium text-warning">
                   {minutesRemaining !== null
                     ? `${minutesRemaining} minute${minutesRemaining !== 1 ? 's' : ''} remaining`
                     : 'Expiring soon'}
@@ -101,11 +100,11 @@ export function SessionWarningModal({
 
           {/* Content */}
           <div className="space-y-2">
-            <p className="text-sm text-slate-500 dark:text-slate-400">
+            <p className="text-sm text-text-secondary">
               Your session will expire soon for security reasons. You'll be automatically
               logged out when it ends.
             </p>
-            <p className="text-sm text-slate-500 dark:text-slate-400">
+            <p className="text-sm text-text-secondary">
               Please save any unsaved work before the session expires.
             </p>
           </div>

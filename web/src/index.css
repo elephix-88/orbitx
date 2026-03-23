@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -6,71 +6,102 @@
 
 @layer base {
   :root {
-    /* Bauhaus Primary Palette */
-    --brand-50: 253 237 239;
-    --brand-100: 249 207 212;
-    --brand-200: 243 163 172;
-    --brand-300: 237 119 132;
-    --brand-400: 233 85 100;
-    --brand-500: 230 57 70;    /* #E63946 — Bauhaus Red */
-    --brand-600: 200 45 58;
-    --brand-700: 170 35 48;
-    --brand-800: 140 28 38;
-    --brand-900: 110 20 28;
+    /* ── Semantic surfaces ── */
+    --surface-primary: 255 255 255;
+    --surface-secondary: 249 250 251;
+    --surface-tertiary: 243 244 246;
+    --surface-dark: 17 24 39;
 
-    /* Surface — Off-White Bauhaus */
-    --surface-primary: 241 250 238;    /* #F1FAEE */
-    --surface-secondary: 255 255 255;  /* White cards */
-    --surface-tertiary: 232 242 228;   /* Slightly darker cream */
-    --surface-dark: 29 53 87;          /* #1D3557 */
+    /* ── Semantic text ── */
+    --text-primary: 17 24 39;
+    --text-secondary: 107 114 128;
+    --text-tertiary: 156 163 175;
+    --text-inverse: 255 255 255;
 
-    /* Text — Deep Blue hierarchy */
-    --text-primary: 29 53 87;     /* #1D3557 */
-    --text-secondary: 69 123 157; /* #457B9D */
-    --text-tertiary: 168 218 220; /* #A8DADC */
-    --text-inverse: 241 250 238;  /* #F1FAEE */
+    /* ── Semantic borders ── */
+    --border-default: 229 231 235;
+    --border-subtle: 243 244 246;
 
-    /* Borders — Teal */
-    --border-primary: 168 218 220;  /* #A8DADC */
-    --border-secondary: 210 235 236;
+    /* ── Backward-compat aliases ── */
+    --border-primary: 229 231 235;
+    --border-secondary: 243 244 246;
 
-    /* Semantic */
-    --success: 34 197 94;
-    --error: 230 57 70;     /* Bauhaus Red */
-    --warning: 244 162 97;  /* #F4A261 — Bauhaus Yellow */
-    --info: 69 123 157;     /* #457B9D */
+    /* ── Brand / primary scale (indigo) ── */
+    --brand-50: 238 242 255;
+    --brand-100: 224 231 255;
+    --brand-200: 199 210 254;
+    --brand-300: 165 180 252;
+    --brand-400: 129 140 248;
+    --brand-500: 99 102 241;
+    --brand-600: 79 70 229;
+    --brand-700: 67 56 202;
+    --brand-800: 49 46 129;
+    --brand-900: 30 27 75;
+
+    /* ── Status: success ── */
+    --success-light: 236 253 245;
+    --success: 16 185 129;
+    --success-dark: 6 95 70;
+
+    /* ── Status: warning ── */
+    --warning-light: 255 251 235;
+    --warning: 245 158 11;
+    --warning-dark: 146 64 14;
+
+    /* ── Status: error ── */
+    --error-light: 254 242 242;
+    --error: 239 68 68;
+    --error-dark: 153 27 27;
+
+    /* ── Status: info ── */
+    --info-light: 239 246 255;
+    --info: 59 130 246;
+    --info-dark: 30 64 175;
   }
 
   .dark {
-    /* Dark Bauhaus — inverted but same palette */
-    --brand-50: 40 20 24;
-    --brand-100: 60 28 34;
-    --brand-200: 90 35 42;
-    --brand-300: 140 45 55;
-    --brand-400: 200 50 62;
-    --brand-500: 230 57 70;
-    --brand-600: 237 119 132;
-    --brand-700: 243 163 172;
-    --brand-800: 249 207 212;
-    --brand-900: 253 237 239;
+    --surface-primary: 15 23 42;
+    --surface-secondary: 30 41 59;
+    --surface-tertiary: 51 65 85;
+    --surface-dark: 8 12 24;
 
-    --surface-primary: 20 33 54;     /* Dark navy */
-    --surface-secondary: 29 53 87;   /* #1D3557 */
-    --surface-tertiary: 40 65 100;
-    --surface-dark: 10 18 32;
+    --text-primary: 248 250 252;
+    --text-secondary: 148 163 184;
+    --text-tertiary: 100 116 139;
+    --text-inverse: 15 23 42;
 
-    --text-primary: 241 250 238;
-    --text-secondary: 168 218 220;
-    --text-tertiary: 69 123 157;
-    --text-inverse: 29 53 87;
+    --border-default: 51 65 85;
+    --border-subtle: 30 41 59;
 
-    --border-primary: 50 75 110;
-    --border-secondary: 35 55 85;
+    --border-primary: 51 65 85;
+    --border-secondary: 30 41 59;
 
-    --success: 34 197 94;
-    --error: 230 57 70;
-    --warning: 244 162 97;
-    --info: 168 218 220;
+    --brand-50: 30 27 75;
+    --brand-100: 49 46 129;
+    --brand-200: 67 56 202;
+    --brand-300: 79 70 229;
+    --brand-400: 99 102 241;
+    --brand-500: 129 140 248;
+    --brand-600: 165 180 252;
+    --brand-700: 199 210 254;
+    --brand-800: 224 231 255;
+    --brand-900: 238 242 255;
+
+    --success-light: 6 78 59;
+    --success: 16 185 129;
+    --success-dark: 167 243 208;
+
+    --warning-light: 120 53 15;
+    --warning: 245 158 11;
+    --warning-dark: 253 230 138;
+
+    --error-light: 127 29 29;
+    --error: 239 68 68;
+    --error-dark: 254 202 202;
+
+    --info-light: 30 58 138;
+    --info: 59 130 246;
+    --info-dark: 191 219 254;
   }
 
   html, body, #root {
@@ -82,32 +113,25 @@
 
   body {
     @apply bg-surface-primary text-text-primary antialiased;
-    font-family: 'DM Sans', 'Inter', ui-sans-serif, system-ui, sans-serif;
+    font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
     font-size: 15px;
     font-weight: 400;
-    line-height: 1.6;
+    line-height: 1.5;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
-    letter-spacing: 0;
+    letter-spacing: -0.011em;
   }
 
-  /* Bauhaus Typography — geometric, bold hierarchy */
-  h1, h2 {
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.02em;
-  }
-
-  h3, h4, h5, h6 {
-    font-weight: 700;
-    letter-spacing: 0;
-  }
-
-  button, .btn-base {
+  /* Typography hierarchy */
+  h1, h2, h3, h4, h5, h6 {
     font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
+    letter-spacing: -0.02em;
+    line-height: 1.3;
+  }
+
+  button {
+    font-weight: 500;
   }
 
   input, textarea, select {
@@ -116,55 +140,60 @@
   }
 
   label {
-    font-weight: 600;
-    font-size: 12px;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
+    font-weight: 500;
+    font-size: 14px;
+    color: rgb(var(--text-primary));
   }
 
   strong, b {
-    font-weight: 700;
+    font-weight: 600;
   }
 }
 
 @layer components {
-  /* === BAUHAUS PANELS === */
+  /* ── Panels ── */
   .glass-panel {
-    @apply bg-surface-secondary border border-border-primary;
-    border-radius: 2px;
+    @apply bg-surface-secondary border border-border-primary rounded-lg;
   }
 
   .glass-panel-hover {
     @apply hover:bg-surface-tertiary transition-colors duration-150;
   }
 
-  /* === BAUHAUS BUTTON SYSTEM === */
+  /* ── Button system ── */
   .btn-base {
-    @apply inline-flex items-center justify-center font-semibold uppercase tracking-wider transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-500 disabled:opacity-50 disabled:cursor-not-allowed;
-    font-size: 13px;
-    border-radius: 2px;
+    @apply inline-flex items-center justify-center font-medium transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-brand-500 disabled:opacity-50 disabled:cursor-not-allowed;
+    font-size: 14px;
+    border-radius: 6px;
   }
 
   .btn-primary {
-    @apply btn-base text-white border-2 border-transparent;
-    background-color: #E63946;
+    @apply btn-base text-white border border-transparent;
+    background-color: #4F46E5;
   }
   .btn-primary:hover:not(:disabled) {
-    background-color: #C8313E;
+    background-color: #4338CA;
   }
 
   .btn-secondary {
-    @apply btn-base bg-transparent text-text-primary;
-    border: 2px solid #1D3557;
+    @apply btn-base bg-white text-text-primary;
+    border: 1px solid #E5E7EB;
   }
   .btn-secondary:hover:not(:disabled) {
-    background-color: #1D3557;
-    color: #F1FAEE;
+    background-color: #F9FAFB;
+  }
+  .dark .btn-secondary {
+    background-color: rgb(var(--surface-secondary));
+    border-color: rgb(var(--border-default));
+    color: rgb(var(--text-primary));
+  }
+  .dark .btn-secondary:hover:not(:disabled) {
+    background-color: rgb(var(--surface-tertiary));
   }
 
   .btn-ghost {
     @apply btn-base bg-transparent text-text-secondary;
-    border: 2px solid transparent;
+    border: 1px solid transparent;
   }
   .btn-ghost:hover:not(:disabled) {
     @apply text-text-primary bg-surface-tertiary;
@@ -172,27 +201,28 @@
 
   .btn-destructive {
     @apply btn-base text-white;
-    background-color: #E63946;
-    border: 2px solid #E63946;
+    background-color: #EF4444;
+    border: 1px solid #EF4444;
   }
   .btn-destructive:hover:not(:disabled) {
-    background-color: #C8313E;
-    border-color: #C8313E;
+    background-color: #DC2626;
+    border-color: #DC2626;
   }
 
   .btn-icon {
     @apply btn-base p-2 aspect-square;
   }
 
-  /* === BAUHAUS TYPOGRAPHY === */
+  /* ── Typography ── */
   .text-display {
-    @apply font-display font-bold uppercase tracking-wide;
+    @apply font-semibold;
+    letter-spacing: -0.025em;
   }
 
-  /* === SCROLLBAR — Minimal === */
+  /* ── Scrollbar ── */
   ::-webkit-scrollbar {
-    width: 4px;
-    height: 4px;
+    width: 6px;
+    height: 6px;
   }
 
   ::-webkit-scrollbar-track {
@@ -200,31 +230,31 @@
   }
 
   ::-webkit-scrollbar-thumb {
-    background-color: #A8DADC;
-    border-radius: 0;
+    background-color: rgb(var(--text-tertiary) / 0.3);
+    border-radius: 3px;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background-color: #457B9D;
+    background-color: rgb(var(--text-tertiary) / 0.5);
   }
 }
 
-/* === BAUHAUS UTILITIES === */
+/* ── Utilities ── */
 .text-gradient {
-  color: #E63946;
+  color: #4F46E5;
 }
 
-/* Bauhaus geometric divider */
 .bauhaus-divider {
   width: 48px;
-  height: 4px;
-  background-color: #E63946;
+  height: 3px;
+  background-color: #4F46E5;
+  border-radius: 2px;
 }
 
-/* Bauhaus accent bar */
 .bauhaus-accent-bar {
-  width: 4px;
-  background-color: #E63946;
+  width: 3px;
+  background-color: #4F46E5;
+  border-radius: 2px;
 }
 
 @keyframes fadeIn {
@@ -243,24 +273,24 @@
   }
 }
 
-/* === REACT DAY PICKER — Bauhaus Style === */
+/* ── React Day Picker ── */
 .date-range-picker-custom {
-  --rdp-accent-color: #E63946;
-  --rdp-accent-background-color: rgba(230, 57, 70, 0.1);
+  --rdp-accent-color: #4F46E5;
+  --rdp-accent-background-color: rgba(79, 70, 229, 0.08);
   --rdp-background-color: #FFFFFF;
   --rdp-day-height: 2rem;
   --rdp-day-width: 2rem;
-  --rdp-day_button-border-radius: 0;
+  --rdp-day_button-border-radius: 6px;
   --rdp-day_button-height: 2rem;
   --rdp-day_button-width: 2rem;
   --rdp-selected-border: none;
   --rdp-disabled-opacity: 0.3;
   --rdp-outside-opacity: 0.5;
-  --rdp-today-color: #E63946;
+  --rdp-today-color: #4F46E5;
   --rdp-selected-font: inherit;
-  --rdp-range_start-date-background-color: #E63946;
-  --rdp-range_end-date-background-color: #E63946;
-  --rdp-range_middle-background-color: rgba(230, 57, 70, 0.1);
+  --rdp-range_start-date-background-color: #4F46E5;
+  --rdp-range_end-date-background-color: #4F46E5;
+  --rdp-range_middle-background-color: rgba(79, 70, 229, 0.08);
 }
 
 .date-range-picker-custom .rdp-root {
@@ -288,10 +318,9 @@
 
 .date-range-picker-custom .rdp-caption_label {
   font-size: 0.875rem;
-  font-weight: 700;
-  color: #1D3557;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+  font-weight: 600;
+  color: rgb(var(--text-primary));
+  letter-spacing: -0.01em;
 }
 
 .date-range-picker-custom .rdp-nav {
@@ -306,9 +335,9 @@
   justify-content: center;
   width: 1.75rem;
   height: 1.75rem;
-  border-radius: 0;
+  border-radius: 6px;
   background: transparent;
-  color: #457B9D;
+  color: rgb(var(--text-secondary));
   transition: all 0.15s ease;
   cursor: pointer;
   border: none;
@@ -316,8 +345,8 @@
 
 .date-range-picker-custom .rdp-button_previous:hover,
 .date-range-picker-custom .rdp-button_next:hover {
-  background: #A8DADC;
-  color: #1D3557;
+  background: rgb(var(--surface-tertiary));
+  color: rgb(var(--text-primary));
 }
 
 .date-range-picker-custom .rdp-weekdays {
@@ -330,11 +359,9 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.65rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: #457B9D;
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: rgb(var(--text-tertiary));
 }
 
 .date-range-picker-custom .rdp-weeks {
@@ -358,10 +385,10 @@
 .date-range-picker-custom .rdp-day_button {
   width: 2rem;
   height: 2rem;
-  border-radius: 0;
+  border-radius: 6px;
   font-size: 0.8125rem;
-  font-weight: 500;
-  color: #1D3557;
+  font-weight: 400;
+  color: rgb(var(--text-primary));
   background: transparent;
   border: none;
   cursor: pointer;
@@ -369,53 +396,53 @@
 }
 
 .date-range-picker-custom .rdp-day_button:hover:not(:disabled) {
-  background: #A8DADC;
+  background: rgb(var(--surface-tertiary));
 }
 
 .date-range-picker-custom .rdp-today .rdp-day_button {
-  background: rgba(230, 57, 70, 0.1);
-  font-weight: 700;
+  background: rgba(79, 70, 229, 0.08);
+  font-weight: 600;
 }
 
 .date-range-picker-custom .rdp-selected .rdp-day_button {
-  background: #E63946;
+  background: #4F46E5;
   color: white;
-  font-weight: 600;
+  font-weight: 500;
 }
 
 .date-range-picker-custom .rdp-range_start .rdp-day_button,
 .date-range-picker-custom .rdp-range_end .rdp-day_button {
-  background: #E63946;
+  background: #4F46E5;
   color: white;
-  font-weight: 600;
+  font-weight: 500;
 }
 
 .date-range-picker-custom .rdp-range_middle .rdp-day_button {
-  background: rgba(230, 57, 70, 0.1);
-  color: #1D3557;
+  background: rgba(79, 70, 229, 0.08);
+  color: rgb(var(--text-primary));
   border-radius: 0;
 }
 
 .date-range-picker-custom .rdp-range_start .rdp-day_button {
-  border-radius: 0;
+  border-radius: 6px 0 0 6px;
 }
 
 .date-range-picker-custom .rdp-range_end .rdp-day_button {
-  border-radius: 0;
+  border-radius: 0 6px 6px 0;
 }
 
 .date-range-picker-custom .rdp-range_start.rdp-range_end .rdp-day_button {
-  border-radius: 0;
+  border-radius: 6px;
 }
 
 .date-range-picker-custom .rdp-disabled .rdp-day_button {
-  color: #A8DADC;
+  color: rgb(var(--text-tertiary));
   opacity: 0.3;
   cursor: not-allowed;
 }
 
 .date-range-picker-custom .rdp-outside .rdp-day_button {
-  color: #A8DADC;
+  color: rgb(var(--text-tertiary));
   opacity: 0.5;
 }
 

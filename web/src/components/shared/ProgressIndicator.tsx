@@ -28,16 +28,16 @@ export const ProgressIndicator: React.FC<ProgressIndicatorProps> = ({
               key={index}
               className={cn(
                 'text-sm font-medium',
-                index + 1 <= currentStep ? 'text-brand-600' : 'text-slate-400'
+                index + 1 <= currentStep ? 'text-primary-600' : 'text-text-tertiary'
               )}
             >
               {label}
             </span>
           ))}
         </div>
-        <div className="w-full bg-slate-200 rounded-full h-2 dark:bg-slate-700">
+        <div className="w-full bg-neutral-200 rounded-full h-2 dark:bg-neutral-700">
           <div
-            className="bg-brand-600 h-2 rounded-full transition-all duration-300 ease-out"
+            className="bg-primary-600 h-2 rounded-full transition-all duration-300 ease-out"
             style={{ width: `${(currentStep / steps) * 100}%` }}
           />
         </div>
@@ -55,10 +55,10 @@ export const ProgressIndicator: React.FC<ProgressIndicatorProps> = ({
                 className={cn(
                   'w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium transition-all duration-200',
                   step < currentStep
-                    ? 'bg-brand-600 text-white'
+                    ? 'bg-primary-600 text-white'
                     : step === currentStep
-                    ? 'bg-brand-600 text-white ring-4 ring-brand-100'
-                    : 'bg-slate-200 text-slate-500 dark:bg-slate-700 dark:text-slate-400'
+                    ? 'bg-primary-600 text-white ring-4 ring-primary-100'
+                    : 'bg-neutral-200 text-text-tertiary dark:bg-neutral-700'
                 )}
               >
                 {step < currentStep ? (
@@ -71,7 +71,7 @@ export const ProgressIndicator: React.FC<ProgressIndicatorProps> = ({
                 <span
                   className={cn(
                     'mt-2 text-xs font-medium',
-                    step <= currentStep ? 'text-brand-600' : 'text-slate-400'
+                    step <= currentStep ? 'text-primary-600' : 'text-text-tertiary'
                   )}
                 >
                   {stepLabels[index]}
@@ -82,7 +82,7 @@ export const ProgressIndicator: React.FC<ProgressIndicatorProps> = ({
               <div
                 className={cn(
                   'flex-1 h-0.5 mx-4 transition-all duration-300',
-                  step < currentStep ? 'bg-brand-600' : 'bg-slate-200 dark:bg-slate-700'
+                  step < currentStep ? 'bg-primary-600' : 'bg-neutral-200 dark:bg-neutral-700'
                 )}
               />
             )}
@@ -101,8 +101,8 @@ export const ProgressIndicator: React.FC<ProgressIndicatorProps> = ({
           className={cn(
             'w-2 h-2 rounded-full transition-all duration-200',
             step <= currentStep
-              ? 'bg-brand-600 scale-125'
-              : 'bg-slate-300 dark:bg-slate-600'
+              ? 'bg-primary-600 scale-125'
+              : 'bg-neutral-300 dark:bg-neutral-600'
           )}
         />
       ))}
@@ -132,13 +132,13 @@ export const LoadingProgress: React.FC<{
   <div className="w-full">
     {label && (
       <div className="flex justify-between items-center mb-2">
-        <span className="text-sm font-medium text-slate-700 dark:text-slate-300">{label}</span>
-        <span className="text-sm text-slate-500 dark:text-slate-400">{Math.round(progress)}%</span>
+        <span className="text-sm font-medium text-text-primary">{label}</span>
+        <span className="text-sm text-text-secondary">{Math.round(progress)}%</span>
       </div>
     )}
-    <div className="w-full bg-slate-200 rounded-full h-2 dark:bg-slate-700">
+    <div className="w-full bg-neutral-200 rounded-full h-2 dark:bg-neutral-700">
       <div
-        className="bg-brand-600 h-2 rounded-full transition-all duration-300 ease-out"
+        className="bg-primary-600 h-2 rounded-full transition-all duration-300 ease-out"
         style={{ width: `${Math.min(100, Math.max(0, progress))}%` }}
       />
     </div>

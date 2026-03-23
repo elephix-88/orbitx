@@ -18,10 +18,10 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
         {label && (
           <label
             htmlFor={inputId}
-            className="block text-xs font-bold uppercase tracking-wider text-[#1D3557] dark:text-slate-300 mb-2"
+            className="block text-sm font-medium text-text-primary mb-2"
           >
             {label}
-            {required && <span className="text-red-500 ml-0.5">*</span>}
+            {required && <span className="text-error ml-0.5">*</span>}
           </label>
         )}
         <div className="relative">
@@ -31,24 +31,24 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
             aria-invalid={!!error}
             aria-describedby={error ? `${inputId}-error` : helperText ? `${inputId}-helper` : undefined}
             className={cn(
-              'block w-full rounded-sm px-3.5 py-2.5',
-              'text-sm text-[#1D3557] dark:text-slate-100',
-              'placeholder:text-slate-400 dark:placeholder:text-slate-500',
-              'bg-white dark:bg-slate-800',
-              'border border-[#A8DADC] dark:border-slate-600',
-              'focus:outline-none focus:border-[#1D3557] focus:border-2 focus:ring-0',
-              'disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-slate-50 dark:disabled:bg-slate-900',
+              'block w-full rounded-md px-3.5 py-2.5',
+              'text-sm text-text-primary',
+              'placeholder:text-text-tertiary',
+              'bg-surface-primary',
+              'border border-border',
+              'focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500/20',
+              'disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-surface-tertiary',
               'transition-colors duration-200',
               error
-                ? 'border-[#E63946] dark:border-[#E63946] focus:border-[#E63946]'
-                : 'hover:border-[#457B9D] dark:hover:border-slate-500',
+                ? 'border-error focus:border-error'
+                : 'hover:border-neutral-400',
               className
             )}
             {...props}
           />
           {error && (
             <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-              <AlertCircle className="w-4 h-4 text-red-500" aria-hidden="true" />
+              <AlertCircle className="w-4 h-4 text-error" aria-hidden="true" />
             </div>
           )}
         </div>
@@ -57,7 +57,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
             id={error ? `${inputId}-error` : `${inputId}-helper`}
             className={cn(
               'mt-1.5 text-sm',
-              error ? 'text-red-500 dark:text-red-400' : 'text-slate-500 dark:text-slate-400'
+              error ? 'text-error' : 'text-text-secondary'
             )}
           >
             {error || helperText}
@@ -68,4 +68,4 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
   }
 );
 
-Input.displayName = 'Input'; 
+Input.displayName = 'Input';

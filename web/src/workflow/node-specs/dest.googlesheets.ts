@@ -9,7 +9,7 @@ export const googleSheetsDestSpec: NodeSpec = {
   displayName: 'Google Sheets',
   category: 'DESTINATION',
   icon: 'GoogleSheets',
-  color: '#0F9D58',
+  color: '#10B981',
   ports: [{ id: 'in', name: 'Input', io: 'input', dataType: 'records' }],
   defaults: { connection_id: '', spreadsheet_id: '', worksheet_name: '', range: '', insert_mode: 'append' },
   paramsSchema: z.object({ spreadsheet_id: z.string().default('') }),

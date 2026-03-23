@@ -33,8 +33,8 @@ const statusConfig: Record<string, StatusConfig> = {
   },
   inactive: {
     label: 'Inactive',
-    dotClass: 'bg-slate-400',
-    textClass: 'text-slate-500 dark:text-slate-400',
+    dotClass: 'bg-neutral-400',
+    textClass: 'text-text-secondary',
   },
   paused: {
     label: 'Paused',

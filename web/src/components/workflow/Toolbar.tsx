@@ -67,8 +67,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
 
   return (
     <div
-      className="h-16 flex items-center justify-between px-6 z-50"
-      style={{ backgroundColor: '#1D3557', borderBottom: '2px solid #E63946' }}
+      className="h-16 flex items-center justify-between px-6 z-50 bg-neutral-900 border-b-2 border-primary-600"
     >
       {/* Left Side */}
       <div className="flex items-center gap-4">
@@ -107,17 +106,19 @@ export const Toolbar: React.FC<ToolbarProps> = ({
 
         {/* Workflow Name */}
         <div className="flex items-center gap-2.5">
-          <div className="p-1.5" style={{ backgroundColor: '#E63946', borderRadius: '2px' }}>
+          <div className="p-1.5 bg-primary-600 rounded-sm">
             <Zap className="text-white" size={16} />
           </div>
           <div>
-            <h1 className="text-sm font-semibold text-white uppercase tracking-wider">
+            <h1 className="text-sm font-semibold text-white">
               {workflow.name}
             </h1>
             <div className="flex items-center gap-1.5">
               <span
-                className="w-1.5 h-1.5 rounded-full"
-                style={{ backgroundColor: workflow.isActive ? '#34d399' : '#94a3b8' }}
+                className={cn(
+                  "w-1.5 h-1.5 rounded-full",
+                  workflow.isActive ? "bg-success" : "bg-neutral-400"
+                )}
               />
               <span className="text-[10px] font-medium text-white/50 uppercase tracking-wider">
                 {workflow.isActive ? "ACTIVE" : "DRAFT"}
@@ -131,8 +132,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
       <button
         onClick={onExecute}
         disabled={workflow.nodes.length === 0 || executing}
-        className="px-8 py-2 flex items-center gap-2 text-white font-semibold uppercase tracking-wider text-sm transition-colors disabled:opacity-50"
-        style={{ backgroundColor: '#E63946', borderRadius: '2px' }}
+        className="px-6 py-2 flex items-center gap-2 text-white font-medium text-sm rounded-md transition-colors disabled:opacity-50 bg-primary-600"
       >
         {executing ? (
           <Loader2 size={18} className="animate-spin" />
@@ -146,11 +146,11 @@ export const Toolbar: React.FC<ToolbarProps> = ({
       <div className="flex items-center gap-3">
         {/* Status Indicators */}
         {hasUnsavedChanges ? (
-          <span className="flex items-center gap-1.5 text-xs font-medium" style={{ color: '#F4A261' }}>
+          <span className="flex items-center gap-1.5 text-xs font-medium text-warning">
             <Clock size={14} /> Unsaved changes
           </span>
         ) : lastSavedAt ? (
-          <span className="flex items-center gap-1.5 text-xs font-medium" style={{ color: '#34d399' }}>
+          <span className="flex items-center gap-1.5 text-xs font-medium text-success">
             <CheckCircle2 size={14} /> Saved
           </span>
         ) : null}
