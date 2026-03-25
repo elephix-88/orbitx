@@ -74,8 +74,8 @@ export function SessionWarningModal({
         <div className="flex flex-col gap-4">
           {/* Icon + Title */}
           <div className="flex items-start gap-4">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-warning-light dark:bg-warning-dark/20">
-              <Clock className="h-5 w-5 text-warning dark:text-warning" />
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-warning-light">
+              <Clock className="h-5 w-5 text-warning" />
             </div>
             <div className="flex-1">
               <h2

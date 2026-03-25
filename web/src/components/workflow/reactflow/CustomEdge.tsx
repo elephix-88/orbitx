@@ -7,9 +7,9 @@ import {
 
 // Resolve CSS variable-based design token to a usable color string
 const resolveTokenColor = (varName: string): string => {
-  if (typeof window === 'undefined') return '#64748b';
+  if (typeof window === 'undefined') return '#3F3F46';
   const raw = getComputedStyle(document.documentElement).getPropertyValue(varName).trim();
-  if (!raw) return '#64748b';
+  if (!raw) return '#3F3F46';
   return `rgb(${raw})`;
 };
 
@@ -34,10 +34,10 @@ const CustomEdge: React.FC<EdgeProps> = ({
     targetPosition,
   });
 
-  // Use design tokens for edge colors — primary-500 when selected, neutral-400 otherwise
+  // Use design tokens for edge colors — primary-400 (yellow) when selected, neutral-600 otherwise
   const strokeColor = selected
-    ? resolveTokenColor('--brand-500')
-    : resolveTokenColor('--text-tertiary');
+    ? resolveTokenColor('--brand-400')
+    : resolveTokenColor('--border-default');
 
   const strokeWidth = selected ? 2.2 : 1.8;
 

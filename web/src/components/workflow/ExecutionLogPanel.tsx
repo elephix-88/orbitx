@@ -455,7 +455,7 @@ export const ExecutionLogPanel = ({ workflowId }: ExecutionLogPanelProps) => {
                                 className={cn(
                                   'px-2 py-0.5 text-[11px] font-medium rounded transition-all',
                                   timeRange === opt.value
-                                    ? 'bg-primary-600 text-white shadow-sm'
+                                    ? 'bg-primary-400 text-neutral-950 shadow-sm'
                                     : 'bg-surface-primary border border-border text-text-secondary hover:bg-surface-secondary'
                                 )}
                               >
@@ -504,7 +504,7 @@ export const ExecutionLogPanel = ({ workflowId }: ExecutionLogPanelProps) => {
                                 className={cn(
                                   'px-2 py-0.5 text-[11px] font-medium rounded transition-all',
                                   statusFilter === opt.value
-                                    ? 'bg-primary-600 text-white shadow-sm'
+                                    ? 'bg-primary-400 text-neutral-950 shadow-sm'
                                     : 'bg-surface-primary border border-border text-text-secondary hover:bg-surface-secondary'
                                 )}
                               >
@@ -522,7 +522,7 @@ export const ExecutionLogPanel = ({ workflowId }: ExecutionLogPanelProps) => {
                               setStatusFilter('all');
                               setCustomDateError(null);
                             }}
-                            className="w-full py-1 text-[11px] font-medium text-blue-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded transition-colors"
+                            className="w-full py-1 text-[11px] font-medium text-primary-400 hover:text-primary-300 hover:bg-primary-400/10 rounded transition-colors"
                           >
                             Reset filters
                           </button>
@@ -565,8 +565,8 @@ export const ExecutionLogPanel = ({ workflowId }: ExecutionLogPanelProps) => {
                           )}
                           className={cn(
                             'w-full px-3 py-2.5 flex items-center gap-3 text-left transition-colors border-b border-border-subtle',
-                            isSelected 
-                              ? 'bg-primary-50'
+                            isSelected
+                              ? 'bg-primary-400/10'
                               : 'hover:bg-surface-secondary'
                           )}
                         >
@@ -627,9 +627,9 @@ export const ExecutionLogPanel = ({ workflowId }: ExecutionLogPanelProps) => {
                         </span>
                       </div>
                       {selectedData.cost_usd !== null && (
-                        <div className="flex items-center gap-2 px-2 py-1 rounded-md bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
+                        <div className="flex items-center gap-2 px-2 py-1 rounded-md bg-amber-900/20 border border-amber-800">
                           <DollarSign className="w-4 h-4 text-amber-500" />
-                          <span className="text-amber-600 dark:text-amber-400 font-medium">
+                          <span className="text-amber-400 font-medium">
                             {formatCost(selectedData.cost_usd)}
                           </span>
                         </div>
@@ -650,9 +650,9 @@ export const ExecutionLogPanel = ({ workflowId }: ExecutionLogPanelProps) => {
 
                     {/* Error */}
                     {selectedData.error && (
-                      <div className="p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 flex items-start gap-2">
+                      <div className="p-3 rounded-lg bg-red-900/20 border border-red-800 flex items-start gap-2">
                         <AlertTriangle className="w-4 h-4 text-red-500 flex-shrink-0 mt-0.5" />
-                        <p className="text-sm text-red-700 dark:text-red-400">{selectedData.error}</p>
+                        <p className="text-sm text-red-400">{selectedData.error}</p>
                       </div>
                     )}
 

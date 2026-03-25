@@ -116,17 +116,17 @@ const FeatureCard = ({
     <div
       ref={ref as any}
       className={cn(
-        "group relative p-8 transition-all duration-700 bg-surface-primary border border-border rounded-lg hover:shadow-md",
+        "group relative p-8 transition-all duration-700 bg-surface-secondary border border-neutral-800 rounded-xl hover:shadow-md hover:border-neutral-700",
         inView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
       )}
       style={{ transitionDelay: `${delay}ms` }}
     >
       {/* Accent bar */}
-      <div className="w-12 h-1 bg-primary-600 rounded-full mb-6" />
+      <div className="w-12 h-1 bg-primary-400 rounded-full mb-6" />
 
       <div className="relative">
-        <div className="w-12 h-12 flex items-center justify-center mb-6 bg-primary-50 rounded-lg">
-          <Icon className="w-6 h-6 text-primary-600" />
+        <div className="w-12 h-12 flex items-center justify-center mb-6 bg-primary-400/10 rounded-lg">
+          <Icon className="w-6 h-6 text-primary-400" />
         </div>
 
         <h3 className="text-xl font-semibold mb-3 text-text-primary">
@@ -201,12 +201,12 @@ const OrbitAnimation = () => {
             {sources.map((s, i) => (
               <linearGradient key={`in-grad-${i}`} id={`in-grad-${i}`} x1="0%" y1="0%" x2="100%" y2="0%">
                 <stop offset="0%" stopColor={s.color} stopOpacity="0.6" />
-                <stop offset="100%" stopColor="#4F46E5" stopOpacity="0.8" />
+                <stop offset="100%" stopColor="#FACC15" stopOpacity="0.8" />
               </linearGradient>
             ))}
             {destinations.map((d, i) => (
               <linearGradient key={`out-grad-${i}`} id={`out-grad-${i}`} x1="0%" y1="0%" x2="100%" y2="0%">
-                <stop offset="0%" stopColor="#4F46E5" stopOpacity="0.8" />
+                <stop offset="0%" stopColor="#FACC15" stopOpacity="0.8" />
                 <stop offset="100%" stopColor={d.color} stopOpacity="0.6" />
               </linearGradient>
             ))}
@@ -245,7 +245,7 @@ const OrbitAnimation = () => {
               "M 170 100 Q 255 155 340 155"
             ];
             return (
-              <circle key={`out-${i}`} r="4" fill="#4F46E5">
+              <circle key={`out-${i}`} r="4" fill="#FACC15">
                 <animateMotion dur="2.5s" repeatCount="indefinite" begin={`${i * 0.4 + 1.25}s`} path={paths[i]} />
                 <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.1;0.9;1" dur="2.5s" repeatCount="indefinite" begin={`${i * 0.4 + 1.25}s`} />
               </circle>
@@ -260,11 +260,11 @@ const OrbitAnimation = () => {
               Transform
             </span>
             <div className="relative">
-              <div className="relative w-12 h-12 flex items-center justify-center bg-primary-600 rounded-lg">
-                <Zap className="w-6 h-6 text-white" />
+              <div className="relative w-12 h-12 flex items-center justify-center bg-primary-400 rounded-lg">
+                <Zap className="w-6 h-6 text-neutral-950" />
               </div>
             </div>
-            <span className="mt-1 text-[10px] font-semibold text-primary-600">OrbitX</span>
+            <span className="mt-1 text-[10px] font-semibold text-primary-400">OrbitX</span>
           </div>
         </div>
       </div>
@@ -296,21 +296,21 @@ const PricingCard = ({
     <div
       ref={ref as any}
       className={cn(
-        "relative p-8 transition-all duration-700 bg-surface-primary rounded-lg",
-        popular ? "border-2 border-primary-600 shadow-lg" : "border border-border",
+        "relative p-8 transition-all duration-700 bg-surface-secondary rounded-xl",
+        popular ? "border-2 border-primary-400 shadow-glow" : "border border-neutral-800",
         inView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
       )}
       style={{ transitionDelay: `${delay}ms` }}
     >
       {popular && (
-        <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 bg-primary-600 text-white text-xs font-semibold rounded-full">
+        <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 bg-primary-400 text-neutral-950 text-xs font-semibold rounded-full">
           Most Popular
         </div>
       )}
 
       <div className="text-center mb-8">
         <h3 className="text-xl font-semibold mb-2 text-text-primary">{name}</h3>
-        <div className="text-4xl font-semibold mb-2 text-primary-600">
+        <div className="text-4xl font-semibold mb-2 text-primary-400">
           {price}
         </div>
         <p className="text-sm text-text-secondary">{description}</p>
@@ -319,7 +319,7 @@ const PricingCard = ({
       <ul className="space-y-4 mb-8">
         {features.map((feature, i) => (
           <li key={i} className="flex items-start gap-3">
-            <Check className="w-5 h-5 flex-shrink-0 mt-0.5 text-primary-600" />
+            <Check className="w-5 h-5 flex-shrink-0 mt-0.5 text-primary-400" />
             <span className="text-text-secondary">{feature}</span>
           </li>
         ))}
@@ -330,8 +330,8 @@ const PricingCard = ({
         className={cn(
           "w-full py-3 font-medium transition-all rounded-lg text-sm",
           popular
-            ? "bg-primary-600 text-white hover:bg-primary-700"
-            : "bg-transparent text-text-primary border-2 border-neutral-300 hover:border-primary-600 hover:text-primary-600"
+            ? "bg-primary-400 text-neutral-950 hover:bg-primary-500"
+            : "bg-transparent text-text-primary border-2 border-neutral-700 hover:border-primary-400 hover:text-primary-400"
         )}
       >
         Get Started
@@ -357,15 +357,15 @@ const LandingPage = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-surface-secondary">
+    <div className="min-h-screen bg-surface-primary">
       {/* Navigation */}
       <nav className="fixed top-0 left-0 right-0 z-50 bg-neutral-900">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
             <Link to="/" className="flex items-center gap-3 group">
-              <div className="w-9 h-9 flex items-center justify-center bg-primary-600 rounded-md">
-                <span className="text-white font-semibold text-lg">O</span>
+              <div className="w-9 h-9 flex items-center justify-center bg-primary-400 rounded-md">
+                <span className="text-neutral-950 font-semibold text-lg">O</span>
               </div>
               <span className="text-xl font-semibold text-white tracking-tight">
                 OrbitX
@@ -409,7 +409,7 @@ const LandingPage = () => {
               {/* Sign In Button - Desktop */}
               <button
                 onClick={handleGoogleSignIn}
-                className="hidden sm:flex items-center gap-2 px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white font-medium transition-all text-sm rounded-md"
+                className="hidden sm:flex items-center gap-2 px-4 py-2 bg-primary-400 hover:bg-primary-500 text-neutral-950 font-medium transition-all text-sm rounded-md"
               >
                 <GoogleIcon />
                 Sign in
@@ -456,7 +456,7 @@ const LandingPage = () => {
                   handleGoogleSignIn();
                   setMobileMenuOpen(false);
                 }}
-                className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-primary-600 hover:bg-primary-700 text-white font-medium rounded-md"
+                className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-primary-400 hover:bg-primary-500 text-neutral-950 font-medium rounded-md"
               >
                 <GoogleIcon />
                 Sign in with Google
@@ -472,9 +472,9 @@ const LandingPage = () => {
         className="relative min-h-screen flex items-center pt-16 bg-neutral-900"
       >
         {/* Geometric decorations */}
-        <div className="absolute top-32 right-16 w-24 h-24 rounded-full bg-primary-600/15 hidden lg:block" />
-        <div className="absolute bottom-24 left-24 w-16 h-16 bg-warning/20 rounded-lg hidden lg:block" />
-        <div className="absolute top-1/2 right-1/3 w-8 h-8 bg-primary-200/15 rotate-45 hidden lg:block" />
+        <div className="absolute top-32 right-16 w-24 h-24 rounded-full bg-primary-400/15 hidden lg:block" />
+        <div className="absolute bottom-24 left-24 w-16 h-16 bg-primary-400/20 rounded-lg hidden lg:block" />
+        <div className="absolute top-1/2 right-1/3 w-8 h-8 bg-primary-400/15 rotate-45 hidden lg:block" />
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
           <div className="grid lg:grid-cols-2 gap-16 items-center">
@@ -484,9 +484,9 @@ const LandingPage = () => {
               heroInView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
             )}>
               {/* Badge */}
-              <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary-600/20 rounded-full">
-                <Sparkles className="w-4 h-4 text-warning" />
-                <span className="text-sm font-medium text-warning">
+              <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary-400/20 rounded-full">
+                <Sparkles className="w-4 h-4 text-primary-400" />
+                <span className="text-sm font-medium text-primary-400">
                   Now in Public Beta
                 </span>
               </div>
@@ -508,7 +508,7 @@ const LandingPage = () => {
               <div className="flex flex-wrap gap-4">
                 <button
                   onClick={handleGoogleSignIn}
-                  className="flex items-center gap-3 px-6 py-4 bg-primary-600 hover:bg-primary-700 text-white font-medium transition-all group rounded-lg"
+                  className="flex items-center gap-3 px-6 py-4 bg-primary-400 hover:bg-primary-500 text-neutral-950 font-medium transition-all group rounded-lg"
                 >
                   <GoogleIcon />
                   Continue with Google
@@ -517,7 +517,7 @@ const LandingPage = () => {
 
                 <button
                   onClick={() => navigate('/workflows/builder')}
-                  className="flex items-center gap-2 px-6 py-4 font-medium group text-white border-2 border-neutral-500 hover:border-primary-400 hover:text-primary-400 bg-transparent transition-all rounded-lg"
+                  className="flex items-center gap-2 px-6 py-4 font-medium group text-white border-2 border-neutral-700 hover:border-primary-400 hover:text-primary-400 bg-transparent transition-all rounded-lg"
                 >
                   <Play className="w-5 h-5" />
                   Try Demo
@@ -532,7 +532,7 @@ const LandingPage = () => {
                       key={i}
                       className="w-10 h-10 flex items-center justify-center text-white text-xs font-semibold rounded-full border-2 border-neutral-900 relative"
                       style={{
-                        backgroundColor: ['#6366F1', '#F59E0B', '#6B7280', '#111827'][i],
+                        backgroundColor: ['#FACC15', '#EAB308', '#3F3F46', '#18181B'][i],
                         zIndex: 4 - i,
                       }}
                     >
@@ -561,29 +561,29 @@ const LandingPage = () => {
       </section>
 
       {/* Stats Section */}
-      <section className="relative py-20 bg-surface-primary border-t-4 border-t-primary-600 border-b border-b-border">
+      <section className="relative py-20 bg-surface-secondary border-t-4 border-t-primary-400 border-b border-b-neutral-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
             <div className="text-center">
-              <div className="text-4xl md:text-5xl font-semibold mb-2 text-primary-600">
+              <div className="text-4xl md:text-5xl font-semibold mb-2 text-primary-400">
                 <AnimatedCounter value={10} suffix="M+" />
               </div>
               <p className="text-sm text-text-secondary">Events processed</p>
             </div>
             <div className="text-center">
-              <div className="text-4xl md:text-5xl font-semibold mb-2 text-primary-600">
+              <div className="text-4xl md:text-5xl font-semibold mb-2 text-primary-400">
                 <AnimatedCounter value={99} suffix="%" />
               </div>
               <p className="text-sm text-text-secondary">Uptime SLA</p>
             </div>
             <div className="text-center">
-              <div className="text-4xl md:text-5xl font-semibold mb-2 text-primary-600">
+              <div className="text-4xl md:text-5xl font-semibold mb-2 text-primary-400">
                 <AnimatedCounter value={50} suffix="+" />
               </div>
               <p className="text-sm text-text-secondary">Integrations</p>
             </div>
             <div className="text-center">
-              <div className="text-4xl md:text-5xl font-semibold mb-2 text-primary-600">
+              <div className="text-4xl md:text-5xl font-semibold mb-2 text-primary-400">
                 <AnimatedCounter value={500} suffix="+" />
               </div>
               <p className="text-sm text-text-secondary">Active teams</p>
@@ -593,16 +593,16 @@ const LandingPage = () => {
       </section>
 
       {/* Features Section */}
-      <section id="features" className="relative py-32 bg-surface-secondary">
+      <section id="features" className="relative py-32 bg-surface-primary">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Section Header */}
           <div className="text-center max-w-3xl mx-auto mb-20">
             <div className="flex justify-center mb-6">
-              <div className="w-12 h-1 bg-primary-600 rounded-full" />
+              <div className="w-12 h-1 bg-primary-400 rounded-full" />
             </div>
             <h2 className="text-4xl md:text-5xl font-semibold mb-6 text-text-primary tracking-tight">
               Everything you need to{' '}
-              <span className="text-primary-600">automate</span>
+              <span className="text-primary-400">automate</span>
             </h2>
             <p className="text-xl text-text-secondary">
               From data extraction to transformation and loading, OrbitX handles your entire pipeline.
@@ -652,12 +652,12 @@ const LandingPage = () => {
       </section>
 
       {/* Pricing Section */}
-      <section id="pricing" className="relative py-32 bg-surface-primary">
+      <section id="pricing" className="relative py-32 bg-surface-secondary">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Section Header */}
           <div className="text-center max-w-3xl mx-auto mb-20">
             <div className="flex justify-center mb-6">
-              <div className="w-12 h-1 bg-primary-600 rounded-full" />
+              <div className="w-12 h-1 bg-primary-400 rounded-full" />
             </div>
             <h2 className="text-4xl md:text-5xl font-semibold mb-6 text-text-primary tracking-tight">
               Simple, transparent pricing
@@ -716,14 +716,14 @@ const LandingPage = () => {
       </section>
 
       {/* CTA Section */}
-      <section className="relative py-32 bg-surface-secondary">
+      <section className="relative py-32 bg-surface-primary">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           {/* Geometric decoration */}
           <div className="flex justify-center mb-8">
             <div className="flex items-center gap-3">
-              <div className="w-4 h-4 rounded-full bg-primary-600" />
-              <div className="w-4 h-4 rounded-md bg-warning" />
-              <div className="w-4 h-4 rotate-45 bg-neutral-900 rounded-sm" />
+              <div className="w-4 h-4 rounded-full bg-primary-400" />
+              <div className="w-4 h-4 rounded-md bg-primary-500" />
+              <div className="w-4 h-4 rotate-45 bg-neutral-700 rounded-sm" />
             </div>
           </div>
           <h2 className="text-4xl md:text-5xl font-semibold mb-6 text-text-primary tracking-tight">
@@ -735,7 +735,7 @@ const LandingPage = () => {
 
           <button
             onClick={handleGoogleSignIn}
-            className="inline-flex items-center gap-3 px-8 py-5 bg-primary-600 hover:bg-primary-700 text-white font-medium text-lg transition-all group rounded-lg"
+            className="inline-flex items-center gap-3 px-8 py-5 bg-primary-400 hover:bg-primary-500 text-neutral-950 font-medium text-lg transition-all group rounded-lg"
           >
             <GoogleIcon />
             Sign up with Google
@@ -751,8 +751,8 @@ const LandingPage = () => {
             {/* Brand */}
             <div className="md:col-span-1">
               <Link to="/" className="flex items-center gap-3 mb-4">
-                <div className="w-8 h-8 flex items-center justify-center bg-primary-600 rounded-md">
-                  <span className="text-white font-semibold text-sm">O</span>
+                <div className="w-8 h-8 flex items-center justify-center bg-primary-400 rounded-md">
+                  <span className="text-neutral-950 font-semibold text-sm">O</span>
                 </div>
                 <span className="text-lg font-semibold text-white tracking-tight">
                   OrbitX

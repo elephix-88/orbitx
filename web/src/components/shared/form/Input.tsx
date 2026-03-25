@@ -31,17 +31,17 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
             aria-invalid={!!error}
             aria-describedby={error ? `${inputId}-error` : helperText ? `${inputId}-helper` : undefined}
             className={cn(
-              'block w-full rounded-md px-3.5 py-2.5',
+              'block w-full rounded-lg px-3.5 py-2.5',
               'text-sm text-text-primary',
-              'placeholder:text-text-tertiary',
-              'bg-surface-primary',
-              'border border-border',
-              'focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500/20',
+              'placeholder:text-neutral-600',
+              'bg-neutral-900',
+              'border border-neutral-700',
+              'focus:outline-none focus:border-primary-400 focus:ring-1 focus:ring-primary-400/20',
               'disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-surface-tertiary',
               'transition-colors duration-200',
               error
                 ? 'border-error focus:border-error'
-                : 'hover:border-neutral-400',
+                : 'hover:border-neutral-600',
               className
             )}
             {...props}

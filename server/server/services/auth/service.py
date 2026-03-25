@@ -79,10 +79,10 @@ def decode_refresh_token(token: str) -> dict | None:
 
 
 async def get_user_by_email(email: str) -> UserInDB | None:
-    users = await get_mongodb().get_all_documents(
+    user_doc = await get_mongodb().get_document(
         settings.users_collection, {"email": email}
     )
-    return UserInDB.model_validate(users[0]) if users else None
+    return UserInDB.model_validate(user_doc) if user_doc else None
 
 
 async def get_user_by_id(user_id: str) -> UserInDB | None:
@@ -91,10 +91,10 @@ async def get_user_by_id(user_id: str) -> UserInDB | None:
 
 
 async def get_user_by_google_id(google_id: str) -> UserInDB | None:
-    users = await get_mongodb().get_all_documents(
+    user_doc = await get_mongodb().get_document(
         settings.users_collection, {"google_id": google_id}
     )
-    return UserInDB.model_validate(users[0]) if users else None
+    return UserInDB.model_validate(user_doc) if user_doc else None
 
 
 async def create_user(

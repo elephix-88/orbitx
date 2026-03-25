@@ -5,11 +5,16 @@ from loguru import logger
 
 from server.configs.config import settings
 
+_client: DagsterGraphQLClient | None = None
 
-def build_client() -> DagsterGraphQLClient:
-    hostname = settings.get("dagster_host", "dagster")
-    port = settings.get("dagster_port", 3000)
-    return DagsterGraphQLClient(hostname=hostname, port_number=port)
+
+def get_dagster_client() -> DagsterGraphQLClient:
+    global _client
+    if _client is None:
+        hostname = settings.get("dagster_host", "dagster")
+        port = settings.get("dagster_port", 3000)
+        _client = DagsterGraphQLClient(hostname=hostname, port_number=port)
+    return _client
 
 
 def sanitize_dagster_name(name: str) -> str:
@@ -27,8 +32,7 @@ def launch_run(
     job_name = sanitize_dagster_name(workflow_name)
 
     try:
-        client = build_client()
-        run_id = client.submit_job_execution(
+        run_id = get_dagster_client().submit_job_execution(
             job_name=job_name,
             run_config={
                 "ops": {
@@ -56,8 +60,7 @@ def launch_run(
 
 def get_run_status(run_id: str) -> str | None:
     try:
-        client = build_client()
-        status = client.get_run_status(run_id)
+        status = get_dagster_client().get_run_status(run_id)
         return status.value
 
     except Exception as error:
@@ -67,8 +70,7 @@ def get_run_status(run_id: str) -> str | None:
 
 def reload_code_location() -> bool:
     try:
-        client = build_client()
-        client.reload_repository_location("dagster_orbitx.definitions")
+        get_dagster_client().reload_repository_location("dagster_orbitx.definitions")
         logger.info("Dagster code location reloaded")
         return True
 

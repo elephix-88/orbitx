@@ -14,13 +14,13 @@ export const FormCard: React.FC<FormCardProps> = ({
   title,
   description,
   icon: Icon,
-  iconColor = "from-primary-500 to-primary-700",
+  iconColor = "from-primary-400 to-primary-600",
   children,
   className = ""
 }) => {
   return (
     <div className={`max-w-4xl mx-auto ${className}`}>
-      <div className="bg-surface-primary rounded-md border border-border overflow-hidden transition-colors duration-300">
+      <div className="bg-surface-secondary rounded-lg border border-neutral-800 overflow-hidden transition-colors duration-300">
         {/* Header */}
         <div className="bg-neutral-900 px-6 py-5">
           <div className="flex items-center space-x-4">
@@ -43,7 +43,7 @@ export const FormCard: React.FC<FormCardProps> = ({
         </div>
 
         {/* Form Content */}
-        <div className="px-6 py-6 bg-surface-primary">
+        <div className="px-6 py-6 bg-surface-secondary">
           {children}
         </div>
       </div>
@@ -63,7 +63,7 @@ interface FormFieldProps {
 export const FormField: React.FC<FormFieldProps> = ({
   label,
   icon: Icon,
-  iconColor = "text-primary-600",
+  iconColor = "text-primary-400",
   description,
   children,
   className = ""
@@ -100,10 +100,10 @@ export const InfoCard: React.FC<InfoCardProps> = ({
   className = ""
 }) => {
   return (
-    <div className={`rounded-md p-5 border border-border-subtle bg-surface-secondary ${className}`}>
+    <div className={`rounded-lg p-5 border border-neutral-800 bg-surface-secondary ${className}`}>
       <div className="flex items-center space-x-2.5 mb-3">
-        <div className="w-5 h-5 rounded-md bg-primary-100 flex items-center justify-center">
-          <svg className="w-3 h-3 text-primary-600" fill="currentColor" viewBox="0 0 20 20">
+        <div className="w-5 h-5 rounded-md bg-primary-400/10 flex items-center justify-center">
+          <svg className="w-3 h-3 text-primary-400" fill="currentColor" viewBox="0 0 20 20">
             <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
           </svg>
         </div>

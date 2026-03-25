@@ -4,6 +4,8 @@ from typing import Any
 
 import pandas as pd
 
+from engine.exceptions import OrbitXException
+
 from common.model.execution import (
     DataSummary,
     ExtractorOutput,
@@ -252,6 +254,25 @@ def build_loader_output(
     )
 
 
+def extract_orbitx_error_details(error: Exception) -> dict[str, Any] | None:
+    """Extract structured details from OrbitXException.
+
+    isinstance is used here because this function receives errors from
+    mixed sources (OrbitX exceptions + third-party/builtin exceptions).
+    """
+    if not isinstance(error, OrbitXException):
+        return None
+
+    details = error.details
+    if error.node_id:
+        details = details or {}
+        details["node_id"] = error.node_id
+    if error.node_instance_id:
+        details = details or {}
+        details["node_instance_id"] = error.node_instance_id
+    return details
+
+
 def build_error_output(
     output_type: NodeOutputType,
     node_type_name: str,
@@ -260,15 +281,7 @@ def build_error_output(
     metadata: dict[str, Any] | None = None,
 ) -> NodeOutput:
     """Build a NodeOutput for a failed node execution."""
-    error_details: dict[str, Any] | None = None
-    if hasattr(error, "details"):
-        error_details = error.details
-    if hasattr(error, "node_id"):
-        error_details = error_details or {}
-        error_details["node_id"] = error.node_id
-    if hasattr(error, "node_instance_id"):
-        error_details = error_details or {}
-        error_details["node_instance_id"] = error.node_instance_id
+    error_details = extract_orbitx_error_details(error)
 
     return NodeOutput(
         title=f"{node_type_name} failed",

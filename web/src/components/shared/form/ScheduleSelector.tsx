@@ -202,11 +202,11 @@ export const ScheduleSelector: React.FC<ScheduleSelectorProps> = ({
       )}
 
       {/* Schedule preview with next run times */}
-      <div className="rounded-xl border border-brand-200 dark:border-brand-500/20 bg-brand-50/50 dark:bg-brand-900/10 overflow-hidden">
+      <div className="rounded-xl border border-primary-400/20 bg-primary-400/5 overflow-hidden">
         {/* Description */}
-        <div className="p-4 border-b border-brand-200/50 dark:border-brand-500/10">
+        <div className="p-4 border-b border-primary-400/10">
           <div className="flex items-start space-x-3">
-            <div className="text-brand-600 dark:text-brand-400 mt-0.5">
+            <div className="text-primary-400 mt-0.5">
               <Clock className="w-5 h-5" />
             </div>
             <div className="flex-1">
@@ -222,9 +222,9 @@ export const ScheduleSelector: React.FC<ScheduleSelectorProps> = ({
 
         {/* Next run times */}
         {nextRuns.length > 0 && (
-          <div className="p-4 bg-surface-primary/50 dark:bg-surface-primary/30">
+          <div className="p-4 bg-surface-primary/30">
             <div className="flex items-start space-x-3">
-              <div className="text-emerald-600 dark:text-emerald-400 mt-0.5">
+              <div className="text-emerald-400 mt-0.5">
                 <Calendar className="w-5 h-5" />
               </div>
               <div className="flex-1">
@@ -234,7 +234,7 @@ export const ScheduleSelector: React.FC<ScheduleSelectorProps> = ({
                 <ul className="space-y-1.5">
                   {nextRuns.map((run, idx) => (
                     <li key={idx} className="text-sm text-text-secondary flex items-center">
-                      <span className="w-5 h-5 flex items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 text-xs font-medium mr-2">
+                      <span className="w-5 h-5 flex items-center justify-center rounded-full bg-emerald-900/30 text-emerald-400 text-xs font-medium mr-2">
                         {idx + 1}
                       </span>
                       {formatNextRun(run)}

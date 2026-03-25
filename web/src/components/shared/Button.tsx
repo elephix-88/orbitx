@@ -11,12 +11,12 @@ const buttonVariants = cva("btn-base relative overflow-hidden", {
       ghost: "btn-ghost",
       destructive: "btn-destructive",
       outline:
-        "bg-transparent border-2 border-border text-text-primary hover:bg-surface-tertiary rounded-md",
-      link: "text-primary-600 hover:text-primary-700 hover:underline p-0 h-auto shadow-none hover:shadow-none hover:translate-y-0 active:scale-100",
+        "bg-transparent border border-neutral-700 text-text-primary hover:bg-neutral-800 rounded-lg",
+      link: "text-primary-400 hover:text-primary-300 hover:underline p-0 h-auto shadow-none hover:shadow-none hover:translate-y-0 active:scale-100",
       warning:
-        "bg-warning hover:bg-warning-dark text-white rounded-md border-2 border-transparent",
+        "bg-warning hover:bg-warning-dark text-neutral-950 rounded-lg border-2 border-transparent",
       success:
-        "bg-success hover:bg-success-dark text-white rounded-md border-2 border-transparent",
+        "bg-success hover:bg-success-dark text-neutral-950 rounded-lg border-2 border-transparent",
     },
     size: {
       xs: "h-7 px-2 text-sm font-medium",

@@ -9,12 +9,12 @@ from common.config.settings import get_settings
 
 class MongoDBClient:
     def __init__(self) -> None:
-        settings = get_settings()
+        config = get_settings()
         self.uri = (
-            f"mongodb+srv://{settings.mongo_username}:{settings.mongo_password}"
-            f"@{settings.mongo_uri}/{settings.mongo_database}"
+            f"mongodb+srv://{config.mongo_username}:{config.mongo_password}"
+            f"@{config.mongo_uri}/{config.mongo_database}"
         )
-        self.db_name = settings.mongo_database
+        self.db_name = config.mongo_database
         self.client = AsyncIOMotorClient(
             self.uri,
             maxPoolSize=50,
@@ -94,27 +94,33 @@ class MongoDBClient:
         result = await collection.delete_one(query or {})
         return result.deleted_count > 0
 
-    async def find_one(
-        self,
-        collection_name: str,
-        id: str,
-        model_class: type[BaseModel] | None = None,
-    ) -> BaseModel | dict[str, Any] | None:
-        return await self.get_document(collection_name, {"_id": id}, model_class)
-
-    async def find_many(
-        self,
-        collection_name: str,
-        field: str,
-        values: list[Any],
-        model_class: type[BaseModel] | None = None,
-    ) -> list[BaseModel] | list[dict[str, Any]]:
-        query = {field: {"$in": values}}
-        return await self.get_all_documents(collection_name, query, model_class)
-
     def get_collection(self, collection_name: str):
         """Get a raw Motor collection for direct operations."""
         return self.database[collection_name]
+
+    async def get_paginated_documents(
+        self,
+        collection_name: str,
+        query: dict | None = None,
+        sort: list[tuple[str, int]] | None = None,
+        page: int = 1,
+        limit: int = 50,
+        model_class: type[BaseModel] | None = None,
+    ) -> tuple[list, int]:
+        collection = self.database[collection_name]
+        total = await collection.count_documents(query or {})
+        skip = (page - 1) * limit
+        cursor = collection.find(query or {})
+        if sort:
+            cursor = cursor.sort(sort)
+        cursor = cursor.skip(skip).limit(limit)
+        documents = await cursor.to_list(length=limit)
+        if model_class:
+            documents = [model_class.model_validate(doc) for doc in documents]
+        logger.info(
+            f"Retrieved {len(documents)} of {total} from '{collection_name}' (page {page})"
+        )
+        return documents, total
 
     async def aggregate(
         self,

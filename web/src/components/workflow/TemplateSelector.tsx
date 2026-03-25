@@ -148,7 +148,7 @@ export const TemplateSelector: React.FC<TemplateSelectorProps> = ({
                   placeholder="Search templates..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 text-sm rounded-lg bg-surface-secondary border-0 focus:ring-2 focus:ring-brand-500/20"
+                  className="w-full pl-10 pr-4 py-2 text-sm rounded-lg bg-surface-secondary border-0 text-text-primary placeholder:text-text-tertiary focus:ring-2 focus:ring-primary-400/30"
                 />
               </div>
 
@@ -161,7 +161,7 @@ export const TemplateSelector: React.FC<TemplateSelectorProps> = ({
                     className={cn(
                       'px-2.5 py-1 text-xs font-medium rounded-lg transition-colors',
                       selectedCategory === 'all'
-                        ? 'bg-brand-500 text-white'
+                        ? 'bg-primary-400 text-neutral-950'
                         : 'text-text-secondary hover:bg-surface-secondary'
                     )}
                   >
@@ -175,7 +175,7 @@ export const TemplateSelector: React.FC<TemplateSelectorProps> = ({
                         className={cn(
                           'px-2.5 py-1 text-xs font-medium rounded-lg transition-colors',
                           selectedCategory === key
-                            ? 'bg-brand-500 text-white'
+                            ? 'bg-primary-400 text-neutral-950'
                             : 'text-text-secondary hover:bg-surface-secondary'
                         )}
                       >
@@ -206,7 +206,7 @@ export const TemplateSelector: React.FC<TemplateSelectorProps> = ({
                       className={cn(
                         'w-full text-left p-3 rounded-xl transition-all',
                         isSelected
-                          ? 'bg-brand-50 dark:bg-brand-900/20 border-2 border-brand-500'
+                          ? 'bg-primary-400/10 border-2 border-primary-400'
                           : 'hover:bg-surface-secondary border-2 border-transparent'
                       )}
                     >
@@ -215,7 +215,7 @@ export const TemplateSelector: React.FC<TemplateSelectorProps> = ({
                           className={cn(
                             'p-2 rounded-lg',
                             isSelected
-                              ? 'bg-brand-500 text-white'
+                              ? 'bg-primary-400 text-neutral-950'
                               : 'bg-surface-secondary text-text-secondary'
                           )}
                         >
@@ -227,7 +227,7 @@ export const TemplateSelector: React.FC<TemplateSelectorProps> = ({
                               {template.name}
                             </h4>
                             {isSelected && (
-                              <CheckCircle className="w-4 h-4 text-brand-500 flex-shrink-0" />
+                              <CheckCircle className="w-4 h-4 text-primary-400 flex-shrink-0" />
                             )}
                           </div>
                           <p className="text-xs text-text-secondary mt-0.5 line-clamp-2">
@@ -296,7 +296,7 @@ export const TemplateSelector: React.FC<TemplateSelectorProps> = ({
                           {selectedTemplate.sources.map((source) => (
                             <span
                               key={source}
-                              className="px-2.5 py-1 text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 rounded-lg"
+                              className="px-2.5 py-1 text-xs font-medium bg-blue-900/30 text-blue-400 rounded-lg"
                             >
                               {source}
                             </span>
@@ -313,7 +313,7 @@ export const TemplateSelector: React.FC<TemplateSelectorProps> = ({
                           {selectedTemplate.destinations.map((dest) => (
                             <span
                               key={dest}
-                              className="px-2.5 py-1 text-xs font-medium bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 rounded-lg"
+                              className="px-2.5 py-1 text-xs font-medium bg-emerald-900/30 text-emerald-400 rounded-lg"
                             >
                               {dest}
                             </span>
@@ -335,7 +335,7 @@ export const TemplateSelector: React.FC<TemplateSelectorProps> = ({
                             key={index}
                             className="flex items-start gap-2 text-sm text-text-secondary"
                           >
-                            <span className="flex-shrink-0 w-5 h-5 rounded-full bg-brand-100 dark:bg-brand-900/30 text-brand-600 dark:text-brand-400 text-xs flex items-center justify-center mt-0.5">
+                            <span className="flex-shrink-0 w-5 h-5 rounded-full bg-primary-400/15 text-primary-400 text-xs flex items-center justify-center mt-0.5">
                               {index + 1}
                             </span>
                             {tip}
@@ -350,7 +350,7 @@ export const TemplateSelector: React.FC<TemplateSelectorProps> = ({
                 <div className="p-4 border-t border-border bg-surface-secondary">
                   <button
                     onClick={handleSelectTemplate}
-                    className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-brand-500 hover:bg-brand-600 text-white font-medium rounded-xl transition-colors"
+                    className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-primary-400 hover:bg-primary-500 text-neutral-950 font-medium rounded-xl transition-colors"
                   >
                     Use This Template
                     <ArrowRight className="w-4 h-4" />

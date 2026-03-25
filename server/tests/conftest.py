@@ -174,10 +174,10 @@ def setup_test_environment() -> None:
         }
     )
 
-    # Configure orbitx-common database settings
-    from common.config.settings import configure_database
+    # Register orbitx-common settings
+    from common.config.settings import register_settings
 
-    configure_database(mock_settings)
+    register_settings(mock_settings)
 
 
 # =============================================================================

@@ -36,14 +36,14 @@ const categoryStyles: Record<string, {
   bgClass: string;
 }> = {
   source: {
+    borderClass: 'border-l-primary-400',
+    textClass: 'text-primary-400',
+    bgClass: 'bg-primary-400',
+  },
+  transform: {
     borderClass: 'border-l-info',
     textClass: 'text-info',
     bgClass: 'bg-info',
-  },
-  transform: {
-    borderClass: 'border-l-warning',
-    textClass: 'text-warning',
-    bgClass: 'bg-warning',
   },
   destination: {
     borderClass: 'border-l-success',
@@ -95,7 +95,7 @@ const WorkflowNode = ({ data, selected }: WorkflowNodeProps) => {
       case 'unconfigured':
         return (
           <div title={tooltip} className="flex-shrink-0">
-            <div className="w-2 h-2 rounded-full bg-neutral-300" />
+            <div className="w-2 h-2 rounded-full bg-neutral-600" />
           </div>
         );
       default:
@@ -110,10 +110,10 @@ const WorkflowNode = ({ data, selected }: WorkflowNodeProps) => {
         'flex items-center gap-2',
         'transition-all duration-300 ease-out',
         'w-[144px] h-[47px]',
-        'bg-surface-primary border border-border rounded-sm',
+        'bg-surface-secondary border border-neutral-700 rounded-xl',
         'border-l-4',
         styles.borderClass,
-        selected && 'ring-2 ring-offset-1 scale-[1.02] shadow-sm'
+        selected && 'border-primary-400 shadow-glow-sm scale-[1.02]'
       )}
       onDoubleClick={(e) => {
         e.stopPropagation();
@@ -133,8 +133,8 @@ const WorkflowNode = ({ data, selected }: WorkflowNodeProps) => {
             }}
             className={cn(
               '!w-3 !h-3 !rounded-full',
-              '!bg-neutral-300 !border-2 !border-surface-primary',
-              'hover:!bg-neutral-500 hover:!scale-125',
+              '!bg-neutral-600 !border-2 !border-surface-secondary',
+              'hover:!bg-neutral-400 hover:!scale-125',
               '!transition-all !duration-200'
             )}
           />
@@ -155,7 +155,7 @@ const WorkflowNode = ({ data, selected }: WorkflowNodeProps) => {
 
       {/* Running State Overlay */}
       {data.status === 'running' && (
-        <div className="absolute inset-0 z-50 flex items-center justify-center bg-surface-primary/60 rounded-sm">
+        <div className="absolute inset-0 z-50 flex items-center justify-center bg-surface-secondary/60 rounded-xl">
           <div className="relative">
             <Loader2 className={cn('w-5 h-5 animate-spin', styles.textClass)} />
           </div>
@@ -170,7 +170,7 @@ const WorkflowNode = ({ data, selected }: WorkflowNodeProps) => {
         )}
       >
         {/* Icon Container */}
-        <div className="flex-shrink-0 flex items-center justify-center w-9 h-9 rounded-sm">
+        <div className="flex-shrink-0 flex items-center justify-center w-9 h-9 rounded-md">
           {renderIcon(data.icon || 'Circle')}
         </div>
 
@@ -223,7 +223,7 @@ const WorkflowNode = ({ data, selected }: WorkflowNodeProps) => {
             className={cn(
               '!w-3 !h-3 !rounded-full',
               styles.bgClass,
-              '!border-2 !border-surface-primary',
+              '!border-2 !border-surface-secondary',
               'hover:!scale-125',
               '!transition-all !duration-200'
             )}
@@ -235,7 +235,7 @@ const WorkflowNode = ({ data, selected }: WorkflowNodeProps) => {
         {/* Duplicate Button */}
         {data.onDuplicate && (
           <button
-            className="w-5 h-5 flex items-center justify-center transition-all duration-200 bg-neutral-200 text-text-primary rounded-sm"
+            className="w-5 h-5 flex items-center justify-center transition-all duration-200 bg-neutral-700 text-text-primary rounded-md"
             onClick={(e) => {
               e.stopPropagation();
               data.onDuplicate?.();
@@ -248,7 +248,7 @@ const WorkflowNode = ({ data, selected }: WorkflowNodeProps) => {
         {/* Delete Button */}
         {data.onDelete && (
           <button
-            className="w-5 h-5 flex items-center justify-center transition-all duration-200 bg-error text-text-inverse rounded-sm"
+            className="w-5 h-5 flex items-center justify-center transition-all duration-200 bg-error text-text-inverse rounded-md"
             onClick={(e) => {
               e.stopPropagation();
               data.onDelete?.();

@@ -30,12 +30,12 @@ export const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
           {/* Checkbox Background */}
           <div className={cn(
             "w-5 h-5 rounded-md border-2 transition-all duration-200 ease-out",
-            "bg-surface-primary",
-            "border-border",
-            "peer-focus:ring-1 peer-focus:ring-primary-500/20 peer-focus:border-primary-500",
+            "bg-neutral-900",
+            "border-neutral-600",
+            "peer-focus:ring-1 peer-focus:ring-primary-400/20 peer-focus:border-primary-400",
             checked
-              ? "bg-primary-600 border-primary-600"
-              : "group-hover:border-neutral-400",
+              ? "bg-primary-400 border-primary-400"
+              : "group-hover:border-neutral-500",
             error && "border-error"
           )} />
 
@@ -49,7 +49,7 @@ export const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
                 transition={{ duration: 0.2, ease: "backOut" }}
                 className="absolute inset-0 flex items-center justify-center pointer-events-none"
               >
-                <Check className="w-3.5 h-3.5 text-white stroke-[3]" />
+                <Check className="w-3.5 h-3.5 text-neutral-950 stroke-[3]" />
               </motion.div>
             )}
           </AnimatePresence>

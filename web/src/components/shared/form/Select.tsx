@@ -115,7 +115,7 @@ export const Select: React.FC<SelectProps> = ({
           exit={{ opacity: 0, y: -10, scale: 0.95 }}
           transition={{ duration: 0.15, ease: "easeOut" }}
           style={dropdownStyle}
-          className="overflow-hidden rounded-md bg-surface-primary shadow-sm border border-border focus:outline-none"
+          className="overflow-hidden rounded-lg bg-surface-secondary shadow-lg border border-neutral-700 focus:outline-none"
           onClick={stopPropagation}
           onMouseDown={stopPropagation}
           onMouseUp={stopPropagation}
@@ -133,15 +133,15 @@ export const Select: React.FC<SelectProps> = ({
                   onMouseDown={stopPropagation}
                   className={`
                     relative cursor-pointer select-none py-2.5 pl-4 pr-9 text-sm transition-colors
-                    ${option.disabled ? 'opacity-50 cursor-not-allowed' : 'hover:bg-primary-50'}
-                    ${isSelected ? 'bg-primary-50 text-primary-600 font-medium' : 'text-text-primary'}
+                    ${option.disabled ? 'opacity-50 cursor-not-allowed' : 'hover:bg-neutral-800'}
+                    ${isSelected ? 'bg-primary-400/10 text-primary-400 font-medium' : 'text-text-primary'}
                   `}
                 >
                   <span className="block truncate">
                     {option.label}
                   </span>
                   {isSelected && (
-                    <span className="absolute inset-y-0 right-0 flex items-center pr-4 text-primary-600">
+                    <span className="absolute inset-y-0 right-0 flex items-center pr-4 text-primary-400">
                       <Check className="h-4 w-4" />
                     </span>
                   )}
@@ -182,12 +182,12 @@ export const Select: React.FC<SelectProps> = ({
           className={`
             relative w-full text-left cursor-pointer
             flex items-center justify-between
-            rounded-md px-4 py-3 text-sm font-medium transition-all duration-200
-            bg-surface-primary
-            border border-border
-            hover:border-neutral-400
-            focus:outline-none focus:border-primary-500 focus:ring-1 focus:ring-primary-500/20
-            ${isOpen ? 'border-primary-500 ring-1 ring-primary-500/20' : ''}
+            rounded-lg px-4 py-3 text-sm font-medium transition-all duration-200
+            bg-neutral-900
+            border border-neutral-700
+            hover:border-neutral-600
+            focus:outline-none focus:border-primary-400 focus:ring-1 focus:ring-primary-400/20
+            ${isOpen ? 'border-primary-400 ring-1 ring-primary-400/20' : ''}
             ${error ? 'border-error focus:border-error' : ''}
             ${disabled ? 'opacity-50 cursor-not-allowed bg-surface-tertiary' : ''}
           `}

@@ -1,7 +1,10 @@
+from collections import deque
+
 from dagster import JobDefinition, graph
 from loguru import logger
 
 from common.model.workflow import Connection, Node, NodeType, WorkflowData
+from dagster_orbitx.hooks.execution_history import on_workflow_failure, on_workflow_success
 from dagster_orbitx.jobs.workflow_executor import sanitize_dagster_name
 from dagster_orbitx.ops.extractor_ops import make_extractor_op
 from dagster_orbitx.ops.transformer_ops import make_transformer_op
@@ -26,16 +29,20 @@ def topological_sort(nodes: list[Node], connections: list[Connection]) -> list[N
         incoming_count[connection.to_node] += 1
         outgoing[connection.from_node].append(connection.to_node)
 
-    queue = [nid for nid, count in incoming_count.items() if count == 0]
+    queue = deque(nid for nid, count in incoming_count.items() if count == 0)
     sorted_nodes = []
 
     while queue:
-        current = queue.pop(0)
+        current = queue.popleft()
         sorted_nodes.append(node_map[current])
         for child in outgoing.get(current, []):
             incoming_count[child] -= 1
             if incoming_count[child] == 0:
                 queue.append(child)
+
+    if len(sorted_nodes) != len(nodes):
+        cycle_ids = [nid for nid, count in incoming_count.items() if count > 0]
+        raise ValueError(f"Workflow graph contains a cycle. Stuck node instance IDs: {cycle_ids}")
 
     return sorted_nodes
 
@@ -49,7 +56,6 @@ def build_workflow_job(workflow: WorkflowData, job_name: str) -> JobDefinition:
 
     sorted_nodes = topological_sort(workflow.nodes, workflow.connections)
 
-    op_by_instance_id: dict[int, object] = {}
     op_fns: dict[int, object] = {}
 
     for node in sorted_nodes:
@@ -65,6 +71,8 @@ def build_workflow_job(workflow: WorkflowData, job_name: str) -> JobDefinition:
 
     @graph(name=job_name)
     def workflow_graph():
+        op_by_instance_id: dict[int, object] = {}
+
         for node in sorted_nodes:
             op_fn = op_fns.get(node.node_instance_id)
             if not op_fn:
@@ -95,6 +103,7 @@ def build_workflow_job(workflow: WorkflowData, job_name: str) -> JobDefinition:
 
     return workflow_graph.to_job(
         description=f"OrbitX workflow: {workflow.job_name}",
+        hooks={on_workflow_success, on_workflow_failure},
         tags={
             "kind": "orbitx_workflow",
             "workflow_id": workflow.id,

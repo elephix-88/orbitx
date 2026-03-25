@@ -75,7 +75,7 @@ const Toast: React.FC<ToastProps> = ({
   return (
     <div
       className={cn(
-        'flex items-start gap-3 p-4 rounded-md border shadow-lg transition-all duration-300 ease-out max-w-md',
+        'flex items-start gap-3 p-4 rounded-lg border shadow-lg transition-all duration-300 ease-out max-w-md',
         typeClasses[type],
         isVisible && !isLeaving
           ? 'translate-x-0 opacity-100 scale-100'

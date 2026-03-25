@@ -99,8 +99,8 @@ sse_manager = SSEManager()
 async def process_message(message):
     """Process a Pub/Sub message for workflow execution tracking.
 
-    SSE broadcast only - execution_history collection (written by ExecutionTracker
-    in workflow engine) is the single source of truth for persistence.
+    SSE broadcast only - execution_history collection (written by workflow engine)
+    is the single source of truth for persistence.
     """
     try:
         data = message.data.decode("utf-8")

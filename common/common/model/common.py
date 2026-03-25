@@ -1,19 +1,9 @@
 from enum import Enum
-from typing import Protocol, runtime_checkable
 
 from pydantic import BaseModel
 
 
-@runtime_checkable
-class BaseFieldSchema(Protocol):
-    """Protocol for field schemas with type information.
-
-    Any class with `field` and `data_type` attributes satisfies this protocol.
-    Used by loaders to determine column types.
-
-    Supported data_type values: "integer", "float", "string", "boolean", "date"
-    """
-
+class BaseFieldSchema(BaseModel):
     field: str
     data_type: str
 

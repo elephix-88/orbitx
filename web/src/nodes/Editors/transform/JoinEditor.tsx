@@ -63,10 +63,10 @@ type JoinEditorProps = {
 };
 
 const JOIN_TYPES: { value: JoinType; label: string; description: string; color: string; bgColor: string }[] = [
-  { value: 'inner', label: 'Inner Join', description: 'Only matching rows from both tables', color: 'text-blue-600 dark:text-blue-400', bgColor: 'bg-blue-500/10' },
-  { value: 'left', label: 'Left Join', description: 'All from base + matching from source', color: 'text-emerald-600 dark:text-emerald-400', bgColor: 'bg-emerald-500/10' },
-  { value: 'right', label: 'Right Join', description: 'All from source + matching from base', color: 'text-amber-600 dark:text-amber-400', bgColor: 'bg-amber-500/10' },
-  { value: 'outer', label: 'Full Outer', description: 'All rows from both tables', color: 'text-purple-600 dark:text-purple-400', bgColor: 'bg-purple-500/10' },
+  { value: 'inner', label: 'Inner Join', description: 'Only matching rows from both tables', color: 'text-blue-400', bgColor: 'bg-blue-500/10' },
+  { value: 'left', label: 'Left Join', description: 'All from base + matching from source', color: 'text-emerald-400', bgColor: 'bg-emerald-500/10' },
+  { value: 'right', label: 'Right Join', description: 'All from source + matching from base', color: 'text-amber-400', bgColor: 'bg-amber-500/10' },
+  { value: 'outer', label: 'Full Outer', description: 'All rows from both tables', color: 'text-purple-400', bgColor: 'bg-purple-500/10' },
 ];
 
 const JoinTypeBadge: React.FC<{ type: JoinType; compact?: boolean }> = ({ type, compact }) => {
@@ -171,19 +171,19 @@ const SortableSourceCard: React.FC<SortableSourceCardProps> = ({
         isDragging && 'opacity-50 shadow-lg z-50',
         isOverlayDragging && 'shadow-2xl',
         isBase
-          ? 'border-emerald-200 dark:border-emerald-800/50 bg-gradient-to-br from-emerald-50/50 to-white dark:from-emerald-900/10 dark:to-surface-primary/50'
+          ? 'border-emerald-800/50 bg-gradient-to-br from-emerald-900/10 to-surface-primary/50'
           : isConfigured
-            ? 'border-blue-200 dark:border-blue-800/50 bg-blue-50/30 dark:bg-blue-900/10'
-            : 'border-border bg-surface-primary dark:bg-surface-primary/30'
+            ? 'border-blue-800/50 bg-blue-900/10'
+            : 'border-border bg-surface-primary/30'
       )}
     >
       {/* Header */}
       <div className={cn(
         'px-4 py-3 border-b flex items-center justify-between',
         isBase
-          ? 'border-emerald-200/50 dark:border-emerald-800/30 bg-emerald-50/50 dark:bg-emerald-900/20'
+          ? 'border-emerald-800/30 bg-emerald-900/20'
           : isConfigured
-            ? 'border-blue-200/50 dark:border-blue-800/30 bg-blue-50/50 dark:bg-blue-900/20'
+            ? 'border-blue-800/30 bg-blue-900/20'
             : 'border-border/50'
       )}>
         <div className="flex items-center gap-3">
@@ -219,7 +219,7 @@ const SortableSourceCard: React.FC<SortableSourceCardProps> = ({
         {/* Status Badge */}
         <div className="flex items-center gap-2">
           {isBase ? (
-            <span className="px-2 py-0.5 rounded-md text-xs font-semibold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+            <span className="px-2 py-0.5 rounded-md text-xs font-semibold bg-emerald-500/10 text-emerald-400">
               BASE TABLE
             </span>
           ) : isConfigured ? (
@@ -253,7 +253,7 @@ const SortableSourceCard: React.FC<SortableSourceCardProps> = ({
                   <button
                     type="button"
                     onClick={() => handleRemoveKey(keyIndex)}
-                    className="p-2 text-text-tertiary hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                    className="p-2 text-text-tertiary hover:text-red-500 hover:bg-red-900/20 rounded-lg transition-colors"
                   >
                     <X size={16} />
                   </button>
@@ -263,7 +263,7 @@ const SortableSourceCard: React.FC<SortableSourceCardProps> = ({
             <button
               type="button"
               onClick={handleAddKey}
-              className="flex items-center gap-1.5 text-xs text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 font-medium"
+              className="flex items-center gap-1.5 text-xs text-emerald-400 hover:text-emerald-300 font-medium"
             >
               <Plus size={14} />
               Add another key
@@ -305,7 +305,7 @@ const SortableSourceCard: React.FC<SortableSourceCardProps> = ({
                   <button
                     type="button"
                     onClick={() => handleRemoveKey(keyIndex)}
-                    className="p-2 text-text-tertiary hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                    className="p-2 text-text-tertiary hover:text-red-500 hover:bg-red-900/20 rounded-lg transition-colors"
                   >
                     <X size={16} />
                   </button>
@@ -316,7 +316,7 @@ const SortableSourceCard: React.FC<SortableSourceCardProps> = ({
               <button
                 type="button"
                 onClick={handleAddKey}
-                className="flex items-center gap-1.5 text-xs text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 font-medium"
+                className="flex items-center gap-1.5 text-xs text-blue-400 hover:text-blue-300 font-medium"
               >
                 <Plus size={14} />
                 Add another key (AND condition)
@@ -351,17 +351,17 @@ const DragOverlayCard: React.FC<{ source: SourceItem; index: number; isConfigure
     <div className={cn(
       'rounded-xl border shadow-2xl overflow-hidden cursor-grabbing',
       isBase
-        ? 'border-emerald-300 bg-emerald-50 dark:bg-emerald-900/30'
+        ? 'border-emerald-700 bg-emerald-900/30'
         : isConfigured
-          ? 'border-blue-300 bg-blue-50 dark:bg-blue-900/30'
+          ? 'border-blue-700 bg-blue-900/30'
           : 'border-border bg-surface-primary'
     )}>
       <div className={cn(
         'px-4 py-3 flex items-center gap-3',
         isBase
-          ? 'bg-emerald-100/50 dark:bg-emerald-900/40'
+          ? 'bg-emerald-900/40'
           : isConfigured
-            ? 'bg-blue-100/50 dark:bg-blue-900/40'
+            ? 'bg-blue-900/40'
             : 'bg-surface-secondary'
       )}>
         <div className="text-text-tertiary">
@@ -785,7 +785,7 @@ const JoinEditor: React.FC<JoinEditorProps> = ({
                   {/* Base table row */}
                   <div className="flex items-center gap-2 text-sm flex-wrap">
                     <span className="text-xs font-medium text-text-tertiary w-12">Start</span>
-                    <code className="px-2 py-1 rounded-lg bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 font-mono text-xs">
+                    <code className="px-2 py-1 rounded-lg bg-emerald-900/30 text-emerald-400 font-mono text-xs">
                       {baseSource?.name}
                     </code>
                     <span className="text-text-tertiary">on</span>
@@ -807,7 +807,7 @@ const JoinEditor: React.FC<JoinEditorProps> = ({
                         <div key={source.id} className="flex items-center gap-2 text-sm flex-wrap">
                           <span className="text-xs font-medium text-text-tertiary w-12">{idx === 0 ? 'Join' : 'Then'}</span>
                           <JoinTypeBadge type={config.joinType} compact />
-                          <code className="px-2 py-1 rounded-lg bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 font-mono text-xs">
+                          <code className="px-2 py-1 rounded-lg bg-blue-900/30 text-blue-400 font-mono text-xs">
                             {source.name}
                           </code>
                           <span className="text-text-tertiary">on</span>
@@ -841,13 +841,13 @@ const JoinEditor: React.FC<JoinEditorProps> = ({
 
             {/* Validation Messages */}
             {touched && !hasBaseKeys && (
-              <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/50">
-                <span className="text-xs text-red-600 dark:text-red-400">Please select at least one join key for the base table.</span>
+              <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-red-900/20 border border-red-800/50">
+                <span className="text-xs text-red-400">Please select at least one join key for the base table.</span>
               </div>
             )}
             {touched && !otherSources.some((s) => sourceConfigs[s.id]?.keys?.some(k => k.left && k.right)) && (
-              <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/50">
-                <span className="text-xs text-red-600 dark:text-red-400">Configure at least one source table with key pairs to join with.</span>
+              <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-red-900/20 border border-red-800/50">
+                <span className="text-xs text-red-400">Configure at least one source table with key pairs to join with.</span>
               </div>
             )}
           </>

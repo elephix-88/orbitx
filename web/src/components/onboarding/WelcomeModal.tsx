@@ -40,8 +40,8 @@ const ONBOARDING_STEPS: OnboardingStep[] = [
       'Link your ad platforms like Facebook Ads or Google Ads. This is required before creating workflows.',
     action: 'Set Up Connections',
     route: '/connections',
-    iconBg: 'bg-blue-100 dark:bg-blue-900/20',
-    iconColor: 'text-blue-600 dark:text-blue-500',
+    iconBg: 'bg-blue-900/20',
+    iconColor: 'text-blue-400',
   },
   {
     id: 'workflow',
@@ -51,8 +51,8 @@ const ONBOARDING_STEPS: OnboardingStep[] = [
       'Build a visual pipeline to extract, transform, and load your marketing data automatically.',
     action: 'Create Workflow',
     route: '/workflows',
-    iconBg: 'bg-violet-100 dark:bg-violet-900/20',
-    iconColor: 'text-violet-600 dark:text-violet-500',
+    iconBg: 'bg-violet-900/20',
+    iconColor: 'text-violet-400',
   },
   {
     id: 'execute',
@@ -62,8 +62,8 @@ const ONBOARDING_STEPS: OnboardingStep[] = [
       'Run your workflows on a schedule and monitor execution status from the dashboard.',
     action: 'View Dashboard',
     route: '/dashboard',
-    iconBg: 'bg-emerald-100 dark:bg-emerald-900/20',
-    iconColor: 'text-emerald-600 dark:text-emerald-500',
+    iconBg: 'bg-emerald-900/20',
+    iconColor: 'text-emerald-400',
   },
 ];
 
@@ -155,7 +155,7 @@ export const WelcomeModal: React.FC<WelcomeModalProps> = ({
         "overflow-hidden"
       )}>
         {/* Header with brand color */}
-        <div className="relative bg-brand-600 px-6 py-8 text-white">
+        <div className="relative bg-primary-400 px-6 py-8 text-neutral-950">
           {/* Close button */}
           <button
             onClick={handleSkip}
@@ -165,14 +165,14 @@ export const WelcomeModal: React.FC<WelcomeModalProps> = ({
             <X className="h-4 w-4" />
           </button>
 
-          <div className="flex items-center gap-2 text-sm font-medium text-white/80">
+          <div className="flex items-center gap-2 text-sm font-medium text-neutral-950/70">
             <Sparkles className="h-4 w-4" />
             <span>Welcome to OrbitX</span>
           </div>
           <h2 id="welcome-title" className="mt-2 text-2xl font-semibold">
             {userName ? `Hey ${userName}!` : 'Welcome!'} Let's get started
           </h2>
-          <p className="mt-1 text-sm text-white/70">
+          <p className="mt-1 text-sm text-neutral-950/60">
             Set up your marketing data automation in 3 simple steps.
           </p>
         </div>
@@ -187,7 +187,7 @@ export const WelcomeModal: React.FC<WelcomeModalProps> = ({
                 aria-label={`Step ${idx + 1}: ${s.title}`}
                 className={cn(
                   "flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium transition-all",
-                  idx === currentStep && "bg-neutral-900 text-white dark:bg-white dark:text-neutral-900",
+                  idx === currentStep && "bg-primary-400 text-neutral-950",
                   idx < currentStep && "bg-emerald-500 text-white",
                   idx > currentStep && "bg-surface-secondary text-text-secondary hover:bg-surface-tertiary"
                 )}
@@ -323,7 +323,7 @@ export const OnboardingChecklist: React.FC<{
       {/* Progress bar */}
       <div className="h-1 bg-surface-secondary">
         <div
-          className="h-full bg-brand-600 transition-all duration-500"
+          className="h-full bg-primary-400 transition-all duration-500"
           style={{ width: `${(completedCount / 3) * 100}%` }}
         />
       </div>
@@ -342,7 +342,7 @@ const ChecklistItem: React.FC<{
     disabled={disabled || completed}
     className={cn(
       'flex w-full items-center gap-3 rounded-md p-2 text-left transition-colors',
-      completed && 'bg-emerald-50 dark:bg-emerald-900/10',
+      completed && 'bg-emerald-900/10',
       !completed && !disabled && 'hover:bg-surface-secondary',
       disabled && 'cursor-not-allowed opacity-50'
     )}
@@ -361,7 +361,7 @@ const ChecklistItem: React.FC<{
       className={cn(
         'text-sm',
         completed
-          ? 'text-emerald-700 line-through dark:text-emerald-400'
+          ? 'text-emerald-400 line-through'
           : 'text-text-secondary'
       )}
     >

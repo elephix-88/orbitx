@@ -1,5 +1,4 @@
 from fastapi import APIRouter, Depends, HTTPException
-from loguru import logger
 
 from common.model.connection import ConnectionItem, DeleteConnectionResponse
 from common.model.user import UserInDB
@@ -7,7 +6,6 @@ from server.services.auth.dependencies import get_current_user
 from server.services.connection import delete_connection as delete_connection_service
 from server.services.connection import get_all_connections
 from server.services.connection import get_connection as get_connection_service
-from server.services.exceptions import OrbitXError
 
 router = APIRouter()
 
@@ -40,11 +38,7 @@ async def delete_connection(
     _current_user: UserInDB = Depends(get_current_user),
 ):
     """Delete a connection with ownership verification."""
-    try:
-        deleted = await delete_connection_service(connection_id)
-        if not deleted:
-            raise HTTPException(status_code=404, detail="Connection not found")
-        return DeleteConnectionResponse(success=True)
-    except OrbitXError as e:
-        logger.error(f"Error deleting connection {connection_id}: {e.message}")
-        raise HTTPException(status_code=e.status_code, detail=e.message)
+    deleted = await delete_connection_service(connection_id)
+    if not deleted:
+        raise HTTPException(status_code=404, detail="Connection not found")
+    return DeleteConnectionResponse(success=True)

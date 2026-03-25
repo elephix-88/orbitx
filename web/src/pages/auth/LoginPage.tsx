@@ -92,18 +92,18 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="min-h-screen flex bg-surface-secondary">
+    <div className="min-h-screen flex bg-surface-primary">
       {/* Left Side — Branding */}
       <div className="hidden lg:flex lg:w-5/12 relative overflow-hidden bg-neutral-900">
         {/* Geometric decorations */}
-        <div className="absolute top-0 right-0 w-48 h-48 bg-primary-600 rounded-bl-[4rem]" />
-        <div className="absolute bottom-16 left-16 w-32 h-32 rounded-full bg-warning/40" />
-        <div className="absolute top-1/3 left-1/4 w-24 h-24 rotate-45 bg-primary-200/20 rounded-lg" />
+        <div className="absolute top-0 right-0 w-48 h-48 bg-primary-400 rounded-bl-[4rem]" />
+        <div className="absolute bottom-16 left-16 w-32 h-32 rounded-full bg-primary-400/20" />
+        <div className="absolute top-1/3 left-1/4 w-24 h-24 rotate-45 bg-primary-400/15 rounded-lg" />
 
         <div className="relative z-10 flex flex-col justify-between p-16 w-full">
           <Link to="/" className="flex items-center gap-3">
-            <div className="w-12 h-12 flex items-center justify-center bg-primary-600 rounded-lg">
-              <span className="text-2xl font-semibold text-white">O</span>
+            <div className="w-12 h-12 flex items-center justify-center bg-primary-400 rounded-lg">
+              <span className="text-2xl font-semibold text-neutral-950">O</span>
             </div>
             <span className="text-2xl font-semibold text-white tracking-tight">OrbitX</span>
           </Link>
@@ -112,7 +112,7 @@ const LoginPage = () => {
             <h1 className="text-4xl font-semibold text-white tracking-tight leading-tight mb-8">
               Automate<br />your data<br />workflows
             </h1>
-            <div className="w-16 h-1 mb-8 bg-primary-600 rounded-full" />
+            <div className="w-16 h-1 mb-8 bg-primary-400 rounded-full" />
             <p className="text-lg leading-relaxed text-neutral-400">
               Connect your data sources, transform your data, and load it into your destinations.
             </p>
@@ -135,8 +135,8 @@ const LoginPage = () => {
           {/* Mobile Logo */}
           <div className="lg:hidden mb-16">
             <Link to="/" className="inline-flex items-center gap-3">
-              <div className="w-10 h-10 flex items-center justify-center bg-primary-600 rounded-lg">
-                <span className="text-xl font-semibold text-white">O</span>
+              <div className="w-10 h-10 flex items-center justify-center bg-primary-400 rounded-lg">
+                <span className="text-xl font-semibold text-neutral-950">O</span>
               </div>
               <span className="text-xl font-semibold text-text-primary tracking-tight">
                 OrbitX
@@ -148,7 +148,7 @@ const LoginPage = () => {
             <h2 className="text-3xl font-semibold text-text-primary tracking-tight mb-3">
               Welcome
             </h2>
-            <div className="w-12 h-1 mb-4 bg-primary-600 rounded-full" />
+            <div className="w-12 h-1 mb-4 bg-primary-400 rounded-full" />
             <p className="text-base text-text-secondary">
               Sign in with your Google account to continue
             </p>
@@ -176,14 +176,14 @@ const LoginPage = () => {
           <div className="mb-12">
             {isLoading ? (
               <div className="flex items-center justify-center py-6">
-                <Loader2 className="w-8 h-8 animate-spin text-primary-600" />
+                <Loader2 className="w-8 h-8 animate-spin text-primary-400" />
               </div>
             ) : GOOGLE_CLIENT_ID ? (
               <div id="google-signin-button" className="flex justify-center" />
             ) : (
               <button
                 onClick={() => navigate('/dashboard')}
-                className="w-full flex items-center justify-center gap-3 px-6 py-4 font-medium text-sm transition-colors bg-surface-primary border-2 border-neutral-300 text-text-primary hover:border-primary-600 rounded-lg"
+                className="w-full flex items-center justify-center gap-3 px-6 py-4 font-medium text-sm transition-colors bg-white border-2 border-neutral-300 text-neutral-900 hover:border-neutral-400 rounded-lg"
               >
                 <GoogleIcon />
                 Continue with Google
@@ -194,11 +194,11 @@ const LoginPage = () => {
           <div className="mb-8">
             <p className="text-xs text-text-secondary">
               By continuing, you agree to our{' '}
-              <Link to="/terms" className="font-medium underline text-text-primary hover:text-primary-600">
+              <Link to="/terms" className="font-medium underline text-text-primary hover:text-primary-400">
                 Terms
               </Link>{' '}
               and{' '}
-              <Link to="/privacy" className="font-medium underline text-text-primary hover:text-primary-600">
+              <Link to="/privacy" className="font-medium underline text-text-primary hover:text-primary-400">
                 Privacy Policy
               </Link>
             </p>
@@ -206,7 +206,7 @@ const LoginPage = () => {
 
           <Link
             to="/"
-            className="inline-flex items-center gap-2 text-sm font-medium text-primary-600 hover:text-primary-700 transition-colors"
+            className="inline-flex items-center gap-2 text-sm font-medium text-primary-400 hover:text-primary-300 transition-colors"
           >
             &larr; Back to home
           </Link>

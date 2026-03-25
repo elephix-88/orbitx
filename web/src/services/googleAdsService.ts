@@ -30,7 +30,7 @@ interface GoogleOAuthResponse {
 
 class GoogleAdsService extends BaseApiService {
   async connectWithPopup(connectionName: string = 'Google Ads Connection'): Promise<{ connection_id: string }> {
-    const response = await this.post<GoogleOAuthResponse>('/api/google/google_ads/login', {
+    const response = await this.post<GoogleOAuthResponse>('/api/google/ads/login', {
       connection_name: connectionName,
     });
 
@@ -53,13 +53,13 @@ class GoogleAdsService extends BaseApiService {
 
   async getAccounts(connectionId: string): Promise<GoogleAdsAccount[]> {
     const response = await this.get<GoogleAdsAccount[]>(
-      `/api/google/google_ads/accounts?connection_id=${encodeURIComponent(connectionId)}`
+      `/api/google/ads/accounts?connection_id=${encodeURIComponent(connectionId)}`
     );
     return response.data;
   }
 
   async getFields(): Promise<GoogleAdsField[]> {
-    const response = await this.get<GoogleAdsField[]>('/api/google/google_ads/fields');
+    const response = await this.get<GoogleAdsField[]>('/api/google/ads/fields');
     return response.data;
   }
 }

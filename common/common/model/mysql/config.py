@@ -3,7 +3,7 @@ from common.model.common import BaseDestinationConfig
 
 class MySQLDestinationConfig(BaseDestinationConfig):
     host: str
-    port: int | str
+    port: int
     database: str
     username: str
     password: str

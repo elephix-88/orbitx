@@ -1,54 +1,19 @@
 import time
-from enum import Enum
+from collections.abc import AsyncGenerator
+from contextlib import asynccontextmanager
 
 from loguru import logger
 
 
-class Unit(Enum):
-    SECOND = "second"
-    MINUTE = "minute"
-    HOUR = "hour"
-
-
-class ExecutionTimer:
-    """Measures and logs execution time for operations."""
-
-    def __init__(self, label: str = "Execution") -> None:
-        self.label = label
-        self.start_time: float | None = None
-        self.end_time: float | None = None
-
-    async def start(self) -> None:
-        self.start_time = time.perf_counter()
-        logger.info(f"{self.label} started...")
-
-    async def stop(self, success: bool = True, error: Exception | None = None) -> None:
-        self.end_time = time.perf_counter()
-        duration = self.elapsed_time
-
-        if duration >= 3600:
-            duration_value = duration / 3600
-            unit = Unit.HOUR.value
-        elif duration >= 60:
-            duration_value = duration / 60
-            unit = Unit.MINUTE.value
-        else:
-            duration_value = duration
-            unit = Unit.SECOND.value
-
-        status_text = "SUCCESS" if success else "FAILED"
-        logger.info(f"{self.label} took {duration_value:.2f} {unit} ({status_text})")
-
-    @property
-    def elapsed_time(self) -> float:
-        if self.start_time is None:
-            return 0.0
-        end = self.end_time if self.end_time is not None else time.perf_counter()
-        return end - self.start_time
-
-
-# Backward compatibility
-ExecutionTracker = ExecutionTimer
+@asynccontextmanager
+async def execution_timer(label: str) -> AsyncGenerator[None, None]:
+    start = time.perf_counter()
+    logger.info(f"Starting: {label}")
+    try:
+        yield
+    finally:
+        elapsed = time.perf_counter() - start
+        logger.info(f"Completed: {label} ({elapsed:.2f}s)")
 
 
 def log_progress(

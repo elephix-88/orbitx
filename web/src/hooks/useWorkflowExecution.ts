@@ -77,6 +77,22 @@ export const useWorkflowExecution = ({
     }
   }, [nodes, triggering]);
 
+  // Timeout for triggering - fail if no response within 1 minute
+  useEffect(() => {
+    if (!triggering) return;
+
+    const timeoutId = setTimeout(() => {
+      setTriggering(false);
+      setExecuting(false);
+      notify.error(
+        "Triggered failed",
+        "Workflow did not start within 1 minute. Please try again."
+      );
+    }, 60000);
+
+    return () => clearTimeout(timeoutId);
+  }, [triggering, notify]);
+
   // Monitor node status changes and stop spinning when all destinations complete
   useEffect(() => {
     if (!executing) return;

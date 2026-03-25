@@ -16,7 +16,7 @@ export const Skeleton: React.FC<SkeletonProps> = ({
   height,
   lines = 1,
 }) => {
-  const baseClasses = 'animate-pulse bg-neutral-200 dark:bg-neutral-700';
+  const baseClasses = 'animate-pulse bg-neutral-800';
 
   const variantClasses = {
     text: 'h-4 rounded-md',

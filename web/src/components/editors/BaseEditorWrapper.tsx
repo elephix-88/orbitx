@@ -70,7 +70,7 @@ const BaseEditorWrapper = ({
     }
   };
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 lg:p-8 bg-black/20 dark:bg-black/50 backdrop-blur-sm animate-fade-in">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 lg:p-8 bg-black/50 backdrop-blur-sm animate-fade-in">
       <form
         onSubmit={onSubmit}
         className="w-full max-w-5xl h-[85vh] sm:h-[80vh] flex flex-col bg-surface-primary rounded-2xl shadow-2xl border border-border animate-scale-in"

@@ -106,11 +106,11 @@ const PanelHeader: React.FC<{
   const getNodeTypeBadge = () => {
     switch (node.type) {
       case 'source':
-        return { label: 'Source', color: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' };
+        return { label: 'Source', color: 'bg-emerald-500/10 text-emerald-400' };
       case 'transform':
-        return { label: 'Transform', color: 'bg-purple-500/10 text-purple-600 dark:text-purple-400' };
+        return { label: 'Transform', color: 'bg-purple-500/10 text-purple-400' };
       case 'destination':
-        return { label: 'Destination', color: 'bg-orange-500/10 text-orange-600 dark:text-orange-400' };
+        return { label: 'Destination', color: 'bg-orange-500/10 text-orange-400' };
       default:
         return { label: 'Node', color: 'bg-neutral-500/10 text-text-secondary' };
     }
@@ -169,10 +169,10 @@ const PanelHeader: React.FC<{
             disabled={isExecuting}
             className={cn(
               "flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all",
-              "bg-gradient-to-r from-brand-500 to-brand-600 text-white",
-              "hover:from-brand-600 hover:to-brand-700",
+              "bg-primary-400 text-neutral-950",
+              "hover:bg-primary-500",
               "disabled:opacity-50 disabled:cursor-not-allowed",
-              "shadow-md shadow-brand-500/20 hover:shadow-lg hover:shadow-brand-500/30"
+              "shadow-md shadow-primary-400/20 hover:shadow-lg hover:shadow-primary-400/30"
             )}
           >
             {isExecuting ? (
@@ -321,7 +321,7 @@ export const NodeConfigPanel: React.FC<NodeConfigPanelProps> = ({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="absolute inset-0 bg-black/20 dark:bg-black/50 backdrop-blur-sm"
+        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
         onClick={onClose}
       />
 
@@ -388,14 +388,14 @@ export const NodeConfigPanel: React.FC<NodeConfigPanelProps> = ({
 
                   {/* Validation Errors */}
                   {validationErrors.length > 0 && (
-                    <div className="mt-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/50 rounded-xl">
+                    <div className="mt-6 p-4 bg-red-900/20 border border-red-800/50 rounded-xl">
                       <div className="flex items-start gap-3">
                         <AlertTriangle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
                         <div>
-                          <h4 className="text-sm font-medium text-red-800 dark:text-red-300 mb-2">
+                          <h4 className="text-sm font-medium text-red-300 mb-2">
                             Please fix the following issues:
                           </h4>
-                          <ul className="text-sm text-red-600 dark:text-red-400 space-y-1">
+                          <ul className="text-sm text-red-400 space-y-1">
                             {validationErrors.map((error, index) => (
                               <li key={index} className="flex items-start gap-2">
                                 <ChevronRight className="w-4 h-4 flex-shrink-0 mt-0.5" />
@@ -434,7 +434,7 @@ export const NodeConfigPanel: React.FC<NodeConfigPanelProps> = ({
                       className={cn(
                         "w-full px-4 py-3 rounded-xl text-sm transition-all",
                         "bg-surface-secondary border border-border",
-                        "focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500",
+                        "focus:outline-none focus:ring-2 focus:ring-primary-400/30 focus:border-primary-400",
                         "placeholder:text-text-tertiary"
                       )}
                       placeholder={`e.g., "${node.name} - Campaign Data"`}
@@ -457,7 +457,7 @@ export const NodeConfigPanel: React.FC<NodeConfigPanelProps> = ({
                       className={cn(
                         "w-full px-4 py-3 rounded-xl text-sm transition-all resize-none",
                         "bg-surface-secondary border border-border",
-                        "focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500",
+                        "focus:outline-none focus:ring-2 focus:ring-primary-400/30 focus:border-primary-400",
                         "placeholder:text-text-tertiary"
                       )}
                       placeholder="Add a description to help you remember what this node does..."
@@ -477,7 +477,7 @@ export const NodeConfigPanel: React.FC<NodeConfigPanelProps> = ({
                           type="checkbox"
                           checked={pendingContinueOnFail}
                           onChange={(e) => setPendingContinueOnFail(e.target.checked)}
-                          className="mt-0.5 w-5 h-5 rounded border-border text-brand-500 focus:ring-brand-500/50"
+                          className="mt-0.5 w-5 h-5 rounded border-border text-primary-400 focus:ring-primary-400/30"
                         />
                         <div>
                           <span className="text-sm font-medium text-text-secondary block">
@@ -494,7 +494,7 @@ export const NodeConfigPanel: React.FC<NodeConfigPanelProps> = ({
                           type="checkbox"
                           checked={pendingRetryOnFail}
                           onChange={(e) => setPendingRetryOnFail(e.target.checked)}
-                          className="mt-0.5 w-5 h-5 rounded border-border text-brand-500 focus:ring-brand-500/50"
+                          className="mt-0.5 w-5 h-5 rounded border-border text-primary-400 focus:ring-primary-400/30"
                         />
                         <div>
                           <span className="text-sm font-medium text-text-secondary block">
@@ -522,15 +522,15 @@ export const NodeConfigPanel: React.FC<NodeConfigPanelProps> = ({
               >
                 <div className="p-6">
                   {/* Node Info Card */}
-                  <div className="flex items-start gap-4 p-5 bg-gradient-to-br from-brand-50 to-purple-50 dark:from-brand-900/20 dark:to-purple-900/20 border border-brand-200/50 dark:border-brand-800/30 rounded-2xl mb-6">
-                    <div className="w-10 h-10 rounded-xl bg-brand-500/10 flex items-center justify-center flex-shrink-0">
-                      <Info className="w-5 h-5 text-brand-500" />
+                  <div className="flex items-start gap-4 p-5 bg-gradient-to-br from-primary-400/10 to-purple-900/20 border border-primary-400/20 rounded-2xl mb-6">
+                    <div className="w-10 h-10 rounded-xl bg-primary-400/10 flex items-center justify-center flex-shrink-0">
+                      <Info className="w-5 h-5 text-primary-400" />
                     </div>
                     <div>
-                      <h4 className="text-sm font-semibold text-brand-900 dark:text-brand-100 mb-1">
+                      <h4 className="text-sm font-semibold text-primary-300 mb-1">
                         About {node.name}
                       </h4>
-                      <p className="text-sm text-brand-700 dark:text-brand-300">
+                      <p className="text-sm text-text-secondary">
                         {spec?.typeId ? `Node Type: ${spec.typeId}` : 'Standard workflow node'}
                       </p>
                     </div>
@@ -540,12 +540,12 @@ export const NodeConfigPanel: React.FC<NodeConfigPanelProps> = ({
                   <div className="prose prose-sm dark:prose-invert max-w-none">
                     {node.type === 'source' && (
                       <div className="space-y-4">
-                        <div className="p-4 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl border border-emerald-200/50 dark:border-emerald-800/30">
-                          <h3 className="text-base font-semibold text-emerald-900 dark:text-emerald-100 mb-2 flex items-center gap-2">
+                        <div className="p-4 bg-emerald-900/20 rounded-xl border border-emerald-800/30">
+                          <h3 className="text-base font-semibold text-emerald-100 mb-2 flex items-center gap-2">
                             <Database className="w-5 h-5" />
                             Source Node
                           </h3>
-                          <p className="text-sm text-emerald-700 dark:text-emerald-300">
+                          <p className="text-sm text-emerald-300">
                             Source nodes extract data from external services, APIs, or databases. The data flows to connected transform or destination nodes in your workflow.
                           </p>
                         </div>
@@ -572,12 +572,12 @@ export const NodeConfigPanel: React.FC<NodeConfigPanelProps> = ({
 
                     {node.type === 'transform' && (
                       <div className="space-y-4">
-                        <div className="p-4 bg-purple-50 dark:bg-purple-900/20 rounded-xl border border-purple-200/50 dark:border-purple-800/30">
-                          <h3 className="text-base font-semibold text-purple-900 dark:text-purple-100 mb-2 flex items-center gap-2">
+                        <div className="p-4 bg-purple-900/20 rounded-xl border border-purple-800/30">
+                          <h3 className="text-base font-semibold text-purple-100 mb-2 flex items-center gap-2">
                             <Code2 className="w-5 h-5" />
                             Transform Node
                           </h3>
-                          <p className="text-sm text-purple-700 dark:text-purple-300">
+                          <p className="text-sm text-purple-300">
                             Transform nodes modify, filter, aggregate, or reshape data as it flows through your workflow. They receive input from upstream nodes and output processed data.
                           </p>
                         </div>
@@ -608,12 +608,12 @@ export const NodeConfigPanel: React.FC<NodeConfigPanelProps> = ({
 
                     {node.type === 'destination' && (
                       <div className="space-y-4">
-                        <div className="p-4 bg-orange-50 dark:bg-orange-900/20 rounded-xl border border-orange-200/50 dark:border-orange-800/30">
-                          <h3 className="text-base font-semibold text-orange-900 dark:text-orange-100 mb-2 flex items-center gap-2">
+                        <div className="p-4 bg-orange-900/20 rounded-xl border border-orange-800/30">
+                          <h3 className="text-base font-semibold text-orange-100 mb-2 flex items-center gap-2">
                             <ArrowRight className="w-5 h-5" />
                             Destination Node
                           </h3>
-                          <p className="text-sm text-orange-700 dark:text-orange-300">
+                          <p className="text-sm text-orange-300">
                             Destination nodes load processed data into external systems like databases, data warehouses, spreadsheets, or cloud services.
                           </p>
                         </div>
@@ -662,10 +662,10 @@ export const NodeConfigPanel: React.FC<NodeConfigPanelProps> = ({
             disabled={!isValid}
             className={cn(
               "px-5 py-2.5 rounded-xl text-sm font-medium transition-all",
-              "bg-gradient-to-r from-brand-500 to-brand-600 text-white",
-              "hover:from-brand-600 hover:to-brand-700",
+              "bg-primary-400 text-neutral-950",
+              "hover:bg-primary-500",
               "disabled:opacity-50 disabled:cursor-not-allowed",
-              "shadow-md shadow-brand-500/20 hover:shadow-lg hover:shadow-brand-500/30"
+              "shadow-md shadow-primary-400/20 hover:shadow-lg hover:shadow-primary-400/30"
             )}
           >
             Save Changes

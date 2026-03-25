@@ -13,39 +13,41 @@ module.exports = {
         mono: ['JetBrains Mono', 'ui-monospace', 'monospace'],
       },
       fontSize: {
-        xs: ['12px', { lineHeight: '1.5' }],
-        sm: ['14px', { lineHeight: '1.5' }],
-        base: ['15px', { lineHeight: '1.5' }],
-        lg: ['18px', { lineHeight: '1.4' }],
-        xl: ['22px', { lineHeight: '1.3' }],
-        '2xl': ['28px', { lineHeight: '1.2' }],
+        xs: ['11px', { lineHeight: '1.5' }],
+        sm: ['13px', { lineHeight: '1.5' }],
+        base: ['14px', { lineHeight: '1.5' }],
+        lg: ['16px', { lineHeight: '1.4' }],
+        xl: ['20px', { lineHeight: '1.3' }],
+        '2xl': ['24px', { lineHeight: '1.2' }],
+        '3xl': ['30px', { lineHeight: '1.1' }],
       },
       colors: {
-        /* Raw neutral scale — cool gray (constant across themes) */
+        /* Raw neutral — zinc scale */
         neutral: {
-          50: '#F9FAFB',
-          100: '#F3F4F6',
-          200: '#E5E7EB',
-          300: '#D1D5DB',
-          400: '#9CA3AF',
-          500: '#6B7280',
-          600: '#4B5563',
-          700: '#374151',
-          800: '#1F2937',
-          900: '#111827',
+          50: '#F5F5F5',
+          100: '#E8E8EC',
+          200: '#D4D4DB',
+          300: '#B0B0BC',
+          400: '#8A8A9A',
+          500: '#6B6B7A',
+          600: '#4A4A56',
+          700: '#373741',
+          800: '#282830',
+          900: '#1C1C21',
+          950: '#111114',
         },
-        /* Raw primary scale — indigo (constant across themes) */
+        /* Raw primary — yellow */
         primary: {
-          50: '#EEF2FF',
-          100: '#E0E7FF',
-          200: '#C7D2FE',
-          300: '#A5B4FC',
-          400: '#818CF8',
-          500: '#6366F1',
-          600: '#4F46E5',
-          700: '#4338CA',
+          50: '#FEFCE8',
+          100: '#FEF9C3',
+          200: '#FEF08A',
+          300: '#FDE047',
+          400: '#FACC15',
+          500: '#EAB308',
+          600: '#CA8A04',
+          700: '#A16207',
         },
-        /* Backward compat — brand via CSS variables (swaps in dark) */
+        /* Backward compat — brand via CSS variables */
         brand: {
           50: 'rgb(var(--brand-50) / <alpha-value>)',
           100: 'rgb(var(--brand-100) / <alpha-value>)',
@@ -58,28 +60,28 @@ module.exports = {
           800: 'rgb(var(--brand-800) / <alpha-value>)',
           900: 'rgb(var(--brand-900) / <alpha-value>)',
         },
-        /* Semantic surfaces (swap in dark mode via CSS vars) */
+        /* Semantic surfaces */
         surface: {
           primary: 'rgb(var(--surface-primary) / <alpha-value>)',
           secondary: 'rgb(var(--surface-secondary) / <alpha-value>)',
           tertiary: 'rgb(var(--surface-tertiary) / <alpha-value>)',
           dark: 'rgb(var(--surface-dark) / <alpha-value>)',
         },
-        /* Semantic text colors (swap in dark mode) */
+        /* Semantic text */
         text: {
           primary: 'rgb(var(--text-primary) / <alpha-value>)',
           secondary: 'rgb(var(--text-secondary) / <alpha-value>)',
           tertiary: 'rgb(var(--text-tertiary) / <alpha-value>)',
           inverse: 'rgb(var(--text-inverse) / <alpha-value>)',
         },
-        /* Semantic borders (swap in dark mode) */
+        /* Semantic borders */
         border: {
           DEFAULT: 'rgb(var(--border-default) / <alpha-value>)',
           subtle: 'rgb(var(--border-subtle) / <alpha-value>)',
           primary: 'rgb(var(--border-primary) / <alpha-value>)',
           secondary: 'rgb(var(--border-secondary) / <alpha-value>)',
         },
-        /* Status colors (swap in dark mode) */
+        /* Status */
         success: {
           light: 'rgb(var(--success-light) / <alpha-value>)',
           DEFAULT: 'rgb(var(--success) / <alpha-value>)',
@@ -104,19 +106,21 @@ module.exports = {
       borderRadius: {
         'none': '0',
         'sm': '4px',
-        'DEFAULT': '6px',
-        'md': '6px',
-        'lg': '8px',
-        'xl': '12px',
-        '2xl': '16px',
+        'DEFAULT': '8px',
+        'md': '8px',
+        'lg': '12px',
+        'xl': '16px',
+        '2xl': '20px',
         'full': '9999px',
       },
       boxShadow: {
         'none': 'none',
-        'sm': '0 1px 2px rgba(0, 0, 0, 0.05)',
-        'DEFAULT': '0 1px 3px rgba(0, 0, 0, 0.08)',
-        'md': '0 2px 8px rgba(0, 0, 0, 0.08)',
-        'lg': '0 4px 16px rgba(0, 0, 0, 0.1)',
+        'sm': '0 1px 3px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.03)',
+        'DEFAULT': '0 2px 6px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.04)',
+        'md': '0 4px 16px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05)',
+        'lg': '0 8px 30px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.05)',
+        'glow': '0 0 20px rgba(250, 204, 21, 0.15)',
+        'glow-sm': '0 0 10px rgba(250, 204, 21, 0.1)',
       },
       spacing: {
         '18': '4.5rem',

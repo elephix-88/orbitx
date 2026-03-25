@@ -6,7 +6,8 @@ from loguru import logger
 
 from engine.factories.loader import LoaderFactory
 from engine.utils.retry import with_retry
-from engine.utils.validation import validate_dataframe_for_load
+from engine.exceptions import ValidationException
+from engine.utils.validation import validate_dataframe
 from common.model.workflow import Node
 from dagster_orbitx.ops.node_result import NodeResult
 
@@ -27,13 +28,17 @@ def make_loader_op(node: Node, op_name: str):
 
         destination_table = getattr(loader.config, "destination_table", "")
 
-        validated_dataframe = validate_dataframe_for_load(
-            df=input_result.data,
-            destination_type=node.node_id,
-            destination_table=destination_table,
-            node_id=node.node_id,
-            node_instance_id=node.node_instance_id,
-        )
+        try:
+            validated_dataframe = validate_dataframe(
+                input_result.data,
+                node_id=node.node_id,
+                node_instance_id=node.node_instance_id,
+                allow_empty=True,
+            )
+        except ValidationException as e:
+            e.details["destination_type"] = node.node_id
+            e.details["destination_table"] = destination_table
+            raise
 
         asyncio.run(with_retry(loader.load, validated_dataframe))
 

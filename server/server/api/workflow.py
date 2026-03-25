@@ -8,7 +8,6 @@ from common.model.workflow import JobIdRequest, WorkflowData, WorkflowSummary
 from server.configs.config import settings
 from server.middleware import limiter
 from server.services.auth.dependencies import get_current_user
-from server.services.exceptions import OrbitXError
 from server.services.workflow import (
     create_new_workflow,
     delete_workflow,
@@ -18,10 +17,10 @@ from server.services.workflow import (
     update_workflow,
 )
 
-router = APIRouter()
+router = APIRouter(prefix="/api/workflows", tags=["workflows"])
 
 
-@router.post("/create_workflow", response_model=WorkflowData)
+@router.post("", response_model=WorkflowData)
 @limiter.limit(settings.rate_limit_expensive)
 async def create_workflow(
     request: Request,
@@ -41,12 +40,9 @@ async def create_workflow(
             status_code=status.HTTP_409_CONFLICT,
             detail="Workflow with this id already exists",
         )
-    except OrbitXError as e:
-        logger.error(f"Create workflow failed: {e.message}")
-        raise HTTPException(status_code=e.status_code, detail=e.message)
 
 
-@router.post("/workflows/execute")
+@router.post("/execute")
 @limiter.limit(settings.rate_limit_expensive)
 async def execute_workflow_endpoint(
     request: Request,
@@ -57,7 +53,7 @@ async def execute_workflow_endpoint(
     return result
 
 
-@router.get("/workflows", response_model=list[WorkflowSummary])
+@router.get("", response_model=list[WorkflowSummary])
 async def read_all_workflows_endpoint(
     _current_user: UserInDB = Depends(get_current_user),
 ):
@@ -65,7 +61,7 @@ async def read_all_workflows_endpoint(
     return await get_all_workflows()
 
 
-@router.post("/update_workflow", response_model=bool)
+@router.put("", response_model=bool)
 @limiter.limit(settings.rate_limit_expensive)
 async def update_workflow_endpoint(
     request: Request,
@@ -76,7 +72,7 @@ async def update_workflow_endpoint(
     return result
 
 
-@router.post("/update_workflow/{id}", response_model=bool)
+@router.put("/{id}", response_model=bool)
 @limiter.limit(settings.rate_limit_expensive)
 async def update_workflow_by_id_endpoint(
     request: Request,
@@ -91,7 +87,7 @@ async def update_workflow_by_id_endpoint(
     return result
 
 
-@router.get("/get_workflow_builder/{id}", response_model=WorkflowData)
+@router.get("/{id}", response_model=WorkflowData)
 async def get_workflow_builder_endpoint(
     id: str,
     _current_user: UserInDB = Depends(get_current_user),
@@ -103,7 +99,7 @@ async def get_workflow_builder_endpoint(
     return results
 
 
-@router.delete("/delete_workflow/{id}", response_model=bool)
+@router.delete("/{id}", response_model=bool)
 async def delete_workflow_endpoint(
     id: str,
     _current_user: UserInDB = Depends(get_current_user),

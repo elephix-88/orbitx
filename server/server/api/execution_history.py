@@ -9,7 +9,7 @@ from server.services.execution_history import (
     get_execution_history_by_workflow,
 )
 
-router = APIRouter(prefix="/execution-history", tags=["Execution History"])
+router = APIRouter(prefix="/api/execution-history", tags=["Execution History"])
 
 
 @router.get("/dashboard-stats")

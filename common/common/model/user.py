@@ -1,7 +1,11 @@
-from datetime import datetime
+from datetime import UTC, datetime
 from enum import Enum
 
 from pydantic import BaseModel, EmailStr, Field
+
+
+def utc_now() -> datetime:
+    return datetime.now(UTC)
 
 
 class UserRole(str, Enum):
@@ -21,8 +25,8 @@ class UserInDB(UserBase):
     google_id: str | None = None
     role: UserRole = UserRole.USER
     is_active: bool = True
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=utc_now)
+    updated_at: datetime = Field(default_factory=utc_now)
 
     model_config = {"populate_by_name": True}
 

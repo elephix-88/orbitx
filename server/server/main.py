@@ -1,12 +1,15 @@
 import asyncio
 from contextlib import asynccontextmanager
 
-from fastapi import APIRouter, FastAPI
+from fastapi import APIRouter, FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, StreamingResponse
 from loguru import logger
 from slowapi.errors import RateLimitExceeded
 
+from server.services.exceptions import OrbitXError
+
+from common.database.indexes import ensure_indexes
 from common.database.mongodb import get_mongodb
 from server.api.auth import router as auth_router
 from server.api.connection.connections import router as connections_router
@@ -39,7 +42,8 @@ init_settings()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Startup - use MongoDB Change Streams instead of Pub/Sub
+    # Startup
+    await ensure_indexes(get_mongodb().database)
     stream_task = asyncio.create_task(start_change_stream())
     yield
     # Shutdown
@@ -50,9 +54,23 @@ async def lifespan(app: FastAPI):
         pass
 
 
-app = FastAPI(lifespan=lifespan)
+app = FastAPI(
+    title="OrbitX API",
+    version="0.1.0",
+    description="Marketing Data Intelligence Platform",
+    lifespan=lifespan,
+)
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, rate_limit_exceeded_handler)
+
+
+@app.exception_handler(OrbitXError)
+async def orbitx_error_handler(request: Request, exc: OrbitXError) -> JSONResponse:
+    logger.error(f"OrbitX error on {request.url.path}: {exc.message}")
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={"data": None, "success": False, "error": exc.message},
+    )
 
 origins = settings.cors_origins
 

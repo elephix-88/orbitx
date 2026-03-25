@@ -102,15 +102,6 @@ const toReactFlowEdge = (conn: WorkflowConnection): Edge => ({
   type: 'custom',
 });
 
-// Convert React Flow Edge back to WorkflowConnection (reserved for future use)
-// const fromReactFlowEdge = (edge: Edge): WorkflowConnection => ({
-//   id: edge.id,
-//   sourceNodeId: edge.source,
-//   targetNodeId: edge.target,
-//   sourceOutputId: edge.sourceHandle || undefined,
-//   targetInputId: edge.targetHandle || undefined,
-// });
-
 // Inner component that uses React Flow hooks
 const ReactFlowCanvasInner: React.FC<ReactFlowCanvasProps> = ({
   nodes: workflowNodes,
@@ -503,20 +494,20 @@ const ReactFlowCanvasInner: React.FC<ReactFlowCanvasProps> = ({
           strokeDasharray: '6 6',
         }}
         proOptions={{ hideAttribution: true }}
-        className="bg-surface-secondary"
+        className="bg-surface-primary"
       >
         <Background
           variant={BackgroundVariant.Dots}
           gap={24}
           size={1}
-          color="rgb(var(--text-tertiary) / 0.3)"
+          color="rgb(39 39 42 / 0.8)"
         />
         <Controls
           showZoom={true}
           showFitView={true}
           showInteractive={false}
           position="bottom-right"
-          className="!bg-surface-primary !border-border !rounded-xl !shadow-sm"
+          className="!bg-surface-secondary !border-neutral-800 !rounded-xl !shadow-sm"
         />
 
         {/* Auto-arrange button panel */}
@@ -528,9 +519,9 @@ const ReactFlowCanvasInner: React.FC<ReactFlowCanvasProps> = ({
             onClick={handleAutoArrange}
             disabled={workflowNodes.length === 0}
             className={cn(
-              'p-1.5 rounded-lg text-text-secondary hover:text-text-primary hover:bg-surface-tertiary',
+              'p-1.5 rounded-lg text-text-secondary hover:text-text-primary hover:bg-neutral-800',
               'disabled:opacity-30 disabled:cursor-not-allowed transition-all duration-200',
-              'bg-surface-primary border border-border shadow-sm'
+              'bg-surface-secondary border border-neutral-800 shadow-sm'
             )}
             title="Auto Arrange"
           >
@@ -542,7 +533,7 @@ const ReactFlowCanvasInner: React.FC<ReactFlowCanvasProps> = ({
         {workflowNodes.length === 0 && (
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
             <div className="text-center max-w-sm">
-              <div className="w-14 h-14 mx-auto mb-5 bg-surface-tertiary rounded-2xl flex items-center justify-center">
+              <div className="w-14 h-14 mx-auto mb-5 bg-surface-secondary rounded-2xl flex items-center justify-center">
                 <Zap className="w-6 h-6 text-text-tertiary" />
               </div>
               <h3 className="text-lg font-semibold text-text-primary mb-2">
@@ -553,11 +544,11 @@ const ReactFlowCanvasInner: React.FC<ReactFlowCanvasProps> = ({
               </p>
               <div className="flex justify-center gap-6 text-xs text-text-tertiary">
                 <span className="flex items-center gap-1.5">
-                  <div className="w-2 h-2 rounded-full bg-info" />
+                  <div className="w-2 h-2 rounded-full bg-primary-400" />
                   Source
                 </span>
                 <span className="flex items-center gap-1.5">
-                  <div className="w-2 h-2 rounded-full bg-warning" />
+                  <div className="w-2 h-2 rounded-full bg-info" />
                   Transform
                 </span>
                 <span className="flex items-center gap-1.5">

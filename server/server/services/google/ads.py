@@ -7,7 +7,7 @@ from loguru import logger
 
 from common.database import get_mongodb
 from common.model.connection import ConnectionItem
-from common.model.google.ads import GoogleAdsAccount, GoogleAdsFields
+from common.model.google.ads import GoogleAdsAccount, GoogleAdsField
 from common.model.token import GoogleConnectionParams
 from server.configs.config import settings
 from server.services.exceptions import (
@@ -18,8 +18,8 @@ from server.services.exceptions import (
 from server.services.field_service import get_fields
 
 
-async def get_google_ads_fields() -> list[GoogleAdsFields]:
-    return await get_fields(settings.google_fields, GoogleAdsFields)
+async def get_google_ads_fields() -> list[GoogleAdsField]:
+    return await get_fields(settings.google_fields, GoogleAdsField)
 
 
 def _get_google_ads_accounts_sync(

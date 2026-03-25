@@ -3,14 +3,14 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '@/lib/utils';
 
 const cardVariants = cva(
-  'rounded-lg border bg-surface-primary transition-all duration-200 dark:bg-surface-primary',
+  'rounded-lg border bg-surface-secondary shadow-sm transition-all duration-200',
   {
     variants: {
       variant: {
         default: 'border-border',
-        interactive: 'border-border hover:border-primary-300 cursor-pointer dark:hover:border-primary-600/40',
-        selected: 'border-primary-500 border-2 ring-1 ring-primary-200',
-        connection: 'border-border hover:border-primary-300 cursor-pointer h-[200px] flex flex-col dark:hover:border-primary-600/40',
+        interactive: 'border-border hover:border-primary-400/30 cursor-pointer',
+        selected: 'border-primary-400 ring-1 ring-primary-400/20',
+        connection: 'border-border hover:border-primary-400/30 cursor-pointer h-[200px] flex flex-col',
       },
       padding: {
         none: '',

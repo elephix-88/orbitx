@@ -35,29 +35,29 @@ const statusConfig: Record<ExecutionStatus, {
 }> = {
   SUCCESS: {
     icon: CheckCircle2,
-    color: 'text-emerald-600',
-    bg: 'bg-emerald-50 dark:bg-emerald-500/10',
+    color: 'text-emerald-500',
+    bg: 'bg-emerald-500/10',
     text: 'Success',
     dotColor: 'bg-emerald-500',
   },
   FAILED: {
     icon: XCircle,
-    color: 'text-red-600',
-    bg: 'bg-red-50 dark:bg-red-500/10',
+    color: 'text-red-500',
+    bg: 'bg-red-500/10',
     text: 'Failed',
     dotColor: 'bg-red-500',
   },
   RUNNING: {
     icon: Loader2,
-    color: 'text-blue-600',
-    bg: 'bg-blue-50 dark:bg-blue-500/10',
+    color: 'text-blue-500',
+    bg: 'bg-blue-500/10',
     text: 'Running',
     dotColor: 'bg-blue-500',
   },
   PENDING: {
     icon: Clock,
-    color: 'text-amber-600',
-    bg: 'bg-amber-50 dark:bg-amber-500/10',
+    color: 'text-amber-500',
+    bg: 'bg-amber-500/10',
     text: 'Pending',
     dotColor: 'bg-amber-500',
   },
@@ -141,7 +141,7 @@ const StepItem = ({ step }: { step: ExecutionStep }) => {
         {step.error && (
           <button
             onClick={() => setShowError(!showError)}
-            className="mt-1 text-xs text-red-600 hover:text-red-700 flex items-center gap-1"
+            className="mt-1 text-xs text-red-500 hover:text-red-400 flex items-center gap-1"
           >
             <AlertTriangle className="w-3 h-3" />
             {showError ? 'Hide error' : 'Show error'}
@@ -156,10 +156,10 @@ const StepItem = ({ step }: { step: ExecutionStep }) => {
               exit={{ height: 0, opacity: 0 }}
               className="overflow-hidden"
             >
-              <div className="mt-2 p-2 rounded-lg bg-red-50 dark:bg-red-900/20 text-xs">
-                <p className="text-red-700 dark:text-red-400 font-medium">{step.error}</p>
+              <div className="mt-2 p-2 rounded-lg bg-red-900/20 text-xs">
+                <p className="text-red-400 font-medium">{step.error}</p>
                 {step.error_trace && (
-                  <pre className="mt-2 p-2 bg-red-100 dark:bg-red-900/40 rounded text-red-600 dark:text-red-300 overflow-x-auto max-h-32 overflow-y-auto whitespace-pre-wrap">
+                  <pre className="mt-2 p-2 bg-red-900/40 rounded text-red-300 overflow-x-auto max-h-32 overflow-y-auto whitespace-pre-wrap">
                     {step.error_trace}
                   </pre>
                 )}
@@ -287,10 +287,10 @@ const ExecutionRow = ({ execution }: { execution: ExecutionHistory }) => {
 
               {/* Error message */}
               {execution.error && (
-                <div className="mb-4 p-3 rounded-xl bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800">
+                <div className="mb-4 p-3 rounded-xl bg-red-900/20 border border-red-800">
                   <div className="flex items-start gap-2">
                     <AlertTriangle className="w-4 h-4 text-red-500 flex-shrink-0 mt-0.5" />
-                    <p className="text-sm text-red-700 dark:text-red-400">{execution.error}</p>
+                    <p className="text-sm text-red-400">{execution.error}</p>
                   </div>
                 </div>
               )}
@@ -427,9 +427,9 @@ export const ExecutionHistoryModal = ({
                     Avg: {formatDuration(stats.avgDuration)}
                   </span>
                 </div>
-                <div className="flex items-center gap-2 ml-auto px-2 py-1 rounded-md bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
+                <div className="flex items-center gap-2 ml-auto px-2 py-1 rounded-md bg-amber-900/20 border border-amber-800">
                   <DollarSign className="w-3.5 h-3.5 text-amber-500" />
-                  <span className="text-amber-600 dark:text-amber-400 font-medium">
+                  <span className="text-amber-400 font-medium">
                     Total: {formatCost(stats.totalCost)}
                   </span>
                 </div>
@@ -446,14 +446,14 @@ export const ExecutionHistoryModal = ({
               </div>
             ) : error ? (
               <div className="flex flex-col items-center justify-center py-16">
-                <div className="w-12 h-12 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center mb-3">
+                <div className="w-12 h-12 rounded-full bg-red-900/30 flex items-center justify-center mb-3">
                   <XCircle className="w-6 h-6 text-red-500" />
                 </div>
                 <p className="text-text-primary font-medium mb-1">Failed to load</p>
                 <p className="text-text-secondary text-sm mb-4">{error}</p>
                 <button
                   onClick={fetchData}
-                  className="px-4 py-2 text-sm font-medium text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded-lg transition-colors"
+                  className="px-4 py-2 text-sm font-medium text-primary-400 hover:bg-primary-400/10 rounded-lg transition-colors"
                 >
                   Try again
                 </button>

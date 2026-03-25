@@ -371,7 +371,7 @@ const ColumnEditorEditor: React.FC<ColumnEditorEditorProps> = ({
                     key={columnName}
                     className={`grid grid-cols-[1fr_1fr_130px_36px] gap-2 px-4 py-3 items-center transition-colors ${
                       isDropped
-                        ? 'bg-red-50 dark:bg-red-950/30'
+                        ? 'bg-red-950/30'
                         : 'hover:bg-surface-secondary/50'
                     }`}
                   >
@@ -380,7 +380,7 @@ const ColumnEditorEditor: React.FC<ColumnEditorEditorProps> = ({
                       <code
                         className={`text-sm font-mono px-2 py-1 rounded truncate ${
                           isDropped
-                            ? 'text-red-500 dark:text-red-400 bg-red-100 dark:bg-red-900/30 line-through'
+                            ? 'text-red-400 bg-red-900/30 line-through'
                             : 'text-text-primary bg-surface-secondary'
                         }`}
                       >
@@ -445,7 +445,7 @@ const ColumnEditorEditor: React.FC<ColumnEditorEditorProps> = ({
                         className={`w-7 h-7 rounded-md flex items-center justify-center transition-colors ${
                           isDropped
                             ? 'bg-red-500 text-white hover:bg-red-600'
-                            : 'text-text-tertiary hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30'
+                            : 'text-text-tertiary hover:text-red-500 hover:bg-red-950/30'
                         }`}
                         title={isDropped ? 'Restore column' : 'Drop column'}
                       >
@@ -469,7 +469,7 @@ const ColumnEditorEditor: React.FC<ColumnEditorEditorProps> = ({
                 </span>
               )}
               {newColumns.filter((nc) => nc.name.trim() && nc.value.trim()).length > 0 && (
-                <span className="text-green-600 dark:text-green-400 ml-1">
+                <span className="text-green-400 ml-1">
                   (+{newColumns.filter((nc) => nc.name.trim() && nc.value.trim()).length} new)
                 </span>
               )}
@@ -483,7 +483,7 @@ const ColumnEditorEditor: React.FC<ColumnEditorEditorProps> = ({
               <button
                 type="button"
                 onClick={handleAddNewColumn}
-                className="flex items-center gap-1 text-sm text-brand-600 hover:text-brand-700 dark:text-brand-400 dark:hover:text-brand-300"
+                className="flex items-center gap-1 text-sm text-primary-400 hover:text-primary-300"
               >
                 <Plus size={14} />
                 Add Column
@@ -508,7 +508,7 @@ const ColumnEditorEditor: React.FC<ColumnEditorEditorProps> = ({
                   return (
                     <div
                       key={nc.id}
-                      className="grid grid-cols-[1fr_1fr_130px_36px] gap-2 px-4 py-3 items-center bg-green-50/50 dark:bg-green-950/20"
+                      className="grid grid-cols-[1fr_1fr_130px_36px] gap-2 px-4 py-3 items-center bg-green-950/20"
                     >
                       {/* Column name */}
                       <div>
@@ -559,7 +559,7 @@ const ColumnEditorEditor: React.FC<ColumnEditorEditorProps> = ({
                         <button
                           type="button"
                           onClick={() => handleRemoveNewColumn(nc.id)}
-                          className="w-7 h-7 rounded-md flex items-center justify-center text-text-tertiary hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors"
+                          className="w-7 h-7 rounded-md flex items-center justify-center text-text-tertiary hover:text-red-500 hover:bg-red-950/30 transition-colors"
                           title="Remove column"
                         >
                           <Trash2 size={14} />

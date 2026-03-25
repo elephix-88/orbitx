@@ -249,8 +249,8 @@ export const ConnectionHelp: React.FC<ConnectionHelpProps> = ({
           <div className="space-y-3">
             {help.steps.map((step, index) => (
               <div key={index} className="flex gap-3">
-                <div className="flex-shrink-0 w-6 h-6 rounded-full bg-brand-100 dark:bg-brand-900/30 flex items-center justify-center">
-                  <span className="text-xs font-medium text-brand-600 dark:text-brand-400">
+                <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary-400/15 flex items-center justify-center">
+                  <span className="text-xs font-medium text-primary-400">
                     {index + 1}
                   </span>
                 </div>

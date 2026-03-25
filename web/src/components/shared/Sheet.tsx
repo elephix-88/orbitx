@@ -21,17 +21,17 @@ import { cn } from '@/lib/utils';
 
 const sheetVariants = cva(
   [
-    'fixed z-50 gap-4 bg-surface-primary shadow-md',
+    'fixed z-50 gap-4 bg-surface-secondary shadow-md',
     'transition-transform duration-300 ease-in-out',
     'flex flex-col',
   ],
   {
     variants: {
       side: {
-        top: 'inset-x-0 top-0 border-b border-border',
-        bottom: 'inset-x-0 bottom-0 border-t border-border',
-        left: 'inset-y-0 left-0 h-full border-r border-border',
-        right: 'inset-y-0 right-0 h-full border-l border-border',
+        top: 'inset-x-0 top-0 border-b border-neutral-800',
+        bottom: 'inset-x-0 bottom-0 border-t border-neutral-800',
+        left: 'inset-y-0 left-0 h-full border-r border-neutral-800',
+        right: 'inset-y-0 right-0 h-full border-l border-neutral-800',
       },
       size: {
         sm: '',
@@ -176,7 +176,7 @@ export const Sheet = ({
         tabIndex={-1}
       >
         {/* Header */}
-        <div className="flex flex-col space-y-2 p-6 border-b border-border">
+        <div className="flex flex-col space-y-2 p-6 border-b border-neutral-800">
           <div className="flex items-start justify-between">
             <div className="flex-1">
               {title && (
@@ -201,8 +201,8 @@ export const Sheet = ({
                 onClick={onClose}
                 className={cn(
                   "rounded-md transition-colors",
-                  "text-text-tertiary hover:text-text-primary hover:bg-surface-tertiary",
-                  "focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+                  "text-neutral-500 hover:text-neutral-200 hover:bg-surface-tertiary",
+                  "focus:outline-none focus:ring-2 focus:ring-primary-400 focus:ring-offset-2"
                 )}
                 aria-label="Close"
               >
@@ -219,7 +219,7 @@ export const Sheet = ({
 
         {/* Footer */}
         {footer && (
-          <div className="flex flex-col-reverse gap-2 p-6 border-t border-border sm:flex-row sm:justify-end">
+          <div className="flex flex-col-reverse gap-2 p-6 border-t border-neutral-800 sm:flex-row sm:justify-end">
             {footer}
           </div>
         )}

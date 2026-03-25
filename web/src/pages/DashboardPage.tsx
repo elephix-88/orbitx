@@ -147,7 +147,7 @@ const sortStepsByType = (steps: ExecutionStep[]): ExecutionStep[] => {
 const getNodeTypeColor = (nodeType: string): string => {
   const type = nodeType?.toLowerCase();
   if (type === 'source') return 'text-info';
-  if (type === 'transform') return 'text-primary-500';
+  if (type === 'transform') return 'text-primary-400';
   if (type === 'destinations' || type === 'destination') return 'text-success';
   return 'text-text-tertiary';
 };
@@ -196,7 +196,7 @@ const ExecutionTreeRow = ({
   return (
     <>
       <div
-        className="flex items-center gap-3 px-4 py-3 hover:bg-surface-secondary transition-colors cursor-pointer group border-b border-border-subtle"
+        className="flex items-center gap-3 px-4 py-3 hover:bg-neutral-800/50 transition-colors cursor-pointer group border-b border-neutral-800"
         onClick={() => setIsExpanded(!isExpanded)}
       >
         <button
@@ -233,7 +233,7 @@ const ExecutionTreeRow = ({
               {formatNumber(totalRecords)} records
             </span>
           )}
-          <span className="px-2 py-0.5 text-xs font-semibold text-text-primary bg-surface-secondary border border-border-subtle rounded-md">
+          <span className="px-2 py-0.5 text-xs font-semibold text-text-primary bg-surface-tertiary border border-neutral-800 rounded-md">
             {exec.status}
           </span>
           <span className="text-xs w-16 text-right text-text-secondary">
@@ -262,10 +262,10 @@ const ExecutionTreeRow = ({
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="overflow-hidden bg-surface-secondary"
+            className="overflow-hidden bg-surface-tertiary"
           >
             {/* Table Header */}
-            <div className="flex items-center gap-3 px-4 py-2 ml-8 text-[10px] font-semibold border-b border-border-subtle border-l-2 border-l-border text-text-secondary">
+            <div className="flex items-center gap-3 px-4 py-2 ml-8 text-[10px] font-semibold border-b border-neutral-800 border-l-2 border-l-neutral-700 text-text-secondary">
               <div className="w-4" />
               <div className="flex-1">Node</div>
               <div className="w-24">Type</div>
@@ -281,7 +281,7 @@ const ExecutionTreeRow = ({
               return (
                 <div
                   key={idx}
-                  className="flex items-center gap-3 px-4 py-2 ml-8 border-l-2 border-l-border"
+                  className="flex items-center gap-3 px-4 py-2 ml-8 border-l-2 border-l-neutral-700"
                 >
                   <StepIcon className={cn("w-4 h-4 flex-shrink-0", stepConfig.text, step.status === 'RUNNING' && "animate-spin")} />
                   <span className={cn("flex-1 text-sm font-semibold truncate", getNodeTypeColor(step.node_type))}>
@@ -422,21 +422,21 @@ const DashboardPage = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
           <div className="flex items-center justify-between">
             <div>
-              <div className="h-7 w-32 animate-pulse bg-border rounded-md" />
-              <div className="h-4 w-48 mt-2 animate-pulse bg-border rounded-md" />
+              <div className="h-7 w-32 animate-pulse bg-neutral-800 rounded-md" />
+              <div className="h-4 w-48 mt-2 animate-pulse bg-neutral-800 rounded-md" />
             </div>
-            <div className="h-9 w-24 animate-pulse bg-border rounded-md" />
+            <div className="h-9 w-24 animate-pulse bg-neutral-800 rounded-md" />
           </div>
 
           <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
             {[1, 2, 3, 4, 5].map((i) => (
-              <div key={i} className="p-4 h-24 animate-pulse bg-surface-primary border border-border-subtle rounded-lg" />
+              <div key={i} className="p-4 h-24 animate-pulse bg-surface-secondary border border-neutral-800 rounded-xl" />
             ))}
           </div>
 
           <div className="grid lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2 h-96 animate-pulse bg-surface-primary border border-border-subtle rounded-lg" />
-            <div className="h-96 animate-pulse bg-surface-primary border border-border-subtle rounded-lg" />
+            <div className="lg:col-span-2 h-96 animate-pulse bg-surface-secondary border border-neutral-800 rounded-xl" />
+            <div className="h-96 animate-pulse bg-surface-secondary border border-neutral-800 rounded-xl" />
           </div>
         </div>
       </Layout>
@@ -459,7 +459,7 @@ const DashboardPage = () => {
           <div>
             {/* Section accent bar */}
             <div className="flex items-center gap-3 mb-2">
-              <div className="w-12 h-1 bg-primary-600 rounded-md" />
+              <div className="w-12 h-1 bg-primary-400 rounded-md" />
             </div>
             <h1 className="text-2xl font-semibold text-text-primary">Dashboard</h1>
             <p className="text-sm mt-0.5 text-text-secondary">
@@ -470,7 +470,7 @@ const DashboardPage = () => {
           <button
             onClick={() => fetchData(true)}
             disabled={refreshing}
-            className="h-9 px-3 flex items-center gap-2 text-sm transition-colors text-text-secondary bg-surface-primary border border-border-subtle rounded-lg"
+            className="h-9 px-3 flex items-center gap-2 text-sm transition-colors text-text-secondary bg-surface-secondary border border-neutral-800 rounded-lg hover:bg-surface-tertiary"
           >
             <RefreshCw className={cn("w-4 h-4", refreshing && "animate-spin")} />
             <span className="hidden sm:inline text-xs">Refresh</span>
@@ -479,10 +479,10 @@ const DashboardPage = () => {
 
         {/* Stats Grid */}
         <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
-          <div className="p-4 bg-surface-primary border border-border-subtle rounded-lg">
+          <div className="p-4 bg-surface-secondary border border-neutral-800 rounded-xl">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-surface-tertiary rounded-lg">
-                <Activity className="w-5 h-5 text-text-primary" />
+                <Activity className="w-5 h-5 text-primary-400" />
               </div>
               <div>
                 <p className="text-2xl font-semibold text-text-primary">{stats.totalExecutions}</p>
@@ -491,7 +491,7 @@ const DashboardPage = () => {
             </div>
           </div>
 
-          <div className="p-4 bg-surface-primary border border-border-subtle rounded-lg">
+          <div className="p-4 bg-surface-secondary border border-neutral-800 rounded-xl">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-surface-tertiary rounded-lg">
                 <TrendingUp className="w-5 h-5 text-success" />
@@ -503,7 +503,7 @@ const DashboardPage = () => {
             </div>
           </div>
 
-          <div className="p-4 bg-surface-primary border border-border-subtle rounded-lg">
+          <div className="p-4 bg-surface-secondary border border-neutral-800 rounded-xl">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-surface-tertiary rounded-lg">
                 <XCircle className="w-5 h-5 text-error" />
@@ -515,7 +515,7 @@ const DashboardPage = () => {
             </div>
           </div>
 
-          <div className="p-4 bg-surface-primary border border-border-subtle rounded-lg">
+          <div className="p-4 bg-surface-secondary border border-neutral-800 rounded-xl">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-surface-tertiary rounded-lg">
                 <Timer className="w-5 h-5 text-text-secondary" />
@@ -527,7 +527,7 @@ const DashboardPage = () => {
             </div>
           </div>
 
-          <div className="p-4 bg-surface-primary border border-border-subtle rounded-lg">
+          <div className="p-4 bg-surface-secondary border border-neutral-800 rounded-xl">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-surface-tertiary rounded-lg">
                 <DollarSign className="w-5 h-5 text-warning" />
@@ -543,10 +543,10 @@ const DashboardPage = () => {
         {/* Main Content */}
         <div className="grid lg:grid-cols-3 gap-6">
           {/* Recent Executions */}
-          <div className="lg:col-span-2 overflow-hidden bg-surface-primary border border-border-subtle rounded-lg">
-            <div className="flex items-center justify-between px-4 py-3 border-b border-border-subtle">
+          <div className="lg:col-span-2 overflow-hidden bg-surface-secondary border border-neutral-800 rounded-xl">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-neutral-800">
               <div className="flex items-center gap-2">
-                <Clock className="w-4 h-4 text-primary-600" />
+                <Clock className="w-4 h-4 text-primary-400" />
                 <h2 className="text-sm font-semibold text-text-primary">
                   Recent Executions
                   {hasActiveFilters && (
@@ -568,8 +568,8 @@ const DashboardPage = () => {
                   className={cn(
                     'p-1.5 transition-colors rounded-md',
                     showFilters || hasActiveFilters
-                      ? 'bg-primary-600 text-white'
-                      : 'text-text-secondary hover:bg-surface-secondary'
+                      ? 'bg-primary-400 text-neutral-950'
+                      : 'text-text-secondary hover:bg-surface-tertiary'
                   )}
                   title="Filter executions"
                 >
@@ -586,13 +586,13 @@ const DashboardPage = () => {
                   animate={{ height: 'auto', opacity: 1 }}
                   exit={{ height: 0, opacity: 0 }}
                   transition={{ duration: 0.15 }}
-                  className="overflow-hidden border-b border-border-subtle"
+                  className="overflow-hidden border-b border-neutral-800"
                 >
-                  <div className="p-3 flex flex-wrap items-center gap-3 bg-surface-secondary">
+                  <div className="p-3 flex flex-wrap items-center gap-3 bg-surface-tertiary">
                     {/* Time Range - Button Pills */}
                     <div className="flex items-center gap-1.5">
                       <Calendar className="w-3.5 h-3.5 text-text-secondary" />
-                      <div className="flex items-center p-0.5 bg-surface-primary border border-border-subtle rounded-md">
+                      <div className="flex items-center p-0.5 bg-surface-secondary border border-neutral-800 rounded-md">
                         {timeRangeOptions.map(opt => (
                           <button
                             key={opt.value}
@@ -600,7 +600,7 @@ const DashboardPage = () => {
                             className={cn(
                               "px-2.5 py-1 text-xs font-semibold transition-all rounded-md",
                               timeRange === opt.value
-                                ? 'bg-neutral-900 text-white'
+                                ? 'bg-neutral-800 text-primary-400'
                                 : 'text-text-secondary'
                             )}
                           >
@@ -636,7 +636,7 @@ const DashboardPage = () => {
                     <div className="w-px h-5 bg-border" />
 
                     {/* Status Filter */}
-                    <div className="flex items-center p-0.5 bg-surface-primary border border-border-subtle rounded-md">
+                    <div className="flex items-center p-0.5 bg-surface-secondary border border-neutral-800 rounded-md">
                       {statusFilterOptions.map(opt => (
                         <button
                           key={opt.value}
@@ -644,7 +644,7 @@ const DashboardPage = () => {
                           className={cn(
                             "px-2.5 py-1 text-xs font-semibold transition-all rounded-md",
                             statusFilter === opt.value
-                              ? 'bg-neutral-900 text-white'
+                              ? 'bg-neutral-800 text-primary-400'
                               : 'text-text-secondary'
                           )}
                         >
@@ -686,7 +686,7 @@ const DashboardPage = () => {
                 {!hasActiveFilters && (
                   <button
                     onClick={() => navigate('/workflows')}
-                    className="mt-4 h-8 px-4 text-xs font-semibold text-white transition-colors bg-primary-600 rounded-lg"
+                    className="mt-4 h-8 px-4 text-xs font-semibold text-neutral-950 transition-colors bg-primary-400 hover:bg-primary-500 rounded-md"
                   >
                     Go to Workflows
                   </button>
@@ -733,10 +733,10 @@ const DashboardPage = () => {
             )}
 
             {/* Workflows Panel */}
-            <div className="overflow-hidden bg-surface-primary border border-border-subtle rounded-lg">
-              <div className="flex items-center justify-between px-4 py-3 border-b border-border-subtle">
+            <div className="overflow-hidden bg-surface-secondary border border-neutral-800 rounded-xl">
+              <div className="flex items-center justify-between px-4 py-3 border-b border-neutral-800">
                 <div className="flex items-center gap-2">
-                  <BarChart3 className="w-4 h-4 text-primary-600" />
+                  <BarChart3 className="w-4 h-4 text-primary-400" />
                   <h2 className="text-sm font-semibold text-text-primary">Workflows</h2>
                 </div>
                 <span className="text-xs text-text-secondary">{workflowCount} total</span>
@@ -755,7 +755,7 @@ const DashboardPage = () => {
                   .map(([workflowId, data]) => (
                     <div
                       key={workflowId}
-                      className="px-4 py-3 hover:bg-surface-secondary transition-colors cursor-pointer border-b border-border-subtle"
+                      className="px-4 py-3 hover:bg-neutral-800/50 transition-colors cursor-pointer border-b border-neutral-800"
                       onClick={() => navigate(`/workflows/builder?id=${workflowId}`)}
                     >
                       <div className="flex items-center justify-between mb-2">
@@ -783,10 +783,10 @@ const DashboardPage = () => {
               </div>
             )}
 
-            <div className="px-4 py-3 border-t border-border-subtle">
+            <div className="px-4 py-3 border-t border-neutral-800">
               <button
                 onClick={() => navigate('/workflows')}
-                className="w-full flex items-center justify-center gap-2 py-2 text-xs font-semibold transition-colors text-primary-600"
+                className="w-full flex items-center justify-center gap-2 py-2 text-xs font-semibold transition-colors text-primary-400 hover:text-primary-300"
               >
                 View all workflows
                 <ArrowRight className="w-3 h-3" />
@@ -800,11 +800,11 @@ const DashboardPage = () => {
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <button
             onClick={() => navigate('/workflows/builder')}
-            className="p-4 transition-all group text-left bg-surface-primary border border-border-subtle rounded-lg"
+            className="p-4 transition-all group text-left bg-surface-secondary border border-neutral-800 rounded-xl hover:border-primary-400/50"
           >
             <div className="flex items-center gap-3">
-              <div className="p-2 transition-colors bg-primary-600 rounded-lg">
-                <Plus className="w-5 h-5 text-white" />
+              <div className="p-2 transition-colors bg-primary-400 rounded-lg">
+                <Plus className="w-5 h-5 text-neutral-950" />
               </div>
               <div>
                 <h3 className="font-semibold text-sm text-text-primary">Create Workflow</h3>
@@ -815,11 +815,11 @@ const DashboardPage = () => {
 
           <button
             onClick={() => navigate('/workflows')}
-            className="p-4 transition-all group text-left bg-surface-primary border border-border-subtle rounded-lg"
+            className="p-4 transition-all group text-left bg-surface-secondary border border-neutral-800 rounded-xl hover:border-neutral-700"
           >
             <div className="flex items-center gap-3">
-              <div className="p-2 transition-colors bg-neutral-900 rounded-lg">
-                <PlayCircle className="w-5 h-5 text-white" />
+              <div className="p-2 transition-colors bg-surface-tertiary rounded-lg">
+                <PlayCircle className="w-5 h-5 text-text-primary" />
               </div>
               <div>
                 <h3 className="font-semibold text-sm text-text-primary">Run Workflow</h3>
@@ -830,11 +830,11 @@ const DashboardPage = () => {
 
           <button
             onClick={() => navigate('/connections')}
-            className="p-4 transition-all group text-left bg-surface-primary border border-border-subtle rounded-lg"
+            className="p-4 transition-all group text-left bg-surface-secondary border border-neutral-800 rounded-xl hover:border-neutral-700"
           >
             <div className="flex items-center gap-3">
-              <div className="p-2 transition-colors bg-primary-500 rounded-lg">
-                <Link2 className="w-5 h-5 text-white" />
+              <div className="p-2 transition-colors bg-surface-tertiary rounded-lg">
+                <Link2 className="w-5 h-5 text-primary-400" />
               </div>
               <div>
                 <h3 className="font-semibold text-sm text-text-primary">Connections</h3>

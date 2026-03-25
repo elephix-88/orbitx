@@ -75,7 +75,6 @@ describe('workflowStore', () => {
       expect(state.originalBackendWorkflow).toBeNull();
       expect(state.hasUnsavedChanges).toBe(false);
       expect(state.lastSavedAt).toBeNull();
-      expect(state.changes).toEqual([]);
     });
   });
 
@@ -125,74 +124,20 @@ describe('workflowStore', () => {
       expect(useWorkflowStore.getState().nodes).toHaveLength(2);
     });
 
-    it('should track addNode change', () => {
-      const node = createTestNode({ id: 'node-1' });
-
-      act(() => {
-        useWorkflowStore.getState().updateNodes([node]);
-      });
-
-      const state = useWorkflowStore.getState();
-      expect(state.changes.length).toBeGreaterThan(0);
-      expect(state.changes.some((c) => c.type === 'addNode')).toBe(true);
-    });
-
-    it('should track deleteNode change', () => {
-      const node1 = createTestNode({ id: 'node-1' });
-      const node2 = createTestNode({ id: 'node-2' });
-
-      act(() => {
-        useWorkflowStore.getState().updateNodes([node1, node2]);
-      });
-
-      // Clear changes to isolate delete
-      act(() => {
-        useWorkflowStore.getState().clearChanges();
-      });
-
-      // Remove node2
-      act(() => {
-        useWorkflowStore.getState().updateNodes([node1]);
-      });
-
-      const state = useWorkflowStore.getState();
-      expect(state.changes.some((c) => c.type === 'deleteNode')).toBe(true);
-    });
-
-    it('should track updateNode change when node data changes', () => {
+    it('should set hasUnsavedChanges when node data changes', () => {
       const node = createTestNode({ id: 'node-1', name: 'Original Name' });
 
       act(() => {
         useWorkflowStore.getState().updateNodes([node]);
-        useWorkflowStore.getState().clearChanges();
+        useWorkflowStore.getState().markAsSaved();
       });
 
-      // Update node name
       const updatedNode = { ...node, name: 'Updated Name' };
       act(() => {
         useWorkflowStore.getState().updateNodes([updatedNode]);
       });
 
-      const state = useWorkflowStore.getState();
-      expect(state.changes.some((c) => c.type === 'updateNode')).toBe(true);
-    });
-
-    it('should track moveNode change when position changes', () => {
-      const node = createTestNode({ id: 'node-1', position: { x: 0, y: 0 } });
-
-      act(() => {
-        useWorkflowStore.getState().updateNodes([node]);
-        useWorkflowStore.getState().clearChanges();
-      });
-
-      // Move node
-      const movedNode = { ...node, position: { x: 100, y: 100 } };
-      act(() => {
-        useWorkflowStore.getState().updateNodes([movedNode]);
-      });
-
-      const state = useWorkflowStore.getState();
-      expect(state.changes.some((c) => c.type === 'moveNode')).toBe(true);
+      expect(useWorkflowStore.getState().hasUnsavedChanges).toBe(true);
     });
 
     it('should not set hasUnsavedChanges for move-only changes', () => {
@@ -200,16 +145,14 @@ describe('workflowStore', () => {
 
       act(() => {
         useWorkflowStore.getState().updateNodes([node]);
-        useWorkflowStore.getState().markAsSaved(); // Clear unsaved flag
+        useWorkflowStore.getState().markAsSaved();
       });
 
-      // Move node only
       const movedNode = { ...node, position: { x: 100, y: 100 } };
       act(() => {
         useWorkflowStore.getState().updateNodes([movedNode]);
       });
 
-      // moveNode alone should not trigger hasUnsavedChanges
       expect(useWorkflowStore.getState().hasUnsavedChanges).toBe(false);
     });
 
@@ -218,16 +161,14 @@ describe('workflowStore', () => {
 
       act(() => {
         useWorkflowStore.getState().updateNodes(nodes);
-        useWorkflowStore.getState().clearChanges();
+        useWorkflowStore.getState().markAsSaved();
       });
 
-      // Pass same reference via updater function
       act(() => {
         useWorkflowStore.getState().updateNodes((prev) => prev);
       });
 
-      // No new changes should be tracked
-      expect(useWorkflowStore.getState().changes).toHaveLength(0);
+      expect(useWorkflowStore.getState().hasUnsavedChanges).toBe(false);
     });
   });
 
@@ -263,33 +204,20 @@ describe('workflowStore', () => {
       expect(useWorkflowStore.getState().connections).toHaveLength(2);
     });
 
-    it('should track addConnection change', () => {
-      const connection = createTestConnection('node-1', 'node-2', { id: 'conn-1' });
-
-      act(() => {
-        useWorkflowStore.getState().updateConnections([connection]);
-      });
-
-      const state = useWorkflowStore.getState();
-      expect(state.changes.some((c) => c.type === 'addConnection')).toBe(true);
-    });
-
-    it('should track deleteConnection change', () => {
+    it('should set hasUnsavedChanges when connections change', () => {
       const conn1 = createTestConnection('node-1', 'node-2', { id: 'conn-1' });
       const conn2 = createTestConnection('node-2', 'node-3', { id: 'conn-2' });
 
       act(() => {
         useWorkflowStore.getState().updateConnections([conn1, conn2]);
-        useWorkflowStore.getState().clearChanges();
+        useWorkflowStore.getState().markAsSaved();
       });
 
-      // Remove conn2
       act(() => {
         useWorkflowStore.getState().updateConnections([conn1]);
       });
 
-      const state = useWorkflowStore.getState();
-      expect(state.changes.some((c) => c.type === 'deleteConnection')).toBe(true);
+      expect(useWorkflowStore.getState().hasUnsavedChanges).toBe(true);
     });
   });
 
@@ -346,32 +274,19 @@ describe('workflowStore', () => {
       expect(state.hasUnsavedChanges).toBe(true);
     });
 
-    it('should track updateWorkflow change', () => {
+    it('should not set hasUnsavedChanges if workflow is deeply equal', () => {
       const workflow = { job_id: 'wf-123', job_name: 'Test' };
 
       act(() => {
         useWorkflowStore.getState().updateWorkflow(workflow);
+        useWorkflowStore.getState().markAsSaved();
       });
 
-      const state = useWorkflowStore.getState();
-      expect(state.changes.some((c) => c.type === 'updateWorkflow')).toBe(true);
-    });
-
-    it('should not add change if workflow is deeply equal', () => {
-      const workflow = { job_id: 'wf-123', job_name: 'Test' };
-
-      act(() => {
-        useWorkflowStore.getState().updateWorkflow(workflow);
-        useWorkflowStore.getState().clearChanges();
-      });
-
-      // Update with equivalent object
       act(() => {
         useWorkflowStore.getState().updateWorkflow({ ...workflow });
       });
 
-      // Should not track new change since content is same
-      expect(useWorkflowStore.getState().changes).toHaveLength(0);
+      expect(useWorkflowStore.getState().hasUnsavedChanges).toBe(false);
     });
   });
 
@@ -424,20 +339,6 @@ describe('workflowStore', () => {
       expect(state.lastSavedAt).not.toBeNull();
       expect(state.lastSavedAt!.getTime()).toBeGreaterThanOrEqual(beforeSave.getTime());
     });
-
-    it('should clear changes array', () => {
-      act(() => {
-        useWorkflowStore.getState().updateNodes([createTestNode()]);
-      });
-
-      expect(useWorkflowStore.getState().changes.length).toBeGreaterThan(0);
-
-      act(() => {
-        useWorkflowStore.getState().markAsSaved();
-      });
-
-      expect(useWorkflowStore.getState().changes).toHaveLength(0);
-    });
   });
 
   // ---------------------------------------------------------------------------
@@ -446,7 +347,6 @@ describe('workflowStore', () => {
 
   describe('resetWorkflow', () => {
     it('should reset all state to initial values', () => {
-      // Setup: populate store with data
       act(() => {
         useWorkflowStore.getState().updateNodes([createTestNode()]);
         useWorkflowStore.getState().updateConnections([
@@ -456,7 +356,6 @@ describe('workflowStore', () => {
         useWorkflowStore.getState().setOriginalBackendWorkflow({ job_id: 'wf-123' });
       });
 
-      // Reset
       act(() => {
         useWorkflowStore.getState().resetWorkflow();
       });
@@ -468,30 +367,6 @@ describe('workflowStore', () => {
       expect(state.originalBackendWorkflow).toBeNull();
       expect(state.hasUnsavedChanges).toBe(false);
       expect(state.lastSavedAt).toBeNull();
-      expect(state.changes).toEqual([]);
-    });
-  });
-
-  // ---------------------------------------------------------------------------
-  // clearChanges()
-  // ---------------------------------------------------------------------------
-
-  describe('clearChanges', () => {
-    it('should clear changes array only', () => {
-      act(() => {
-        useWorkflowStore.getState().updateNodes([createTestNode()]);
-      });
-
-      const nodesBeforeClear = useWorkflowStore.getState().nodes;
-
-      act(() => {
-        useWorkflowStore.getState().clearChanges();
-      });
-
-      const state = useWorkflowStore.getState();
-      expect(state.changes).toEqual([]);
-      expect(state.nodes).toEqual(nodesBeforeClear); // nodes preserved
-      expect(state.hasUnsavedChanges).toBe(true); // flag preserved
     });
   });
 
@@ -517,7 +392,6 @@ describe('workflowStore', () => {
 
       const connection = createTestConnection('source-1', 'dest-1', { id: 'conn-1' });
 
-      // Build workflow
       act(() => {
         useWorkflowStore.getState().updateNodes([sourceNode, destNode]);
         useWorkflowStore.getState().updateConnections([connection]);
@@ -533,38 +407,11 @@ describe('workflowStore', () => {
       expect(state.workflow?.job_name).toBe('Facebook to BigQuery');
       expect(state.hasUnsavedChanges).toBe(true);
 
-      // Save workflow
       act(() => {
         useWorkflowStore.getState().markAsSaved();
       });
 
       expect(useWorkflowStore.getState().hasUnsavedChanges).toBe(false);
-      expect(useWorkflowStore.getState().changes).toHaveLength(0);
-    });
-
-    it('should track multiple changes in sequence', () => {
-      const node1 = createTestNode({ id: 'node-1' });
-      const node2 = createTestNode({ id: 'node-2' });
-
-      act(() => {
-        useWorkflowStore.getState().updateNodes([node1]);
-      });
-
-      act(() => {
-        useWorkflowStore.getState().updateNodes([node1, node2]);
-      });
-
-      act(() => {
-        useWorkflowStore.getState().updateConnections([
-          createTestConnection('node-1', 'node-2'),
-        ]);
-      });
-
-      const state = useWorkflowStore.getState();
-      // Should have multiple changes tracked
-      expect(state.changes.length).toBeGreaterThan(1);
-      expect(state.changes.filter((c) => c.type === 'addNode')).toHaveLength(2);
-      expect(state.changes.filter((c) => c.type === 'addConnection')).toHaveLength(1);
     });
   });
 });

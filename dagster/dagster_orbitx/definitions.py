@@ -8,12 +8,12 @@ engine_root = os.path.join(os.path.dirname(__file__), "..", "..", "engine")
 if os.path.isdir(engine_root):
     os.chdir(engine_root)
 
-from engine.configs.adapter import init_settings
+from common.config.settings import register_settings
+from engine.configs.config import settings
 
-init_settings()
+register_settings(settings)
 
 from common.database.mongodb import get_mongodb
-from engine.configs.config import settings
 from common.model.workflow import WorkflowData
 from dagster_orbitx.graph_builder import build_workflow_job
 from dagster_orbitx.jobs.workflow_executor import sanitize_dagster_name

@@ -9,7 +9,7 @@ from engine.node.extractors.google_ads.extractor import GoogleAdsExtractor
 from engine.node.extractors.s3 import S3Extractor
 from engine.node.extractors.tiktok_ads.extractor import TikTokAdsExtractor
 from common.model.facebook.config import FacebookAdsConfig
-from common.model.google.ads_config import GoogleAdsConfig
+from common.model.google.config import GoogleAdsConfig
 from common.model.google.bigquery import BigQuerySourceConfig
 from common.model.tiktok.config import TikTokAdsConfig
 

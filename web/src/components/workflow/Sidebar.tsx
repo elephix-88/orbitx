@@ -14,10 +14,10 @@ interface SidebarProps {
 
 // Map node category to design token border class
 const getCategoryBorderClass = (type: string): string => {
-  if (type === 'source') return 'border-l-info';
-  if (type === 'transform') return 'border-l-warning';
+  if (type === 'source') return 'border-l-primary-400';
+  if (type === 'transform') return 'border-l-info';
   if (type === 'destination') return 'border-l-success';
-  return 'border-l-border';
+  return 'border-l-neutral-800';
 };
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -51,10 +51,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
   }, [search]);
 
   return (
-    <div className="h-full flex flex-col bg-surface-primary border-r border-border">
+    <div className="h-full flex flex-col bg-surface-dark border-r border-neutral-800">
       {/* Header */}
       <div className={cn(
-        "flex flex-col transition-all duration-300 border-b border-border",
+        "flex flex-col transition-all duration-300 border-b border-neutral-800",
         isCollapsed ? "p-3 items-center" : "p-4"
       )}
       >
@@ -70,7 +70,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
           <button
             onClick={onToggleCollapse}
             className={cn(
-              "hover:bg-surface-tertiary transition-colors flex items-center justify-center text-text-secondary rounded-sm",
+              "hover:bg-neutral-800 transition-colors flex items-center justify-center text-text-secondary rounded-md",
               isCollapsed ? "w-8 h-8" : "p-1.5"
             )}
             title={isCollapsed ? "Expand" : "Collapse"}
@@ -91,7 +91,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               placeholder="Search nodes..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-9 pr-3 py-2 text-xs focus:outline-none transition-all bg-surface-secondary border border-border rounded-sm text-text-primary"
+              className="w-full pl-9 pr-3 py-2 text-xs focus:outline-none transition-all bg-neutral-900 border border-neutral-700 rounded-md text-text-primary focus:border-primary-400 focus:ring-1 focus:ring-primary-400"
             />
           </div>
         )}
@@ -99,7 +99,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
       {/* Node Types List */}
       <div className={cn(
-        "flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-surface-tertiary",
+        "flex-1 overflow-y-auto scrollbar-thin scrollbar-thumb-neutral-700",
         isCollapsed ? "p-3 space-y-2 flex flex-col items-center" : "p-3 space-y-2"
       )}>
         {filteredNodes.map((nodeType) => (
@@ -109,15 +109,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
             onDragStart={(e) => handleDragStart(nodeType, e)}
             className={cn(
               "group relative flex items-center gap-3 cursor-grab transition-all duration-300",
-              "hover:shadow-sm active:scale-95",
-              "bg-surface-primary border border-border rounded-sm",
+              "hover:shadow-sm active:scale-95 hover:bg-neutral-800",
+              "bg-surface-secondary border border-neutral-800 rounded-md",
               isCollapsed ? "justify-center p-2 w-10 h-10" : cn("p-3 h-auto border-l-4", getCategoryBorderClass(nodeType.type))
             )}
           >
             {/* Icon */}
             <div
               className={cn(
-                "flex items-center justify-center transition-transform duration-300 group-hover:scale-110 rounded-sm bg-surface-secondary text-text-secondary",
+                "flex items-center justify-center transition-transform duration-300 group-hover:scale-110 rounded-md bg-surface-tertiary text-text-secondary",
                 isCollapsed ? "w-8 h-8" : "w-12 h-12"
               )}
             >

@@ -7,7 +7,7 @@ from engine.node.extractors.google_ads.field_manager import (
 from engine.utils.datetime import get_time_range
 from common.model.common import DateTimeConfig
 from common.model.google.ads import GoogleAdsBase
-from common.model.google.ads import GoogleAdsFields as FieldConfig
+from common.model.google.ads import GoogleAdsField as FieldConfig
 
 SelectedPair = tuple[str, str]
 

@@ -143,7 +143,7 @@ export const SelectMenu: React.FC<SelectMenuProps> = ({
                 }}
                 onMouseDown={stopPropagation}
                 className={`w-full text-left px-3 py-2 text-[14px] ${
-                  idx === activeIndex ? 'bg-blue-50 text-blue-700' : 'text-text-primary'
+                  idx === activeIndex ? 'bg-primary-400/10 text-primary-400' : 'text-text-primary'
                 } ${opt.disabled ? 'opacity-50 cursor-not-allowed' : 'hover:bg-surface-tertiary'} `}
               >
                 {opt.label}

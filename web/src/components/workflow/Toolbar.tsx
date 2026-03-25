@@ -67,7 +67,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
 
   return (
     <div
-      className="h-16 flex items-center justify-between px-6 z-50 bg-neutral-900 border-b-2 border-primary-600"
+      className="h-16 flex items-center justify-between px-6 z-50 bg-surface-dark border-b border-neutral-800"
     >
       {/* Left Side */}
       <div className="flex items-center gap-4">
@@ -106,8 +106,8 @@ export const Toolbar: React.FC<ToolbarProps> = ({
 
         {/* Workflow Name */}
         <div className="flex items-center gap-2.5">
-          <div className="p-1.5 bg-primary-600 rounded-sm">
-            <Zap className="text-white" size={16} />
+          <div className="p-1.5 bg-primary-400 rounded-md">
+            <Zap className="text-neutral-950" size={16} />
           </div>
           <div>
             <h1 className="text-sm font-semibold text-white">
@@ -132,7 +132,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
       <button
         onClick={onExecute}
         disabled={workflow.nodes.length === 0 || executing}
-        className="px-6 py-2 flex items-center gap-2 text-white font-medium text-sm rounded-md transition-colors disabled:opacity-50 bg-primary-600"
+        className="px-6 py-2 flex items-center gap-2 text-neutral-950 font-medium text-sm rounded-md transition-colors disabled:opacity-50 bg-primary-400 hover:bg-primary-500"
       >
         {executing ? (
           <Loader2 size={18} className="animate-spin" />

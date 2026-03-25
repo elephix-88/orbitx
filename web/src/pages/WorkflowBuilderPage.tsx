@@ -16,8 +16,13 @@ import { getNodeSpec } from "../workflow/registry";
 import { AlertTriangle, Loader2 } from "lucide-react";
 import { Button } from "@/components/shared/Button";
 import { useWorkflowEvents } from "../hooks/useWorkflowEvents";
-import { WorkflowData, MongoId, BackendWorkflow } from "../types/backend";
+import { useWorkflowExecution } from "../hooks/useWorkflowExecution";
+import { WorkflowData, BackendWorkflow } from "../types/backend";
 import { prefetchWorkflowNodeData } from "../services/nodeDataPrefetch";
+import { extractMongoId } from "../utils/mongoUtils";
+import { useResponsiveLayout } from "../hooks/useResponsiveLayout";
+import { useElementSize } from "../hooks/useElementSize";
+import { autoLayoutDynamic } from "../utils/workflowLayout";
 
 // Lazy load heavy components (modals and panels)
 const ExecutionLogPanel = lazy(() => import("../components/workflow/ExecutionLogPanel").then(m => ({ default: m.ExecutionLogPanel })));
@@ -34,133 +39,6 @@ interface LocationState {
     connections: WorkflowConnection[];
   };
 }
-
-// Helper to extract MongoDB ID from MongoId type
-const extractMongoId = (id: MongoId | undefined): string | undefined => {
-  if (!id) return undefined;
-  if (typeof id === 'string') return id;
-  if (typeof id === 'object' && '$oid' in id) return id.$oid;
-  return undefined;
-};
-
-const useResponsiveLayout = () => {
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
-  const [isTablet, setIsTablet] = useState(window.innerWidth < 1024);
-
-  useEffect(() => {
-    const handleResize = () => {
-      setIsMobile(window.innerWidth < 768);
-      setIsTablet(window.innerWidth < 1024);
-    };
-
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
-
-  return { isMobile, isTablet };
-};
-
-// -------- Auto-layout helper (grouped flow layout) --------
-// Groups sources with their destinations, creating a compact flow-based layout
-type NodeType = "source" | "transform" | "destination" | string;
-
-interface LayoutOpts {
-  canvasWidth: number;
-  canvasHeight: number;
-  nodeWidth?: number;
-  nodeHeight?: number;
-  minGapX?: number;
-  minGapY?: number;
-  groupGapY?: number;
-  margin?: number;
-  order?: NodeType[];
-}
-
-const autoLayoutDynamic = (
-  list: WorkflowNode[],
-  opts: LayoutOpts
-): WorkflowNode[] => {
-  if (!Array.isArray(list) || list.length === 0) return list;
-
-  const {
-    nodeWidth = 200,
-    nodeHeight = 80,
-    minGapX = 120,
-    minGapY = 30,
-    groupGapY = 60,
-    margin = 60,
-  } = opts;
-
-  // Separate nodes by type
-  const sources = list.filter(n => n.type === 'source');
-  const transforms = list.filter(n => n.type === 'transform');
-  const destinations = list.filter(n => n.type === 'destination');
-
-  const result: WorkflowNode[] = [];
-  let currentY = margin;
-
-  // For each source, create a group with its connected destinations
-  sources.forEach((source, sourceIdx) => {
-    // Find transforms and destinations (for now, distribute evenly)
-    // Each source gets its share of destinations
-    const destsPerSource = Math.ceil(destinations.length / Math.max(sources.length, 1));
-    const startDestIdx = sourceIdx * destsPerSource;
-    const sourceDestinations = destinations.slice(startDestIdx, startDestIdx + destsPerSource);
-
-    // Calculate group height based on max of source side vs destination side
-    const destCount = sourceDestinations.length || 1;
-    const groupHeight = Math.max(nodeHeight, destCount * nodeHeight + (destCount - 1) * minGapY);
-
-    // Position source - vertically centered in the group
-    const sourceY = currentY + (groupHeight - nodeHeight) / 2;
-    result.push({ ...source, position: { x: margin, y: sourceY } });
-
-    // Position destinations - stacked vertically, aligned to the right
-    const destX = margin + nodeWidth + minGapX;
-    const destStartY = currentY + (groupHeight - (destCount * nodeHeight + (destCount - 1) * minGapY)) / 2;
-
-    sourceDestinations.forEach((dest, destIdx) => {
-      const destY = destStartY + destIdx * (nodeHeight + minGapY);
-      result.push({ ...dest, position: { x: destX, y: destY } });
-    });
-
-    // Move to next group
-    currentY += groupHeight + groupGapY;
-  });
-
-  // Handle any remaining destinations not assigned to sources
-  const assignedDestCount = sources.length * Math.ceil(destinations.length / Math.max(sources.length, 1));
-  const remainingDests = destinations.slice(assignedDestCount);
-  remainingDests.forEach((dest, idx) => {
-    result.push({
-      ...dest,
-      position: { x: margin + nodeWidth + minGapX, y: currentY + idx * (nodeHeight + minGapY) }
-    });
-  });
-
-  // Handle transforms (place between sources and destinations if present)
-  if (transforms.length > 0) {
-    const transformX = margin + (nodeWidth + minGapX) / 2;
-    transforms.forEach((transform, idx) => {
-      result.push({
-        ...transform,
-        position: { x: transformX, y: margin + idx * (nodeHeight + minGapY) }
-      });
-    });
-  }
-
-  // Handle orphan sources (sources without any destinations to pair with)
-  if (sources.length === 0 && destinations.length > 0) {
-    destinations.forEach((dest, idx) => {
-      result.push({
-        ...dest,
-        position: { x: margin, y: margin + idx * (nodeHeight + minGapY) }
-      });
-    });
-  }
-
-  return result;
-};
 
 const WorkflowBuilderPage: React.FC = () => {
   const { isMobile, isTablet } = useResponsiveLayout();
@@ -190,12 +68,16 @@ const WorkflowBuilderPage: React.FC = () => {
   const workflowId = originalBackendWorkflow?.job_id || docId;
   useWorkflowEvents(workflowId);
 
-  // Separate selection from editor modal
-  const [, setSelectedNodeId] = useState<string | null>(null);
+  // Execution ID: prefer Mongo ObjectId, fall back to job_id
+  const executionId = extractMongoId(originalBackendWorkflow?._id) || originalBackendWorkflow?.job_id;
+  const { executing, triggering, handleExecute } = useWorkflowExecution({
+    workflowId: executionId,
+    nodes,
+    setNodes,
+  });
+
   const [editorNode, setEditorNode] = useState<WorkflowNode | null>(null);
   const [saving, setSaving] = useState(false);
-  const [executing, setExecuting] = useState(false);
-  const [triggering, setTriggering] = useState(false);
 
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(!!docId); // Only show loading if we have a docId to fetch
@@ -214,24 +96,6 @@ const WorkflowBuilderPage: React.FC = () => {
     const saved = localStorage.getItem("workflow-right-sidebar-collapsed");
     return saved ? JSON.parse(saved) : isMobile || isTablet;
   });
-
-  function useElementSize<T extends HTMLElement>() {
-    const ref = React.useRef<T | null>(null);
-    const [rect, setRect] = React.useState({ width: 0, height: 0 });
-
-    React.useLayoutEffect(() => {
-      if (!ref.current) return;
-      const el = ref.current;
-      const ro = new ResizeObserver(([entry]) => {
-        const cr = entry.contentRect;
-        setRect({ width: cr.width, height: cr.height });
-      });
-      ro.observe(el);
-      return () => ro.disconnect();
-    }, []);
-
-    return { ref, ...rect } as const;
-  }
 
   const makeLayoutWithSize = useCallback(
     (cw: number, ch: number) => (list: WorkflowNode[]) =>
@@ -488,102 +352,6 @@ const WorkflowBuilderPage: React.FC = () => {
       })
     );
   };
-
-  const handleExecute = async () => {
-    try {
-      const id = extractMongoId(originalBackendWorkflow?._id) || originalBackendWorkflow?.job_id;
-      if (!id) {
-        notify.error(
-          "Execute failed",
-          "Workflow has no job_id. Please save first."
-        );
-        return;
-      }
-
-      // Show blocking modal during API call and until first status update
-      setTriggering(true);
-
-      // Reset all node statuses to 'pending' before execution
-      setNodes((prevNodes) =>
-        prevNodes.map((node) => ({
-          ...node,
-          status: "pending" as const,
-        }))
-      );
-
-      // Execute workflow - wait for trigger API to complete
-      await workflowApiService.executeWorkflow(id);
-
-      // Start tracking execution status (modal will close when first node status changes)
-      setExecuting(true);
-
-      // Note: setTriggering(false) will be called by useEffect when first node starts running
-      // Note: setExecuting(false) will be called by the useEffect monitoring node completion
-    } catch (err) {
-      console.error("Failed to execute workflow:", err);
-      notify.error(
-        "Execute failed",
-        err instanceof Error ? err.message : "Unknown error"
-      );
-      setTriggering(false);
-      setExecuting(false);
-    }
-  };
-
-  // Close triggering modal when first node starts running
-  useEffect(() => {
-    if (!triggering) return;
-
-    // Check if any node has started (status changed from pending to running/success/error)
-    const hasStartedNode = nodes.some(
-      (node) => node.status === "running" || node.status === "success" || node.status === "error"
-    );
-
-    if (hasStartedNode) {
-      setTriggering(false);
-    }
-  }, [nodes, triggering]);
-
-  // Timeout for triggering - fail if no response within 1 minute
-  useEffect(() => {
-    if (!triggering) return;
-
-    const timeoutId = setTimeout(() => {
-      // Still triggering after 1 minute = failed
-      setTriggering(false);
-      setExecuting(false);
-      notify.error(
-        "Triggered failed",
-        "Workflow did not start within 1 minute. Please try again."
-      );
-    }, 60000); // 1 minute timeout
-
-    return () => clearTimeout(timeoutId);
-  }, [triggering, notify]);
-
-  // Monitor node status changes and stop spinning when all destinations complete
-  useEffect(() => {
-    if (!executing) return;
-
-    const destinationNodes = nodes.filter(
-      (node) => node.type === "destination"
-    );
-
-    // If no destination nodes, stop executing immediately
-    if (destinationNodes.length === 0) {
-      setExecuting(false);
-      return;
-    }
-
-    // Check if all destination nodes have completed (success or error)
-    const allDestinationsComplete = destinationNodes.every(
-      (node) => node.status === "success" || node.status === "error"
-    );
-
-    if (allDestinationsComplete) {
-      setExecuting(false);
-    }
-  }, [nodes, executing]);
 
   const handleSave = async () => {
     if (!originalBackendWorkflow) {
@@ -1058,7 +826,7 @@ const WorkflowBuilderPage: React.FC = () => {
               connections={Array.isArray(connections) ? connections : []}
               onNodesChange={handleNodesChange}
               onConnectionsChange={handleConnectionsChange}
-              onNodeSelect={(n) => setSelectedNodeId(n ? n.id : null)}
+              onNodeSelect={() => {}}
               onNodeOpenEditor={(n) => setEditorNode(n)}
               isMobile={isMobile}
             />

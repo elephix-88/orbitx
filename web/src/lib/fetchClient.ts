@@ -46,12 +46,12 @@ export async function fetchClient(path: string, options: FetchOptions = {}) {
     },
   });
 
-  // Handle 401 - try to refresh token first
+  // Handle 401 — attempt silent token refresh, then retry
   if (resp.status === 401 && !skipRefresh) {
     const refreshed = await tryRefreshToken();
 
     if (refreshed) {
-      // Retry the original request with new token
+      // Retry the original request with the new token
       resp = await fetch(url, {
         credentials: 'include',
         ...fetchOptions,
@@ -62,9 +62,10 @@ export async function fetchClient(path: string, options: FetchOptions = {}) {
       });
     }
 
-    // If still 401 after refresh attempt, redirect to login
+    // If still 401 after refresh (or refresh itself failed), force re-login.
+    // Use clearLocalAuth — no server call needed since the session is already invalid.
     if (resp.status === 401) {
-      await authService.logout();
+      authService.clearLocalAuth();
       window.location.href = '/login';
     }
   }

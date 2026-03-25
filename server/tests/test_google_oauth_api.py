@@ -218,7 +218,7 @@ class TestGoogleOAuthEndpoints:
     @pytest.mark.unit
     def test_google_ads_fields_success(self, client: TestClient):
         """Test successful Google Ads fields retrieval."""
-        # Arrange - Mock the service function to return proper GoogleAdsFields data
+        # Arrange - Mock the service function to return proper GoogleAdsField data
         mock_fields = [
             {
                 "field": "impressions",
@@ -251,10 +251,10 @@ class TestGoogleOAuthEndpoints:
         ]
 
         with patch("server.api.google.ads.get_google_ads_fields") as mock_get_fields:
-            from common.model.google.ads import GoogleAdsFields
+            from common.model.google.ads import GoogleAdsField
 
             mock_get_fields.return_value = [
-                GoogleAdsFields(**field) for field in mock_fields
+                GoogleAdsField(**field) for field in mock_fields
             ]
 
             # Act

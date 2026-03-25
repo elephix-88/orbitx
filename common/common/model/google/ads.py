@@ -22,7 +22,7 @@ class FieldSource(BaseModel):
     allowed_bases: list[GoogleAdsBase] | None = None
 
 
-class GoogleAdsFields(BaseModel):
+class GoogleAdsField(BaseModel):
     field: str
     output_name: str | None = None
     display_name: str | None = None

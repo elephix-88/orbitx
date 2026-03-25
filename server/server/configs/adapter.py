@@ -1,4 +1,4 @@
-from common.config.settings import configure_database
+from common.config.settings import register_settings
 from server.configs.config import settings as app_settings
 
 
@@ -20,4 +20,4 @@ def _validate_required_secrets():
 
 def init_settings():
     _validate_required_secrets()
-    configure_database(app_settings)
+    register_settings(app_settings)

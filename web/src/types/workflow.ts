@@ -128,18 +128,6 @@ export interface Workflow {
   updatedAt: string;
 }
 
-export interface NodeType {
-  type: 'source' | 'transform' | 'destination';
-  name: string;
-  description: string;
-  category: string;
-  icon: string;
-  color: string;
-  inputs: NodePort[];
-  outputs: NodePort[];
-  defaultData: Record<string, any>;
-}
-
 // Workflow Execution
 export interface WorkflowExecution extends BaseEntity {
   workflowId: string;
@@ -218,44 +206,3 @@ export type NodeKind = 'source' | 'transform' | 'destination';
 
 export type NodeStatus = 'pending' | 'running' | 'success' | 'error';
 
-export interface BuilderNode {
-  id: string;
-  type: NodeKind;
-  name: string;
-  /** Custom alias for the node (e.g., "Facebook Ads - Age, Gender") */
-  display_name?: string;
-  definitionId: NodeTypeId;
-  componentType?: string;
-  position: { x: number; y: number };
-  data: Record<string, unknown>;
-  inputs: NodePort[];
-  outputs: NodePort[];
-  status: NodeStatus;
-}
-
-export interface BuilderConnection {
-  id: string;
-  source: string;
-  target: string;
-  sourceHandle?: string | null;
-  targetHandle?: string | null;
-}
-
-export interface BuilderWorkflowMeta {
-  id?: string;
-  workflowId?: string;
-  jobId?: string;
-  jobName?: string;
-  status?: string;
-  scheduleExpression?: string;
-  description?: string;
-  createdAt?: string;
-  updatedAt?: string;
-  applicationName?: string;
-}
-
-export interface BuilderState {
-  workflow: BuilderWorkflowMeta | null;
-  nodes: BuilderNode[];
-  connections: BuilderConnection[];
-}

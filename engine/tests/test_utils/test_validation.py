@@ -4,7 +4,7 @@ import pandas as pd
 import pytest
 
 from engine.exceptions import ValidationException
-from engine.utils.validation import validate_dataframe, validate_dataframe_for_load
+from engine.utils.validation import validate_dataframe
 
 
 class TestValidateDataframe:
@@ -99,60 +99,6 @@ class TestValidateDataframe:
             required_columns=["col1", "col2"],
         )
         assert result is df
-
-
-class TestValidateDataframeForLoad:
-    """Tests for validate_dataframe_for_load function."""
-
-    def test_valid_dataframe(self) -> None:
-        """Test that a valid DataFrame passes validation."""
-        df = pd.DataFrame({"col1": [1, 2]})
-
-        result = validate_dataframe_for_load(
-            df,
-            destination_type="bigquery",
-            destination_table="test_table",
-        )
-        assert result is df
-
-    def test_none_raises_with_destination_context(self) -> None:
-        """Test that None raises exception with destination context."""
-        with pytest.raises(ValidationException) as exc_info:
-            validate_dataframe_for_load(
-                None,
-                destination_type="mysql",
-                destination_table="users",
-                node_id="mysql_loader",
-            )
-
-        assert exc_info.value.details.get("destination_type") == "mysql"
-        assert exc_info.value.details.get("destination_table") == "users"
-
-    def test_empty_dataframe_allowed_by_default(self) -> None:
-        """Test that empty DataFrame is allowed by default for loaders."""
-        df = pd.DataFrame()
-
-        result = validate_dataframe_for_load(
-            df,
-            destination_type="bigquery",
-            destination_table="analytics",
-        )
-        assert result is df
-
-    def test_empty_raises_when_explicitly_disallowed(self) -> None:
-        """Test that empty DataFrame raises exception when allow_empty=False."""
-        df = pd.DataFrame()
-
-        with pytest.raises(ValidationException) as exc_info:
-            validate_dataframe_for_load(
-                df,
-                destination_type="bigquery",
-                destination_table="analytics",
-                allow_empty=False,
-            )
-
-        assert exc_info.value.details.get("destination_type") == "bigquery"
-        assert exc_info.value.details.get("destination_table") == "analytics"
 
 
 class TestLoaderSetMergeKeys:

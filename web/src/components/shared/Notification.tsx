@@ -5,7 +5,7 @@ import { CheckCircle, XCircle, AlertTriangle, Info, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const notificationVariants = cva(
-  'pointer-events-auto relative flex items-center justify-between space-x-4 overflow-hidden rounded-md p-5 shadow-sm transition-all duration-300 bg-surface-primary border border-border',
+  'pointer-events-auto relative flex items-center justify-between space-x-4 overflow-hidden rounded-lg p-5 shadow-sm transition-all duration-300 bg-surface-secondary border border-neutral-800',
   {
     variants: {
       type: {

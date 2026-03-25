@@ -4,7 +4,7 @@ from typing import Any, Literal, Union
 from pydantic import BaseModel, Field
 
 from common.model.facebook.config import FacebookAdsConfig
-from common.model.google.ads_config import GoogleAdsConfig
+from common.model.google.config import GoogleAdsConfig
 from common.model.google.bigquery import BigQueryDestinationConfig
 from common.model.google.sheets import GoogleSheetsDestinationConfig
 from common.model.mysql.config import MySQLDestinationConfig

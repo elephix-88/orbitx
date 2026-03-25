@@ -31,7 +31,7 @@ class ExecutionHistoryService {
    */
   async getExecutionHistory(workflowId: string): Promise<ExecutionHistory[]> {
     const response = await fetchClient(
-      `/execution-history/workflow/${encodeURIComponent(workflowId)}`,
+      `/api/execution-history/workflow/${encodeURIComponent(workflowId)}`,
       { method: 'GET' }
     );
 
@@ -60,7 +60,7 @@ class ExecutionHistoryService {
         }
       }
       const queryString = params.toString() ? `?${params.toString()}` : '';
-      const response = await fetchClient(`/execution-history/dashboard-stats${queryString}`, {
+      const response = await fetchClient(`/api/execution-history/dashboard-stats${queryString}`, {
         method: 'GET',
       });
 

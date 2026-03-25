@@ -16,9 +16,9 @@ import { cn } from '@/lib/utils';
 const modalVariants = cva(
   [
     'relative w-full flex flex-col',
-    'bg-surface-primary',
-    'rounded-lg shadow-md',
-    'border border-border',
+    'bg-surface-secondary',
+    'rounded-xl shadow-md',
+    'border border-neutral-800',
   ],
   {
     variants: {
@@ -119,7 +119,7 @@ export const Modal = ({
       <div
         className={cn(
           "fixed inset-0 z-50",
-          "bg-black/70",
+          "bg-black/80",
           "data-[state=open]:animate-in data-[state=closed]:animate-out",
           "data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0"
         )}
@@ -148,7 +148,7 @@ export const Modal = ({
       >
         {/* Header */}
         {!headerless && (title || showCloseButton) && (
-          <div className="flex flex-col space-y-1.5 text-left border-b border-border pb-4">
+          <div className="flex flex-col space-y-1.5 text-left border-b border-neutral-800 pb-4">
             {title && (
               <h2
                 id="modal-title"
@@ -175,8 +175,8 @@ export const Modal = ({
             className={cn(
               "absolute right-4 top-4",
               "rounded-md transition-colors",
-              "text-text-tertiary hover:text-text-primary hover:bg-surface-tertiary",
-              "focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2",
+              "text-neutral-500 hover:text-neutral-200 hover:bg-surface-tertiary",
+              "focus:outline-none focus:ring-2 focus:ring-primary-400 focus:ring-offset-2",
               "disabled:pointer-events-none"
             )}
             aria-label="Close"

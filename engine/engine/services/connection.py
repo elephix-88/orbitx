@@ -31,8 +31,8 @@ async def get_connection_token(
         ConnectionException: If connection not found or params missing
     """
     mongodb = get_mongodb()
-    connection_info = await mongodb.find_one(
-        settings.connections_collection, connection_id, Connection
+    connection_info = await mongodb.get_document(
+        settings.connections_collection, {"_id": connection_id}, Connection
     )
     if not connection_info or not connection_info.params:
         raise ConnectionException(

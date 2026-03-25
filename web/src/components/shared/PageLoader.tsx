@@ -37,7 +37,7 @@ export function PageLoader({
   };
 
   const containerClasses = fullScreen
-    ? 'fixed inset-0 flex items-center justify-center bg-surface-primary/90 z-50'
+    ? 'fixed inset-0 flex items-center justify-center bg-surface-primary z-50'
     : 'flex items-center justify-center p-8';
 
   return (
@@ -49,8 +49,8 @@ export function PageLoader({
             ${sizeClasses[size]}
             animate-spin
             rounded-full
-            border-border
-            border-t-primary-600
+            border-neutral-700
+            border-t-primary-400
           `}
         />
 
@@ -74,7 +74,7 @@ export function PageLoader({
 export function InlineLoader({ message }: { message?: string }) {
   return (
     <div className="flex items-center justify-center p-4 gap-2">
-      <div className="h-4 w-4 animate-spin rounded-full border-2 border-border border-t-primary-600" />
+      <div className="h-4 w-4 animate-spin rounded-full border-2 border-neutral-700 border-t-primary-400" />
       {message && (
         <span className="text-sm text-text-secondary">{message}</span>
       )}

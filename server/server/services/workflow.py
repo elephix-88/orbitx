@@ -1,4 +1,3 @@
-from fastapi import HTTPException
 from loguru import logger
 
 from common.database import get_mongodb
@@ -6,6 +5,11 @@ from common.model.workflow import JobIdRequest, WorkflowData, WorkflowSummary
 from server.configs.config import settings
 from server.services.auth.context import get_current_user
 from server.services import dagster_client
+from server.services.exceptions import (
+    OrbitXError,
+    ValidationError,
+    WorkflowNotFoundError,
+)
 from server.services.utils import generate_uuid
 
 
@@ -22,7 +26,7 @@ async def get_all_workflows() -> list[WorkflowSummary]:
 async def get_workflow_builder(request: JobIdRequest) -> WorkflowData:
     """Get workflow by ID with ownership verification."""
     if not request.id:
-        raise HTTPException(status_code=400, detail="Workflow ID is required")
+        raise ValidationError("workflow_id", "Workflow ID is required")
 
     user = get_current_user()
     workflow = await get_mongodb().get_document(
@@ -32,7 +36,7 @@ async def get_workflow_builder(request: JobIdRequest) -> WorkflowData:
     )
 
     if not workflow:
-        raise HTTPException(status_code=404, detail="Workflow not found")
+        raise WorkflowNotFoundError(request.id)
 
     return workflow
 
@@ -40,15 +44,7 @@ async def get_workflow_builder(request: JobIdRequest) -> WorkflowData:
 async def update_workflow(workflow_data: WorkflowData) -> bool:
     """Update workflow with ownership verification."""
     if not workflow_data.id:
-        logger.error("Workflow ID is required for update")
-        raise HTTPException(
-            status_code=400,
-            detail={
-                "status": False,
-                "message": "Workflow ID (_id) is required for update",
-                "workflow_id": None,
-            },
-        )
+        raise ValidationError("workflow_id", "Workflow ID (_id) is required for update")
 
     user = get_current_user()
     result = await get_mongodb().update_document(
@@ -59,15 +55,7 @@ async def update_workflow(workflow_data: WorkflowData) -> bool:
     )
 
     if result.matched_count == 0:
-        logger.error(f"Workflow {workflow_data.id} not found or access denied")
-        raise HTTPException(
-            status_code=404,
-            detail={
-                "status": False,
-                "message": "Workflow not found or access denied",
-                "workflow_id": workflow_data.id,
-            },
-        )
+        raise WorkflowNotFoundError(workflow_data.id)
 
     # Dagster picks up schedule changes via code location reload
     dagster_client.reload_code_location()
@@ -130,7 +118,7 @@ async def create_new_workflow(workflow_data: WorkflowData) -> WorkflowData:
 async def execute_workflow(job_id: str) -> bool:
     """Execute a workflow with ownership check."""
     if not job_id:
-        raise HTTPException(status_code=400, detail="Workflow ID is required")
+        raise ValidationError("workflow_id", "Workflow ID is required")
 
     user = get_current_user()
     workflow = await get_mongodb().get_document(
@@ -140,7 +128,7 @@ async def execute_workflow(job_id: str) -> bool:
     )
 
     if not workflow:
-        raise HTTPException(status_code=404, detail="Workflow not found")
+        raise WorkflowNotFoundError(job_id)
 
     run_id = dagster_client.launch_run(
         workflow_id=job_id,
@@ -150,9 +138,7 @@ async def execute_workflow(job_id: str) -> bool:
     )
 
     if not run_id:
-        raise HTTPException(
-            status_code=500, detail="Failed to execute workflow"
-        )
+        raise OrbitXError("Failed to execute workflow")
 
     logger.info(f"Dagster run {run_id} launched for workflow: {job_id}")
     return True

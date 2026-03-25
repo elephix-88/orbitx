@@ -6,22 +6,19 @@ from google.ads.googleads.client import GoogleAdsClient
 from loguru import logger
 
 from engine.configs.config import settings
-from engine.exceptions import ExtractorException, ValidationException
+from engine.exceptions import ValidationException
 from engine.interfaces.node import Extractor
 from engine.node.extractors.google_ads.field_manager import get_gaql_level
 from engine.node.extractors.google_ads.gaql_builder import GaqlBuildResult, build_gaql
 from engine.node.extractors.google_ads.row_utils import flatten_row
 from engine.services.connection import get_connection_token
 from engine.services.google.auth import build_credentials
-from engine.utils.logger import ExecutionTimer
+from engine.utils.extraction import extraction_lifecycle
 from common.database.mongodb import get_mongodb
-from common.model.execution import Status
-from common.model.google.ads import GoogleAdsFields as FieldConfig
-from common.model.google.ads_config import GoogleAdsConfig
+from common.model.google.ads import GoogleAdsField as FieldConfig
+from common.model.google.config import GoogleAdsConfig
 from common.model.result import ExtractorResult
 from common.model.token import GoogleToken
-
-MAX_PARALLEL_ACCOUNTS = 10
 
 
 class GoogleAdsExtractor(Extractor):
@@ -50,10 +47,11 @@ class GoogleAdsExtractor(Extractor):
 
     async def extract(self) -> ExtractorResult:
         """Extract data from Google Ads API."""
-        execution_timer = ExecutionTimer("Google Ads Extraction")
-        await execution_timer.start()
-
-        try:
+        async with extraction_lifecycle(
+            "Google Ads Extraction",
+            settings.services.google_ads,
+            self.config.connection_id,
+        ):
             token = await get_connection_token(
                 self.config.connection_id,
                 settings.services.google_ads,
@@ -73,8 +71,8 @@ class GoogleAdsExtractor(Extractor):
             )
 
             mongodb = get_mongodb()
-            field_config = await mongodb.find_many(
-                settings.google_fields, "field", self.config.fields, FieldConfig
+            field_config = await mongodb.get_all_documents(
+                settings.google_fields, {"field": {"$in": self.config.fields}}, FieldConfig
             )
 
             if not field_config:
@@ -136,20 +134,9 @@ class GoogleAdsExtractor(Extractor):
 
             primary_keys = list(dict.fromkeys([*gaql.primary_keys, customer_key]))
 
-            result = ExtractorResult(
+            return ExtractorResult(
                 data=df,
                 primary_keys=primary_keys,
                 report_level=gaql_level,
                 field_schemas=field_config,
             )
-
-            await execution_timer.stop(Status.SUCCESS)
-            return result
-
-        except Exception as ex:
-            await execution_timer.stop(Status.FAILED)
-            raise ExtractorException(
-                f"Google Ads extraction failed: {ex}",
-                source_type=settings.services.google_ads,
-                details={"connection_id": self.config.connection_id},
-            ) from ex

@@ -36,7 +36,7 @@ class ColumnEditorTransformer(Transformer):
 
         updated = []
         for schema in schemas:
-            field = getattr(schema, "field", None)
+            field = schema.field
             if field and field in conv_map:
                 conv = conv_map[field]
 
@@ -51,7 +51,7 @@ class ColumnEditorTransformer(Transformer):
                 if conv.cast:
                     updates["data_type"] = conv.cast.value
 
-                if updates and hasattr(schema, "model_copy"):
+                if updates:
                     schema = schema.model_copy(update=updates)
 
             updated.append(schema)
@@ -59,7 +59,7 @@ class ColumnEditorTransformer(Transformer):
         if self.config.new_columns and updated:
             template = updated[0]
             for new_col in self.config.new_columns:
-                if hasattr(template, "model_copy"):
+                if template:
                     new_schema = template.model_copy(
                         update={
                             "field": new_col.name,

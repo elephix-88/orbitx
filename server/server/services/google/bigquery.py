@@ -10,7 +10,6 @@ from loguru import logger
 from common.database import get_mongodb
 from common.model.connection import ConnectionItem
 from common.model.google.bigquery import BigQueryDataset, BigQueryProject
-from common.model.token import GoogleConnectionParams
 from server.configs.config import settings
 from server.services.auth.context import get_current_user
 from server.services.exceptions import (
@@ -18,19 +17,7 @@ from server.services.exceptions import (
     ConnectionNotFoundError,
     ExternalAPIError,
 )
-
-
-def _build_credentials(connection: ConnectionItem) -> Credentials:
-    """Build BigQuery credentials from a connection item."""
-    params = GoogleConnectionParams(**connection.params)
-    return Credentials(
-        token=params.access_token,
-        refresh_token=params.refresh_token,
-        token_uri=settings.google_oauth_token_url,
-        client_id=settings.google_oauth_client_id,
-        client_secret=settings.google_oauth_client_secret,
-        scopes=[settings.google_oauth_bigquery_scope],
-    )
+from server.services.google.credentials import build_google_credentials
 
 
 async def get_bigquery_credentials(connection_id: str) -> Credentials:
@@ -46,7 +33,9 @@ async def get_bigquery_credentials(connection_id: str) -> Credentials:
     if not connection_item:
         raise ConnectionNotFoundError(connection_id)
 
-    return _build_credentials(connection_item)
+    return build_google_credentials(
+        connection_item, scopes=[settings.google_oauth_bigquery_scope]
+    )
 
 
 def get_bigquery_client(credentials: Credentials, project_id: str):

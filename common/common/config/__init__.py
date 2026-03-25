@@ -1,3 +1,3 @@
-from .settings import configure_database, get_settings
+from .settings import register_settings, get_settings
 
-__all__ = ["configure_database", "get_settings"]
+__all__ = ["register_settings", "get_settings"]

@@ -39,7 +39,7 @@ async def build_connection_credentials(
 ) -> Credentials:
     """Build Credentials object for a stored connection document."""
     mongodb = get_mongodb()
-    connection = await mongodb.find_one("connections", connection_id, ConnectionConfig)
+    connection = await mongodb.get_document("connections", {"_id": connection_id}, ConnectionConfig)
     return await asyncio.to_thread(
         build_credentials,
         refresh_token=connection.params.refresh_token,
