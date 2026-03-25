@@ -42,6 +42,7 @@ default:
   google_oauth_redirect_uri: http://localhost:8080/oauth2callback
   google_oauth_scope:
   google_oauth_ads_scope: https://www.googleapis.com/auth/adwords
+  google_oauth_analytics_scope: https://www.googleapis.com/auth/analytics.readonly
   google_oauth_sheets_scope: https://www.googleapis.com/auth/spreadsheets
   google_oauth_drive_scope: https://www.googleapis.com/auth/drive.readonly
   google_oauth_bigquery_scope: https://www.googleapis.com/auth/bigquery
@@ -79,3 +80,13 @@ default:
   # Dagster Integration
   dagster_host: dagster
   dagster_port: 3000
+
+  # Slack OAuth (MUST be set via environment variable in production)
+  slack_client_id:
+  slack_client_secret:
+  slack_redirect_uri: http://localhost:8080/api/slack/callback
+
+  # LINE Ads OAuth (MUST be set via environment variable in production)
+  line_ads_client_id:
+  line_ads_client_secret:
+  line_ads_redirect_uri: http://localhost:8080/api/line/ads/oauth2callback

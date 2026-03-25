@@ -18,6 +18,7 @@ import { Button } from "@/components/shared/Button";
 import { useWorkflowEvents } from "../hooks/useWorkflowEvents";
 import { useWorkflowExecution } from "../hooks/useWorkflowExecution";
 import { WorkflowData, BackendWorkflow } from "../types/backend";
+import { DeliveryConfig, DEFAULT_DELIVERY_CONFIG } from "../types/delivery";
 import { prefetchWorkflowNodeData } from "../services/nodeDataPrefetch";
 import { extractMongoId } from "../utils/mongoUtils";
 import { useResponsiveLayout } from "../hooks/useResponsiveLayout";
@@ -28,6 +29,8 @@ import { autoLayoutDynamic } from "../utils/workflowLayout";
 const ExecutionLogPanel = lazy(() => import("../components/workflow/ExecutionLogPanel").then(m => ({ default: m.ExecutionLogPanel })));
 const WorkflowMetaForm = lazy(() => import("../components/forms/WorkflowMetaForm").then(m => ({ default: m.WorkflowMetaForm })));
 const NodeConfigPanel = lazy(() => import("../components/workflow/node-config/NodeConfigPanel").then(m => ({ default: m.NodeConfigPanel })));
+const PreviewPanel = lazy(() => import("../components/workflow/PreviewPanel").then(m => ({ default: m.PreviewPanel })));
+const ScheduleDeliverySheet = lazy(() => import("../components/workflow/ScheduleDeliverySheet").then(m => ({ default: m.ScheduleDeliverySheet })));
 
 // Location state type
 interface LocationState {
@@ -78,12 +81,18 @@ const WorkflowBuilderPage: React.FC = () => {
 
   const [editorNode, setEditorNode] = useState<WorkflowNode | null>(null);
   const [saving, setSaving] = useState(false);
+  const [previewNodeId, setPreviewNodeId] = useState<string | null>(null);
 
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(!!docId); // Only show loading if we have a docId to fetch
   const [bootstrapped, setBootstrapped] = useState(false); // Track if bootstrap has run
   const { notify } = useNotification();
   const [metaOpen, setMetaOpen] = useState(false);
+  const [scheduleDeliveryOpen, setScheduleDeliveryOpen] = useState(false);
+
+  // Schedule & delivery local state (saved via onSave)
+  const [scheduleEnabled, setScheduleEnabled] = useState(true);
+  const [deliveryConfig, setDeliveryConfig] = useState<DeliveryConfig>(DEFAULT_DELIVERY_CONFIG);
 
   // Left Sidebar State
   const [leftSidebarCollapsed, setLeftSidebarCollapsed] = useState(() => {
@@ -196,8 +205,13 @@ const WorkflowBuilderPage: React.FC = () => {
 
           // Apply layout to template nodes if provided
           if (templateNodes.length > 0) {
-            const layoutedTemplateNodes = layoutNodes(templateNodes);
-            setNodes(layoutedTemplateNodes);
+            // Use template positions if all nodes already have valid positions,
+            // otherwise fall back to auto-layout
+            const allHavePositions = templateNodes.every(
+              (n: WorkflowNode) => n.position && !Number.isNaN(n.position.x) && !Number.isNaN(n.position.y)
+            );
+            const finalNodes = allHavePositions ? templateNodes : layoutNodes(templateNodes);
+            setNodes(finalNodes);
             setConnections(templateConnections);
           } else {
             setNodes([]);
@@ -594,6 +608,13 @@ const WorkflowBuilderPage: React.FC = () => {
     }
   };
 
+  const handleScheduleDeliverySave = () => {
+    // Real persistence happens when the user clicks Save on the main toolbar.
+    // Here we just close the sheet and remind the user.
+    setScheduleDeliveryOpen(false);
+    notify.success("Schedule updated", "Save the workflow to persist these changes.");
+  };
+
   const handleLoad = () => {
     document
       .querySelector<HTMLInputElement>(
@@ -777,6 +798,7 @@ const WorkflowBuilderPage: React.FC = () => {
           onExecute={handleExecute}
           onSave={handleSave}
           onSettings={() => setMetaOpen(true)}
+          onScheduleDelivery={() => setScheduleDeliveryOpen(true)}
           executing={executing}
           saving={saving}
           hasUnsavedChanges={hasUnsavedChanges}
@@ -846,6 +868,10 @@ const WorkflowBuilderPage: React.FC = () => {
                 onUpdate={handleNodeUpdate}
                 onClose={() => setEditorNode(null)}
                 executionStatus={editorNode.status === 'running' ? 'running' : editorNode.status === 'success' ? 'success' : editorNode.status === 'error' ? 'error' : 'idle'}
+                onPreview={(nodeId) => {
+                  setPreviewNodeId(nodeId);
+                  setEditorNode(null);
+                }}
               />
             </Suspense>
           )}
@@ -864,6 +890,36 @@ const WorkflowBuilderPage: React.FC = () => {
                 onSubmit={handleMetaSubmit}
                 onCancel={() => setMetaOpen(false)}
                 hasUnsavedChanges={hasUnsavedChanges}
+              />
+            </Suspense>
+          )}
+
+          {/* Schedule & Delivery Sheet */}
+          <Suspense fallback={null}>
+            <ScheduleDeliverySheet
+              isOpen={scheduleDeliveryOpen}
+              onClose={() => setScheduleDeliveryOpen(false)}
+              workflowId={extractMongoId(originalBackendWorkflow?._id) || docId}
+              scheduleExpression={originalBackendWorkflow?.schedule_expression || "0 0 * * *"}
+              scheduleEnabled={scheduleEnabled}
+              deliveryConfig={deliveryConfig}
+              onScheduleChange={(cron) => {
+                updateWorkflow({ schedule_expression: cron });
+              }}
+              onScheduleEnabledChange={setScheduleEnabled}
+              onDeliveryConfigChange={setDeliveryConfig}
+              onSave={handleScheduleDeliverySave}
+              isSaving={saving}
+            />
+          </Suspense>
+
+          {/* Data Preview Panel */}
+          {previewNodeId && (
+            <Suspense fallback={null}>
+              <PreviewPanel
+                nodeId={previewNodeId}
+                isOpen={!!previewNodeId}
+                onClose={() => setPreviewNodeId(null)}
               />
             </Suspense>
           )}

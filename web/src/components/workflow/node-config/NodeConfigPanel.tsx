@@ -16,7 +16,8 @@ import {
   Sparkles,
   Code2,
   Info,
-  ChevronRight
+  ChevronRight,
+  Eye,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { WorkflowNode } from '@/types/workflow';
@@ -46,6 +47,7 @@ interface NodeConfigPanelProps {
   onExecuteNode?: () => void;
   isExecuting?: boolean;
   executionStatus?: 'idle' | 'running' | 'success' | 'error';
+  onPreview?: (nodeId: string) => void;
 }
 
 // Panel Header with Node Info
@@ -55,7 +57,8 @@ const PanelHeader: React.FC<{
   onExecute?: () => void;
   isExecuting?: boolean;
   executionStatus?: 'idle' | 'running' | 'success' | 'error';
-}> = ({ node, onClose, onExecute, isExecuting, executionStatus }) => {
+  onPreview?: () => void;
+}> = ({ node, onClose, onExecute, isExecuting, executionStatus, onPreview }) => {
   const spec = getNodeSpecByDisplayName(node.name) || (node.definitionId ? getNodeSpec(node.definitionId) : undefined);
 
   const statusIcon = useMemo(() => {
@@ -163,6 +166,20 @@ const PanelHeader: React.FC<{
       </div>
 
       <div className="flex items-center gap-3">
+        {onPreview && (
+          <button
+            onClick={onPreview}
+            className={cn(
+              "flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all",
+              "bg-surface-secondary border border-border text-text-primary",
+              "hover:bg-surface-tertiary"
+            )}
+          >
+            <Eye className="w-4 h-4" />
+            <span>Preview</span>
+          </button>
+        )}
+
         {onExecute && (
           <button
             onClick={onExecute}
@@ -241,6 +258,7 @@ export const NodeConfigPanel: React.FC<NodeConfigPanelProps> = ({
   onExecuteNode,
   isExecuting = false,
   executionStatus = 'idle',
+  onPreview,
 }) => {
   const [activeTab, setActiveTab] = useState<TabId>('parameters');
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
@@ -345,6 +363,7 @@ export const NodeConfigPanel: React.FC<NodeConfigPanelProps> = ({
           onExecute={onExecuteNode}
           isExecuting={isExecuting}
           executionStatus={executionStatus}
+          onPreview={onPreview ? () => onPreview(node.id) : undefined}
         />
 
         <TabNavigation

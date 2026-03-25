@@ -304,7 +304,42 @@ export const TemplateSelector: React.FC<TemplateSelectorProps> = ({
                         </div>
                       </div>
 
-                      <ChevronRight className="w-5 h-5 text-text-tertiary" />
+                      <ChevronRight className="w-5 h-5 text-text-tertiary flex-shrink-0" />
+
+                      {/* Transforms */}
+                      {(() => {
+                        const transformNodes = selectedTemplate.nodes.filter(
+                          (n) => n.type === 'transform'
+                        );
+                        if (transformNodes.length === 0) return null;
+                        const uniqueNames = [
+                          ...new Set(
+                            transformNodes.map(
+                              (n) => n.display_name || n.name
+                            )
+                          ),
+                        ];
+                        return (
+                          <>
+                            <div className="flex-1">
+                              <div className="text-xs text-text-secondary mb-2">
+                                Transforms
+                              </div>
+                              <div className="flex flex-wrap gap-2">
+                                {uniqueNames.map((name) => (
+                                  <span
+                                    key={name}
+                                    className="px-2.5 py-1 text-xs font-medium bg-violet-900/30 text-violet-400 rounded-lg"
+                                  >
+                                    {name}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                            <ChevronRight className="w-5 h-5 text-text-tertiary flex-shrink-0" />
+                          </>
+                        );
+                      })()}
 
                       {/* Destinations */}
                       <div className="flex-1">

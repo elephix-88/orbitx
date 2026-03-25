@@ -193,9 +193,13 @@ export type NodeTypeId =
   | 'facebook.ads'
   | 'google.ads'
   | 'tiktok.ads'
+  | 'source.ga4'
+  | 'source.line-ads'
   | 'transform.sql'
   | 'transform.rename'
   | 'transform.join'
+  | 'transform.column-editor'
+  | 'transform.unify'
   | 'dest.bigquery'
   | 'dest.googlesheets'
   | 'dest.mysql';

@@ -1,14 +1,16 @@
 from collections import deque
 
-from dagster import JobDefinition, graph
-from loguru import logger
-
 from common.model.workflow import Connection, Node, NodeType, WorkflowData
-from dagster_orbitx.hooks.execution_history import on_workflow_failure, on_workflow_success
+from dagster import JobDefinition, graph
+from dagster_orbitx.hooks.execution_history import (
+    on_workflow_failure,
+    on_workflow_success,
+)
 from dagster_orbitx.jobs.workflow_executor import sanitize_dagster_name
+from dagster_orbitx.ops.delivery_ops import make_delivery_op
 from dagster_orbitx.ops.extractor_ops import make_extractor_op
-from dagster_orbitx.ops.transformer_ops import make_transformer_op
 from dagster_orbitx.ops.loader_ops import make_loader_op
+from dagster_orbitx.ops.transformer_ops import make_transformer_op
 
 
 def build_op_name(node: Node, job_name: str) -> str:
@@ -16,8 +18,13 @@ def build_op_name(node: Node, job_name: str) -> str:
     return f"{job_name}__{sanitized}_{node.node_instance_id}"
 
 
-def count_parents(node_instance_id: int, connections: list[Connection]) -> int:
-    return sum(1 for connection in connections if connection.to_node == node_instance_id)
+def count_parents(
+    node_instance_id: int, connections: list[Connection]
+) -> int:
+    return sum(
+        1 for connection in connections
+        if connection.to_node == node_instance_id
+    )
 
 
 def topological_sort(nodes: list[Node], connections: list[Connection]) -> list[Node]:
@@ -29,7 +36,7 @@ def topological_sort(nodes: list[Node], connections: list[Connection]) -> list[N
         incoming_count[connection.to_node] += 1
         outgoing[connection.from_node].append(connection.to_node)
 
-    queue = deque(nid for nid, count in incoming_count.items() if count == 0)
+    queue = deque(node_instance_id for node_instance_id, count in incoming_count.items() if count == 0)
     sorted_nodes = []
 
     while queue:
@@ -41,8 +48,13 @@ def topological_sort(nodes: list[Node], connections: list[Connection]) -> list[N
                 queue.append(child)
 
     if len(sorted_nodes) != len(nodes):
-        cycle_ids = [nid for nid, count in incoming_count.items() if count > 0]
-        raise ValueError(f"Workflow graph contains a cycle. Stuck node instance IDs: {cycle_ids}")
+        cycle_ids = [
+            node_instance_id for node_instance_id, count in incoming_count.items() if count > 0
+        ]
+        raise ValueError(
+            "Workflow graph contains a cycle. "
+            f"Stuck node instance IDs: {cycle_ids}"
+        )
 
     return sorted_nodes
 
@@ -56,25 +68,42 @@ def build_workflow_job(workflow: WorkflowData, job_name: str) -> JobDefinition:
 
     sorted_nodes = topological_sort(workflow.nodes, workflow.connections)
 
-    op_fns: dict[int, object] = {}
+    op_functions: dict[int, object] = {}
 
     for node in sorted_nodes:
         op_name = build_op_name(node, job_name)
         parent_count = count_parents(node.node_instance_id, workflow.connections)
 
         if node.node_type == NodeType.source.value:
-            op_fns[node.node_instance_id] = make_extractor_op(node, op_name)
+            op_functions[node.node_instance_id] = make_extractor_op(node, op_name)
         elif node.node_type == NodeType.transforms.value:
-            op_fns[node.node_instance_id] = make_transformer_op(node, op_name, parent_count)
+            op_functions[node.node_instance_id] = make_transformer_op(
+                node, op_name, parent_count
+            )
         elif node.node_type == NodeType.destinations.value:
-            op_fns[node.node_instance_id] = make_loader_op(node, op_name)
+            op_functions[node.node_instance_id] = make_loader_op(node, op_name)
+
+    has_delivery = workflow.delivery and workflow.delivery.channels
+    delivery_op_fn = None
+
+    if has_delivery:
+        destination_count = sum(
+            1 for node in sorted_nodes
+            if node.node_type == NodeType.destinations.value
+        )
+        if destination_count > 0:
+            delivery_op_name = f"{job_name}__deliver_report"
+            delivery_op_fn = make_delivery_op(
+                workflow.delivery, delivery_op_name, destination_count
+            )
 
     @graph(name=job_name)
     def workflow_graph():
         op_by_instance_id: dict[int, object] = {}
+        destination_outputs: list[object] = []
 
         for node in sorted_nodes:
-            op_fn = op_fns.get(node.node_instance_id)
+            op_fn = op_functions.get(node.node_instance_id)
             if not op_fn:
                 continue
 
@@ -99,14 +128,26 @@ def build_workflow_job(workflow: WorkflowData, job_name: str) -> JobDefinition:
 
             elif node.node_type == NodeType.destinations.value:
                 if parent_ids and parent_ids[0] in op_by_instance_id:
-                    op_fn(op_by_instance_id[parent_ids[0]])
+                    result = op_fn(op_by_instance_id[parent_ids[0]])
+                    op_by_instance_id[node.node_instance_id] = result
+                    destination_outputs.append(result)
+
+        if delivery_op_fn and destination_outputs:
+            kwargs = {
+                f"input_{i}": output
+                for i, output in enumerate(destination_outputs)
+            }
+            delivery_op_fn(**kwargs)
+
+    tags = {
+        "kind": "orbitx_workflow",
+        "workflow_id": workflow.id,
+        "user_id": workflow.user_id,
+        "workflow_name": workflow.job_name,
+    }
 
     return workflow_graph.to_job(
         description=f"OrbitX workflow: {workflow.job_name}",
         hooks={on_workflow_success, on_workflow_failure},
-        tags={
-            "kind": "orbitx_workflow",
-            "workflow_id": workflow.id,
-            "user_id": workflow.user_id,
-        },
+        tags=tags,
     )

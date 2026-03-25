@@ -16,6 +16,7 @@ dependencies = [
     "google-cloud-bigquery-storage>=2.25.0",
     "google-cloud-run>=0.11.0",
     "google-ads>=25.2.0",
+    "google-analytics-data>=0.18.0",
     "google-api-python-client>=2.0.0",
     "google-auth>=2.0.0",
     "google-auth-oauthlib>=1.2.0",
@@ -27,6 +28,7 @@ dependencies = [
     "pygsheets>=2.0.0",
     "tenacity>=9.0.0",
     "pyarrow>=20.0.0",
+    "anthropic>=0.40.0",
 ]
 
 [tool.uv.sources]
@@ -56,10 +58,10 @@ exclude = ["tests"]
 
 [[tool.mypy.overrides]]
 module = [
-    "duckdb", "google.cloud.*", "bson.*", "dynaconf",
+    "duckdb", "google.cloud.*", "google.analytics.*", "bson.*", "dynaconf",
     "loguru", "pandas", "boto3", "google.ads.*",
     "common.*", "gspread_dataframe", "requests",
-    "aioboto3", "asyncmy",
+    "aioboto3", "asyncmy", "anthropic",
 ]
 ignore_missing_imports = true
 

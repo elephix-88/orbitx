@@ -1,10 +1,13 @@
 import { facebookAdsSpec } from './node-specs/facebook.ads';
 import { googleAdsSourceSpec } from './node-specs/google.ads';
 import { tiktokAdsSpec } from './node-specs/tiktok.ads';
+import { ga4SourceSpec } from './node-specs/source.ga4';
+import { lineAdsSourceSpec } from './node-specs/source.line-ads';
 import { sqlTransformSpec } from './node-specs/transform.sql';
 import { renameTransformSpec } from './node-specs/transform.rename';
 import { joinTransformSpec } from './node-specs/transform.join';
 import { columnEditorTransformSpec } from './node-specs/transform.column-editor';
+import { unifyTransformSpec } from './node-specs/transform.unify';
 import { mysqlDestSpec } from './node-specs/dest.mysql';
 import { bigQueryDestSpec } from './node-specs/dest.bigquery';
 import { googleSheetsDestSpec } from './node-specs/dest.googlesheets';
@@ -16,10 +19,13 @@ export const nodeRegistry: Record<string, NodeSpec> = {
   'facebook.ads': facebookAdsSpec,
   'google.ads': googleAdsSourceSpec,
   'tiktok.ads': tiktokAdsSpec,
+  'source.ga4': ga4SourceSpec,
+  'source.line-ads': lineAdsSourceSpec,
   'transform.sql': sqlTransformSpec,
   'transform.rename': renameTransformSpec,
   'transform.join': joinTransformSpec,
   'transform.column-editor': columnEditorTransformSpec,
+  'transform.unify': unifyTransformSpec,
   'dest.mysql': mysqlDestSpec,
   'dest.bigquery': bigQueryDestSpec,
   'dest.googlesheets': googleSheetsDestSpec,

@@ -17,8 +17,10 @@ import {
   Filter,
   Calendar,
   DollarSign,
+  Bell,
+  BellOff,
 } from 'lucide-react';
-import { ExecutionHistory, ExecutionStep, ExecutionStatus, NodeOutput } from '@/types/backend';
+import { ExecutionHistory, ExecutionStep, ExecutionStatus, NodeOutput, ExecutionDeliveryResult } from '@/types/backend';
 import { executionHistoryService } from '@/services/executionHistoryService';
 import { DateRangePicker } from '@/components/ui/DateRangePicker';
 import { cn } from '@/lib/utils';
@@ -156,6 +158,35 @@ const formatCost = (cost: number | null): string => {
   if (cost < 0.0001) return '<$0.0001';
   if (cost < 0.01) return `$${cost.toFixed(4)}`;
   return `$${cost.toFixed(2)}`;
+};
+
+// Delivery status badge — shown per-execution
+const DeliveryBadge: React.FC<{ result: ExecutionDeliveryResult }> = ({ result }) => {
+  const channelLabel =
+    result.channel_type === 'slack'
+      ? `Slack${result.channel_label ? ` ${result.channel_label}` : ''}`
+      : 'LINE';
+
+  if (result.status === 'delivered') {
+    return (
+      <span
+        className="inline-flex items-center gap-1 px-1.5 py-0.5 text-[10px] font-medium rounded bg-success/10 text-success border border-success/20"
+        title={`Delivered to ${channelLabel}`}
+      >
+        <Bell className="w-2.5 h-2.5" />
+        {channelLabel}
+      </span>
+    );
+  }
+  return (
+    <span
+      className="inline-flex items-center gap-1 px-1.5 py-0.5 text-[10px] font-medium rounded bg-error/10 text-error border border-error/20"
+      title={result.error || `Delivery to ${channelLabel} failed`}
+    >
+      <BellOff className="w-2.5 h-2.5" />
+      {channelLabel}
+    </span>
+  );
 };
 
 // Time range filter options
@@ -589,6 +620,13 @@ export const ExecutionLogPanel = ({ workflowId }: ExecutionLogPanelProps) => {
                             <span className="text-xs text-text-secondary">
                               {formatRelativeTime(exec.start_time)}
                             </span>
+                            {exec.delivery_results && exec.delivery_results.length > 0 && (
+                              <div className="flex flex-wrap gap-1 mt-1">
+                                {exec.delivery_results.map((result, idx) => (
+                                  <DeliveryBadge key={idx} result={result} />
+                                ))}
+                              </div>
+                            )}
                           </div>
                         </button>
                       );
@@ -647,6 +685,21 @@ export const ExecutionLogPanel = ({ workflowId }: ExecutionLogPanelProps) => {
                         )}
                       </div>
                     </div>
+
+                    {/* Delivery Status */}
+                    {selectedData.delivery_results && selectedData.delivery_results.length > 0 ? (
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-xs font-medium text-text-tertiary">Delivered to:</span>
+                        {selectedData.delivery_results.map((result, idx) => (
+                          <DeliveryBadge key={idx} result={result} />
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-1.5 text-xs text-text-tertiary">
+                        <BellOff className="w-3.5 h-3.5" />
+                        No delivery configured
+                      </div>
+                    )}
 
                     {/* Error */}
                     {selectedData.error && (

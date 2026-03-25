@@ -9,8 +9,12 @@ class ServiceName(Enum):
     BIGQUERY = "BigQuery"
     GOOGLE_SHEET = "GoogleSheet"
     GOOGLE_ADS = "GoogleAds"
+    GA4 = "GA4"
     FACEBOOK_ADS = "FacebookAds"
     TIKTOK_ADS = "TikTokAds"
+    SLACK = "Slack"
+    LINE = "Line"
+    LINE_ADS = "LineAds"
 
 
 class ConnectionType(Enum):

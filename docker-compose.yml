@@ -14,6 +14,8 @@ services:
       - ./server/server:/app/server/server
       - ./server/configs:/app/server/configs
       - ./common/common:/app/common/common
+      - ./engine/engine:/app/engine/engine
+      - ./engine/configs:/app/engine/configs
     profiles: ["dev"]
 
   web:

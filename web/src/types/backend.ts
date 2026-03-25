@@ -150,6 +150,13 @@ export interface ExecutionStep {
   output?: NodeOutput;
 }
 
+export interface ExecutionDeliveryResult {
+  channel_type: 'slack' | 'line';
+  status: 'delivered' | 'failed';
+  channel_label?: string; // e.g. "#marketing-alerts"
+  error?: string;
+}
+
 export interface ExecutionHistory {
   _id: string;
   execution_id: string;
@@ -166,4 +173,6 @@ export interface ExecutionHistory {
   total_nodes: number;
   successful_nodes: number;
   failed_nodes: number;
+  // Optional: populated when delivery channels are configured
+  delivery_results?: ExecutionDeliveryResult[];
 }

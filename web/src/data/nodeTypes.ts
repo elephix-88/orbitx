@@ -64,6 +64,39 @@ export const nodeTypes: NodeTypeDefinition[] = [
     }
   },
   {
+    type: 'source',
+    name: 'Google Analytics',
+    description: 'Import sessions, users, conversions, and revenue from Google Analytics 4',
+    category: NodeCategory.SOURCE,
+    icon: 'BarChart3',
+    color: '#F59E0B',
+    inputs: [],
+    outputs: [{ id: 'out', name: 'Output' }],
+    defaultData: {
+      connection_id: '',
+      property_id: '',
+      dimensions: ['date', 'sessionSource', 'sessionMedium', 'sessionCampaignName'],
+      metrics: ['sessions', 'activeUsers', 'conversions', 'purchaseRevenue', 'transactions'],
+      time_config: { time_preset: 'last_7_days', time_increment: 1 }
+    }
+  },
+  {
+    type: 'source',
+    name: 'LINE Ads',
+    description: 'Import impressions, clicks, cost, and conversions from LINE Ads',
+    category: NodeCategory.SOURCE,
+    icon: 'MessageCircle',
+    color: '#00B900',
+    inputs: [],
+    outputs: [{ id: 'out', name: 'Output' }],
+    defaultData: {
+      connection_id: '',
+      ad_account_id: '',
+      fields: ['impressions', 'clicks', 'cost', 'conversions', 'campaign_name', 'campaign_id'],
+      time_config: { time_preset: 'last_7_days' }
+    }
+  },
+  {
     type: 'transform',
     name: 'SQL Transform',
     description: 'Transform data using SQL queries',
@@ -103,6 +136,20 @@ export const nodeTypes: NodeTypeDefinition[] = [
     outputs: [{ id: 'out', name: 'Output' }],
     defaultData: {
       conversions: []
+    }
+  },
+  {
+    type: 'transform',
+    name: 'Unify Schema',
+    description: 'Normalize ad platform data into a unified marketing schema',
+    category: NodeCategory.TRANSFORM,
+    icon: 'Layers',
+    color: '#8B5CF6',
+    inputs: [{ id: 'in', name: 'Input' }],
+    outputs: [{ id: 'out', name: 'Output' }],
+    defaultData: {
+      platform: '',
+      include_calculated_metrics: true
     }
   },
   {

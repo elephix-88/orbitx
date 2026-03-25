@@ -10,3 +10,5 @@ default:
     bigquery_source: bigquery_source
     mysql: mysql
     google_sheet: google_sheet
+    ga4: ga4
+    line_ads: line_ads

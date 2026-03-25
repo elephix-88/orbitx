@@ -52,7 +52,7 @@ def make_transformer_op(node: Node, op_name: str, parent_count: int):
         transformed = asyncio.run(with_retry(transformer.transform, input_result.data))
 
         field_schemas = input_result.field_schemas
-        if node.node_id in (TransformType.RENAME.value, TransformType.COLUMN_EDITOR.value):
+        if node.node_id in (TransformType.RENAME.value, TransformType.COLUMN_EDITOR.value, TransformType.UNIFY.value):
             updated = transformer.update_field_schemas(field_schemas)
             if updated is not None:
                 field_schemas = updated

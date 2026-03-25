@@ -6,12 +6,14 @@ from engine.node.transformers.column_editor import ColumnEditorTransformer
 from engine.node.transformers.join import JoinTransformer
 from engine.node.transformers.rename import RenameTransformer
 from engine.node.transformers.sql import SQLTransformer
+from engine.node.transformers.unify import UnifyTransformer
 from common.model.transform import (
     ColumnEditorConfig,
     JoinTransformConfig,
     RenameTransformConfig,
     SQLTransformConfig,
     TransformType,
+    UnifyTransformConfig,
 )
 
 _CONFIG_CLASSES: dict[str, type[Any]] = {
@@ -19,6 +21,7 @@ _CONFIG_CLASSES: dict[str, type[Any]] = {
     TransformType.RENAME.value: RenameTransformConfig,
     TransformType.JOIN.value: JoinTransformConfig,
     TransformType.COLUMN_EDITOR.value: ColumnEditorConfig,
+    TransformType.UNIFY.value: UnifyTransformConfig,
 }
 
 
@@ -30,6 +33,7 @@ class TransformFactory(TransformerFactory):
         TransformType.RENAME.value: RenameTransformer,
         TransformType.JOIN.value: JoinTransformer,
         TransformType.COLUMN_EDITOR.value: ColumnEditorTransformer,
+        TransformType.UNIFY.value: UnifyTransformer,
     }
 
     def __init__(self, registry: dict[str, type[Transformer]] | None = None) -> None:

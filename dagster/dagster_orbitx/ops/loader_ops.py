@@ -1,20 +1,19 @@
 import asyncio
 
-import pandas as pd
-from dagster import OpExecutionContext, op
 from loguru import logger
 
+from common.model.workflow import Node
+from dagster import OpExecutionContext, op
+from dagster_orbitx.ops.node_result import NodeResult
+from engine.exceptions import ValidationException
 from engine.factories.loader import LoaderFactory
 from engine.utils.retry import with_retry
-from engine.exceptions import ValidationException
 from engine.utils.validation import validate_dataframe
-from common.model.workflow import Node
-from dagster_orbitx.ops.node_result import NodeResult
 
 
 def make_loader_op(node: Node, op_name: str):
     @op(name=op_name)
-    def loader_op(context: OpExecutionContext, input_result: NodeResult) -> None:
+    def loader_op(context: OpExecutionContext, input_result: NodeResult) -> NodeResult:
         logger.info(f"Loading: {node.node_id} (#{node.node_instance_id})")
 
         factory = LoaderFactory()
@@ -46,5 +45,7 @@ def make_loader_op(node: Node, op_name: str):
             f"Loaded {len(validated_dataframe)} rows to {node.node_id} "
             f"(#{node.node_instance_id})"
         )
+
+        return input_result
 
     return loader_op

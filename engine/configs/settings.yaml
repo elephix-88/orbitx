@@ -25,6 +25,9 @@ default:
   # temp directory
   temp_dir: /tmp
 
+  # AI / LLM
+  ANTHROPIC_API_KEY:
+
   # Google Cloud
   google_cloud_project_id: cron5-dev
 

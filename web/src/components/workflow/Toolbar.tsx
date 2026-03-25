@@ -15,6 +15,7 @@ import {
   Loader2,
   Sun,
   Moon,
+  CalendarClock,
 } from "lucide-react";
 
 import { useNavigate } from "react-router-dom";
@@ -30,6 +31,7 @@ interface ToolbarProps {
   onLoad: () => void;
 
   onSettings?: () => void;
+  onScheduleDelivery?: () => void;
   onImport: (_file: File) => void;
   onExportJson?: () => void;
   leftSidebarCollapsed?: boolean;
@@ -50,6 +52,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
   onLoad,
 
   onSettings,
+  onScheduleDelivery,
   onImport,
   onExportJson,
   leftSidebarCollapsed = false,
@@ -183,6 +186,18 @@ export const Toolbar: React.FC<ToolbarProps> = ({
         >
           Export
         </Button>
+
+        {onScheduleDelivery && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onScheduleDelivery}
+            leftIcon={<CalendarClock size={16} />}
+            className="text-white/70 hover:text-white hover:bg-white/10"
+          >
+            Schedule
+          </Button>
+        )}
 
         <Button
           variant="ghost"

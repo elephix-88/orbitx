@@ -54,6 +54,8 @@ const NODE_DEFINITION_FIXES: Record<string, NodeTypeId> = {
   'Rename Columns': 'transform.rename',
   'Join Tables': 'transform.join',
   'SQL Transform': 'transform.sql',
+  'Column Editor': 'transform.column-editor',
+  'Unify Schema': 'transform.unify',
   'Facebook Ads': 'facebook.ads',
   'Google Ads': 'google.ads',
   'TikTok Ads': 'tiktok.ads',

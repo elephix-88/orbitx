@@ -149,6 +149,28 @@ class LoaderException(OrbitXException):
         super().__init__(message, node_id, node_instance_id, details)
 
 
+class DelivererException(OrbitXException):
+    """Raised when delivery to an external channel fails.
+
+    Attributes:
+        delivery_channel: The channel type that failed (e.g. slack, line).
+    """
+
+    def __init__(
+        self,
+        message: str,
+        delivery_channel: str | None = None,
+        node_id: str | None = None,
+        node_instance_id: int | None = None,
+        details: dict[str, Any] | None = None,
+    ):
+        self.delivery_channel = delivery_channel
+        details = details or {}
+        if delivery_channel:
+            details["delivery_channel"] = delivery_channel
+        super().__init__(message, node_id, node_instance_id, details)
+
+
 class ValidationException(OrbitXException):
     """Raised when data or schema validation fails.
 

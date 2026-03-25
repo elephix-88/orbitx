@@ -7,7 +7,19 @@ from common.model.user import UserInDB
 from common.model.workflow import JobIdRequest, WorkflowData, WorkflowSummary
 from server.configs.config import settings
 from server.middleware import limiter
+from server.models.schedule import ScheduleConfig, ScheduleResponse
 from server.services.auth.dependencies import get_current_user
+from server.services.exceptions import WorkflowNotFoundError
+from server.services.preview import (
+    PreviewNodeRequest,
+    PreviewNodeResponse,
+    preview_node_data,
+)
+from server.services.schedule import (
+    get_workflow_schedule,
+    remove_workflow_schedule,
+    set_workflow_schedule,
+)
 from server.services.workflow import (
     create_new_workflow,
     delete_workflow,
@@ -51,6 +63,16 @@ async def execute_workflow_endpoint(
 ):
     result = await execute_workflow(job_request.id)
     return result
+
+
+@router.post("/preview-node", response_model=PreviewNodeResponse)
+@limiter.limit(settings.rate_limit_expensive)
+async def preview_node(
+    request: Request,
+    preview_request: PreviewNodeRequest,
+    _current_user: UserInDB = Depends(get_current_user),
+) -> PreviewNodeResponse:
+    return await preview_node_data(preview_request)
 
 
 @router.get("", response_model=list[WorkflowSummary])
@@ -111,3 +133,45 @@ async def delete_workflow_endpoint(
 
     logger.info(f"Workflow ID {id} has been deleted")
     return True
+
+
+@router.put("/{id}/schedule", response_model=ScheduleResponse)
+@limiter.limit(settings.rate_limit_expensive)
+async def set_schedule_endpoint(
+    request: Request,
+    id: str,
+    schedule: ScheduleConfig,
+    _current_user: UserInDB = Depends(get_current_user),
+) -> ScheduleResponse:
+    """Set or update the schedule config on a workflow."""
+    try:
+        saved = await set_workflow_schedule(id, schedule)
+        return ScheduleResponse(workflow_id=id, schedule=saved)
+    except WorkflowNotFoundError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+
+
+@router.get("/{id}/schedule", response_model=ScheduleResponse)
+async def get_schedule_endpoint(
+    id: str,
+    _current_user: UserInDB = Depends(get_current_user),
+) -> ScheduleResponse:
+    """Get the current schedule config for a workflow."""
+    try:
+        schedule = await get_workflow_schedule(id)
+        return ScheduleResponse(workflow_id=id, schedule=schedule)
+    except WorkflowNotFoundError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+
+
+@router.delete("/{id}/schedule")
+async def remove_schedule_endpoint(
+    id: str,
+    _current_user: UserInDB = Depends(get_current_user),
+) -> dict:
+    """Remove the schedule from a workflow."""
+    try:
+        await remove_workflow_schedule(id)
+        return {"success": True}
+    except WorkflowNotFoundError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
