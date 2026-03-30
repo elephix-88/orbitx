@@ -20,6 +20,8 @@ import { v4 as uuidv4 } from 'uuid';
 import { cn } from '@/lib/utils';
 import { WorkflowNode as WorkflowNodeType, WorkflowConnection } from '@/types/workflow';
 import { getNodeSpec } from '@/workflow/registry';
+import { isConnectionAllowed, getRejectionMessage } from '@/workflow/connectionRules';
+import { useNotification } from '@/hooks/useNotification';
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog';
 import { validateWorkflow, type NodeValidationResult } from '../WorkflowValidation';
 import WorkflowNodeComponent, { type WorkflowNodeData } from './WorkflowNode';
@@ -52,7 +54,39 @@ interface ReactFlowCanvasProps {
   onNodeSelect: (_node: WorkflowNodeType | null) => void;
   isMobile?: boolean;
   onNodeOpenEditor?: (_node: WorkflowNodeType) => void;
+  /** Set of node_instance_id strings that are currently pinned. */
+  pinnedNodeInstanceIds?: ReadonlySet<string>;
+  /** Set of node React IDs that have a cached preview result. */
+  previewedNodeIds?: ReadonlySet<string>;
+  onPinNode?: (_node: WorkflowNodeType) => void;
+  onUnpinNode?: (_node: WorkflowNodeType) => void;
+  /**
+   * Map of node React ID → step-run status.
+   * Drives the Play button color and spinner overlay inside WorkflowNode.
+   */
+  stepRunStatusMap?: ReadonlyMap<string, 'idle' | 'running' | 'done' | 'error'>;
+  onStepRunNode?: (_node: WorkflowNodeType) => void;
+
+  /**
+   * Debug mode: map of node_instance_id (string) → overlay data.
+   * Present only when an execution is loaded for inspection.
+   */
+  debugNodeMap?: ReadonlyMap<string, {
+    failed: boolean;
+    succeeded: boolean;
+    rowCount: number;
+    errorMessage: string | null;
+  }>;
+  /** Called when user double-clicks a node in debug mode. */
+  onDebugInspectNode?: (_node: WorkflowNodeType) => void;
 }
+
+type DebugNodeData = {
+  failed: boolean;
+  succeeded: boolean;
+  rowCount: number;
+  errorMessage: string | null;
+};
 
 // Convert WorkflowNode to React Flow Node
 const toReactFlowNode = (
@@ -60,14 +94,22 @@ const toReactFlowNode = (
   validation: NodeValidationResult | undefined,
   onOpenEditor: (() => void) | undefined,
   onDelete: (() => void) | undefined,
-  onDuplicate: (() => void) | undefined
+  onDuplicate: (() => void) | undefined,
+  isPinned: boolean,
+  hasPreview: boolean,
+  onPin: (() => void) | undefined,
+  onUnpin: (() => void) | undefined,
+  stepRunStatus: 'idle' | 'running' | 'done' | 'error' | undefined,
+  onStepRun: (() => void) | undefined,
+  debugData: DebugNodeData | undefined,
+  onDebugInspect: (() => void) | undefined
 ): ReactFlowNodeType => ({
   id: node.id,
   type: 'custom',
   position: node.position,
   data: {
-    name: node.name, // Actual node type name (e.g., "Facebook Ads")
-    display_name: node.display_name, // Alias/custom name (e.g., "FB - Age Data")
+    name: node.name,
+    display_name: node.display_name,
     icon: getNodeSpec(node.definitionId)?.icon,
     color: getNodeSpec(node.definitionId)?.color,
     category: node.type,
@@ -79,6 +121,17 @@ const toReactFlowNode = (
     onOpenEditor,
     onDelete,
     onDuplicate,
+    isPinned,
+    hasPreview,
+    onPin,
+    onUnpin,
+    stepRunStatus,
+    onStepRun,
+    debugFailed: debugData?.failed,
+    debugSucceeded: debugData?.succeeded,
+    debugRowCount: debugData?.rowCount,
+    debugErrorMessage: debugData?.errorMessage ?? null,
+    onDebugInspect,
   },
 });
 
@@ -111,9 +164,20 @@ const ReactFlowCanvasInner: React.FC<ReactFlowCanvasProps> = ({
   onNodeSelect,
   isMobile = false,
   onNodeOpenEditor,
+  pinnedNodeInstanceIds,
+  previewedNodeIds,
+  onPinNode,
+  onUnpinNode,
+  stepRunStatusMap,
+  onStepRunNode,
+  debugNodeMap,
+  onDebugInspectNode,
 }) => {
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const { fitView, getViewport } = useReactFlow();
+  const { notify } = useNotification();
+  const pendingConnectionSourceRef = useRef<string | null>(null);
+  const connectionSucceededRef = useRef<boolean>(false);
 
   // Delete confirmation state
   const [confirmDeleteNodeId, setConfirmDeleteNodeId] = useState<string | null>(null);
@@ -179,16 +243,49 @@ const ReactFlowCanvasInner: React.FC<ReactFlowCanvasProps> = ({
 
   // Convert workflow nodes to React Flow nodes
   const rfNodes = useMemo<ReactFlowNodeType[]>(() => {
-    return workflowNodes.map((node) =>
-      toReactFlowNode(
+    return workflowNodes.map((node) => {
+      // node_instance_id is stored inside node.data by the backend transformer
+      const instanceId = node.data?.node_instance_id;
+      const instanceIdStr = instanceId !== undefined ? String(instanceId) : '';
+      const isPinned = instanceIdStr !== '' && (pinnedNodeInstanceIds?.has(instanceIdStr) ?? false);
+      const hasPreview = previewedNodeIds?.has(node.id) ?? false;
+
+      const stepRunStatus = stepRunStatusMap?.get(node.id);
+
+      // Debug overlay — reuse the same instanceIdStr computed above
+      const debugData = instanceIdStr !== '' ? debugNodeMap?.get(instanceIdStr) : undefined;
+
+      return toReactFlowNode(
         node,
         nodeValidationMap.get(node.id),
         onNodeOpenEditor ? () => onNodeOpenEditor(node) : undefined,
         () => requestDeleteNode(node.id),
-        () => handleDuplicateNode(node.id)
-      )
-    );
-  }, [workflowNodes, nodeValidationMap, onNodeOpenEditor, requestDeleteNode, handleDuplicateNode]);
+        () => handleDuplicateNode(node.id),
+        isPinned,
+        hasPreview,
+        onPinNode ? () => onPinNode(node) : undefined,
+        onUnpinNode ? () => onUnpinNode(node) : undefined,
+        stepRunStatus,
+        onStepRunNode ? () => onStepRunNode(node) : undefined,
+        debugData,
+        onDebugInspectNode ? () => onDebugInspectNode(node) : undefined
+      );
+    });
+  }, [
+    workflowNodes,
+    nodeValidationMap,
+    onNodeOpenEditor,
+    requestDeleteNode,
+    handleDuplicateNode,
+    pinnedNodeInstanceIds,
+    previewedNodeIds,
+    onPinNode,
+    onUnpinNode,
+    stepRunStatusMap,
+    onStepRunNode,
+    debugNodeMap,
+    onDebugInspectNode,
+  ]);
 
   // Convert workflow connections to React Flow edges
   const rfEdges = useMemo<Edge[]>(() => {
@@ -256,6 +353,7 @@ const ReactFlowCanvasInner: React.FC<ReactFlowCanvasProps> = ({
   const handleConnect = useCallback(
     (connection: Connection) => {
       if (!connection.source || !connection.target) return;
+      connectionSucceededRef.current = true;
 
       const newConnection: WorkflowConnection = {
         id: `conn_${Date.now()}`,
@@ -268,6 +366,57 @@ const ReactFlowCanvasInner: React.FC<ReactFlowCanvasProps> = ({
       onWorkflowConnectionsChange((prev) => [...prev, newConnection]);
     },
     [onWorkflowConnectionsChange]
+  );
+
+  const handleIsValidConnection = useCallback(
+    (connection: Edge | Connection): boolean => {
+      if (!connection.source || !connection.target) return false;
+      const sourceNode = workflowNodes.find((n) => n.id === connection.source);
+      const targetNode = workflowNodes.find((n) => n.id === connection.target);
+      if (!sourceNode || !targetNode) return false;
+      return isConnectionAllowed(sourceNode, targetNode, workflowConnections).allowed;
+    },
+    [workflowNodes, workflowConnections]
+  );
+
+  const handleConnectStart = useCallback(
+    (_event: unknown, params: { nodeId: string | null }) => {
+      pendingConnectionSourceRef.current = params.nodeId;
+      connectionSucceededRef.current = false;
+    },
+    []
+  );
+
+  const handleConnectEnd = useCallback(
+    (event: MouseEvent | TouchEvent) => {
+      if (connectionSucceededRef.current) {
+        pendingConnectionSourceRef.current = null;
+        connectionSucceededRef.current = false;
+        return;
+      }
+
+      const sourceNodeId = pendingConnectionSourceRef.current;
+      if (!sourceNodeId) return;
+
+      const targetElement = (event.target as Element)?.closest('[data-id]');
+      const targetNodeId = targetElement?.getAttribute('data-id');
+
+      if (targetNodeId && targetNodeId !== sourceNodeId) {
+        const sourceNode = workflowNodes.find((n) => n.id === sourceNodeId);
+        const targetNode = workflowNodes.find((n) => n.id === targetNodeId);
+
+        if (sourceNode && targetNode) {
+          const message = getRejectionMessage(sourceNode, targetNode, workflowConnections);
+          if (message) {
+            notify.warning('Connection not allowed', message);
+          }
+        }
+      }
+
+      pendingConnectionSourceRef.current = null;
+      connectionSucceededRef.current = false;
+    },
+    [workflowNodes, workflowConnections, notify]
   );
 
   // Handle drag and drop from sidebar
@@ -477,6 +626,9 @@ const ReactFlowCanvasInner: React.FC<ReactFlowCanvasProps> = ({
         onNodesChange={handleNodesChange as any}
         onEdgesChange={handleEdgesChange}
         onConnect={handleConnect}
+        isValidConnection={handleIsValidConnection}
+        onConnectStart={handleConnectStart}
+        onConnectEnd={handleConnectEnd}
         onPaneClick={handlePaneClick}
         nodeTypes={nodeTypes as any}
         edgeTypes={edgeTypes}

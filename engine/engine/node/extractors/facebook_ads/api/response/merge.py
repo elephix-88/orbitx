@@ -4,6 +4,8 @@ from typing import Any
 import pandas as pd
 from loguru import logger
 
+from common.model.facebook.common import Group
+from common.model.facebook.fields import FacebookField as FieldConfig
 from engine.node.extractors.facebook_ads.api.request.field_mapper import unify_fields
 from engine.node.extractors.facebook_ads.api.request.post_processing import (
     normalize_data,
@@ -13,8 +15,6 @@ from engine.utils.dtypes import (
     create_dtype_mapping,
     validate_df_with_fields,
 )
-from common.model.facebook.common import Group
-from common.model.facebook.fields import FacebookField as FieldConfig
 
 NESTED_FIELDS = ["actions", "action_values", "conversions"]
 

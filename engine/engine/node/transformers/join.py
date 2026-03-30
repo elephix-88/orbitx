@@ -1,10 +1,10 @@
 import pandas as pd
 from loguru import logger
 
+from common.model.transform import JoinTransformConfig
 from engine.exceptions import TransformerException
 from engine.interfaces.node import Transformer
 from engine.utils.dtypes import normalize_join_keys
-from common.model.transform import JoinTransformConfig
 
 
 class JoinTransformer(Transformer):
@@ -34,7 +34,8 @@ class JoinTransformer(Transformer):
 
         result = data[self.config.base_node_id].copy()
         logger.info(
-            f"Starting join with base node {self.config.base_node_id} ({len(result)} rows)"
+            f"Starting join with base node "
+            f"{self.config.base_node_id} ({len(result)} rows)"
         )
 
         base_keys = self.config.get_base_keys()
@@ -62,13 +63,13 @@ class JoinTransformer(Transformer):
                         details={"source_index": i, "node_id": source.node_id},
                     )
 
-            for left_key, right_key in zip(left_keys, right_keys):
+            for left_key, right_key in zip(left_keys, right_keys, strict=False):
                 result, source_df = normalize_join_keys(
                     result, source_df, left_key, right_key
                 )
 
             key_pairs = " AND ".join(
-                f"{lk}={rk}" for lk, rk in zip(left_keys, right_keys)
+                f"{lk}={rk}" for lk, rk in zip(left_keys, right_keys, strict=False)
             )
             logger.info(
                 f"Join {i + 1}/{len(self.config.sources)}: "
@@ -101,6 +102,7 @@ class JoinTransformer(Transformer):
                 ) from ex
 
         logger.success(
-            f"Join completed: {len(self.config.sources) + 1} sources -> {len(result)} rows"
+            f"Join completed: {len(self.config.sources) + 1} "
+            f"sources -> {len(result)} rows"
         )
         return result

@@ -21,7 +21,9 @@ async def set_workflow_schedule(
 async def get_workflow_schedule(workflow_id: str) -> ScheduleConfig | None:
     """Get the schedule config for a workflow owned by the current user."""
     user = get_current_user()
-    return await get_workflow_field(workflow_id, user.id, SCHEDULE_FIELD, ScheduleConfig)
+    return await get_workflow_field(
+        workflow_id, user.id, SCHEDULE_FIELD, ScheduleConfig
+    )
 
 
 async def remove_workflow_schedule(workflow_id: str) -> None:

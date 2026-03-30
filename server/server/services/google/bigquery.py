@@ -43,7 +43,9 @@ def get_bigquery_client(credentials: Credentials, project_id: str):
     return bigquery.Client(credentials=credentials, project=project_id)
 
 
-def get_bigquery_projects(connection_id: str, credentials: Credentials) -> list[BigQueryProject]:
+def get_bigquery_projects(
+    connection_id: str, credentials: Credentials
+) -> list[BigQueryProject]:
     """Retrieves a list of BigQuery projects accessible with given credentials."""
     try:
         service = build("bigquery", "v2", credentials=credentials)
@@ -69,17 +71,22 @@ def get_bigquery_projects(connection_id: str, credentials: Credentials) -> list[
         raise
     except RefreshError as e:
         logger.error(f"Token refresh failed for connection {connection_id}: {e}")
-        raise ConnectionAuthError(connection_id, "Token expired or revoked")
+        raise ConnectionAuthError(connection_id, "Token expired or revoked") from e
     except HttpError as e:
         logger.error(f"BigQuery API error: {e}")
-        raise ExternalAPIError("BigQuery", str(e), e.resp.status if e.resp else None)
+        status_code = e.resp.status if e.resp else None
+        raise ExternalAPIError("BigQuery", str(e), status_code) from e
     except GoogleAPIError as e:
         logger.error(f"Google API error fetching BigQuery projects: {e}")
-        raise ExternalAPIError("BigQuery", str(e))
+        raise ExternalAPIError("BigQuery", str(e)) from e
 
 
-def get_bigquery_datasets(connection_id: str, project_id: str, credentials: Credentials) -> list[BigQueryDataset]:
-    """Retrieves a list of BigQuery datasets accessible with given credentials and project_id."""
+def get_bigquery_datasets(
+    connection_id: str,
+    project_id: str,
+    credentials: Credentials,
+) -> list[BigQueryDataset]:
+    """Retrieves BigQuery datasets for a given project_id."""
     try:
         client = get_bigquery_client(credentials, project_id)
 
@@ -108,14 +115,16 @@ def get_bigquery_datasets(connection_id: str, project_id: str, credentials: Cred
         raise
     except RefreshError as e:
         logger.error(f"Token refresh failed for connection {connection_id}: {e}")
-        raise ConnectionAuthError(connection_id, "Token expired or revoked")
+        raise ConnectionAuthError(connection_id, "Token expired or revoked") from e
     except GoogleAPIError as e:
         logger.error(f"Google API error fetching BigQuery datasets: {e}")
-        raise ExternalAPIError("BigQuery", str(e))
+        raise ExternalAPIError("BigQuery", str(e)) from e
 
 
-def validate_bigquery_connection(connection_id: str, credentials: Credentials) -> bool:
-    """Validates that a BigQuery connection is working by attempting to list projects."""
+def validate_bigquery_connection(
+    connection_id: str, credentials: Credentials
+) -> bool:
+    """Validates a BigQuery connection by listing projects."""
     try:
         get_bigquery_projects(connection_id, credentials)
         return True

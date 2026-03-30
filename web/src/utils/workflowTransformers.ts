@@ -582,10 +582,22 @@ export function transformBackendWorkflowDetailed(
         const toUi = typeof toInst === 'number' ? instanceIdToUiNode.get(toInst) : undefined;
         if (!fromUi || !toUi) continue;
         // Use actual node ports (already calculated with dynamic ports) instead of spec lookup
-        const fromOutput = fromUi.outputs[0]?.id || 'out';
-        const toInput = toUi.inputs[0]?.id || 'in';
+        // Prefer from_port from the backend payload (set for multi-output nodes like IF/Switch)
+        // Fall back to the first output port of the source node for single-output nodes
+        const backendFromPort = (conn as Record<string, unknown>)?.from_port;
+        const fromOutput = typeof backendFromPort === 'string' && backendFromPort
+          ? backendFromPort
+          : fromUi.outputs[0]?.id || 'out';
+        const backendToPort = (conn as Record<string, unknown>)?.to_port;
+        const toInput = typeof backendToPort === 'string' && backendToPort
+          ? backendToPort
+          : toUi.inputs[0]?.id || 'in';
+        // For multi-output nodes, include the port ID in the connection id to avoid collisions
+        const edgeId = fromOutput !== 'out'
+          ? `${fromUi.id}-${fromOutput}-to-${toUi.id}`
+          : `${fromUi.id}-to-${toUi.id}`;
         connections.push({
-          id: `${fromUi.id}-to-${toUi.id}`,
+          id: edgeId,
           sourceNodeId: fromUi.id,
           sourceOutputId: fromOutput,
           targetNodeId: toUi.id,

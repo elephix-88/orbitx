@@ -1,4 +1,4 @@
-from enum import Enum
+from enum import StrEnum
 
 from pydantic import BaseModel
 
@@ -36,7 +36,7 @@ class BaseAdsConfig(BaseConnectedConfig):
     time_config: DateTimeConfig
 
 
-class InsertMode(str, Enum):
+class InsertMode(StrEnum):
     """Insert mode for data loaders."""
 
     APPEND = "append"

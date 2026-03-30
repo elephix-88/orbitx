@@ -3,10 +3,10 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import httpx
 import pytest
+
 from common.model.connection import ConnectionItem
 from common.model.facebook.ads import FacebookAdsAccount
 from common.model.user import UserInDB
-
 from server.services.exceptions import ConnectionNotFoundError, ExternalAPIError
 from server.services.facebook.ads import get_facebook_ads_accounts
 
@@ -105,7 +105,9 @@ class TestFacebookService:
         mock_client = AsyncMock()
         mock_client.get.side_effect = [mock_response1, mock_response2]
 
-        with patch("server.services.facebook.ads.httpx.AsyncClient") as mock_async_client:
+        with patch(
+            "server.services.facebook.ads.httpx.AsyncClient"
+        ) as mock_async_client:
             mock_async_client.return_value.__aenter__.return_value = mock_client
 
             # Act
@@ -152,7 +154,9 @@ class TestFacebookService:
             "Bad Request", request=MagicMock(), response=mock_response
         )
 
-        with patch("server.services.facebook.ads.httpx.AsyncClient") as mock_async_client:
+        with patch(
+            "server.services.facebook.ads.httpx.AsyncClient"
+        ) as mock_async_client:
             mock_async_client.return_value.__aenter__.return_value = mock_client
 
             # Act & Assert

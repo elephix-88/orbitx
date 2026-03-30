@@ -4,9 +4,9 @@ import duckdb
 import pandas as pd
 from loguru import logger
 
+from common.model.transform import RenameTransformConfig
 from engine.exceptions import TransformerException
 from engine.interfaces.node import Transformer
-from common.model.transform import RenameTransformConfig
 
 
 class RenameTransformer(Transformer):

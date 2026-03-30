@@ -1,4 +1,4 @@
-"""Tests for delivery Pydantic models — DeliveryConfig, SlackChannelConfig, LineChannelConfig."""
+"""Tests for delivery Pydantic models."""
 
 import pytest
 from pydantic import ValidationError
@@ -141,7 +141,7 @@ class TestDeliveryConfig:
         assert isinstance(config.channels[0], LineChannelConfig)
 
     def test_valid_config_with_both_channels(self):
-        """DeliveryConfig with both Slack and LINE channels configured simultaneously."""
+        """DeliveryConfig with both Slack and LINE channels."""
         config = DeliveryConfig(
             channels=[
                 SlackChannelConfig(

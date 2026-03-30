@@ -1,16 +1,13 @@
-import asyncio
 from contextlib import asynccontextmanager
 
 from fastapi import APIRouter, FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse, StreamingResponse
+from fastapi.responses import JSONResponse
 from loguru import logger
 from slowapi.errors import RateLimitExceeded
 
-from server.services.exceptions import OrbitXError
-
 from common.database.indexes import ensure_indexes
-from common.database.mongodb import get_mongodb
+from common.database.mongodb import close_mongodb, get_mongodb
 from server.api.auth import router as auth_router
 from server.api.connection.connections import router as connections_router
 from server.api.delivery import router as delivery_router
@@ -19,21 +16,16 @@ from server.api.facebook.ads import router as facebook_ads_router
 from server.api.facebook.facebook_fields import router as facebook_fields_router
 from server.api.facebook.oauth import router as facebook_oauth_router
 from server.api.google.ads import router as google_ads_fields
-from server.api.google.analytics import router as google_analytics_router
 from server.api.google.bigquery import router as google_bigquery_router
 from server.api.google.oauth import router as google_oauth
 from server.api.google.sheets import router as google_sheets_router
-from server.api.pulse import router as pulse_router
-from server.api.line.ads import router as line_ads_router
 from server.api.slack.oauth import router as slack_router
 from server.api.tiktok.ads import router as tiktok_ads_router
 from server.api.tiktok.oauth import router as tiktok_oauth_router
 from server.api.tiktok.tiktok_fields import router as tiktok_fields_router
 from server.api.workflow import router as workflow_router
-from server.change_stream import start_change_stream
 from server.configs.adapter import init_settings
 from server.configs.config import settings
-from server.consumer import sse_manager
 from server.middleware import (
     AuthContextMiddleware,
     CSRFMiddleware,
@@ -41,22 +33,16 @@ from server.middleware import (
     limiter,
     rate_limit_exceeded_handler,
 )
+from server.services.exceptions import OrbitXError
 
 init_settings()
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Startup
     await ensure_indexes(get_mongodb().database)
-    stream_task = asyncio.create_task(start_change_stream())
     yield
-    # Shutdown
-    stream_task.cancel()
-    try:
-        await stream_task
-    except asyncio.CancelledError:
-        pass
+    close_mongodb()
 
 
 app = FastAPI(
@@ -108,13 +94,12 @@ app.add_middleware(AuthContextMiddleware)
 
 app.include_router(auth_router)
 app.include_router(workflow_router)
-app.include_router(execution_history_router)
+# app.include_router(execution_history_router)  # disabled temporarily
 app.include_router(google_bigquery_router)
 app.include_router(google_oauth)
 app.include_router(facebook_oauth_router)
 app.include_router(facebook_ads_router)
 app.include_router(google_ads_fields)
-app.include_router(google_analytics_router)
 app.include_router(google_sheets_router)
 app.include_router(connections_router)
 app.include_router(facebook_fields_router)
@@ -122,9 +107,7 @@ app.include_router(tiktok_oauth_router)
 app.include_router(tiktok_fields_router)
 app.include_router(tiktok_ads_router)
 app.include_router(delivery_router)
-app.include_router(pulse_router)
 app.include_router(slack_router)
-app.include_router(line_ads_router)
 
 
 # Health endpoints
@@ -166,10 +149,3 @@ async def readyz():
 
 
 app.include_router(health_router)
-
-
-@app.get("/stream/{workflow_id}")
-async def stream(workflow_id: str):
-    return StreamingResponse(
-        sse_manager.connect(workflow_id), media_type="text/event-stream"
-    )

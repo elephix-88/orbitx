@@ -17,7 +17,8 @@ async def set_execution_delivery_status(
     Called by the delivery layer after attempting to send to configured channels.
     """
     user = get_current_user()
-    collection = get_mongodb().get_collection(settings.execution_history_collection)
+    mongodb = get_mongodb()
+    collection = mongodb.get_collection(settings.execution_history_collection)
 
     document = await collection.find_one({"execution_id": execution_id})
 
@@ -28,7 +29,7 @@ async def set_execution_delivery_status(
         return
 
     workflow_id = document.get("workflow_id")
-    owned_workflow = await get_mongodb().get_document(
+    owned_workflow = await mongodb.get_document(
         collection_name=settings.workflow_collection,
         query={"_id": workflow_id, "user_id": user.id},
         model_cls=WorkflowData,
@@ -56,7 +57,8 @@ async def get_execution_delivery_status(
 ) -> ExecutionDeliveryStatus | None:
     """Get the delivery_status for an execution, with ownership verification."""
     user = get_current_user()
-    collection = get_mongodb().get_collection(settings.execution_history_collection)
+    mongodb = get_mongodb()
+    collection = mongodb.get_collection(settings.execution_history_collection)
 
     document = await collection.find_one({"execution_id": execution_id})
 
@@ -64,7 +66,7 @@ async def get_execution_delivery_status(
         return None
 
     workflow_id = document.get("workflow_id")
-    owned_workflow = await get_mongodb().get_document(
+    owned_workflow = await mongodb.get_document(
         collection_name=settings.workflow_collection,
         query={"_id": workflow_id, "user_id": user.id},
         model_cls=WorkflowData,

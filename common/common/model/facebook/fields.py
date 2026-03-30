@@ -1,5 +1,7 @@
 from pydantic import BaseModel
 
+from common.model.common import BaseFieldSchema
+
 
 class Endpoints(BaseModel):
     insights: str | None = None
@@ -11,11 +13,9 @@ class Endpoints(BaseModel):
     ads: str | None = None
 
 
-class FacebookField(BaseModel):
-    field: str
+class FacebookField(BaseFieldSchema):
     display_name: str | None = None
     group: str
-    data_type: str
     is_primary_key: bool
     active: bool = True
     endpoints: Endpoints

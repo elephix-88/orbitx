@@ -4,6 +4,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 from bson import ObjectId
+
 from common.model.user import UserInDB
 
 # Mock user for tests
@@ -178,7 +179,7 @@ class TestGetDashboardStats:
     def test_get_dashboard_stats_with_workflow_ids_and_names(
         self, mock_mongodb, mock_settings, sample_aggregation_result
     ):
-        """Test dashboard stats when both IDs and names are provided (skips DB query)."""
+        """Test dashboard stats when both IDs and names are provided."""
         from server.services.execution_history import get_dashboard_stats
 
         mock_mongodb.aggregate.return_value = sample_aggregation_result

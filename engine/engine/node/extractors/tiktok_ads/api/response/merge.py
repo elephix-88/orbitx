@@ -45,8 +45,9 @@ class TikTokDataMerger:
             return basic_data
 
         logger.info(
-            f"Both BASIC ({len(basic_data)} rows) and AUDIENCE ({len(audience_data)} rows) "
-            f"data exist. Using AUDIENCE data (contains breakdown dimensions)."
+            f"Both BASIC ({len(basic_data)} rows) and "
+            f"AUDIENCE ({len(audience_data)} rows) data exist. "
+            "Using AUDIENCE data (contains breakdown dimensions)."
         )
         return audience_data
 
@@ -115,7 +116,8 @@ class TikTokDataMerger:
         audience_df = self.flatten_report_data(audience_data or [])
 
         logger.info(
-            f"Flattened data: basic={len(basic_df)} rows, audience={len(audience_df)} rows"
+            f"Flattened data: basic={len(basic_df)} rows, "
+            f"audience={len(audience_df)} rows"
         )
 
         merged = self.merge_reports(basic_df, audience_df, merge_keys)
@@ -131,7 +133,8 @@ class TikTokDataMerger:
         if hierarchy_dfs:
             merged = self.join_hierarchy_data(merged, hierarchy_dfs)
             logger.info(
-                f"After hierarchy join: {len(merged)} rows, {len(merged.columns)} columns"
+                f"After hierarchy join: {len(merged)} rows, "
+                f"{len(merged.columns)} columns"
             )
 
         return merged

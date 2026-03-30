@@ -45,10 +45,10 @@ def _get_google_ads_accounts_sync(
         response = customer_service.list_accessible_customers()
     except RefreshError as e:
         logger.error(f"Token refresh failed for connection {connection.id}: {e}")
-        raise ConnectionAuthError(connection.id, "Token expired or revoked")
+        raise ConnectionAuthError(connection.id, "Token expired or revoked") from e
     except GoogleAdsException as e:
         logger.error(f"Google Ads API error: {e}")
-        raise ExternalAPIError("Google Ads", str(e))
+        raise ExternalAPIError("Google Ads", str(e)) from e
 
     ga_service = client.get_service("GoogleAdsService")
     accounts: list[GoogleAdsAccount] = []

@@ -4,7 +4,7 @@ from typing import TypeVar
 T = TypeVar("T")
 
 
-def chunked(items: Iterable[T], size: int) -> Iterator[list[T]]:
+def chunked[T](items: Iterable[T], size: int) -> Iterator[list[T]]:
     """Yield lists of up to 'size' items from an iterable."""
     bucket: list[T] = []
     for item in items:

@@ -21,7 +21,9 @@ async def set_workflow_delivery(
 async def get_workflow_delivery(workflow_id: str) -> DeliveryConfig | None:
     """Get the delivery config for a workflow owned by the current user."""
     user = get_current_user()
-    return await get_workflow_field(workflow_id, user.id, DELIVERY_FIELD, DeliveryConfig)
+    return await get_workflow_field(
+        workflow_id, user.id, DELIVERY_FIELD, DeliveryConfig
+    )
 
 
 async def remove_workflow_delivery(workflow_id: str) -> None:

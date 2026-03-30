@@ -1,8 +1,8 @@
 """Tests for node output utilities."""
 
 import pandas as pd
-from common.model.execution import NodeOutputType
 
+from common.model.execution import NodeOutputType
 from engine.utils.node_output import (
     build_error_output,
     build_extractor_output,

@@ -1,7 +1,6 @@
 from datetime import date, timedelta
 
 from common.model.common import DateTimeConfig
-
 from engine.utils.datetime import get_time_preset, get_time_range
 
 

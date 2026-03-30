@@ -1,12 +1,6 @@
 from typing import Any
 
-from engine.interfaces.factory import TransformerFactory
-from engine.interfaces.node import Transformer
-from engine.node.transformers.column_editor import ColumnEditorTransformer
-from engine.node.transformers.join import JoinTransformer
-from engine.node.transformers.rename import RenameTransformer
-from engine.node.transformers.sql import SQLTransformer
-from engine.node.transformers.unify import UnifyTransformer
+from common.model.conditional import IfNodeConfig, SwitchNodeConfig
 from common.model.transform import (
     ColumnEditorConfig,
     JoinTransformConfig,
@@ -15,6 +9,15 @@ from common.model.transform import (
     TransformType,
     UnifyTransformConfig,
 )
+from engine.interfaces.factory import TransformerFactory
+from engine.interfaces.node import Transformer
+from engine.node.transformers.column_editor import ColumnEditorTransformer
+from engine.node.transformers.conditional_router import ConditionalRouter
+from engine.node.transformers.join import JoinTransformer
+from engine.node.transformers.rename import RenameTransformer
+from engine.node.transformers.sql import SQLTransformer
+from engine.node.transformers.switch_router import SwitchRouter
+from engine.node.transformers.unify import UnifyTransformer
 
 _CONFIG_CLASSES: dict[str, type[Any]] = {
     TransformType.SQL.value: SQLTransformConfig,
@@ -22,6 +25,16 @@ _CONFIG_CLASSES: dict[str, type[Any]] = {
     TransformType.JOIN.value: JoinTransformConfig,
     TransformType.COLUMN_EDITOR.value: ColumnEditorConfig,
     TransformType.UNIFY.value: UnifyTransformConfig,
+}
+
+_ROUTER_CONFIG_CLASSES: dict[str, type[Any]] = {
+    "if": IfNodeConfig,
+    "switch": SwitchNodeConfig,
+}
+
+_ROUTER_CLASSES: dict[str, type] = {
+    "if": ConditionalRouter,
+    "switch": SwitchRouter,
 }
 
 
@@ -52,3 +65,21 @@ class TransformFactory(TransformerFactory):
         except KeyError as exc:
             raise ValueError(f"Unknown transform type: {node_id}") from exc
         return transformer_cls(config)
+
+    def create_router(
+        self, config: Any, node_id: str
+    ) -> ConditionalRouter | SwitchRouter:
+        """Create a router instance for IF or Switch nodes.
+
+        Routers return dict[str, DataFrame] instead of a single DataFrame,
+        so they use a separate interface from transformers.
+        """
+        config_cls = _ROUTER_CONFIG_CLASSES.get(node_id)
+        if config_cls and isinstance(config, dict):
+            config = config_cls(**config)
+
+        router_cls = _ROUTER_CLASSES.get(node_id)
+        if router_cls is None:
+            raise ValueError(f"Unknown router type: {node_id}")
+
+        return router_cls(config)

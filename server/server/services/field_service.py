@@ -9,7 +9,9 @@ from common.database import get_mongodb
 T = TypeVar("T", bound=BaseModel)
 
 
-async def get_fields(collection_name: str, model_class: type[T]) -> list[T]:
+async def get_fields[T: BaseModel](
+    collection_name: str, model_class: type[T]
+) -> list[T]:
     """Retrieve fields from a MongoDB collection and return as typed models.
 
     Args:

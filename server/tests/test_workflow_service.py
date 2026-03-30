@@ -3,9 +3,9 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 from fastapi import HTTPException
+
 from common.model.user import UserInDB
 from common.model.workflow import JobIdRequest, WorkflowData
-
 from server.services.workflow import (
     create_new_workflow,
     delete_workflow,

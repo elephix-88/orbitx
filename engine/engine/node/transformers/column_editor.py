@@ -4,9 +4,9 @@ import duckdb
 import pandas as pd
 from loguru import logger
 
+from common.model.transform import ColumnEditorConfig, DataType
 from engine.exceptions import TransformerException
 from engine.interfaces.node import Transformer
-from common.model.transform import ColumnEditorConfig, DataType
 
 TYPE_MAP: dict[str, str] = {
     DataType.STRING.value: "VARCHAR",
@@ -25,7 +25,7 @@ class ColumnEditorTransformer(Transformer):
         self.config = config
 
     def update_field_schemas(self, schemas: list[Any] | None) -> list[Any] | None:
-        """Update field schemas to reflect renamed columns, cast types, dropped columns, and new columns."""
+        """Update field schemas for renames, casts, drops, and new columns."""
         if not schemas:
             return None
 
@@ -98,7 +98,7 @@ class ColumnEditorTransformer(Transformer):
         return ", ".join(parts)
 
     async def transform(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Apply column renames, type casts, drop columns, and add new columns using DuckDB."""
+        """Apply column renames, casts, drops, and additions via DuckDB."""
         if not self.config.conversions and not self.config.new_columns:
             return df
 

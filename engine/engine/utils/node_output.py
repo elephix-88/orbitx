@@ -4,8 +4,6 @@ from typing import Any
 
 import pandas as pd
 
-from engine.exceptions import OrbitXException
-
 from common.model.execution import (
     DataSummary,
     ExtractorOutput,
@@ -14,6 +12,7 @@ from common.model.execution import (
     NodeOutputType,
     TransformerOutput,
 )
+from engine.exceptions import OrbitXException
 
 
 def create_data_summary(
@@ -112,7 +111,9 @@ def build_extractor_output(
         if report_level:
             summary += f" at {report_level} level"
         if date_range:
-            summary += f". Date range: {date_range.get('start', '?')} to {date_range.get('end', '?')}"
+            start = date_range.get("start", "?")
+            end = date_range.get("end", "?")
+            summary += f". Date range: {start} to {end}"
 
     return _build_node_output(
         title=title,
@@ -161,7 +162,10 @@ def build_transformer_output(
     else:
         title = f"Processed {records_in:,} -> {records_out:,} records"
         if filtered > 0:
-            summary = f"Filtered out {filtered:,} records ({records_in:,} in, {records_out:,} out)"
+            summary = (
+                f"Filtered out {filtered:,} records "
+                f"({records_in:,} in, {records_out:,} out)"
+            )
         elif added > 0:
             summary = (
                 f"Added {added:,} records ({records_in:,} in, {records_out:,} out)"
@@ -207,22 +211,29 @@ def build_loader_output(
     """Build a NodeOutput for a loader node."""
     total = len(df) if df is not None else 0
 
-    if records_inserted == 0 and records_updated == 0 and records_deleted == 0:
-        if operation in ("INSERT", "APPEND", "TRUNCATE_INSERT", "UPSERT"):
-            records_inserted = total
+    no_records = records_inserted == 0 and records_updated == 0 and records_deleted == 0
+    if no_records and operation in ("INSERT", "APPEND", "TRUNCATE_INSERT", "UPSERT"):
+        records_inserted = total
 
     if error:
         title = f"Failed to load to {destination_type}"
         summary = f"Load failed: {error}"
     elif operation == "UPSERT" and records_updated > 0:
         title = f"Upserted {total:,} records"
-        summary = f"Inserted {records_inserted:,}, updated {records_updated:,} records in {destination_table}"
+        summary = (
+            f"Inserted {records_inserted:,}, "
+            f"updated {records_updated:,} records "
+            f"in {destination_table}"
+        )
     elif operation == "TRUNCATE_INSERT":
         title = f"Replaced with {records_inserted:,} records"
         summary = (
-            f"Deleted {records_deleted:,}, inserted {records_inserted:,} in {destination_table}"
+            f"Deleted {records_deleted:,}, "
+            f"inserted {records_inserted:,} "
+            f"in {destination_table}"
             if records_deleted > 0
-            else f"Truncated and inserted {records_inserted:,} records in {destination_table}"
+            else f"Truncated and inserted {records_inserted:,} "
+            f"records in {destination_table}"
         )
     elif operation == "DELETE":
         title = f"Deleted {records_deleted:,} records"

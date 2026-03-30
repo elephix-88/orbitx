@@ -3,7 +3,6 @@ from pydantic import BaseModel
 
 from common.database import get_mongodb
 from server.configs.config import settings
-from server.services.auth.context import get_current_user
 from server.services.exceptions import WorkflowNotFoundError
 
 

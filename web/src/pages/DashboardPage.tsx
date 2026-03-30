@@ -27,10 +27,8 @@ import { DateRangePicker } from '@/components/ui/DateRangePicker';
 import { cn } from '@/lib/utils';
 import { useDeferredLoading } from '@/hooks/useDeferredLoading';
 import { useFetchOnce } from '@/hooks/useStableRequest';
-import { useFirstTimeUser } from '@/hooks/useFirstTimeUser';
 import { executionHistoryService, DashboardStats } from '@/services/executionHistoryService';
 import { workflowApiService } from '@/services/workflowApiService';
-import { WelcomeModal, OnboardingChecklist } from '@/components/onboarding/WelcomeModal';
 import { fetchClient } from '@/lib/fetchClient';
 import {
   ExecutionHistory,
@@ -309,13 +307,6 @@ const DashboardPage = () => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
-  // First-time user detection for onboarding
-  const {
-    isFirstTimeUser,
-    hasCompletedOnboarding,
-    markOnboardingComplete,
-    dismissOnboarding,
-  } = useFirstTimeUser();
 
   // Filter state - show filters by default
   const [timeRange, setTimeRange] = useState<TimeRange>('all');
@@ -445,14 +436,6 @@ const DashboardPage = () => {
 
   return (
     <Layout>
-      {/* Welcome Modal for first-time users */}
-      {isFirstTimeUser && (
-        <WelcomeModal
-          onComplete={markOnboardingComplete}
-          onDismiss={dismissOnboarding}
-        />
-      )}
-
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -722,16 +705,6 @@ const DashboardPage = () => {
 
           {/* Right Column: Onboarding Checklist + Workflows Panel */}
           <div className="space-y-6">
-            {/* Onboarding Checklist - shown until user completes onboarding */}
-            {!hasCompletedOnboarding && (
-              <OnboardingChecklist
-                hasConnections={connectionCount > 0}
-                hasWorkflows={workflowCount > 0}
-                hasExecutions={stats.totalExecutions > 0}
-                onDismiss={markOnboardingComplete}
-              />
-            )}
-
             {/* Workflows Panel */}
             <div className="overflow-hidden bg-surface-secondary border border-neutral-800 rounded-xl">
               <div className="flex items-center justify-between px-4 py-3 border-b border-neutral-800">

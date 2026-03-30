@@ -14,8 +14,6 @@ const PLATFORM_OPTIONS = [
   { value: 'facebook_ads', label: 'Facebook Ads' },
   { value: 'google_ads', label: 'Google Ads' },
   { value: 'tiktok_ads', label: 'TikTok Ads' },
-  { value: 'ga4', label: 'Google Analytics 4' },
-  { value: 'line_ads', label: 'LINE Ads' },
 ];
 
 const FIELD_MAPPINGS: Record<UnifyPlatform, FieldMapping[]> = {
@@ -62,31 +60,6 @@ const FIELD_MAPPINGS: Record<UnifyPlatform, FieldMapping[]> = {
     { source: 'spend', unified: 'spend' },
     { source: 'conversions', unified: 'conversions' },
     { source: 'total_complete_payment_rate', unified: 'conversion_value' },
-    { source: 'reach', unified: 'reach' },
-  ],
-  ga4: [
-    { source: 'date', unified: 'date' },
-    { source: 'sessionCampaignName', unified: 'campaign_name' },
-    { source: 'sessionSource', unified: 'campaign_id' },
-    { source: 'sessionMedium', unified: 'ad_group_name' },
-    { source: 'sessions', unified: 'clicks' },
-    { source: 'activeUsers', unified: 'reach' },
-    { source: 'screenPageViews', unified: 'impressions' },
-    { source: 'conversions', unified: 'conversions' },
-    { source: 'purchaseRevenue', unified: 'conversion_value' },
-  ],
-  line_ads: [
-    { source: 'campaign_id', unified: 'campaign_id' },
-    { source: 'campaign_name', unified: 'campaign_name' },
-    { source: 'adgroup_id', unified: 'ad_group_id' },
-    { source: 'adgroup_name', unified: 'ad_group_name' },
-    { source: 'ad_id', unified: 'ad_id' },
-    { source: 'ad_name', unified: 'ad_name' },
-    { source: 'impressions', unified: 'impressions' },
-    { source: 'clicks', unified: 'clicks' },
-    { source: 'cost', unified: 'spend' },
-    { source: 'conversions', unified: 'conversions' },
-    { source: 'conversion_value', unified: 'conversion_value' },
     { source: 'reach', unified: 'reach' },
   ],
 };

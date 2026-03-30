@@ -46,26 +46,28 @@ export function getUpstreamChain(
   // Reverse so sources come first (topological order)
   orderedIds.reverse();
 
-  return orderedIds
-    .map((id) => {
-      const node = nodeMap.get(id);
-      if (!node) return null;
+  const results: UpstreamNodeRequest[] = [];
 
-      const spec = getNodeSpec(node.definitionId);
-      let nodeType = node.definitionId || node.type;
-      let parameters = node.data || {};
+  for (const id of orderedIds) {
+    const node = nodeMap.get(id);
+    if (!node) continue;
 
-      if (spec?.adapters?.toBackend) {
-        const adapted = spec.adapters.toBackend(node.data || {});
-        nodeType = adapted.node_id;
-        parameters = adapted.parameters;
-      }
+    const spec = getNodeSpec(node.definitionId);
+    let nodeType: string = node.definitionId || node.type;
+    let parameters: Record<string, unknown> = node.data || {};
 
-      return {
-        node_type: nodeType,
-        node_category: node.type,
-        parameters,
-      };
-    })
-    .filter((entry): entry is UpstreamNodeRequest => entry !== null);
+    if (spec?.adapters?.toBackend) {
+      const adapted = spec.adapters.toBackend(node.data || {});
+      nodeType = adapted.node_id;
+      parameters = adapted.parameters as Record<string, unknown>;
+    }
+
+    results.push({
+      node_type: nodeType,
+      node_category: node.type,
+      parameters,
+    });
+  }
+
+  return results;
 }

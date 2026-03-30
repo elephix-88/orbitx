@@ -12,13 +12,12 @@ import {
   Hash,
   Power,
   PowerOff,
-  Sparkles,
   ChevronRight,
-  X,
-  TrendingUp,
-  TrendingDown,
-  Minus,
+  ShieldAlert,
+  ChevronDown,
+  Check,
 } from 'lucide-react';
+import { workflowApiService } from '@/services/workflowApiService';
 import { Sheet } from '@/components/shared/Sheet';
 import { Button } from '@/components/shared/Button';
 import { Switch } from '@/components/shared/form/Switch';
@@ -26,7 +25,6 @@ import { Select } from '@/components/shared/form/Select';
 import { ScheduleSelector } from '@/components/shared/form/ScheduleSelector';
 import { cn } from '@/lib/utils';
 import { deliveryService } from '@/services/deliveryService';
-import { pulseService, PulseResponse } from '@/services/pulseService';
 import {
   DeliveryConfig,
   DeliveryChannel,
@@ -34,6 +32,11 @@ import {
   LineDeliveryChannel,
   SlackChannel,
 } from '@/types/delivery';
+
+interface WorkflowSummary {
+  id: string;
+  name: string;
+}
 
 interface ScheduleDeliverySheetProps {
   isOpen: boolean;
@@ -47,9 +50,12 @@ interface ScheduleDeliverySheetProps {
   onDeliveryConfigChange: (_config: DeliveryConfig) => void;
   onSave: () => void;
   isSaving?: boolean;
+  /** The workflow to trigger when this workflow fails. null = no error workflow set. */
+  errorWorkflowId: string | null;
+  onErrorWorkflowChange: (_workflowId: string | null) => void;
 }
 
-type ActiveTab = 'schedule' | 'delivery';
+type ActiveTab = 'schedule' | 'delivery' | 'failure';
 
 // LINE brand colors kept as a semantic name via inline style only where Tailwind token doesn't exist
 const LINE_GREEN = '#06C755';
@@ -66,14 +72,15 @@ export const ScheduleDeliverySheet: React.FC<ScheduleDeliverySheetProps> = ({
   onDeliveryConfigChange,
   onSave,
   isSaving = false,
+  errorWorkflowId,
+  onErrorWorkflowChange,
 }) => {
   const [activeTab, setActiveTab] = useState<ActiveTab>('schedule');
 
-  // Pulse preview state
-  const [pulsePreviewOpen, setPulsePreviewOpen] = useState(false);
-  const [pulsePreviewData, setPulsePreviewData] = useState<PulseResponse | null>(null);
-  const [pulsePreviewLoading, setPulsePreviewLoading] = useState(false);
-  const [pulsePreviewError, setPulsePreviewError] = useState<string | null>(null);
+  // Error workflow selector state
+  const [workflows, setWorkflows] = useState<WorkflowSummary[]>([]);
+  const [workflowsLoading, setWorkflowsLoading] = useState(false);
+  const [workflowDropdownOpen, setWorkflowDropdownOpen] = useState(false);
 
   // Slack state
   const [slackChannels, setSlackChannels] = useState<SlackChannel[]>([]);
@@ -87,6 +94,33 @@ export const ScheduleDeliverySheet: React.FC<ScheduleDeliverySheetProps> = ({
   const lineChannel = deliveryConfig.channels.find(
     (c): c is LineDeliveryChannel => c.type === 'line'
   );
+
+  // Fetch all workflows when the failure tab is opened
+  useEffect(() => {
+    if (activeTab !== 'failure') return;
+    setWorkflowsLoading(true);
+    workflowApiService
+      .getWorkflows({ limit: 200 })
+      .then((response) => {
+        const items: WorkflowSummary[] = (response.data ?? [])
+          .filter((w) => {
+            // Exclude the current workflow from the selector — a workflow cannot be its own error handler.
+            const wId = typeof w._id === 'object' && w._id !== null && '$oid' in w._id
+              ? w._id.$oid
+              : String(w._id ?? '');
+            return wId !== workflowId && String(w.job_id ?? '') !== workflowId;
+          })
+          .map((w) => ({
+            id: typeof w._id === 'object' && w._id !== null && '$oid' in w._id
+              ? w._id.$oid
+              : String(w._id ?? w.job_id ?? ''),
+            name: w.job_name || w.name || w.job_id || 'Unnamed workflow',
+          }));
+        setWorkflows(items);
+      })
+      .catch(() => setWorkflows([]))
+      .finally(() => setWorkflowsLoading(false));
+  }, [activeTab, workflowId]);
 
   // Fetch Slack channels when a connected slack channel exists
   useEffect(() => {
@@ -176,22 +210,6 @@ export const ScheduleDeliverySheet: React.FC<ScheduleDeliverySheetProps> = ({
   // LINE backend is not implemented yet — no-op placeholder
   const handleConnectLine = () => { /* coming soon */ };
 
-  const handlePreviewPulse = async () => {
-    if (!workflowId) return;
-    setPulsePreviewOpen(true);
-    setPulsePreviewLoading(true);
-    setPulsePreviewError(null);
-    setPulsePreviewData(null);
-    try {
-      const result = await pulseService.previewPulse(workflowId);
-      setPulsePreviewData(result);
-    } catch (err) {
-      setPulsePreviewError(err instanceof Error ? err.message : 'Failed to generate Pulse preview');
-    } finally {
-      setPulsePreviewLoading(false);
-    }
-  };
-
   const handleSlackChannelSelect = (channelId: string | number) => {
     const found = slackChannels.find((c) => c.id === String(channelId));
     if (!found || !slackChannel) return;
@@ -201,6 +219,7 @@ export const ScheduleDeliverySheet: React.FC<ScheduleDeliverySheetProps> = ({
   const tabs: { id: ActiveTab; label: string; icon: typeof Calendar }[] = [
     { id: 'schedule', label: 'Schedule', icon: Calendar },
     { id: 'delivery', label: 'Delivery', icon: Bell },
+    { id: 'failure', label: 'On Failure', icon: ShieldAlert },
   ];
 
   const deliveryCount = deliveryConfig.channels.filter(
@@ -304,56 +323,6 @@ export const ScheduleDeliverySheet: React.FC<ScheduleDeliverySheetProps> = ({
         </div>
       )}
 
-      {/* Pulse Preview Modal */}
-      {pulsePreviewOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-          <div
-            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-            onClick={() => setPulsePreviewOpen(false)}
-          />
-          <div className="relative z-10 w-full max-w-lg bg-surface-primary border border-border rounded-2xl shadow-2xl overflow-hidden max-h-[80vh] flex flex-col">
-            {/* Modal header */}
-            <div className="flex items-center justify-between px-5 py-4 border-b border-border bg-surface-secondary">
-              <div className="flex items-center gap-2.5">
-                <Sparkles className="w-4 h-4 text-amber-400" />
-                <span className="text-sm font-semibold text-text-primary">Pulse AI Preview</span>
-              </div>
-              <button
-                type="button"
-                onClick={() => setPulsePreviewOpen(false)}
-                className="p-1.5 rounded-lg text-text-tertiary hover:text-text-secondary hover:bg-surface-primary transition-colors"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            {/* Modal body */}
-            <div className="flex-1 overflow-y-auto p-5 space-y-4">
-              {pulsePreviewLoading && (
-                <div className="flex flex-col items-center justify-center py-12 gap-3">
-                  <Loader2 className="w-6 h-6 text-amber-400 animate-spin" />
-                  <p className="text-sm text-text-secondary">Generating Pulse briefing...</p>
-                </div>
-              )}
-
-              {pulsePreviewError && (
-                <div className="flex items-start gap-3 p-4 rounded-xl bg-error/10 border border-error/20">
-                  <AlertCircle className="w-4 h-4 text-error shrink-0 mt-0.5" />
-                  <div>
-                    <p className="text-sm font-medium text-error">Preview failed</p>
-                    <p className="text-xs text-text-secondary mt-0.5">{pulsePreviewError}</p>
-                  </div>
-                </div>
-              )}
-
-              {pulsePreviewData && (
-                <PulsePreviewContent data={pulsePreviewData} />
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Delivery Tab */}
       {activeTab === 'delivery' && (
         <div className="space-y-5">
@@ -433,56 +402,20 @@ export const ScheduleDeliverySheet: React.FC<ScheduleDeliverySheetProps> = ({
             </div>
           )}
 
-          {/* Divider */}
-          <div className="border-t border-border" />
-
-          {/* AI Summary toggle */}
-          <div className="rounded-xl border border-border bg-surface-primary overflow-hidden">
-            <div className="flex items-start justify-between gap-4 p-4">
-              <div className="flex items-start gap-3">
-                <Sparkles className="w-4 h-4 text-amber-400 mt-0.5 shrink-0" />
-                <div>
-                  <p className="text-sm font-medium text-text-primary">
-                    Include AI Summary
-                  </p>
-                  <p className="text-xs text-text-secondary mt-0.5">
-                    Pulse generates an AI-written marketing briefing with top performers, anomalies, and recommendations.
-                  </p>
-                </div>
-              </div>
-              <Switch
-                checked={deliveryConfig.includeAiSummary}
-                onChange={(checked) =>
-                  onDeliveryConfigChange({ ...deliveryConfig, includeAiSummary: checked })
-                }
-                size="sm"
-              />
-            </div>
-            {deliveryConfig.includeAiSummary && (
-              <div className="px-4 pb-4">
-                <button
-                  type="button"
-                  onClick={handlePreviewPulse}
-                  disabled={!workflowId}
-                  className={cn(
-                    'flex items-center gap-2 px-3 py-2 rounded-lg border text-sm font-medium transition-all',
-                    workflowId
-                      ? 'border-amber-400/30 bg-amber-400/5 text-amber-400 hover:bg-amber-400/10'
-                      : 'border-border text-text-tertiary opacity-50 cursor-not-allowed'
-                  )}
-                >
-                  <Sparkles className="w-3.5 h-3.5" />
-                  Preview Pulse
-                </button>
-                {!workflowId && (
-                  <p className="text-xs text-text-tertiary mt-1.5">
-                    Save the workflow first to preview.
-                  </p>
-                )}
-              </div>
-            )}
-          </div>
         </div>
+      )}
+
+      {/* On Failure Tab */}
+      {activeTab === 'failure' && (
+        <OnFailureTab
+          errorWorkflowId={errorWorkflowId}
+          onErrorWorkflowChange={onErrorWorkflowChange}
+          workflows={workflows}
+          workflowsLoading={workflowsLoading}
+          workflowDropdownOpen={workflowDropdownOpen}
+          onDropdownToggle={() => setWorkflowDropdownOpen((prev) => !prev)}
+          onDropdownClose={() => setWorkflowDropdownOpen(false)}
+        />
       )}
     </Sheet>
   );
@@ -706,161 +639,6 @@ const SlackMessagePreview: React.FC<{ channelName: string }> = ({ channelName })
   </div>
 );
 
-// --- Pulse Preview Content ---
-
-const PulsePreviewContent: React.FC<{ data: PulseResponse }> = ({ data }) => (
-  <div className="space-y-4">
-    {/* Verdict */}
-    <div className="p-4 rounded-xl bg-amber-400/5 border border-amber-400/20">
-      <div className="flex items-center gap-2 mb-2">
-        <Sparkles className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-        <span className="text-xs font-semibold text-amber-400 uppercase tracking-wider">
-          Verdict
-        </span>
-      </div>
-      <p className="text-sm text-text-primary leading-relaxed">{data.verdict}</p>
-    </div>
-
-    {/* Metrics table */}
-    {data.metrics_table.length > 0 && (
-      <div>
-        <p className="text-xs font-semibold text-text-tertiary uppercase tracking-wider mb-2">
-          Key Metrics
-        </p>
-        <div className="rounded-xl border border-border overflow-hidden">
-          {data.metrics_table.map((row, index) => (
-            <div
-              key={index}
-              className={cn(
-                'flex items-center justify-between px-4 py-2.5 text-sm',
-                index < data.metrics_table.length - 1 && 'border-b border-border'
-              )}
-            >
-              <span className="text-text-secondary">{row.label}</span>
-              <div className="flex items-center gap-2">
-                <span className="font-medium text-text-primary">{row.value}</span>
-                {row.change_percent !== undefined && (
-                  <span
-                    className={cn(
-                      'flex items-center gap-0.5 text-xs font-medium',
-                      row.trend === 'up' && 'text-success',
-                      row.trend === 'down' && 'text-error',
-                      row.trend === 'flat' && 'text-text-tertiary'
-                    )}
-                  >
-                    {row.trend === 'up' && <TrendingUp className="w-3 h-3" />}
-                    {row.trend === 'down' && <TrendingDown className="w-3 h-3" />}
-                    {row.trend === 'flat' && <Minus className="w-3 h-3" />}
-                    {Math.abs(row.change_percent).toFixed(1)}%
-                  </span>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    )}
-
-    {/* Winners and Losers */}
-    {(data.winners.length > 0 || data.losers.length > 0) && (
-      <div className="grid grid-cols-2 gap-3">
-        {data.winners.length > 0 && (
-          <div>
-            <p className="text-xs font-semibold text-success uppercase tracking-wider mb-2">
-              Top Performers
-            </p>
-            <div className="space-y-1.5">
-              {data.winners.map((item, index) => (
-                <div
-                  key={index}
-                  className="flex items-center justify-between px-3 py-2 rounded-lg bg-success/5 border border-success/15 text-xs"
-                >
-                  <span className="text-text-secondary truncate mr-2">{item.name}</span>
-                  <span className="text-success font-medium shrink-0">{item.value}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-        {data.losers.length > 0 && (
-          <div>
-            <p className="text-xs font-semibold text-error uppercase tracking-wider mb-2">
-              Underperformers
-            </p>
-            <div className="space-y-1.5">
-              {data.losers.map((item, index) => (
-                <div
-                  key={index}
-                  className="flex items-center justify-between px-3 py-2 rounded-lg bg-error/5 border border-error/15 text-xs"
-                >
-                  <span className="text-text-secondary truncate mr-2">{item.name}</span>
-                  <span className="text-error font-medium shrink-0">{item.value}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
-    )}
-
-    {/* Anomalies */}
-    {data.anomalies.length > 0 && (
-      <div>
-        <p className="text-xs font-semibold text-text-tertiary uppercase tracking-wider mb-2">
-          Anomalies
-        </p>
-        <div className="space-y-2">
-          {data.anomalies.map((anomaly, index) => (
-            <div
-              key={index}
-              className={cn(
-                'flex items-start gap-2.5 px-3 py-2.5 rounded-lg border text-xs',
-                anomaly.severity === 'high' && 'bg-error/5 border-error/20',
-                anomaly.severity === 'medium' && 'bg-warning/5 border-warning/20',
-                anomaly.severity === 'low' && 'bg-surface-secondary border-border'
-              )}
-            >
-              <AlertCircle
-                className={cn(
-                  'w-3.5 h-3.5 shrink-0 mt-0.5',
-                  anomaly.severity === 'high' && 'text-error',
-                  anomaly.severity === 'medium' && 'text-warning',
-                  anomaly.severity === 'low' && 'text-text-tertiary'
-                )}
-              />
-              <span className="text-text-secondary">{anomaly.description}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-    )}
-
-    {/* Recommendations */}
-    {data.recommendations.length > 0 && (
-      <div>
-        <p className="text-xs font-semibold text-text-tertiary uppercase tracking-wider mb-2">
-          Recommendations
-        </p>
-        <div className="space-y-2">
-          {data.recommendations.map((rec, index) => (
-            <div
-              key={index}
-              className="flex items-start gap-2.5 px-3 py-2.5 rounded-lg bg-primary/5 border border-primary/15 text-xs"
-            >
-              <CheckCircle2 className="w-3.5 h-3.5 text-primary shrink-0 mt-0.5" />
-              <span className="text-text-secondary">{rec.text}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-    )}
-
-    <p className="text-[10px] text-text-tertiary text-center pt-1">
-      This is a preview based on your most recent workflow run. Results will vary.
-    </p>
-  </div>
-);
-
 interface LineChannelCardProps {
   channel: LineDeliveryChannel;
   workflowId: string | null; // reserved for future LINE backend implementation
@@ -946,6 +724,160 @@ const LineChannelCard: React.FC<LineChannelCardProps> = ({
             </button>
           </div>
         )}
+      </div>
+    </div>
+  );
+};
+
+// ---------------------------------------------------------------------------
+// OnFailureTab — Error workflow selector
+// ---------------------------------------------------------------------------
+
+interface OnFailureTabProps {
+  errorWorkflowId: string | null;
+  onErrorWorkflowChange: (_workflowId: string | null) => void;
+  workflows: WorkflowSummary[];
+  workflowsLoading: boolean;
+  workflowDropdownOpen: boolean;
+  onDropdownToggle: () => void;
+  onDropdownClose: () => void;
+}
+
+const OnFailureTab: React.FC<OnFailureTabProps> = ({
+  errorWorkflowId,
+  onErrorWorkflowChange,
+  workflows,
+  workflowsLoading,
+  workflowDropdownOpen,
+  onDropdownToggle,
+  onDropdownClose,
+}) => {
+  const selectedWorkflow = workflows.find((w) => w.id === errorWorkflowId) ?? null;
+
+  const handleSelect = (workflowId: string | null) => {
+    onErrorWorkflowChange(workflowId);
+    onDropdownClose();
+  };
+
+  return (
+    <div className="space-y-5">
+      {/* Explanation */}
+      <div className="flex items-start gap-3 rounded-xl border border-red-500/20 bg-red-500/5 px-4 py-3">
+        <ShieldAlert className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
+        <div>
+          <p className="text-sm font-medium text-text-primary">Error Workflow</p>
+          <p className="text-xs text-text-secondary mt-1 leading-relaxed">
+            When this workflow fails, OrbitX will automatically trigger the selected error workflow
+            and pass the error context as input. The error workflow must contain an{' '}
+            <span className="font-mono text-red-400">Error Trigger</span> source node to receive the
+            payload.
+          </p>
+        </div>
+      </div>
+
+      {/* Workflow selector */}
+      <div className="space-y-2">
+        <label className="text-xs font-medium text-text-secondary">Error Workflow</label>
+
+        <div className="relative">
+          <button
+            type="button"
+            onClick={onDropdownToggle}
+            className={cn(
+              'w-full px-3 py-2.5 rounded-lg border text-left text-sm flex items-center justify-between transition-all bg-surface-primary',
+              workflowDropdownOpen
+                ? 'border-red-500/50 ring-2 ring-red-500/20'
+                : 'border-border-primary hover:border-border-primary/80'
+            )}
+          >
+            <span className={selectedWorkflow ? 'text-text-primary' : 'text-text-tertiary'}>
+              {workflowsLoading
+                ? 'Loading workflows...'
+                : selectedWorkflow
+                  ? selectedWorkflow.name
+                  : 'None — errors are not forwarded'}
+            </span>
+            <ChevronDown
+              className={cn(
+                'w-4 h-4 text-text-tertiary transition-transform',
+                workflowDropdownOpen && 'rotate-180'
+              )}
+            />
+          </button>
+
+          {workflowDropdownOpen && !workflowsLoading && (
+            <div className="absolute z-50 mt-1 w-full bg-surface-primary border border-border-primary rounded-lg shadow-lg overflow-hidden">
+              {/* None option */}
+              <button
+                type="button"
+                onClick={() => handleSelect(null)}
+                className={cn(
+                  'w-full px-3 py-2.5 text-left text-sm flex items-center justify-between hover:bg-surface-secondary transition-colors',
+                  errorWorkflowId === null && 'bg-brand-500/5'
+                )}
+              >
+                <span className="text-text-tertiary italic">None</span>
+                {errorWorkflowId === null && (
+                  <Check className="w-4 h-4 text-brand-500" />
+                )}
+              </button>
+
+              {workflows.length === 0 ? (
+                <div className="px-3 py-4 text-sm text-text-tertiary text-center border-t border-border-primary">
+                  No other workflows found.{' '}
+                  <a href="/workflows" className="text-brand-500 hover:underline">
+                    Create one
+                  </a>
+                </div>
+              ) : (
+                <div className="border-t border-border-primary">
+                  {workflows.map((workflow) => (
+                    <button
+                      key={workflow.id}
+                      type="button"
+                      onClick={() => handleSelect(workflow.id)}
+                      className={cn(
+                        'w-full px-3 py-2.5 text-left text-sm flex items-center justify-between hover:bg-surface-secondary transition-colors',
+                        workflow.id === errorWorkflowId && 'bg-brand-500/5'
+                      )}
+                    >
+                      <span className="text-text-primary">{workflow.name}</span>
+                      {workflow.id === errorWorkflowId && (
+                        <Check className="w-4 h-4 text-brand-500" />
+                      )}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {errorWorkflowId !== null && selectedWorkflow && (
+          <p className="text-xs text-text-tertiary">
+            Failures will trigger{' '}
+            <span className="font-medium text-text-secondary">{selectedWorkflow.name}</span>.
+          </p>
+        )}
+      </div>
+
+      {/* Requirements note */}
+      <div className="rounded-xl border border-border bg-surface-primary p-4 space-y-2">
+        <p className="text-xs font-semibold text-text-secondary uppercase tracking-wider">
+          Requirements
+        </p>
+        <ul className="space-y-1.5">
+          {[
+            'The error workflow must contain an Error Trigger source node.',
+            'The error workflow cannot be the same workflow (no self-loops).',
+            'If the error workflow itself fails, it will not trigger a further error workflow.',
+          ].map((req) => (
+            <li key={req} className="flex items-start gap-2 text-xs text-text-secondary">
+              <span className="mt-1 w-1 h-1 rounded-full bg-text-tertiary shrink-0" />
+              {req}
+            </li>
+          ))}
+        </ul>
       </div>
     </div>
   );

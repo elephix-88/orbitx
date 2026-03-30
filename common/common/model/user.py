@@ -1,5 +1,5 @@
 from datetime import UTC, datetime
-from enum import Enum
+from enum import StrEnum
 
 from pydantic import BaseModel, EmailStr, Field
 
@@ -8,7 +8,7 @@ def utc_now() -> datetime:
     return datetime.now(UTC)
 
 
-class UserRole(str, Enum):
+class UserRole(StrEnum):
     ADMIN = "admin"
     USER = "user"
 

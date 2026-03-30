@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, lazy, Suspense, useRef } from "react";
+import React, { useState, useEffect, useCallback, useMemo, lazy, Suspense, useRef } from "react";
 import { useLocation, useSearchParams, useNavigate } from "react-router-dom";
 // React Flow canvas (migrated from custom canvas)
 import { ReactFlowCanvas } from "../components/workflow/reactflow";
@@ -15,7 +15,6 @@ import { normalizeWorkflowPayload } from "../utils/normalizeWorkflow";
 import { getNodeSpec } from "../workflow/registry";
 import { AlertTriangle, Loader2 } from "lucide-react";
 import { Button } from "@/components/shared/Button";
-import { useWorkflowEvents } from "../hooks/useWorkflowEvents";
 import { useWorkflowExecution } from "../hooks/useWorkflowExecution";
 import { WorkflowData, BackendWorkflow } from "../types/backend";
 import { DeliveryConfig, DEFAULT_DELIVERY_CONFIG } from "../types/delivery";
@@ -24,6 +23,9 @@ import { extractMongoId } from "../utils/mongoUtils";
 import { useResponsiveLayout } from "../hooks/useResponsiveLayout";
 import { useElementSize } from "../hooks/useElementSize";
 import { autoLayoutDynamic } from "../utils/workflowLayout";
+import { pinService } from "../services/pinService";
+import { stepRunService, type StepRunResponse } from "../services/stepRunService";
+import { executionDebugService, type ExecutionDetail } from "../services/executionDebugService";
 
 // Lazy load heavy components (modals and panels)
 const ExecutionLogPanel = lazy(() => import("../components/workflow/ExecutionLogPanel").then(m => ({ default: m.ExecutionLogPanel })));
@@ -31,6 +33,7 @@ const WorkflowMetaForm = lazy(() => import("../components/forms/WorkflowMetaForm
 const NodeConfigPanel = lazy(() => import("../components/workflow/node-config/NodeConfigPanel").then(m => ({ default: m.NodeConfigPanel })));
 const PreviewPanel = lazy(() => import("../components/workflow/PreviewPanel").then(m => ({ default: m.PreviewPanel })));
 const ScheduleDeliverySheet = lazy(() => import("../components/workflow/ScheduleDeliverySheet").then(m => ({ default: m.ScheduleDeliverySheet })));
+const ExecutionHistoryPanel = lazy(() => import("../components/workflow/ExecutionHistoryPanel").then(m => ({ default: m.ExecutionHistoryPanel })));
 
 // Location state type
 interface LocationState {
@@ -66,10 +69,16 @@ const WorkflowBuilderPage: React.FC = () => {
     (state) => state.setOriginalBackendWorkflow
   );
   const markAsSaved = useWorkflowStore((state) => state.markAsSaved);
+  const pinnedNodes = useWorkflowStore((state) => state.pinnedNodes);
+  const previewCache = useWorkflowStore((state) => state.previewCache);
+  const loadPinnedNodes = useWorkflowStore((state) => state.loadPinnedNodes);
+  const addPinnedNode = useWorkflowStore((state) => state.addPinnedNode);
+  const removePinnedNode = useWorkflowStore((state) => state.removePinnedNode);
+  const debugExecution = useWorkflowStore((state) => state.debugExecution);
+  const enterDebugMode = useWorkflowStore((state) => state.enterDebugMode);
+  const exitDebugMode = useWorkflowStore((state) => state.exitDebugMode);
 
-  // Real-time status updates
   const workflowId = originalBackendWorkflow?.job_id || docId;
-  useWorkflowEvents(workflowId);
 
   // Execution ID: prefer Mongo ObjectId, fall back to job_id
   const executionId = extractMongoId(originalBackendWorkflow?._id) || originalBackendWorkflow?.job_id;
@@ -93,6 +102,257 @@ const WorkflowBuilderPage: React.FC = () => {
   // Schedule & delivery local state (saved via onSave)
   const [scheduleEnabled, setScheduleEnabled] = useState(true);
   const [deliveryConfig, setDeliveryConfig] = useState<DeliveryConfig>(DEFAULT_DELIVERY_CONFIG);
+  const [errorWorkflowId, setErrorWorkflowId] = useState<string | null>(
+    () => originalBackendWorkflow?.error_workflow_id ?? null
+  );
+
+  // Derived sets for the canvas — recomputed only when maps change
+  const pinnedNodeInstanceIds = useMemo(
+    () => new Set(Object.keys(pinnedNodes)),
+    [pinnedNodes]
+  );
+  const previewedNodeIds = useMemo(
+    () => new Set(Object.keys(previewCache)),
+    [previewCache]
+  );
+
+  // Pin / unpin handlers wired to the pin service
+  const handlePinNode = useCallback(
+    async (node: WorkflowNode) => {
+      const instanceId = node.data?.node_instance_id;
+      const preview = previewCache[node.id];
+      if (!workflowId || instanceId === undefined || !preview) return;
+      try {
+        await pinService.pinNode(workflowId, Number(instanceId), preview);
+        addPinnedNode(String(instanceId), {
+          data: preview.data,
+          columns: preview.columns,
+          pinned_at: Date.now() / 1000,
+        });
+        notify.success("Pinned", `${node.display_name || node.name} data is now pinned.`);
+      } catch {
+        notify.error("Pin failed", "Could not pin node data. Please try again.");
+      }
+    },
+    [workflowId, previewCache, addPinnedNode, notify]
+  );
+
+  const handleUnpinNode = useCallback(
+    async (node: WorkflowNode) => {
+      const instanceId = node.data?.node_instance_id;
+      if (!workflowId || instanceId === undefined) return;
+      try {
+        await pinService.unpinNode(workflowId, Number(instanceId));
+        removePinnedNode(String(instanceId));
+        notify.success("Unpinned", `${node.display_name || node.name} pin cleared.`);
+      } catch {
+        notify.error("Unpin failed", "Could not remove pin. Please try again.");
+      }
+    },
+    [workflowId, removePinnedNode, notify]
+  );
+
+  // ---------------------------------------------------------------------------
+  // F2-FE-1 / F2-FE-2 — Step-run state
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Per-node step-run status map. Key = node React ID.
+   * Lives in page state — not Zustand (it's ephemeral per session interaction).
+   */
+  const [stepRunStatusMap, setStepRunStatusMap] = useState<
+    Map<string, 'idle' | 'running' | 'done' | 'error'>
+  >(new Map());
+
+  /** The node ID whose step-run result is currently shown in PreviewPanel. */
+  const [stepRunNodeId, setStepRunNodeId] = useState<string | null>(null);
+
+  /** The last step-run response for the active step-run panel node. */
+  const [stepRunResult, setStepRunResult] = useState<StepRunResponse | null>(null);
+
+  /** Whether the auto-pin checkbox is checked for the current step-run result. */
+  const [autoPinChecked, setAutoPinChecked] = useState(false);
+
+  const setNodeStepRunStatus = useCallback(
+    (nodeId: string, status: 'idle' | 'running' | 'done' | 'error') => {
+      setStepRunStatusMap((prev) => {
+        const next = new Map(prev);
+        next.set(nodeId, status);
+        return next;
+      });
+    },
+    []
+  );
+
+  const handleStepRunNode = useCallback(
+    async (node: WorkflowNode) => {
+      const instanceId = node.data?.node_instance_id;
+      if (!workflowId || instanceId === undefined) return;
+
+      setNodeStepRunStatus(node.id, 'running');
+      setStepRunNodeId(node.id);
+      setStepRunResult(null);
+      setAutoPinChecked(false);
+
+      try {
+        const result = await stepRunService.stepRunNode(
+          workflowId,
+          Number(instanceId),
+          false // auto_pin controlled by checkbox, not sent as true here
+        );
+        setStepRunResult(result);
+
+        if (result.error_message) {
+          setNodeStepRunStatus(node.id, 'error');
+        } else {
+          setNodeStepRunStatus(node.id, 'done');
+          // Cache the result so the Pin button becomes active
+          const preview = {
+            data: result.data,
+            columns: result.columns,
+            row_count: result.row_count,
+          };
+          useWorkflowStore.getState().cachePreviewResult(node.id, preview);
+        }
+      } catch {
+        setNodeStepRunStatus(node.id, 'error');
+        setStepRunResult({
+          data: [],
+          columns: [],
+          row_count: 0,
+          node_output: {},
+          error_message: 'Step run request failed. Check your network connection.',
+          traceback: null,
+        });
+      }
+    },
+    [workflowId, setNodeStepRunStatus]
+  );
+
+  /**
+   * When the auto-pin checkbox is toggled ON after a successful step-run,
+   * immediately pin the cached result.
+   */
+  const handleAutoPinChange = useCallback(
+    async (checked: boolean) => {
+      setAutoPinChecked(checked);
+      if (!checked || !stepRunNodeId || !stepRunResult || stepRunResult.error_message) return;
+
+      const node = nodes.find((n) => n.id === stepRunNodeId);
+      if (!node) return;
+
+      const instanceId = node.data?.node_instance_id;
+      if (!workflowId || instanceId === undefined) return;
+
+      const preview = {
+        data: stepRunResult.data,
+        columns: stepRunResult.columns,
+        row_count: stepRunResult.row_count,
+      };
+
+      try {
+        await pinService.pinNode(workflowId, Number(instanceId), preview);
+        addPinnedNode(String(instanceId), {
+          data: preview.data,
+          columns: preview.columns,
+          pinned_at: Date.now() / 1000,
+        });
+        notify.success("Pinned", `${node.display_name || node.name} result pinned.`);
+      } catch {
+        setAutoPinChecked(false);
+        notify.error("Pin failed", "Could not auto-pin result. Please try again.");
+      }
+    },
+    [stepRunNodeId, stepRunResult, nodes, workflowId, addPinnedNode, notify]
+  );
+
+  // ---------------------------------------------------------------------------
+  // F4-FE-1 / F4-FE-2 — Execution history + debug mode
+  // ---------------------------------------------------------------------------
+
+  const [historyPanelOpen, setHistoryPanelOpen] = useState(false);
+
+  /**
+   * Build a map from node_instance_id (string) → debug overlay data so the
+   * canvas can highlight each node without reading the store directly.
+   */
+  const debugNodeMap = useMemo<ReadonlyMap<string, {
+    failed: boolean;
+    succeeded: boolean;
+    rowCount: number;
+    errorMessage: string | null;
+  }> | undefined>(() => {
+    if (!debugExecution) return undefined;
+    const map = new Map<string, {
+      failed: boolean;
+      succeeded: boolean;
+      rowCount: number;
+      errorMessage: string | null;
+    }>();
+    for (const [instanceId, step] of Object.entries(debugExecution.steps)) {
+      map.set(instanceId, {
+        failed: step.status === 'FAILED',
+        succeeded: step.status === 'SUCCESS',
+        rowCount: step.output_row_count ?? step.output_rows?.length ?? 0,
+        errorMessage: step.error ?? null,
+      });
+    }
+    return map;
+  }, [debugExecution]);
+
+  /**
+   * The node the user has selected to inspect in debug mode.
+   * Drives the debug-mode PreviewPanel.
+   */
+  const [debugInspectNode, setDebugInspectNode] = useState<WorkflowNode | null>(null);
+
+  const debugPreviewResult = useMemo(() => {
+    if (!debugInspectNode || !debugExecution) return null;
+    const instanceId = debugInspectNode.data?.node_instance_id;
+    if (instanceId === undefined) return null;
+    const step = debugExecution.steps[String(instanceId)];
+    if (!step || !step.output_rows) return null;
+    return {
+      data: step.output_rows,
+      columns: step.output_columns ?? [],
+      row_count: step.output_row_count ?? step.output_rows.length,
+    };
+  }, [debugInspectNode, debugExecution]);
+
+  const handleDebugInspectNode = useCallback((node: WorkflowNode) => {
+    setDebugInspectNode(node);
+    // Close any open step-run panel so the two panels don't stack
+    setStepRunNodeId(null);
+    setStepRunResult(null);
+  }, []);
+
+  const handleExitDebugMode = useCallback(() => {
+    exitDebugMode();
+    setDebugInspectNode(null);
+  }, [exitDebugMode]);
+
+  const [isRetrying, setIsRetrying] = useState(false);
+
+  const handleRetryExecution = useCallback(
+    async (executionId: string) => {
+      if (!workflowId) return;
+      setIsRetrying(true);
+      try {
+        const result = await executionDebugService.retryExecution(workflowId, executionId);
+        notify.success(
+          "Retry started",
+          `New execution launched (ID: ${result.execution_id}).`
+        );
+        handleExitDebugMode();
+        setHistoryPanelOpen(false);
+      } catch {
+        notify.error("Retry failed", "Could not start retry. Please try again.");
+      } finally {
+        setIsRetrying(false);
+      }
+    },
+    [workflowId, notify, handleExitDebugMode]
+  );
 
   // Left Sidebar State
   const [leftSidebarCollapsed, setLeftSidebarCollapsed] = useState(() => {
@@ -269,6 +529,25 @@ const WorkflowBuilderPage: React.FC = () => {
     location,
   ]);
 
+  // Sync error_workflow_id from backend when workflow loads
+  useEffect(() => {
+    if (originalBackendWorkflow?.error_workflow_id !== undefined) {
+      setErrorWorkflowId(originalBackendWorkflow.error_workflow_id ?? null);
+    }
+  }, [originalBackendWorkflow?.error_workflow_id]);
+
+  // F1-FE-2: Load pinned node data from server when a workflow is opened.
+  // Pin state is server-authoritative — never stored in sessionStorage or localStorage.
+  useEffect(() => {
+    if (!workflowId) return;
+    pinService
+      .getPinnedData(workflowId)
+      .then(loadPinnedNodes)
+      .catch(() => {
+        // Non-fatal: pin state is a UI enhancement; silently ignore if unavailable
+      });
+  }, [workflowId, loadPinnedNodes]);
+
   // Prefetch all node data when workflow is loaded
   const prefetchedRef = useRef(false);
 
@@ -412,6 +691,7 @@ const WorkflowBuilderPage: React.FC = () => {
           schedule_expression: wf.schedule_expression,
           nodes: nodesWithDisplayName,
           ...(wf.connections ? { connections: wf.connections } : {}),
+          error_workflow_id: errorWorkflowId ?? undefined,
         };
         if (objectId) base._id = objectId;
         return base;
@@ -810,6 +1090,16 @@ const WorkflowBuilderPage: React.FC = () => {
           onToggleLeftSidebar={handleToggleLeftSidebar}
           rightSidebarCollapsed={rightSidebarCollapsed}
           onToggleRightSidebar={handleToggleRightSidebar}
+          onToggleHistory={() => setHistoryPanelOpen((prev) => !prev)}
+          historyOpen={historyPanelOpen}
+          isDebugMode={!!debugExecution}
+          isRetrying={isRetrying}
+          onRetryExecution={
+            debugExecution
+              ? () => handleRetryExecution(debugExecution.execution_id)
+              : undefined
+          }
+          onExitDebugMode={handleExitDebugMode}
         />
 
         <div
@@ -849,13 +1139,37 @@ const WorkflowBuilderPage: React.FC = () => {
               onNodesChange={handleNodesChange}
               onConnectionsChange={handleConnectionsChange}
               onNodeSelect={() => {}}
-              onNodeOpenEditor={(n) => setEditorNode(n)}
+              onNodeOpenEditor={debugExecution ? undefined : (n) => setEditorNode(n)}
               isMobile={isMobile}
+              pinnedNodeInstanceIds={pinnedNodeInstanceIds}
+              previewedNodeIds={previewedNodeIds}
+              onPinNode={debugExecution ? undefined : handlePinNode}
+              onUnpinNode={debugExecution ? undefined : handleUnpinNode}
+              stepRunStatusMap={debugExecution ? undefined : stepRunStatusMap}
+              onStepRunNode={debugExecution ? undefined : handleStepRunNode}
+              debugNodeMap={debugNodeMap}
+              onDebugInspectNode={debugExecution ? handleDebugInspectNode : undefined}
             />
             {/* Execution Log Panel */}
             <Suspense fallback={null}>
               <ExecutionLogPanel
                 workflowId={extractMongoId(originalBackendWorkflow?._id) || docId}
+              />
+            </Suspense>
+
+            {/* Execution History Panel — absolute overlay inside canvas area */}
+            <Suspense fallback={null}>
+              <ExecutionHistoryPanel
+                workflowId={workflowId}
+                isOpen={historyPanelOpen}
+                onClose={() => setHistoryPanelOpen(false)}
+                onLoadExecution={(detail: ExecutionDetail) => {
+                  enterDebugMode(detail);
+                  setDebugInspectNode(null);
+                }}
+                activeExecutionId={debugExecution?.execution_id ?? null}
+                onRetry={handleRetryExecution}
+                isRetrying={isRetrying}
               />
             </Suspense>
           </div>
@@ -910,16 +1224,58 @@ const WorkflowBuilderPage: React.FC = () => {
               onDeliveryConfigChange={setDeliveryConfig}
               onSave={handleScheduleDeliverySave}
               isSaving={saving}
+              errorWorkflowId={errorWorkflowId}
+              onErrorWorkflowChange={(id) => {
+                setErrorWorkflowId(id);
+                updateWorkflow({ error_workflow_id: id ?? undefined });
+              }}
             />
           </Suspense>
 
-          {/* Data Preview Panel */}
+          {/* Data Preview Panel — preview mode (opened from NodeConfigPanel) */}
           {previewNodeId && (
             <Suspense fallback={null}>
               <PreviewPanel
                 nodeId={previewNodeId}
                 isOpen={!!previewNodeId}
                 onClose={() => setPreviewNodeId(null)}
+                source="preview"
+                onPreviewSuccess={useWorkflowStore.getState().cachePreviewResult}
+              />
+            </Suspense>
+          )}
+
+          {/* Data Preview Panel — step-run mode (opened by Play button on node) */}
+          {stepRunNodeId && !previewNodeId && (
+            <Suspense fallback={null}>
+              <PreviewPanel
+                nodeId={stepRunNodeId}
+                isOpen={!!stepRunNodeId}
+                onClose={() => {
+                  setStepRunNodeId(null);
+                  setStepRunResult(null);
+                  setAutoPinChecked(false);
+                }}
+                source="step-run"
+                stepRunResult={stepRunResult}
+                canAutoPin={
+                  !!stepRunResult && !stepRunResult.error_message
+                }
+                autoPinChecked={autoPinChecked}
+                onAutoPinChange={handleAutoPinChange}
+              />
+            </Suspense>
+          )}
+
+          {/* Data Preview Panel — debug mode (opened by double-clicking a node in debug view) */}
+          {debugInspectNode && !previewNodeId && !stepRunNodeId && (
+            <Suspense fallback={null}>
+              <PreviewPanel
+                nodeId={debugInspectNode.id}
+                isOpen={!!debugInspectNode}
+                onClose={() => setDebugInspectNode(null)}
+                source="debug"
+                debugResult={debugPreviewResult}
               />
             </Suspense>
           )}

@@ -1,3 +1,5 @@
+import asyncio
+import logging
 from typing import Any
 
 from loguru import logger
@@ -6,6 +8,9 @@ from pydantic import BaseModel
 
 from common.config.settings import get_settings
 
+# Suppress PyMongo's noisy background task tracebacks (DNS blips, idle reconnects).
+# These are transient and PyMongo auto-recovers — no need to pollute logs.
+logging.getLogger("pymongo").setLevel(logging.CRITICAL)
 
 class MongoDBClient:
     def __init__(self) -> None:
@@ -28,7 +33,7 @@ class MongoDBClient:
             retryReads=True,
         )
         self.database = self.client[self.db_name]
-        logger.info(f"Connected to MongoDB -> Database: '{self.db_name}'")
+        logger.success(f"Connected to MongoDB -> Database: '{self.db_name}'")
 
     async def insert_document(
         self, collection_name: str, data: BaseModel
@@ -118,7 +123,8 @@ class MongoDBClient:
         if model_class:
             documents = [model_class.model_validate(doc) for doc in documents]
         logger.info(
-            f"Retrieved {len(documents)} of {total} from '{collection_name}' (page {page})"
+            f"Retrieved {len(documents)} of {total} "
+            f"from '{collection_name}' (page {page})"
         )
         return documents, total
 
@@ -131,13 +137,49 @@ class MongoDBClient:
         cursor = collection.aggregate(pipeline)
         return await cursor.to_list(length=None)
 
+    def close(self) -> None:
+        self.client.close()
+        logger.info(f"Closed MongoDB connection -> Database: '{self.db_name}'")
+
 
 _mongodb_instance: MongoDBClient | None = None
+_mongodb_loop_id: int | None = None
+
+
+def close_mongodb() -> None:
+    """Close and discard the singleton MongoDB client."""
+    global _mongodb_instance, _mongodb_loop_id
+    if _mongodb_instance is not None:
+        _mongodb_instance.close()
+        _mongodb_instance = None
+        _mongodb_loop_id = None
 
 
 def get_mongodb() -> MongoDBClient:
-    """Get or create the MongoDB client instance."""
-    global _mongodb_instance
-    if _mongodb_instance is None:
+    """Get or create the MongoDB client instance.
+
+    Motor binds to the event loop at construction time. When running
+    inside Dagster ops (each calling asyncio.run()), the loop changes
+    between invocations. Detect this and recreate the client so Motor
+    never references a closed loop.
+    """
+    global _mongodb_instance, _mongodb_loop_id
+
+    current_loop_id: int | None = None
+    try:
+        loop = asyncio.get_running_loop()
+        current_loop_id = id(loop)
+    except RuntimeError:
+        pass
+
+    loop_changed = (
+        current_loop_id is not None
+        and _mongodb_loop_id is not None
+        and current_loop_id != _mongodb_loop_id
+    )
+
+    if _mongodb_instance is None or loop_changed:
         _mongodb_instance = MongoDBClient()
+        _mongodb_loop_id = current_loop_id
+
     return _mongodb_instance

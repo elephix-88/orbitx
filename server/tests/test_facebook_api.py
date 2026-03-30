@@ -29,7 +29,9 @@ class TestFacebookAPI:
             },
         ]
 
-        with patch("server.api.facebook.ads.get_facebook_ads_accounts") as mock_get_accounts:
+        with patch(
+            "server.api.facebook.ads.get_facebook_ads_accounts"
+        ) as mock_get_accounts:
             from common.model.facebook.ads import FacebookAdsAccount
 
             mock_get_accounts.return_value = [
@@ -49,7 +51,9 @@ class TestFacebookAPI:
     def test_facebook_ads_accounts_error(self, client: TestClient):
         """Test Facebook Ads accounts retrieval with error."""
         # Arrange
-        with patch("server.api.facebook.ads.get_facebook_ads_accounts") as mock_get_accounts:
+        with patch(
+            "server.api.facebook.ads.get_facebook_ads_accounts"
+        ) as mock_get_accounts:
             mock_get_accounts.side_effect = ExternalAPIError("Facebook", "API Error")
 
             # Act

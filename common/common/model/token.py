@@ -17,10 +17,6 @@ class TikTokToken(BaseModel):
     advertiser_ids: list[str] | None = None
 
 
-class LineAdsToken(BaseModel):
-    access_token: str
-
-
 class GoogleConnectionParams(BaseModel):
     access_token: str
     token_type: str | None = None
@@ -43,9 +39,3 @@ class TikTokConnectionParams(BaseModel):
     refresh_token: str | None = None
 
 
-class LineConnectionParams(BaseModel):
-    access_token: str
-    token_type: str | None = None
-    expires_in: int | None = None
-    refresh_token: str | None = None
-    scope: str | None = None

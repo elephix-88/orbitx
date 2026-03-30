@@ -2,13 +2,13 @@
 import pandas as pd
 from loguru import logger
 
+from common.model.facebook.fields import FacebookField as FieldConfig
+from common.model.facebook.request import BatchPlan
 from engine.configs.config import settings
 from engine.node.extractors.facebook_ads.api.client import parse_batch_item, post_batch
 from engine.node.extractors.facebook_ads.utils import generate_batch_tag
 from engine.utils.logger import log_progress
 from engine.utils.utils import ProgressCounter, chunked
-from common.model.facebook.fields import FacebookField as FieldConfig
-from common.model.facebook.request import BatchPlan
 
 
 class PostProcessing:
@@ -47,7 +47,8 @@ class PostProcessing:
             )
             if getattr(parsed, "type", "") == "error":
                 logger.warning(
-                    f"Failed to parse {endpoint_type} data in batch {batch_no} item {idx}"
+                    f"Failed to parse {endpoint_type} data "
+                    f"in batch {batch_no} item {idx}"
                 )
                 continue
             data = getattr(parsed, "data", None)
@@ -195,7 +196,7 @@ def normalize_data(
         creative_field = endpoint_field[9:-1]
 
         df[f.field] = df.get("creative", pd.Series([{}] * len(df))).apply(
-            lambda x: x.get(creative_field) if isinstance(x, dict) else None
+            lambda x, key=creative_field: x.get(key) if isinstance(x, dict) else None
         )
 
     df = df.rename(columns=rename_map)

@@ -4,6 +4,7 @@ from dagster_graphql import DagsterGraphQLClient
 from loguru import logger
 
 from server.configs.config import settings
+from server.services.exceptions import OrbitXError
 
 _client: DagsterGraphQLClient | None = None
 
@@ -28,34 +29,32 @@ def launch_run(
     workflow_name: str,
     run_type: str,
     user_id: str,
+    extra_tags: dict[str, str] | None = None,
 ) -> str | None:
     job_name = sanitize_dagster_name(workflow_name)
+
+    tags = {
+        "workflow_id": workflow_id,
+        "workflow_name": workflow_name,
+        "user_id": user_id,
+        "run_type": run_type,
+    }
+    if extra_tags:
+        tags.update(extra_tags)
 
     try:
         run_id = get_dagster_client().submit_job_execution(
             job_name=job_name,
-            run_config={
-                "ops": {
-                    "execute_workflow_op": {
-                        "config": {
-                            "workflow_id": workflow_id,
-                            "run_type": run_type,
-                        }
-                    }
-                }
-            },
-            tags={
-                "workflow_id": workflow_id,
-                "user_id": user_id,
-                "run_type": run_type,
-            },
+            tags=tags,
         )
         logger.info(f"Dagster run {run_id} launched for job={job_name}")
         return run_id
 
     except Exception as error:
         logger.error(f"Failed to launch Dagster run for job={job_name}: {error}")
-        return None
+        raise OrbitXError(
+            f"Dagster failed to launch job '{job_name}': {error}"
+        ) from error
 
 
 def get_run_status(run_id: str) -> str | None:

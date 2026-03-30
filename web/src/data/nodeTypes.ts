@@ -65,36 +65,14 @@ export const nodeTypes: NodeTypeDefinition[] = [
   },
   {
     type: 'source',
-    name: 'Google Analytics',
-    description: 'Import sessions, users, conversions, and revenue from Google Analytics 4',
+    name: 'Error Trigger',
+    description: 'Receives error context when a linked workflow fails',
     category: NodeCategory.SOURCE,
-    icon: 'BarChart3',
-    color: '#F59E0B',
+    icon: 'AlertTriangle',
+    color: '#EF4444',
     inputs: [],
     outputs: [{ id: 'out', name: 'Output' }],
-    defaultData: {
-      connection_id: '',
-      property_id: '',
-      dimensions: ['date', 'sessionSource', 'sessionMedium', 'sessionCampaignName'],
-      metrics: ['sessions', 'activeUsers', 'conversions', 'purchaseRevenue', 'transactions'],
-      time_config: { time_preset: 'last_7_days', time_increment: 1 }
-    }
-  },
-  {
-    type: 'source',
-    name: 'LINE Ads',
-    description: 'Import impressions, clicks, cost, and conversions from LINE Ads',
-    category: NodeCategory.SOURCE,
-    icon: 'MessageCircle',
-    color: '#00B900',
-    inputs: [],
-    outputs: [{ id: 'out', name: 'Output' }],
-    defaultData: {
-      connection_id: '',
-      ad_account_id: '',
-      fields: ['impressions', 'clicks', 'cost', 'conversions', 'campaign_name', 'campaign_id'],
-      time_config: { time_preset: 'last_7_days' }
-    }
+    defaultData: {},
   },
   {
     type: 'transform',
@@ -151,6 +129,40 @@ export const nodeTypes: NodeTypeDefinition[] = [
       platform: '',
       include_calculated_metrics: true
     }
+  },
+  {
+    type: 'transform',
+    name: 'IF',
+    description: 'Route rows into two branches based on conditions',
+    category: NodeCategory.TRANSFORM,
+    icon: 'GitBranch',
+    color: '#F59E0B',
+    inputs: [{ id: 'in', name: 'Input' }],
+    outputs: [
+      { id: 'true', name: 'True' },
+      { id: 'false', name: 'False' },
+    ],
+    defaultData: {
+      conditions: [{ field: '', operator: 'equals', value: '' }],
+      logic_mode: 'AND',
+    },
+  },
+  {
+    type: 'transform',
+    name: 'Switch',
+    description: 'Route rows into multiple branches based on field values',
+    category: NodeCategory.TRANSFORM,
+    icon: 'GitFork',
+    color: '#8B5CF6',
+    inputs: [{ id: 'in', name: 'Input' }],
+    outputs: [
+      { id: 'case_1', name: 'Case 1' },
+      { id: 'default', name: 'Default' },
+    ],
+    defaultData: {
+      field: '',
+      cases: [{ case_id: 'case_1', value: '' }],
+    },
   },
   {
     type: 'destination',

@@ -1,19 +1,17 @@
-from enum import Enum
+from enum import StrEnum
 
-from pydantic import BaseModel
+from common.model.common import BaseFieldSchema
 
 
-class TikTokReportLevel(str, Enum):
+class TikTokReportLevel(StrEnum):
     AUCTION_CAMPAIGN = "AUCTION_CAMPAIGN"
     AUCTION_ADGROUP = "AUCTION_ADGROUP"
     AUCTION_AD = "AUCTION_AD"
 
 
-class TikTokField(BaseModel):
-    field: str
+class TikTokField(BaseFieldSchema):
     display_name: str | None = None
     group: str
-    data_type: str
     is_primary_key: bool = False
     active: bool = True
     report_level: str

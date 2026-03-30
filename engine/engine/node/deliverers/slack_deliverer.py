@@ -7,10 +7,6 @@ from loguru import logger
 
 from common.model.delivery import SlackChannelConfig
 from engine.exceptions import DelivererException
-from engine.node.intelligence.pulse_generator import (
-    build_pulse_blocks,
-    generate_pulse_summary,
-)
 
 SLACK_POST_MESSAGE_URL = "https://slack.com/api/chat.postMessage"
 MAX_TABLE_ROWS = 20
@@ -30,12 +26,6 @@ class SlackDeliverer:
         include_ai_summary: bool = False,
     ) -> bool:
         blocks = self.build_blocks(data, workflow_name, execution_time)
-
-        if include_ai_summary:
-            pulse_result = await generate_pulse_summary(data)
-            if pulse_result:
-                pulse_blocks = build_pulse_blocks(pulse_result)
-                blocks = pulse_blocks + blocks
 
         try:
             async with httpx.AsyncClient(timeout=30) as client:

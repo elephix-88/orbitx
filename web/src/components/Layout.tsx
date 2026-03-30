@@ -1,7 +1,7 @@
 import React, { ReactNode, useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { HomeIcon, WorkflowIcon, ConnectionIcon } from './icons';
-import { Moon, Sun, ChevronLeft, ChevronRight, LogOut, User } from 'lucide-react';
+import { Moon, Sun, ChevronLeft, ChevronRight, LogOut, User, Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useAuthStore } from '@/store/authStore';
 
@@ -43,6 +43,7 @@ const Layout = ({ children }: { children: ReactNode }) => {
     { name: 'Dashboard', path: '/dashboard', icon: <HomeIcon /> },
     { name: 'Workflows', path: '/workflows', icon: <WorkflowIcon /> },
     { name: 'Connections', path: '/connections', icon: <ConnectionIcon /> },
+    { name: 'Settings', path: '/settings', icon: <Settings /> },
   ];
 
   const isActive = (path: string) => {

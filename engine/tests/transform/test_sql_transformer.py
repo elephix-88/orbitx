@@ -1,23 +1,26 @@
 from datetime import date
 
 import pandas as pd
-from common.model.transform import SQLTransformConfig
+import pytest
 
+from common.model.transform import SQLTransformConfig
 from engine.node.transformers.sql import SQLTransformer
 
 
-def test_no_query_returns_input():
+@pytest.mark.asyncio
+async def test_no_query_returns_input():
     df = pd.DataFrame({"id": [1, 2], "name": ["a", "b"]})
     cfg = SQLTransformConfig(table_name="temp_table", sql_query="")
     t = SQLTransformer(cfg)
 
-    out = t.transform(df)
+    out = await t.transform(df)
 
     # Should return the original DataFrame when no query
     assert out is df
 
 
-def test_simple_select_and_filter():
+@pytest.mark.asyncio
+async def test_simple_select_and_filter():
     """Test basic SELECT with WHERE clause."""
     df = pd.DataFrame(
         {
@@ -33,14 +36,15 @@ def test_simple_select_and_filter():
     )
     t = SQLTransformer(cfg)
 
-    out = t.transform(df)
+    out = await t.transform(df)
 
     assert list(out.columns) == ["id", "name"]
     assert list(out["id"]) == [2, 3]
     assert list(out["name"]) == ["y", "z"]
 
 
-def test_sql_transformer_select_all():
+@pytest.mark.asyncio
+async def test_sql_transformer_select_all():
     # Sample data
     data = {"id": [1, 2, 3], "name": ["A", "B", "C"]}
     df = pd.DataFrame(data)
@@ -51,7 +55,7 @@ def test_sql_transformer_select_all():
     transformer = SQLTransformer(config)
 
     # Transform
-    result_df = transformer.transform(df)
+    result_df = await transformer.transform(df)
 
     # Expected result
     expected_data = {"id": [1, 2, 3], "name": ["A", "B", "C"]}
@@ -60,7 +64,8 @@ def test_sql_transformer_select_all():
     pd.testing.assert_frame_equal(result_df, expected_df)
 
 
-def test_sql_transformer_filter():
+@pytest.mark.asyncio
+async def test_sql_transformer_filter():
     # Sample data
     data = {"id": [1, 2, 3], "value": [10, 20, 30]}
     df = pd.DataFrame(data)
@@ -71,7 +76,7 @@ def test_sql_transformer_filter():
     transformer = SQLTransformer(config)
 
     # Transform
-    result_df = transformer.transform(df)
+    result_df = await transformer.transform(df)
 
     # Expected result
     expected_data = {"id": [2, 3], "value": [20, 30]}
@@ -80,18 +85,22 @@ def test_sql_transformer_filter():
     pd.testing.assert_frame_equal(result_df, expected_df)
 
 
-def test_sql_transformer_aggregate():
+@pytest.mark.asyncio
+async def test_sql_transformer_aggregate():
     # Sample data
     data = {"category": ["A", "A", "B"], "value": [10, 20, 30]}
     df = pd.DataFrame(data)
 
     # SQL query
-    query = "SELECT category, SUM(value) as total FROM temp_table GROUP BY category ORDER BY category"
+    query = (
+        "SELECT category, SUM(value) as total "
+        "FROM temp_table GROUP BY category ORDER BY category"
+    )
     config = SQLTransformConfig(table_name="temp_table", sql_query=query)
     transformer = SQLTransformer(config)
 
     # Transform
-    result_df = transformer.transform(df)
+    result_df = await transformer.transform(df)
 
     # Expected result
     expected_data = {"category": ["A", "B"], "total": [30, 30]}
@@ -103,7 +112,8 @@ def test_sql_transformer_aggregate():
     pd.testing.assert_frame_equal(result_df, expected_df)
 
 
-def test_sql_transformer_with_expression_and_alias():
+@pytest.mark.asyncio
+async def test_sql_transformer_with_expression_and_alias():
     # Sample data
     data = {"name": ["A", "B", "C"], "value": [10, 20, 30]}
     df = pd.DataFrame(data)
@@ -114,7 +124,7 @@ def test_sql_transformer_with_expression_and_alias():
     transformer = SQLTransformer(config)
 
     # Transform
-    result_df = transformer.transform(df)
+    result_df = await transformer.transform(df)
 
     # Expected result
     expected_data = {"name": ["A", "B", "C"], "doubled_value": [20, 40, 60]}
@@ -123,17 +133,21 @@ def test_sql_transformer_with_expression_and_alias():
     pd.testing.assert_frame_equal(result_df, expected_df)
 
 
-def test_sql_transformer_with_null_values():
+@pytest.mark.asyncio
+async def test_sql_transformer_with_null_values():
     # Sample data with NULLs
     data = {"category": ["A", "A", "B", None], "value": [10, None, 30, 40]}
     df = pd.DataFrame(data)
 
     # SQL query to count non-null values
-    query = "SELECT category, COUNT(value) as count_value FROM temp_table GROUP BY category ORDER BY category"
+    query = (
+        "SELECT category, COUNT(value) as count_value "
+        "FROM temp_table GROUP BY category ORDER BY category"
+    )
     config = SQLTransformConfig(table_name="temp_table", sql_query=query)
     transformer = SQLTransformer(config)
 
-    result_df = transformer.transform(df)
+    result_df = await transformer.transform(df)
 
     # Expected result from DuckDB (it will create a row for the None category)
     # DuckDB with ORDER BY ASC places NULLS LAST
@@ -146,7 +160,8 @@ def test_sql_transformer_with_null_values():
     pd.testing.assert_frame_equal(result_df, expected_df)
 
 
-def test_sql_transformer_with_datetime():
+@pytest.mark.asyncio
+async def test_sql_transformer_with_datetime():
     # Sample data with dates
     data = {
         "event_date": [date(2023, 1, 1), date(2023, 1, 15), date(2023, 2, 1)],
@@ -159,7 +174,7 @@ def test_sql_transformer_with_datetime():
     config = SQLTransformConfig(table_name="temp_table", sql_query=query)
     transformer = SQLTransformer(config)
 
-    result_df = transformer.transform(df)
+    result_df = await transformer.transform(df)
 
     # Expected result
     expected_data = {
@@ -174,7 +189,8 @@ def test_sql_transformer_with_datetime():
     pd.testing.assert_frame_equal(result_df, expected_df)
 
 
-def test_sql_transformer_with_cte():
+@pytest.mark.asyncio
+async def test_sql_transformer_with_cte():
     # Sample data
     data = {"category": ["A", "A", "B", "B"], "value": [10, 20, 30, 40]}
     df = pd.DataFrame(data)
@@ -191,7 +207,7 @@ def test_sql_transformer_with_cte():
     config = SQLTransformConfig(table_name="temp_table", sql_query=query)
     transformer = SQLTransformer(config)
 
-    result_df = transformer.transform(df)
+    result_df = await transformer.transform(df)
 
     # Expected result
     expected_data = {"category": ["B"], "total_value": [70]}

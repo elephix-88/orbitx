@@ -60,7 +60,7 @@ class TestSlackDelivererBuildTable:
         assert "roas" in table
 
     def test_table_truncates_at_max_rows(self):
-        """DataFrames with more than MAX_TABLE_ROWS rows must include a truncation note."""
+        """DataFrames exceeding MAX_TABLE_ROWS must include a truncation note."""
         deliverer = SlackDeliverer(make_config())
         df = make_campaign_dataframe(MAX_TABLE_ROWS + 10)
         table = deliverer.build_table(df)
@@ -130,7 +130,7 @@ class TestSlackDelivererBuildTable:
         assert "account_id" in table
 
     def test_fifty_plus_rows_truncates_to_twenty(self):
-        """50-row DataFrame must show exactly MAX_TABLE_ROWS rows and note the remainder."""
+        """50-row DataFrame must show MAX_TABLE_ROWS rows and note the remainder."""
         deliverer = SlackDeliverer(make_config())
         df = make_campaign_dataframe(50)
         table = deliverer.build_table(df)
@@ -183,7 +183,7 @@ class TestSlackDelivererBuildSummary:
         assert summary == ""
 
     def test_nan_spend_excluded_from_total(self):
-        """NaN spend values must be skipped when computing the total (using pandas sum default)."""
+        """NaN spend values must be skipped when computing the total."""
         deliverer = SlackDeliverer(make_config())
         df = pd.DataFrame({"spend": [1000.0, float("nan"), 500.0]})
         summary = deliverer.build_summary(df)
@@ -260,7 +260,9 @@ class TestSlackDelivererDeliver:
         mock_response.raise_for_status = MagicMock()
         mock_response.json.return_value = {"ok": True}
 
-        with patch("engine.node.deliverers.slack_deliverer.httpx.AsyncClient") as mock_client_class:
+        with patch(
+            "engine.node.deliverers.slack_deliverer.httpx.AsyncClient"
+        ) as mock_client_class:
             mock_async_client = AsyncMock()
             mock_async_client.post.return_value = mock_response
             mock_client_class.return_value.__aenter__.return_value = mock_async_client
@@ -280,7 +282,9 @@ class TestSlackDelivererDeliver:
         mock_response.raise_for_status = MagicMock()
         mock_response.json.return_value = {"ok": False, "error": "channel_not_found"}
 
-        with patch("engine.node.deliverers.slack_deliverer.httpx.AsyncClient") as mock_client_class:
+        with patch(
+            "engine.node.deliverers.slack_deliverer.httpx.AsyncClient"
+        ) as mock_client_class:
             mock_async_client = AsyncMock()
             mock_async_client.post.return_value = mock_response
             mock_client_class.return_value.__aenter__.return_value = mock_async_client
@@ -298,7 +302,9 @@ class TestSlackDelivererDeliver:
         """A network error (e.g., timeout) must be wrapped in DelivererException."""
         deliverer = SlackDeliverer(make_config())
 
-        with patch("engine.node.deliverers.slack_deliverer.httpx.AsyncClient") as mock_client_class:
+        with patch(
+            "engine.node.deliverers.slack_deliverer.httpx.AsyncClient"
+        ) as mock_client_class:
             mock_async_client = AsyncMock()
             mock_async_client.post.side_effect = Exception("Connection timeout")
             mock_client_class.return_value.__aenter__.return_value = mock_async_client
@@ -320,7 +326,9 @@ class TestSlackDelivererDeliver:
         mock_response.raise_for_status = MagicMock()
         mock_response.json.return_value = {"ok": True}
 
-        with patch("engine.node.deliverers.slack_deliverer.httpx.AsyncClient") as mock_client_class:
+        with patch(
+            "engine.node.deliverers.slack_deliverer.httpx.AsyncClient"
+        ) as mock_client_class:
             mock_async_client = AsyncMock()
             mock_async_client.post.return_value = mock_response
             mock_client_class.return_value.__aenter__.return_value = mock_async_client
@@ -330,7 +338,8 @@ class TestSlackDelivererDeliver:
             )
 
             call_kwargs = mock_async_client.post.call_args
-            assert call_kwargs.kwargs["headers"]["Authorization"] == f"Bearer {config.bot_token}"
+            auth_header = call_kwargs.kwargs["headers"]["Authorization"]
+            assert auth_header == f"Bearer {config.bot_token}"
 
     @pytest.mark.asyncio
     async def test_correct_channel_id_sent_in_payload(self):
@@ -342,7 +351,9 @@ class TestSlackDelivererDeliver:
         mock_response.raise_for_status = MagicMock()
         mock_response.json.return_value = {"ok": True}
 
-        with patch("engine.node.deliverers.slack_deliverer.httpx.AsyncClient") as mock_client_class:
+        with patch(
+            "engine.node.deliverers.slack_deliverer.httpx.AsyncClient"
+        ) as mock_client_class:
             mock_async_client = AsyncMock()
             mock_async_client.post.return_value = mock_response
             mock_client_class.return_value.__aenter__.return_value = mock_async_client
@@ -363,7 +374,9 @@ class TestSlackDelivererDeliver:
         mock_response.raise_for_status = MagicMock()
         mock_response.json.return_value = {"ok": True}
 
-        with patch("engine.node.deliverers.slack_deliverer.httpx.AsyncClient") as mock_client_class:
+        with patch(
+            "engine.node.deliverers.slack_deliverer.httpx.AsyncClient"
+        ) as mock_client_class:
             mock_async_client = AsyncMock()
             mock_async_client.post.return_value = mock_response
             mock_client_class.return_value.__aenter__.return_value = mock_async_client

@@ -129,6 +129,7 @@ async def get_tiktok_ads_accounts(connection_id: str) -> list[TikTokAdsAccount]:
         )
 
     logger.info(
-        f"Found {len(accounts)} TikTok advertiser accounts for connection {connection_id}"
+        f"Found {len(accounts)} TikTok advertiser accounts "
+        f"for connection {connection_id}"
     )
     return accounts

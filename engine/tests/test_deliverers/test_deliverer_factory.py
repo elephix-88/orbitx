@@ -3,12 +3,9 @@
 import pytest
 
 from common.model.delivery import (
-    DeliveryChannel,
-    LineChannelConfig,
     SlackChannelConfig,
 )
 from engine.node.deliverers.factory import create_deliverer
-from engine.node.deliverers.line_deliverer import LineDeliverer
 from engine.node.deliverers.slack_deliverer import SlackDeliverer
 
 
@@ -25,30 +22,12 @@ class TestCreateDeliverer:
         deliverer = create_deliverer(config)
         assert isinstance(deliverer, SlackDeliverer)
 
-    def test_line_config_returns_line_deliverer(self):
-        """LineChannelConfig must produce a LineDeliverer instance."""
-        config = LineChannelConfig(
-            access_token="line-token",
-            to="U1234567890",
-        )
-        deliverer = create_deliverer(config)
-        assert isinstance(deliverer, LineDeliverer)
-
     def test_slack_deliverer_carries_config(self):
         """The returned SlackDeliverer must hold the original config."""
         config = SlackChannelConfig(
             channel_id="C999",
             channel_name="reports",
             bot_token="xoxb-prod-token",
-        )
-        deliverer = create_deliverer(config)
-        assert deliverer.config is config  # type: ignore[union-attr]
-
-    def test_line_deliverer_carries_config(self):
-        """The returned LineDeliverer must hold the original config."""
-        config = LineChannelConfig(
-            access_token="line-prod-token",
-            to="Uabc",
         )
         deliverer = create_deliverer(config)
         assert deliverer.config is config  # type: ignore[union-attr]

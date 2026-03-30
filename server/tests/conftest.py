@@ -3,9 +3,10 @@ from __future__ import annotations
 
 import os
 import sys
-from datetime import datetime, timedelta, timezone
-from typing import TYPE_CHECKING, Any, Generator
-from unittest.mock import MagicMock, Mock, patch
+from collections.abc import Generator
+from datetime import UTC, datetime, timedelta
+from typing import TYPE_CHECKING, Any
+from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 import jwt
 import pytest
@@ -18,9 +19,8 @@ if TYPE_CHECKING:
 # Module-Level Mocks (must be set before any application imports)
 # =============================================================================
 
-# Mock the entire database.mongodb module before any imports
-mock_mongodb_module = MagicMock()
-mock_mongodb_client = Mock()
+# Mock MongoDB client - but don't replace common.database package
+mock_mongodb_client = AsyncMock()
 
 # Mock return values with proper data structures
 mock_user_data: dict[str, Any] = {
@@ -68,52 +68,25 @@ mock_workflow_data: dict[str, Any] = {
     "connections": [],
 }
 
-mock_mongodb_client.insert_document.return_value = "mock_id_12345"
+# Create AsyncMock instances for all methods
+mock_mongodb_client.insert_document = AsyncMock(return_value="mock_id_12345")
+mock_mongodb_client.get_document = AsyncMock(return_value=mock_user_data)
+mock_mongodb_client.get_all_documents = AsyncMock(
+    return_value=[mock_connection_data, mock_workflow_data]
+)
+result = Mock()
+result.matched_count = 1
+result.modified_count = 1
+mock_mongodb_client.update_document = AsyncMock(return_value=result)
+mock_mongodb_client.delete_document = AsyncMock(return_value=True)
 
-
-# Smart mock for get_document that returns appropriate data based on collection
-def mock_get_document(
-    collection_name: str | None = None,
-    query: dict[str, Any] | None = None,
-    *args: Any,
-    **kwargs: Any,
-) -> dict[str, Any] | None:
-    """Return appropriate mock data based on collection name."""
-    # Handle both positional and keyword arguments
-    collection = collection_name or (args[0] if args else "")
-    if not collection:
-        return mock_connection_data
-
-    collection_lower = collection.lower()
-    if "user" in collection_lower:
-        return mock_user_data
-    elif "connection" in collection_lower:
-        return mock_connection_data
-    elif "workflow" in collection_lower:
-        return mock_workflow_data
-    return mock_connection_data  # default fallback
-
-
-mock_mongodb_client.get_document.side_effect = mock_get_document
-mock_mongodb_client.get_all_documents.return_value = [
-    mock_connection_data,
-    mock_workflow_data,
-]
-mock_update_result = Mock()
-mock_update_result.matched_count = 1
-mock_update_result.modified_count = 1
-mock_mongodb_client.update_document.return_value = mock_update_result
-mock_mongodb_client.delete_document.return_value = True
-
-# Set the mongodb attribute to our mock client
-mock_mongodb_module.mongodb = mock_mongodb_client
-mock_mongodb_module.mongodb_client = mock_mongodb_client
-mock_mongodb_module.MongoDBClient = Mock(return_value=mock_mongodb_client)
-mock_mongodb_module.get_mongodb = Mock(return_value=mock_mongodb_client)
-
-sys.modules["database.mongodb"] = mock_mongodb_module
-sys.modules["common.database"] = mock_mongodb_module
-sys.modules["common.database.mongodb"] = mock_mongodb_module
+# Create async mock database attribute for FastAPI startup
+mock_database = AsyncMock()
+# Mock collection creation
+mock_collection = AsyncMock()
+mock_collection.create_index = AsyncMock(return_value=None)
+mock_database.__getitem__ = Mock(return_value=mock_collection)
+mock_mongodb_client.database = mock_database
 
 # Mock settings module FIRST before any imports
 mock_settings = Mock()
@@ -145,6 +118,10 @@ mock_settings.rate_limit_auth = "100/minute"
 mock_settings.rate_limit_expensive = "100/minute"
 mock_settings.csrf_enabled = False
 mock_settings.env = "DEV"
+mock_settings.mongo_username = "test_user"
+mock_settings.mongo_password = "test_pass"
+mock_settings.mongo_uri = "test.mongodb.net"
+mock_settings.mongo_database = "test_db"
 
 # Mock configs module
 mock_config_module = Mock()
@@ -178,6 +155,11 @@ def setup_test_environment() -> None:
     from common.config.settings import register_settings
 
     register_settings(mock_settings)
+
+    # Patch get_mongodb to return mock client
+    patch("common.database.mongodb.get_mongodb", return_value=mock_mongodb_client).start()
+    # Patch close_mongodb to do nothing
+    patch("common.database.mongodb.close_mongodb", return_value=None).start()
 
 
 # =============================================================================
@@ -219,8 +201,8 @@ def auth_headers(test_user: dict[str, Any]) -> dict[str, str]:
     payload = {
         "sub": test_user["_id"],
         "email": test_user["email"],
-        "exp": datetime.now(timezone.utc) + timedelta(minutes=30),
-        "iat": datetime.now(timezone.utc),
+        "exp": datetime.now(UTC) + timedelta(minutes=30),
+        "iat": datetime.now(UTC),
     }
     token = jwt.encode(
         payload, "test_jwt_secret_key_for_testing_12345", algorithm="HS256"
@@ -238,17 +220,16 @@ _TEST_JWT_SECRET = "test_jwt_secret_key_for_testing_12345"
 _TEST_TOKEN_PAYLOAD = {
     "sub": "test_user_id_123",
     "email": "test@example.com",
-    "exp": datetime.now(timezone.utc) + timedelta(days=1),
-    "iat": datetime.now(timezone.utc),
+    "exp": datetime.now(UTC) + timedelta(days=1),
+    "iat": datetime.now(UTC),
 }
 _TEST_TOKEN = jwt.encode(_TEST_TOKEN_PAYLOAD, _TEST_JWT_SECRET, algorithm="HS256")
 
 
 @pytest.fixture
-def client() -> Generator[TestClient, None, None]:
+def client() -> Generator[TestClient]:
     """Create a test client for the FastAPI app with auth dependency override."""
     from common.model.user import UserInDB
-
     from server.main import app
     from server.services.auth.dependencies import get_current_user
 
@@ -279,7 +260,7 @@ def client() -> Generator[TestClient, None, None]:
 
 
 @pytest.fixture
-def unauthenticated_client() -> Generator[TestClient, None, None]:
+def unauthenticated_client() -> Generator[TestClient]:
     """Create a test client without auth override (for testing auth failures)."""
     from server.main import app
 
@@ -296,31 +277,22 @@ def unauthenticated_client() -> Generator[TestClient, None, None]:
 
 
 @pytest.fixture
-def mock_mongodb() -> Mock:
+def mock_mongodb() -> AsyncMock:
     """Mock MongoDB client - returns the global mock that can be modified in tests."""
     # Reset mock behavior for each test
     mock_mongodb_client.reset_mock()
 
-    # Set default behaviors
-    mock_mongodb_client.insert_document.return_value = "mock_id_12345"
-    mock_mongodb_client.insert_document.side_effect = None
-
-    # Keep the smart get_document that returns appropriate data based on collection
-    mock_mongodb_client.get_document.side_effect = mock_get_document
-
-    mock_mongodb_client.get_all_documents.return_value = [
-        mock_connection_data,
-        mock_workflow_data,
-    ]
-    mock_mongodb_client.get_all_documents.side_effect = None
-
+    # Re-set async methods after reset (they get reset by reset_mock())
+    mock_mongodb_client.insert_document = AsyncMock(return_value="mock_id_12345")
+    mock_mongodb_client.get_document = AsyncMock(return_value=mock_user_data)
+    mock_mongodb_client.get_all_documents = AsyncMock(
+        return_value=[mock_connection_data, mock_workflow_data]
+    )
     result = Mock()
     result.matched_count = 1
     result.modified_count = 1
-    mock_mongodb_client.update_document.return_value = result
-    mock_mongodb_client.update_document.side_effect = None
-    mock_mongodb_client.delete_document.return_value = True
-    mock_mongodb_client.delete_document.side_effect = None
+    mock_mongodb_client.update_document = AsyncMock(return_value=result)
+    mock_mongodb_client.delete_document = AsyncMock(return_value=True)
 
     return mock_mongodb_client
 

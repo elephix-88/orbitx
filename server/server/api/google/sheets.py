@@ -54,7 +54,7 @@ async def get_spreadsheets_endpoint(
     connection_id: str,
     current_user: UserInDB = Depends(get_current_user),
 ):
-    """Retrieves a list of Google Sheets spreadsheets accessible with a given connection_id."""
+    """Retrieves Google Sheets spreadsheets for a given connection_id."""
     return await get_google_sheets_spreadsheets(connection_id, current_user.id)
 
 
@@ -64,7 +64,7 @@ async def get_spreadsheet_details_endpoint(
     spreadsheet_id: str,
     current_user: UserInDB = Depends(get_current_user),
 ):
-    """Retrieves detailed information about a specific spreadsheet including its worksheets."""
+    """Retrieves spreadsheet details including its worksheets."""
     return await get_google_sheets_worksheets(
         connection_id, spreadsheet_id, current_user.id
     )

@@ -1,9 +1,11 @@
-from enum import Enum
+from enum import StrEnum
 
 from pydantic import BaseModel
 
+from common.model.common import BaseFieldSchema
 
-class GoogleAdsBase(str, Enum):
+
+class GoogleAdsBase(StrEnum):
     CUSTOMER = "customer"
     CAMPAIGN = "campaign"
     AD_GROUP = "ad_group"
@@ -22,12 +24,10 @@ class FieldSource(BaseModel):
     allowed_bases: list[GoogleAdsBase] | None = None
 
 
-class GoogleAdsField(BaseModel):
-    field: str
+class GoogleAdsField(BaseFieldSchema):
     output_name: str | None = None
     display_name: str | None = None
     group: str = "general"
-    data_type: str
     is_primary_key: bool
     is_breakdown: bool = False
     active: bool = True

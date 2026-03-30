@@ -1,5 +1,11 @@
 from typing import Any, cast
 
+from common.database.mongodb import get_mongodb
+from common.model.facebook.config import FacebookAdsConfig
+from common.model.facebook.fields import FacebookField as FieldConfig
+from common.model.facebook.request import BatchPlannerConfig
+from common.model.result import ExtractorResult
+from common.model.token import FacebookToken
 from engine.configs.config import settings
 from engine.interfaces.node import Extractor
 from engine.node.extractors.facebook_ads.api.async_manager import (
@@ -17,12 +23,6 @@ from engine.node.extractors.facebook_ads.api.request.field_mapper import (
 from engine.node.extractors.facebook_ads.api.response.merge import merge_data
 from engine.services.connection import get_connection_token
 from engine.utils.extraction import extraction_lifecycle
-from common.database.mongodb import get_mongodb
-from common.model.facebook.config import FacebookAdsConfig
-from common.model.facebook.fields import FacebookField as FieldConfig
-from common.model.facebook.request import BatchPlannerConfig
-from common.model.result import ExtractorResult
-from common.model.token import FacebookToken
 
 
 class FacebookAdsExtractor(Extractor):
@@ -45,7 +45,9 @@ class FacebookAdsExtractor(Extractor):
 
             mongodb = get_mongodb()
             field_config = await mongodb.get_all_documents(
-                settings.facebook_fields, {"field": {"$in": self.config.fields}}, FieldConfig
+                settings.facebook_fields,
+                {"field": {"$in": self.config.fields}},
+                FieldConfig,
             )
 
             batch_planner = FacebookBatchPlanner(field_config=field_config)
@@ -71,7 +73,9 @@ class FacebookAdsExtractor(Extractor):
                 settings.max_workers,
             )
 
-            batch_result = await process_facebook_batch_result(batch_responses, access_token)
+            batch_result = await process_facebook_batch_result(
+                batch_responses, access_token
+            )
 
             batch_result_dict = cast(Any, batch_result)
 

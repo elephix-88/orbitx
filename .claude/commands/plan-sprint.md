@@ -1,40 +1,89 @@
-# Sprint Planning
+# Sprint Planning (Founder Shortcut)
 
-You are a product manager for OrbitX. Help plan the next 1-2 week sprint based on the current state of the project and the product roadmap.
+> ⚠️ **When to use this command:**
+> This is a **founder-only shortcut** for quick solo planning — prototyping, hotfixes, or unblocking yourself fast.
+>
+> For full product sprints, use the agent team instead:
+> Research Team → Product Owner → Project Manager → Engineers → QA
+>
+> This command bypasses the research consensus, feasibility scoring, and QA gate.
+> Use it when speed matters more than process. Do not use it for features that need the unified schema, multi-engineer coordination, or platform API work.
+
+## Tools You Use
+
+- `read_file` — read PRODUCT_ROADMAP.md, COMPETITIVE_STRATEGY.md, recent work
+- `bash_tool` — check recent git log and open TODOs
+- `list_directory` — check current codebase state
 
 ## Process
 
-1. Read PRODUCT_ROADMAP.md to understand priorities.
-2. Read COMPETITIVE_STRATEGY.md to understand market positioning.
-3. Check recent git log to understand what was built recently.
-4. Check for any open issues or TODOs in the codebase.
+### Step 1 — Read context
 
-## Output
+```bash
+# Recent work
+git log --oneline -20
 
-### Sprint Goal
-One sentence describing what we're trying to achieve this sprint.
-
-### Tasks (ordered by priority)
-
-For each task:
-```
-[P0/P1/P2] Task name
-  Description: What needs to be built
-  Files: Which files will be created/modified
-  Effort: Hours estimate
-  Acceptance: How to verify it's done
-  Revenue impact: How this helps get to 100K THB/month
+# Open TODOs in codebase
+grep -r "TODO\|FIXME\|HACK" engine/ server/ web/src/ --include="*.py" --include="*.ts" --include="*.tsx" | head -30
 ```
 
-### What NOT to do this sprint
-List 2-3 things that are tempting but should be deferred. Explain why.
+Then read using `read_file`:
+- `PRODUCT_ROADMAP.md`
+- `COMPETITIVE_STRATEGY.md`
 
-### Key decision needed
-If there's a product/architecture decision that needs to be made before starting, flag it.
+### Step 2 — Assess current state
 
-## Rules
-- Max 5 tasks per sprint (focus > volume)
-- Every task must connect to revenue (directly or indirectly)
-- Include at least 1 content/marketing task (SEO article or template)
-- No tasks that take more than 3 days solo
-- If a task is bigger than 3 days, break it down
+Answer these before planning:
+- What was the last thing shipped?
+- What is currently broken or incomplete?
+- What is the single most important thing for getting to the next paying customer?
+
+### Step 3 — Plan
+
+Apply these constraints hard — do not negotiate them away:
+- **Max 5 tasks** — focus beats volume
+- **Max 3 days per task** — if bigger, break it down or defer it
+- **Every task must connect to revenue** — directly (new feature) or indirectly (fixes blocker, reduces churn)
+- **At least 1 marketing task** — SEO article or template (use `/write-article` command after planning)
+- **No speculative architecture** — nothing that "will be useful later"
+
+### Step 4 — Flag multi-engineer work
+
+If any task requires both Backend and Frontend, or touches `common/` models AND `server/` endpoints, flag it:
+
+```
+⚠️ COORDINATION REQUIRED
+This task spans multiple packages. For clean execution, run it through the agent team sprint loop instead of solo.
+Reason: [what crosses the boundary]
+```
+
+## Output Format
+
+```
+## Sprint Goal
+[One sentence — what is demonstrably working at the end of this sprint]
+
+## Tasks (ordered by priority)
+
+[P0] Task name
+  What: [what to build — specific enough to start immediately]
+  Files: [which files to create or modify]
+  Effort: [hours]
+  Done when: [specific, testable condition]
+  Revenue link: [direct / unblocks X / reduces churn by Y]
+
+[P1] ...
+[P1] ...
+[P2] ...
+[P2] ...
+
+## Explicitly NOT this sprint
+- [Thing 1] — defer because [reason]
+- [Thing 2] — defer because [reason]
+
+## Decision needed before starting
+[Any product or architecture decision that must be made first. If none, write "None."]
+
+## Coordination flags
+[Any tasks that should move to the agent team sprint loop instead. If none, write "None."]
+```

@@ -68,9 +68,8 @@ async def get_google_sheets_spreadsheets(
     connection_id: str, user_id: str
 ) -> list[GoogleSheetsFile]:
     """
-    Returns a list of Google Sheets spreadsheets accessible with the given connection_id.
-    Verifies user ownership of the connection.
-    Runs blocking Google API calls in a thread pool.
+    Returns Google Sheets spreadsheets for the given connection_id.
+    Verifies user ownership. Runs blocking API calls in a thread pool.
     """
     connection = await get_mongodb().get_document(
         collection_name=settings.connection_collection,
@@ -89,12 +88,12 @@ async def get_google_sheets_spreadsheets(
         raise
     except RefreshError as e:
         logger.error(f"Token refresh failed for connection {connection_id}: {e}")
-        raise ConnectionAuthError(connection_id, "Token expired or revoked")
+        raise ConnectionAuthError(connection_id, "Token expired or revoked") from e
     except HttpError as e:
         logger.error(f"Google Sheets API error: {e}")
         raise ExternalAPIError(
             "Google Sheets", str(e), e.resp.status if e.resp else None
-        )
+        ) from e
 
 
 def _get_google_sheets_worksheets_sync(
@@ -171,12 +170,12 @@ async def get_google_sheets_worksheets(
         raise
     except RefreshError as e:
         logger.error(f"Token refresh failed for connection {connection_id}: {e}")
-        raise ConnectionAuthError(connection_id, "Token expired or revoked")
+        raise ConnectionAuthError(connection_id, "Token expired or revoked") from e
     except HttpError as e:
         logger.error(f"Google Sheets API error: {e}")
         raise ExternalAPIError(
             "Google Sheets", str(e), e.resp.status if e.resp else None
-        )
+        ) from e
 
 
 async def validate_google_sheets_connection(connection_id: str, user_id: str) -> bool:

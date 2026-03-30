@@ -4,7 +4,7 @@ import type { NodeSpec } from './types';
 
 const UnifyEditor = lazy(() => import('@/nodes/Editors/transform/UnifyEditor'));
 
-const platformSchema = z.enum(['facebook_ads', 'google_ads', 'tiktok_ads', 'ga4', 'line_ads']);
+const platformSchema = z.enum(['facebook_ads', 'google_ads', 'tiktok_ads']);
 
 export type UnifyPlatform = z.infer<typeof platformSchema>;
 

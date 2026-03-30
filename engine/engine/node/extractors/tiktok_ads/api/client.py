@@ -45,7 +45,8 @@ class TikTokAdsClient:
                         f"status={response.status_code}, body={response.text}"
                     )
                     raise Exception(
-                        f"TikTok API request failed with status {response.status_code}: "
+                        "TikTok API request failed with "
+                        f"status {response.status_code}: "
                         f"{response.text}"
                     )
 

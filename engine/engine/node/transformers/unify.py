@@ -4,9 +4,9 @@ import duckdb
 import pandas as pd
 from loguru import logger
 
+from common.model.transform import UnifyTransformConfig
 from engine.exceptions import TransformerException
 from engine.interfaces.node import Transformer
-from common.model.transform import UnifyTransformConfig
 
 FACEBOOK_ADS_MAPPING: dict[str, str] = {
     "date_start": "date",
@@ -66,47 +66,15 @@ TIKTOK_ADS_MAPPING: dict[str, str] = {
     "frequency": "frequency",
 }
 
-LINE_ADS_MAPPING: dict[str, str] = {
-    "date": "date",
-    "cost": "spend",
-    "impressions": "impressions",
-    "clicks": "clicks",
-    "conversions": "conversions",
-    "conversion_value": "conversion_value",
-    "campaign_name": "campaign_name",
-    "campaign_id": "campaign_id",
-    "adgroup_name": "adgroup_name",
-    "adgroup_id": "adgroup_id",
-    "ad_name": "ad_name",
-    "ad_id": "ad_id",
-    "advertiser_name": "account_name",
-    "account_id": "account_id",
-    "reach": "reach",
-}
-
-GA4_MAPPING: dict[str, str] = {
-    "date": "date",
-    "sessionSource": "source",
-    "sessionMedium": "medium",
-    "sessionCampaignName": "campaign_name",
-    "sessions": "sessions",
-    "activeUsers": "users",
-    "conversions": "conversions",
-    "purchaseRevenue": "conversion_value",
-    "transactions": "transactions",
-}
-
 PLATFORM_MAPPINGS: dict[str, dict[str, str]] = {
     "facebook_ads": FACEBOOK_ADS_MAPPING,
     "google_ads": GOOGLE_ADS_MAPPING,
     "tiktok_ads": TIKTOK_ADS_MAPPING,
-    "line_ads": LINE_ADS_MAPPING,
-    "ga4": GA4_MAPPING,
 }
 
 
 class UnifyTransformer(Transformer):
-    """Transformer that maps platform-specific ad columns to a unified marketing schema."""
+    """Maps platform-specific ad columns to a unified schema."""
 
     def __init__(self, config: UnifyTransformConfig) -> None:
         self.config = config
@@ -179,7 +147,7 @@ class UnifyTransformer(Transformer):
         return select_parts, unified_columns
 
     async def transform(self, df: pd.DataFrame) -> pd.DataFrame:
-        """Map platform-specific columns to unified schema, add platform column, and compute metrics."""
+        """Map platform columns to unified schema and compute metrics."""
         if self.config.platform not in PLATFORM_MAPPINGS:
             raise TransformerException(
                 f"Unsupported platform: {self.config.platform}",
@@ -196,13 +164,17 @@ class UnifyTransformer(Transformer):
             renamed_df = duckdb.sql(rename_sql).df()
 
             if self.config.include_calculated_metrics:
-                renamed_df = self.compute_calculated_metrics(renamed_df, unified_columns)
+                renamed_df = self.compute_calculated_metrics(
+                    renamed_df, unified_columns
+                )
 
+            platform_map = PLATFORM_MAPPINGS[self.config.platform]
             mapped_count = sum(
-                1 for col in df.columns if col in PLATFORM_MAPPINGS[self.config.platform]
+                1 for col in df.columns if col in platform_map
             )
             logger.info(
-                f"Unified {mapped_count} columns from {self.config.platform} to marketing schema"
+                f"Unified {mapped_count} columns from "
+                f"{self.config.platform} to marketing schema"
             )
             return renamed_df
 
@@ -219,14 +191,18 @@ class UnifyTransformer(Transformer):
         self, df: pd.DataFrame, unified_columns: set[str]
     ) -> pd.DataFrame:
         """Compute CPM, CPC, CTR, CPA, ROAS using DuckDB with null-safe division."""
-        required_for_metrics = {"spend", "impressions", "clicks", "conversions", "conversion_value"}
+        required_for_metrics = {
+            "spend", "impressions", "clicks",
+            "conversions", "conversion_value",
+        }
         available = required_for_metrics & set(df.columns)
 
         metric_expressions: list[str] = []
 
         if "spend" in available and "impressions" in available:
             metric_expressions.append(
-                'CAST(spend AS DOUBLE) / NULLIF(CAST(impressions AS DOUBLE), 0) * 1000 AS "cpm"'
+                "CAST(spend AS DOUBLE) / "
+                'NULLIF(CAST(impressions AS DOUBLE), 0) * 1000 AS "cpm"'
             )
 
         if "spend" in available and "clicks" in available:
@@ -236,22 +212,26 @@ class UnifyTransformer(Transformer):
 
         if "clicks" in available and "impressions" in available:
             metric_expressions.append(
-                'CAST(clicks AS DOUBLE) / NULLIF(CAST(impressions AS DOUBLE), 0) * 100 AS "ctr"'
+                "CAST(clicks AS DOUBLE) / "
+                'NULLIF(CAST(impressions AS DOUBLE), 0) * 100 AS "ctr"'
             )
 
         if "spend" in available and "conversions" in available:
             metric_expressions.append(
-                'CAST(spend AS DOUBLE) / NULLIF(CAST(conversions AS DOUBLE), 0) AS "cpa"'
+                "CAST(spend AS DOUBLE) / "
+                'NULLIF(CAST(conversions AS DOUBLE), 0) AS "cpa"'
             )
 
         if "conversion_value" in available and "spend" in available:
             metric_expressions.append(
-                'CAST(conversion_value AS DOUBLE) / NULLIF(CAST(spend AS DOUBLE), 0) AS "roas"'
+                "CAST(conversion_value AS DOUBLE) / "
+                'NULLIF(CAST(spend AS DOUBLE), 0) AS "roas"'
             )
 
         if not metric_expressions:
             return df
 
-        existing_columns = ", ".join(f'"{col}"' for col in df.columns)
-        metrics_sql = f"SELECT {existing_columns}, {', '.join(metric_expressions)} FROM df"
+        existing_cols = ", ".join(f'"{col}"' for col in df.columns)
+        metrics = ", ".join(metric_expressions)
+        metrics_sql = f"SELECT {existing_cols}, {metrics} FROM df"
         return duckdb.sql(metrics_sql).df()

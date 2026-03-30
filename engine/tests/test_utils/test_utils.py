@@ -23,8 +23,7 @@ def test_chunked_with_range_iterable():
 
 def test_chunked_with_generator_iterable():
     def gen():
-        for i in range(5):
-            yield i
+        yield from range(5)
 
     assert list(chunked(gen(), 3)) == [[0, 1, 2], [3, 4]]
 

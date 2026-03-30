@@ -2,11 +2,11 @@ import asyncio
 
 from loguru import logger
 
+from common.model.facebook.request import BatchPlan
+from common.model.facebook.response import BatchItem, BatchResponseBase
 from engine.node.extractors.facebook_ads.api.client import parse_batch_item, post_batch
 from engine.utils.logger import log_progress
 from engine.utils.utils import ProgressCounter, chunked
-from common.model.facebook.request import BatchPlan
-from common.model.facebook.response import BatchItem, BatchResponseBase
 
 
 async def send_batch_request(
@@ -20,7 +20,8 @@ async def send_batch_request(
     batches = list(chunked(batch_plans, max_batch_size))
 
     logger.info(
-        f"Processing {len(batch_plans)} requests in {len(batches)} batches (max_workers={max_workers})"
+        f"Processing {len(batch_plans)} requests in "
+        f"{len(batches)} batches (max_workers={max_workers})"
     )
     all_batch_items: list[BatchItem] = []
     progress = ProgressCounter(total=len(batches))
@@ -28,7 +29,9 @@ async def send_batch_request(
     # Use semaphore to limit concurrency
     semaphore = asyncio.Semaphore(max_workers)
 
-    async def process_batch(batch: list[BatchPlan], batch_num: int) -> list[BatchResponseBase]:
+    async def process_batch(
+        batch: list[BatchPlan], batch_num: int
+    ) -> list[BatchResponseBase]:
         async with semaphore:
             return await _process_batch(batch, access_token, batch_num)
 
@@ -77,5 +80,5 @@ async def _process_batch(
     raw_items = await post_batch(access_token, batch)
     return [
         parse_batch_item(raw, plan, batch_num, i)
-        for i, (raw, plan) in enumerate(zip(raw_items, batch), 1)
+        for i, (raw, plan) in enumerate(zip(raw_items, batch, strict=False), 1)
     ]

@@ -6,7 +6,7 @@ from loguru import logger
 
 
 @asynccontextmanager
-async def execution_timer(label: str) -> AsyncGenerator[None, None]:
+async def execution_timer(label: str) -> AsyncGenerator[None]:
     start = time.perf_counter()
     logger.info(f"Starting: {label}")
     try:
@@ -47,7 +47,8 @@ def log_progress(
             progress_percentage = (current / total * 100) if total > 0 else 0
             unit_text = f" {unit}" if unit else ""
             logger.info(
-                f"{operation_name}: {current}/{total} ({progress_percentage:.1f}%){unit_text}"
+                f"{operation_name}: {current}/{total} "
+                f"({progress_percentage:.1f}%){unit_text}"
             )
             return True
 

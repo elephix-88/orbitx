@@ -1,6 +1,7 @@
 """Tests for auth context module."""
 import pytest
 from fastapi import HTTPException
+
 from common.model.user import UserInDB
 
 
@@ -76,7 +77,10 @@ class TestAuthContext:
 
     def test_get_current_user_optional_without_user(self):
         """Test optional user retrieval when not authenticated."""
-        from server.services.auth.context import clear_current_user, get_current_user_optional
+        from server.services.auth.context import (
+            clear_current_user,
+            get_current_user_optional,
+        )
 
         clear_current_user()
 

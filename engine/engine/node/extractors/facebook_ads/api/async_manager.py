@@ -3,6 +3,8 @@ from typing import Any, TypedDict
 
 from loguru import logger
 
+from common.model.facebook.common import ExecutionMode
+from common.model.facebook.response import BatchItem, ReportMeta
 from engine.configs.config import settings
 from engine.node.extractors.facebook_ads.api.client import (
     fetch_insights_paged,
@@ -11,8 +13,6 @@ from engine.node.extractors.facebook_ads.api.client import (
 from engine.utils.logger import log_progress
 from engine.utils.retry import calculate_backoff_with_jitter
 from engine.utils.utils import ProgressCounter
-from common.model.facebook.common import ExecutionMode
-from common.model.facebook.response import BatchItem, ReportMeta
 
 
 class BatchProcessResultDict(TypedDict):
@@ -53,16 +53,15 @@ async def wait_for_all_reports(
             else:
                 next_round.append(report)
 
-        if progress.success != last_success_count:
-            if log_progress(
-                progress.success,
-                total_reports,
-                "Async reports",
-                "completed",
-                interval=10,
-                include_first_last=True,
-            ):
-                last_success_count = progress.success
+        if progress.success != last_success_count and log_progress(
+            progress.success,
+            total_reports,
+            "Async reports",
+            "completed",
+            interval=10,
+            include_first_last=True,
+        ):
+            last_success_count = progress.success
 
         pending = next_round
         if pending:
@@ -107,7 +106,9 @@ async def process_facebook_batch_result(
             rows = item.data if isinstance(item.data, list) else [item.data]
             result_by_tag[item.tag] = rows
     if completed_reports:
-        result_rows = await _process_async_reports_parallel(completed_reports, access_token)
+        result_rows = await _process_async_reports_parallel(
+            completed_reports, access_token
+        )
         result_by_tag.update(result_rows)
 
     total_rows = sum(len(v) for v in result_by_tag.values())
@@ -142,7 +143,7 @@ async def _process_async_reports_parallel(
     ]
     results = await asyncio.gather(*tasks, return_exceptions=True)
 
-    for report, result in zip(completed_reports, results):
+    for report, result in zip(completed_reports, results, strict=False):
         if isinstance(result, Exception):
             progress.mark_failed()
             logger.error(f"Failed to process async report {report.tag}: {result}")

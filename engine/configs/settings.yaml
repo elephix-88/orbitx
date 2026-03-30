@@ -11,6 +11,8 @@ default:
   google_fields: google_fields
   tiktok_fields: tiktok_fields
   execution_history_collection: execution_history
+  execution_ttl_days_free: 7
+  execution_ttl_days_paid: 30
 
   mongo_uri:
   mongo_port:
@@ -30,8 +32,3 @@ default:
 
   # Google Cloud
   google_cloud_project_id: cron5-dev
-
-  # Pub/Sub Tracking
-  enable_tracking: true
-  pubsub_topic_id: workflow-status-events
-  pubsub_subscription_id: workflow-status-sub

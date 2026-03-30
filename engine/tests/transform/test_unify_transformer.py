@@ -1,4 +1,4 @@
-"""Tests for UnifyTransformer — GA4 mapping, edge cases, and all platforms."""
+"""Tests for UnifyTransformer — mapping, edge cases, and all platforms."""
 
 import math
 
@@ -10,13 +10,14 @@ from common.model.transform import UnifyTransformConfig
 from engine.exceptions import TransformerException
 from engine.node.transformers.unify import UnifyTransformer
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
 
 
-def make_transformer(platform: str, include_calculated_metrics: bool = True) -> UnifyTransformer:
+def make_transformer(
+    platform: str, include_calculated_metrics: bool = True
+) -> UnifyTransformer:
     config = UnifyTransformConfig(
         platform=platform,
         include_calculated_metrics=include_calculated_metrics,
@@ -26,140 +27,6 @@ def make_transformer(platform: str, include_calculated_metrics: bool = True) -> 
 
 def make_schemas(fields: list[str]) -> list[BaseFieldSchema]:
     return [BaseFieldSchema(field=f, data_type="string") for f in fields]
-
-
-# ---------------------------------------------------------------------------
-# GA4 mapping tests
-# ---------------------------------------------------------------------------
-
-
-class TestGA4Mapping:
-    """GA4-specific column mapping tests."""
-
-    @pytest.mark.asyncio
-    async def test_ga4_dimensions_map_to_unified_schema(self):
-        """Core GA4 dimensions must map to the unified schema correctly."""
-        df = pd.DataFrame(
-            {
-                "date": ["2024-01-01"],
-                "sessionSource": ["google"],
-                "sessionMedium": ["cpc"],
-                "sessionCampaignName": ["Summer Sale TH"],
-                "sessions": [1500],
-                "activeUsers": [1200],
-                "conversions": [45],
-                "purchaseRevenue": [89500.0],
-                "transactions": [45],
-            }
-        )
-        transformer = make_transformer("ga4")
-        result = await transformer.transform(df)
-
-        assert "date" in result.columns
-        assert "source" in result.columns
-        assert "medium" in result.columns
-        assert "campaign_name" in result.columns
-        assert "sessions" in result.columns
-        assert "users" in result.columns
-        assert "conversions" in result.columns
-        assert "conversion_value" in result.columns
-        assert "transactions" in result.columns
-        assert "platform" in result.columns
-
-    @pytest.mark.asyncio
-    async def test_ga4_platform_column_is_ga4(self):
-        """Platform column must be set to 'ga4'."""
-        df = pd.DataFrame(
-            {"date": ["2024-01-01"], "sessions": [100], "purchaseRevenue": [5000.0]}
-        )
-        transformer = make_transformer("ga4")
-        result = await transformer.transform(df)
-        assert result["platform"].iloc[0] == "ga4"
-
-    @pytest.mark.asyncio
-    async def test_ga4_source_value_preserved(self):
-        """sessionSource values must be passed through to the 'source' column."""
-        df = pd.DataFrame(
-            {"sessionSource": ["google", "facebook", "(direct)"], "sessions": [100, 200, 50]}
-        )
-        transformer = make_transformer("ga4")
-        result = await transformer.transform(df)
-        assert list(result["source"]) == ["google", "facebook", "(direct)"]
-
-    @pytest.mark.asyncio
-    async def test_ga4_campaign_name_with_thai_text(self):
-        """Thai campaign names must pass through correctly without corruption."""
-        thai_name = "แคมเปญฤดูร้อน 2024"
-        df = pd.DataFrame({"sessionCampaignName": [thai_name], "sessions": [300]})
-        transformer = make_transformer("ga4")
-        result = await transformer.transform(df)
-        assert result["campaign_name"].iloc[0] == thai_name
-
-    @pytest.mark.asyncio
-    async def test_ga4_columns_not_in_mapping_are_kept(self):
-        """GA4 columns not in the mapping must be kept as-is (not dropped)."""
-        df = pd.DataFrame(
-            {
-                "date": ["2024-01-01"],
-                "sessions": [100],
-                "country": ["Thailand"],  # not in GA4_MAPPING
-                "deviceCategory": ["mobile"],  # not in GA4_MAPPING
-            }
-        )
-        transformer = make_transformer("ga4")
-        result = await transformer.transform(df)
-        assert "country" in result.columns
-        assert "deviceCategory" in result.columns
-
-    @pytest.mark.asyncio
-    async def test_ga4_empty_dataframe_returns_empty(self):
-        """An empty GA4 DataFrame must not raise and must return empty result."""
-        df = pd.DataFrame(
-            columns=["date", "sessionSource", "sessionCampaignName", "sessions", "purchaseRevenue"]
-        )
-        transformer = make_transformer("ga4")
-        result = await transformer.transform(df)
-        assert len(result) == 0
-        assert "platform" in result.columns
-
-    @pytest.mark.asyncio
-    async def test_ga4_nan_in_sessions_does_not_crash(self):
-        """NaN in sessions column must not raise — just produce NaN in output."""
-        df = pd.DataFrame(
-            {
-                "date": ["2024-01-01", "2024-01-02"],
-                "sessions": [None, 200],
-                "purchaseRevenue": [5000.0, 3000.0],
-            }
-        )
-        transformer = make_transformer("ga4")
-        result = await transformer.transform(df)
-        assert len(result) == 2
-
-    @pytest.mark.asyncio
-    async def test_ga4_purchase_revenue_maps_to_conversion_value(self):
-        """purchaseRevenue must map to conversion_value."""
-        df = pd.DataFrame({"purchaseRevenue": [99999.99], "sessions": [1]})
-        transformer = make_transformer("ga4")
-        result = await transformer.transform(df)
-        assert "conversion_value" in result.columns
-        assert abs(result["conversion_value"].iloc[0] - 99999.99) < 0.01
-
-    @pytest.mark.asyncio
-    async def test_ga4_no_calculated_metrics_when_disabled(self):
-        """When include_calculated_metrics=False, no cpc/ctr/roas columns must appear."""
-        df = pd.DataFrame(
-            {
-                "sessions": [1000],
-                "conversions": [50],
-                "purchaseRevenue": [25000.0],
-            }
-        )
-        transformer = make_transformer("ga4", include_calculated_metrics=False)
-        result = await transformer.transform(df)
-        assert "roas" not in result.columns
-        assert "cpa" not in result.columns
-        assert "cpc" not in result.columns
 
 
 # ---------------------------------------------------------------------------
@@ -389,7 +256,7 @@ class TestCalculatedMetricsEdgeCases:
 class TestUnsupportedPlatform:
     @pytest.mark.asyncio
     async def test_unknown_platform_raises_transformer_exception(self):
-        """An unregistered platform name must raise TransformerException with clear message."""
+        """Unregistered platform must raise TransformerException."""
         df = pd.DataFrame({"spend": [100.0]})
         transformer = make_transformer("snapchat_ads")
         with pytest.raises(TransformerException) as exc_info:
@@ -403,18 +270,21 @@ class TestUnsupportedPlatform:
 
 
 class TestFieldSchemaPropagation:
-    def test_ga4_schemas_get_unified_names(self):
-        """update_field_schemas must rename GA4 fields to unified names."""
-        schemas = make_schemas(["date", "sessionCampaignName", "sessions", "purchaseRevenue"])
-        transformer = make_transformer("ga4")
+    def test_facebook_schemas_get_unified_names(self):
+        """update_field_schemas must rename platform fields to unified names."""
+        schemas = make_schemas([
+            "date_start", "spend",
+            "inline_link_clicks", "campaign_name",
+        ])
+        transformer = make_transformer("facebook_ads")
         result = transformer.update_field_schemas(schemas)
         field_names = {s.field for s in result}
         assert "date" in field_names
+        assert "spend" in field_names
+        assert "clicks" in field_names
         assert "campaign_name" in field_names
-        assert "sessions" in field_names
-        assert "conversion_value" in field_names
-        assert "sessionCampaignName" not in field_names
-        assert "purchaseRevenue" not in field_names
+        assert "date_start" not in field_names
+        assert "inline_link_clicks" not in field_names
 
     def test_platform_field_added_to_schemas(self):
         """A 'platform' field must be appended to the schemas list."""
@@ -425,7 +295,7 @@ class TestFieldSchemaPropagation:
         assert "platform" in field_names
 
     def test_calculated_metric_schemas_added_when_enabled(self):
-        """cpm, cpc, ctr, cpa, roas schemas must be added when include_calculated_metrics=True."""
+        """Metric schemas must be added when include_calculated_metrics=True."""
         schemas = make_schemas(["spend", "impressions", "clicks"])
         transformer = make_transformer("facebook_ads", include_calculated_metrics=True)
         result = transformer.update_field_schemas(schemas)
@@ -445,13 +315,13 @@ class TestFieldSchemaPropagation:
 
     def test_none_schemas_returns_none(self):
         """Passing None schemas must return None without crashing."""
-        transformer = make_transformer("ga4")
+        transformer = make_transformer("facebook_ads")
         result = transformer.update_field_schemas(None)
         assert result is None
 
     def test_empty_schemas_returns_empty(self):
         """Passing empty schemas must return empty list."""
-        transformer = make_transformer("ga4")
+        transformer = make_transformer("facebook_ads")
         result = transformer.update_field_schemas([])
         assert result == [] or result is None
 

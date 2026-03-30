@@ -43,7 +43,8 @@ async def get_dashboard_stats(
         if workflow_ids:
             query["_id"] = {"$in": workflow_ids}
 
-        workflows = await get_mongodb().get_all_documents(
+        mongodb = get_mongodb()
+        workflows = await mongodb.get_all_documents(
             collection_name=settings.workflow_collection,
             query=query,
             model_cls=WorkflowData,
@@ -54,6 +55,7 @@ async def get_dashboard_stats(
         workflow_ids = [w.id for w in workflows]
         workflow_names = {w.id: w.job_name for w in workflows}
 
+    mongodb = get_mongodb()
     logger.info(f"Fetching dashboard stats for {len(workflow_ids)} workflows")
 
     # Aggregation pipeline to compute all stats in one query
@@ -138,7 +140,7 @@ async def get_dashboard_stats(
         },
     ]
 
-    result = await get_mongodb().aggregate(
+    result = await mongodb.aggregate(
         collection_name=settings.execution_history_collection,
         pipeline=pipeline,
     )
@@ -216,7 +218,8 @@ async def get_execution_history_by_workflow(workflow_id: str) -> list[dict[str, 
     user = get_current_user()
 
     # First verify that the user owns this workflow
-    workflow = await get_mongodb().get_document(
+    mongodb = get_mongodb()
+    workflow = await mongodb.get_document(
         collection_name=settings.workflow_collection,
         query={"_id": workflow_id, "user_id": user.id},
         model_cls=WorkflowData,
@@ -225,8 +228,12 @@ async def get_execution_history_by_workflow(workflow_id: str) -> list[dict[str, 
         return []  # User doesn't own this workflow or it doesn't exist
 
     # Get raw documents to preserve all nested data including output
-    return await get_mongodb().get_all_documents(
+    documents = await mongodb.get_all_documents(
         collection_name=settings.execution_history_collection,
         query={"workflow_id": workflow_id},
         model_cls=None,  # Get raw dicts, not Pydantic models
     )
+    for document in documents:
+        if "_id" in document:
+            document["_id"] = str(document["_id"])
+    return documents

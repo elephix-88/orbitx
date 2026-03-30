@@ -16,10 +16,10 @@ from sqlalchemy import (
 from sqlalchemy.engine import URL
 from sqlalchemy.ext.asyncio import AsyncEngine, create_async_engine
 
+from common.model.mysql.config import MySQLDestinationConfig
 from engine.configs.config import settings
 from engine.exceptions import LoaderException
 from engine.interfaces.node import Loader
-from common.model.mysql.config import MySQLDestinationConfig
 
 
 class MySQLLoader(Loader):
@@ -63,7 +63,11 @@ class MySQLLoader(Loader):
 
     async def _create_table(self, table: Table) -> None:
         async with self.engine.begin() as conn:
-            await conn.run_sync(self.metadata.create_all, tables=[table], checkfirst=True)
+            await conn.run_sync(
+                self.metadata.create_all,
+                tables=[table],
+                checkfirst=True,
+            )
         logger.info(f"Table '{self.config.destination_table}' created or verified.")
 
     async def _insert_data(self, table: Table, df: pd.DataFrame) -> None:
@@ -86,7 +90,9 @@ class MySQLLoader(Loader):
             await self._create_table(table)
             await self._insert_data(table, cleaned_data)
             logger.success(
-                f"Data successfully loaded to MySQL Table: {self.config.database_name}:{self.config.destination_table}"
+                f"Data successfully loaded to MySQL Table: "
+                f"{self.config.database_name}:"
+                f"{self.config.destination_table}"
             )
         except Exception as ex:
             raise LoaderException(

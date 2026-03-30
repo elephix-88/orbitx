@@ -5,11 +5,11 @@ import pandas as pd
 from gspread_dataframe import set_with_dataframe
 from loguru import logger
 
+from common.model.google.sheets import GoogleSheetsDestinationConfig
 from engine.configs.config import settings
 from engine.exceptions import LoaderException
 from engine.interfaces.node import Loader
 from engine.services.google.auth import build_connection_credentials
-from common.model.google.sheets import GoogleSheetsDestinationConfig
 
 
 class GoogleSheetLoader(Loader):

@@ -61,9 +61,11 @@ async def get_datasets_endpoint(
     project_id: str,
     _current_user: UserInDB = Depends(get_current_user),
 ):
-    """Retrieves a list of BigQuery datasets accessible with a given connection_id and project_id."""
+    """Retrieves BigQuery datasets for a connection_id and project_id."""
     credentials = await get_bigquery_credentials(connection_id)
-    return await asyncio.to_thread(get_bigquery_datasets, connection_id, project_id, credentials)
+    return await asyncio.to_thread(
+        get_bigquery_datasets, connection_id, project_id, credentials
+    )
 
 
 @router.get("/validate", response_model=dict)
@@ -73,7 +75,9 @@ async def validate_connection_endpoint(
 ):
     """Validates that a BigQuery connection is working."""
     credentials = await get_bigquery_credentials(connection_id)
-    is_valid = await asyncio.to_thread(validate_bigquery_connection, connection_id, credentials)
+    is_valid = await asyncio.to_thread(
+        validate_bigquery_connection, connection_id, credentials
+    )
     return {
         "connection_id": connection_id,
         "is_valid": is_valid,

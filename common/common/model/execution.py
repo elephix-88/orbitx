@@ -1,18 +1,18 @@
 import time
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
 
 
-class Status(str, Enum):
+class Status(StrEnum):
     PENDING = "PENDING"
     RUNNING = "RUNNING"
     SUCCESS = "SUCCESS"
     FAILED = "FAILED"
 
 
-class NodeOutputType(str, Enum):
+class NodeOutputType(StrEnum):
     """Type of node output for frontend display categorization."""
 
     EXTRACTOR = "extractor"
@@ -114,6 +114,10 @@ class ExecutionStep(ExecutionBase):
     error_trace: str | None = None
     message: str | None = None
     output: NodeOutput | None = None
+    output_rows: list[dict[str, Any]] | None = None
+    # Raw row data captured during execution, capped at 1000 rows.
+    # Populated by the Dagster op layer (F4-ENG-1) during actual workflow runs.
+    # Used by the Debug Failed Executions feature to replay data via retry.
 
 
 class ExecutionHistory(BaseModel):
@@ -132,6 +136,10 @@ class ExecutionHistory(BaseModel):
     total_nodes: int = 0
     successful_nodes: int = 0
     failed_nodes: int = 0
+    ttl_expires_at: float | None = None
+    # Unix timestamp after which this document should be deleted.
+    # Set by the Dagster hook (F4-DAG-1) at write time.
+    # MongoDB TTL index on ttl_expires_at enforces deletion (30-day default).
 
     model_config = ConfigDict(
         populate_by_name=True,

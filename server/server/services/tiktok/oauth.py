@@ -34,7 +34,9 @@ def build_tiktok_oauth_url(
     return f"{settings.tiktok_oauth_url}?{urllib.parse.urlencode(params)}"
 
 
-async def save_to_mongo(connection: ConnectionKey, tokens: TikTokConnectionParams) -> None:
+async def save_to_mongo(
+    connection: ConnectionKey, tokens: TikTokConnectionParams
+) -> None:
     """Save TikTok OAuth connection to MongoDB."""
     await save_connection_to_mongo(
         connection=connection,

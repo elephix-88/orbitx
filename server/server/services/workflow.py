@@ -2,13 +2,14 @@ from loguru import logger
 
 from common.database import get_mongodb
 from common.model.workflow import JobIdRequest, WorkflowData, WorkflowSummary
+from common.model.workflow_rules import validate_workflow_structure
 from server.configs.config import settings
-from server.services.auth.context import get_current_user
 from server.services import dagster_client
+from server.services.auth.context import get_current_user
 from server.services.exceptions import (
-    OrbitXError,
     ValidationError,
     WorkflowNotFoundError,
+    WorkflowStructureError,
 )
 from server.services.utils import generate_uuid
 
@@ -130,6 +131,10 @@ async def execute_workflow(job_id: str) -> bool:
     if not workflow:
         raise WorkflowNotFoundError(job_id)
 
+    validation = validate_workflow_structure(workflow.nodes, workflow.connections)
+    if not validation.is_valid:
+        raise WorkflowStructureError(validation.errors)
+
     run_id = dagster_client.launch_run(
         workflow_id=job_id,
         workflow_name=workflow.job_name,
@@ -137,8 +142,5 @@ async def execute_workflow(job_id: str) -> bool:
         user_id=user.id,
     )
 
-    if not run_id:
-        raise OrbitXError("Failed to execute workflow")
-
-    logger.info(f"Dagster run {run_id} launched for workflow: {job_id}")
+    logger.success(f"Dagster run {run_id} launched for workflow: {job_id}")
     return True

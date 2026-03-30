@@ -2,6 +2,7 @@ import React from 'react';
 import { AlertTriangle, CheckCircle, XCircle, Info } from 'lucide-react';
 import { WorkflowNode, WorkflowConnection } from '@/types/workflow';
 import { getNodeSpec } from '@/workflow/registry';
+import { isConnectionAllowed } from '@/workflow/connectionRules';
 import { cn } from '@/lib/utils';
 
 // ============================================
@@ -284,6 +285,31 @@ function hasUserConfiguration(node: WorkflowNode): boolean {
 }
 
 /**
+ * Check incoming connections against isConnectionAllowed rules.
+ * Reports errors for any connection that violates the rules defined in connectionRules.ts.
+ */
+function findIllegalIncomingConnections(
+  node: WorkflowNode,
+  connections: WorkflowConnection[],
+  allNodes: WorkflowNode[]
+): ValidationIssue[] {
+  const issues: ValidationIssue[] = [];
+  const incomingConnections = connections.filter((c) => c.targetNodeId === node.id);
+
+  for (const connection of incomingConnections) {
+    const sourceNode = allNodes.find((n) => n.id === connection.sourceNodeId);
+    if (!sourceNode) continue;
+
+    const check = isConnectionAllowed(sourceNode, node, connections);
+    if (!check.allowed && check.message) {
+      issues.push({ type: 'error', message: check.message });
+    }
+  }
+
+  return issues;
+}
+
+/**
  * Determine the overall status of a node based on its issues
  */
 function determineNodeStatus(issues: ValidationIssue[], node: WorkflowNode): ValidationStatus {
@@ -348,7 +374,8 @@ export function validateWorkflow(
   for (const node of nodes) {
     const configIssues = validateNodeConfiguration(node);
     const connectionIssues = validateNodeConnections(node, connections, nodes);
-    const allIssues = [...configIssues, ...connectionIssues];
+    const illegalConnectionIssues = findIllegalIncomingConnections(node, connections, nodes);
+    const allIssues = [...configIssues, ...connectionIssues, ...illegalConnectionIssues];
     const status = determineNodeStatus(allIssues, node);
 
     nodeResults.push({
@@ -392,7 +419,8 @@ export function getNodeValidation(
 ): NodeValidationResult {
   const configIssues = validateNodeConfiguration(node);
   const connectionIssues = validateNodeConnections(node, connections, allNodes);
-  const allIssues = [...configIssues, ...connectionIssues];
+  const illegalConnectionIssues = findIllegalIncomingConnections(node, connections, allNodes);
+  const allIssues = [...configIssues, ...connectionIssues, ...illegalConnectionIssues];
   const status = determineNodeStatus(allIssues, node);
 
   return {

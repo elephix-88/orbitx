@@ -5,6 +5,7 @@ import pytest
 # If you have a main app, import it. Otherwise, create a test app with the router.
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
+
 from common.model.connection import ConnectionType, ServiceName
 from common.model.user import UserInDB
 
@@ -119,7 +120,7 @@ def test_oauth2callback_success(mock_mongo, mock_httpx, mock_settings):
         # Verify DB save
         mock_mongo.insert_document.assert_called_once()
         call_args = mock_mongo.insert_document.call_args
-        # The collection name comes from settings (could be "connections" or "test_connections")
+        # Collection name comes from settings ("connections" or "test_connections")
         assert "connection" in call_args.kwargs["collection_name"].lower()
         inserted_data = call_args.kwargs["data"]
         assert inserted_data.service_name == ServiceName.FACEBOOK_ADS.value

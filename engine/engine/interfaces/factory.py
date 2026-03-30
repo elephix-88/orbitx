@@ -1,13 +1,13 @@
 from abc import ABC, abstractmethod
 from collections.abc import Callable
-from typing import Any, Generic, TypeVar, cast
+from typing import Any, TypeVar, cast
 
 from engine.interfaces.node import Extractor, Loader, Transformer
 
 T = TypeVar("T")
 
 
-class RegistryFactory(ABC, Generic[T]):
+class RegistryFactory[T]:
     """Base factory with registry pattern for node creation."""
 
     _DEFAULT_REGISTRY: dict[str, type[T]] = {}
@@ -27,7 +27,7 @@ class RegistryFactory(ABC, Generic[T]):
         return factory_fn(config)
 
 
-class ExtractorFactory(RegistryFactory[Extractor]):
+class ExtractorFactory(RegistryFactory[Extractor], ABC):
     """Factory for building Extractors (Source Nodes)."""
 
     @abstractmethod
@@ -36,7 +36,7 @@ class ExtractorFactory(RegistryFactory[Extractor]):
         pass
 
 
-class TransformerFactory(RegistryFactory[Transformer]):
+class TransformerFactory(RegistryFactory[Transformer], ABC):
     """Factory for building Transformers (Transform Nodes)."""
 
     @abstractmethod
@@ -45,7 +45,7 @@ class TransformerFactory(RegistryFactory[Transformer]):
         pass
 
 
-class LoaderFactory(RegistryFactory[Loader]):
+class LoaderFactory(RegistryFactory[Loader], ABC):
     """Factory for building Loaders (Destination Nodes)."""
 
     @abstractmethod

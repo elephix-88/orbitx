@@ -16,6 +16,9 @@ import {
   Sun,
   Moon,
   CalendarClock,
+  History,
+  RotateCcw,
+  XCircle,
 } from "lucide-react";
 
 import { useNavigate } from "react-router-dom";
@@ -43,6 +46,17 @@ interface ToolbarProps {
 
   hasUnsavedChanges?: boolean;
   lastSavedAt?: Date | null;
+
+  /** Called to toggle the execution history panel open/closed. */
+  onToggleHistory?: () => void;
+  /** Whether the history panel is currently open. */
+  historyOpen?: boolean;
+
+  // Debug mode controls — only visible when an execution is loaded on the canvas
+  isDebugMode?: boolean;
+  isRetrying?: boolean;
+  onRetryExecution?: () => void;
+  onExitDebugMode?: () => void;
 }
 
 export const Toolbar: React.FC<ToolbarProps> = ({
@@ -64,13 +78,54 @@ export const Toolbar: React.FC<ToolbarProps> = ({
 
   hasUnsavedChanges = false,
   lastSavedAt = null,
+
+  onToggleHistory,
+  historyOpen = false,
+  isDebugMode = false,
+  isRetrying = false,
+  onRetryExecution,
+  onExitDebugMode,
 }) => {
   const navigate = useNavigate();
   const { isDark, toggleTheme } = useThemeStore();
 
   return (
+    <div className="flex flex-col z-50">
+    {/* Debug mode banner */}
+    {isDebugMode && (
+      <div className="flex items-center justify-between px-6 py-1.5 bg-amber-950/60 border-b border-amber-700/50">
+        <span className="text-xs font-medium text-amber-300 flex items-center gap-1.5">
+          <History size={12} />
+          Debug view — canvas is read-only. Double-click a node to inspect its stored output.
+        </span>
+        <div className="flex items-center gap-2">
+          {onRetryExecution && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onRetryExecution}
+              disabled={isRetrying}
+              isLoading={isRetrying}
+              leftIcon={<RotateCcw size={13} />}
+              className="text-amber-300 hover:text-amber-100 hover:bg-amber-900/40 text-xs h-6 px-2"
+            >
+              Retry with same data
+            </Button>
+          )}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onExitDebugMode}
+            leftIcon={<XCircle size={13} />}
+            className="text-amber-400/70 hover:text-amber-200 hover:bg-amber-900/30 text-xs h-6 px-2"
+          >
+            Exit debug
+          </Button>
+        </div>
+      </div>
+    )}
     <div
-      className="h-16 flex items-center justify-between px-6 z-50 bg-surface-dark border-b border-neutral-800"
+      className="h-16 flex items-center justify-between px-6 bg-surface-dark border-b border-neutral-800"
     >
       {/* Left Side */}
       <div className="flex items-center gap-4">
@@ -209,6 +264,23 @@ export const Toolbar: React.FC<ToolbarProps> = ({
           Settings
         </Button>
 
+        {onToggleHistory && (
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            onClick={onToggleHistory}
+            title={historyOpen ? "Close execution history" : "View execution history"}
+            className={cn(
+              "hover:bg-white/10",
+              historyOpen
+                ? "text-primary-400 bg-white/10"
+                : "text-white/70 hover:text-white"
+            )}
+          >
+            <History size={16} />
+          </Button>
+        )}
+
         <Button
           variant="ghost"
           size="icon-sm"
@@ -256,6 +328,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
           </>
         )}
       </div>
+    </div>
     </div>
   );
 };

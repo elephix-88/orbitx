@@ -21,10 +21,6 @@ class TestDeliveryModuleImports:
         """engine.node.deliverers.slack_deliverer must import."""
         from engine.node.deliverers.slack_deliverer import SlackDeliverer  # noqa: F401
 
-    def test_import_line_deliverer(self):
-        """engine.node.deliverers.line_deliverer must import."""
-        from engine.node.deliverers.line_deliverer import LineDeliverer  # noqa: F401
-
     def test_import_deliverer_factory(self):
         """engine.node.deliverers.factory must import."""
         from engine.node.deliverers.factory import create_deliverer  # noqa: F401
@@ -43,8 +39,3 @@ class TestDeliveryModuleImports:
 
         assert MAX_TABLE_ROWS == 20
 
-    def test_line_deliverer_exposes_max_top_campaigns_constant(self):
-        """MAX_TOP_CAMPAIGNS constant must be importable and equal 5."""
-        from engine.node.deliverers.line_deliverer import MAX_TOP_CAMPAIGNS
-
-        assert MAX_TOP_CAMPAIGNS == 5

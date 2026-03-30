@@ -86,7 +86,9 @@ async def get_user_by_email(email: str) -> UserInDB | None:
 
 
 async def get_user_by_id(user_id: str) -> UserInDB | None:
-    user_doc = await get_mongodb().get_document(settings.users_collection, {"_id": user_id})
+    user_doc = await get_mongodb().get_document(
+        settings.users_collection, {"_id": user_id}
+    )
     return UserInDB.model_validate(user_doc) if user_doc else None
 
 
@@ -164,7 +166,10 @@ async def authenticate_google_user(credential: str) -> UserInDB | None:
             user.picture = picture
             return user
 
-        return await create_user(email=email, name=name, google_id=google_id, picture=picture)
+        return await create_user(
+            email=email, name=name,
+            google_id=google_id, picture=picture,
+        )
 
     except ValueError as e:
         logger.warning(f"Google token verification failed: {e}")

@@ -5,6 +5,11 @@ import pandas as pd
 from google.ads.googleads.client import GoogleAdsClient
 from loguru import logger
 
+from common.database.mongodb import get_mongodb
+from common.model.google.ads import GoogleAdsField as FieldConfig
+from common.model.google.config import GoogleAdsConfig
+from common.model.result import ExtractorResult
+from common.model.token import GoogleToken
 from engine.configs.config import settings
 from engine.exceptions import ValidationException
 from engine.interfaces.node import Extractor
@@ -14,11 +19,6 @@ from engine.node.extractors.google_ads.row_utils import flatten_row
 from engine.services.connection import get_connection_token
 from engine.services.google.auth import build_credentials
 from engine.utils.extraction import extraction_lifecycle
-from common.database.mongodb import get_mongodb
-from common.model.google.ads import GoogleAdsField as FieldConfig
-from common.model.google.config import GoogleAdsConfig
-from common.model.result import ExtractorResult
-from common.model.token import GoogleToken
 
 
 class GoogleAdsExtractor(Extractor):
@@ -33,7 +33,7 @@ class GoogleAdsExtractor(Extractor):
         selected_pairs: list[tuple[str, str]],
         customer_key: str,
     ) -> list[dict[str, str]]:
-        """Fetch data for a single customer ID (sync - will be wrapped with to_thread)."""
+        """Fetch data for a single customer ID (sync)."""
         records: list[dict[str, str]] = []
 
         stream = ga_service.search_stream(customer_id=customer_id, query=query)
@@ -72,7 +72,9 @@ class GoogleAdsExtractor(Extractor):
 
             mongodb = get_mongodb()
             field_config = await mongodb.get_all_documents(
-                settings.google_fields, {"field": {"$in": self.config.fields}}, FieldConfig
+                settings.google_fields,
+                {"field": {"$in": self.config.fields}},
+                FieldConfig,
             )
 
             if not field_config:
@@ -120,7 +122,9 @@ class GoogleAdsExtractor(Extractor):
             results = await asyncio.gather(*tasks)
 
             records: list[dict[str, Any]] = []
-            for customer_id, customer_records in zip(self.config.ad_account_id, results):
+            for customer_id, customer_records in zip(
+                self.config.ad_account_id, results, strict=False
+            ):
                 records.extend(customer_records)
                 logger.success(f"Completed data fetch for customer: {customer_id}")
 

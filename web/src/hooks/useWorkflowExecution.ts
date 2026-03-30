@@ -3,6 +3,28 @@ import { WorkflowNode } from '../types/workflow';
 import { workflowApiService } from '../services/workflowApiService';
 import { useNotification } from './useNotification';
 
+interface ValidationErrorItem {
+  error_type: string;
+  message: string;
+}
+
+function extractValidationErrors(err: unknown): ValidationErrorItem[] | null {
+  if (!(err instanceof Error)) return null;
+  // The API service embeds the JSON response body in the error message after " - "
+  const dashIndex = err.message.indexOf(' - ');
+  if (dashIndex === -1) return null;
+  try {
+    const body = JSON.parse(err.message.slice(dashIndex + 3));
+    const detail = body?.detail;
+    if (detail?.validation_errors && Array.isArray(detail.validation_errors)) {
+      return detail.validation_errors;
+    }
+  } catch {
+    // Not JSON — ignore
+  }
+  return null;
+}
+
 interface UseWorkflowExecutionProps {
   workflowId: string | undefined;
   nodes: WorkflowNode[];
@@ -55,10 +77,18 @@ export const useWorkflowExecution = ({
       setExecuting(true);
     } catch (err) {
       console.error('Failed to execute workflow:', err);
-      notify.error(
-        'Execute failed',
-        err instanceof Error ? err.message : 'Unknown error'
-      );
+
+      const validationErrors = extractValidationErrors(err);
+      if (validationErrors) {
+        const messages = validationErrors.map((e) => e.message).join('\n');
+        notify.error('Workflow structure is invalid', messages);
+      } else {
+        notify.error(
+          'Execute failed',
+          err instanceof Error ? err.message : 'Unknown error'
+        );
+      }
+
       setTriggering(false);
       setExecuting(false);
     }

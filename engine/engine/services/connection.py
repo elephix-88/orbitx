@@ -4,15 +4,15 @@ from typing import TypeVar
 
 from pydantic import BaseModel
 
-from engine.configs.config import settings
-from engine.exceptions import ConnectionException
 from common.database.mongodb import get_mongodb
 from common.model.connection import ConnectionItem as Connection
+from engine.configs.config import settings
+from engine.exceptions import ConnectionException
 
 T = TypeVar("T", bound=BaseModel)
 
 
-async def get_connection_token(
+async def get_connection_token[T: BaseModel](
     connection_id: str,
     service_name: str,
     token_model: type[T],

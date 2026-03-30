@@ -4,9 +4,9 @@ from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from loguru import logger
 
-from engine.configs.config import settings
 from common.database.mongodb import get_mongodb
 from common.model.common import ConnectionConfig
+from engine.configs.config import settings
 
 
 def build_credentials(
@@ -39,7 +39,9 @@ async def build_connection_credentials(
 ) -> Credentials:
     """Build Credentials object for a stored connection document."""
     mongodb = get_mongodb()
-    connection = await mongodb.get_document("connections", {"_id": connection_id}, ConnectionConfig)
+    connection = await mongodb.get_document(
+        "connections", {"_id": connection_id}, ConnectionConfig
+    )
     return await asyncio.to_thread(
         build_credentials,
         refresh_token=connection.params.refresh_token,

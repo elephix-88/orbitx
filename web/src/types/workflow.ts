@@ -19,7 +19,7 @@ export enum WorkflowStatus {
   PAUSED = 'PAUSED',
 }
 
-// Workflow Execution Status
+// Workflow Execution Status — must match backend common.model.execution.Status
 // eslint-disable-next-line no-unused-vars
 export enum ExecutionStatus {
   // eslint-disable-next-line no-unused-vars
@@ -27,11 +27,9 @@ export enum ExecutionStatus {
   // eslint-disable-next-line no-unused-vars
   RUNNING = 'RUNNING',
   // eslint-disable-next-line no-unused-vars
-  COMPLETED = 'COMPLETED',
+  SUCCESS = 'SUCCESS',
   // eslint-disable-next-line no-unused-vars
   FAILED = 'FAILED',
-  // eslint-disable-next-line no-unused-vars
-  CANCELLED = 'CANCELLED',
 }
 
 // Schedule Types
@@ -193,13 +191,14 @@ export type NodeTypeId =
   | 'facebook.ads'
   | 'google.ads'
   | 'tiktok.ads'
-  | 'source.ga4'
-  | 'source.line-ads'
+  | 'source.error-trigger'
   | 'transform.sql'
   | 'transform.rename'
   | 'transform.join'
   | 'transform.column-editor'
   | 'transform.unify'
+  | 'logic.if'
+  | 'logic.switch'
   | 'dest.bigquery'
   | 'dest.googlesheets'
   | 'dest.mysql';

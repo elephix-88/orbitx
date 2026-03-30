@@ -10,7 +10,7 @@ async def extraction_lifecycle(
     label: str,
     source_type: str,
     connection_id: str,
-) -> AsyncGenerator[None, None]:
+) -> AsyncGenerator[None]:
     async with execution_timer(label):
         try:
             yield

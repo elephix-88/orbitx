@@ -2,9 +2,17 @@ from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query
 
+from common.model.execution import ExecutionHistory
 from common.model.user import UserInDB
 from server.models.execution import ExecutionDeliveryStatus
+from server.models.execution_debug import ExecutionSummary, RetryResponse
 from server.services.auth.dependencies import get_current_user
+from server.services.exceptions import WorkflowNotFoundError
+from server.services.execution_debug import (
+    get_execution_detail,
+    get_execution_summaries,
+    retry_execution,
+)
 from server.services.execution_delivery import (
     get_execution_delivery_status,
     set_execution_delivery_status,
@@ -44,7 +52,7 @@ async def get_dashboard_statistics(
     if ids_list and workflow_names:
         names_list = workflow_names.split(",")
         if len(names_list) == len(ids_list):
-            names_dict = dict(zip(ids_list, names_list))
+            names_dict = dict(zip(ids_list, names_list, strict=False))
     return await get_dashboard_stats(
         current_user.id, workflow_ids=ids_list, workflow_names=names_dict
     )
@@ -92,3 +100,66 @@ async def set_delivery_status_endpoint(
     """
     await set_execution_delivery_status(execution_id, delivery_status)
     return delivery_status
+
+
+@router.get(
+    "/workflow/{workflow_id}/executions",
+    response_model=list[ExecutionSummary],
+)
+async def list_execution_summaries(
+    workflow_id: str,
+    current_user: UserInDB = Depends(get_current_user),
+) -> list[ExecutionSummary]:
+    """List lightweight execution summaries for a workflow, newest first.
+
+    Scoped to the last 30 days, capped at 100 results.
+    Returns an empty list when the workflow does not exist or is not owned
+    by the requesting user.
+    """
+    return await get_execution_summaries(workflow_id, current_user.id)
+
+
+@router.get(
+    "/workflow/{workflow_id}/executions/{execution_id}",
+    response_model=ExecutionHistory,
+)
+async def get_execution_detail_endpoint(
+    workflow_id: str,
+    execution_id: str,
+    current_user: UserInDB = Depends(get_current_user),
+) -> ExecutionHistory:
+    """Return the full execution document including per-node output_rows.
+
+    Raises 404 when the workflow or execution is not found.
+    """
+    try:
+        return await get_execution_detail(workflow_id, execution_id, current_user.id)
+    except WorkflowNotFoundError:
+        raise HTTPException(status_code=404, detail="Workflow not found") from None
+    except ValueError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from None
+
+
+@router.post(
+    "/workflow/{workflow_id}/executions/{execution_id}/retry",
+    response_model=RetryResponse,
+)
+async def retry_execution_endpoint(
+    workflow_id: str,
+    execution_id: str,
+    current_user: UserInDB = Depends(get_current_user),
+) -> RetryResponse:
+    """Re-run a workflow using intermediate data from a previous execution.
+
+    Pins output_rows from each completed step, then launches a new Dagster
+    run so the engine skips re-fetching from source for pinned nodes.
+
+    Raises 404 when the workflow or execution is not found.
+    Raises 422 when Dagster fails to launch the retry run.
+    """
+    try:
+        return await retry_execution(workflow_id, execution_id, current_user.id)
+    except WorkflowNotFoundError:
+        raise HTTPException(status_code=404, detail="Workflow not found") from None
+    except ValueError as error:
+        raise HTTPException(status_code=422, detail=str(error)) from None

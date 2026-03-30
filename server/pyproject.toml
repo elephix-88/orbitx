@@ -21,7 +21,6 @@ dependencies = [
     "google-auth>=2.0.0",
     "google-auth-oauthlib>=1.0.0",
     "google-cloud-bigquery>=3.0.0",
-    "google-cloud-pubsub>=2.33.0",
     "slowapi>=0.1.9",
     "dnspython>=2.6.0",
     "dagster-graphql>=1.10.0",

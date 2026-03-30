@@ -1,4 +1,4 @@
-from enum import Enum
+from enum import Enum, StrEnum
 
 from pydantic import BaseModel, Field, model_validator
 
@@ -11,7 +11,7 @@ class TransformType(Enum):
     UNIFY = "unify"
 
 
-class DataType(str, Enum):
+class DataType(StrEnum):
     """Supported data types for column conversion."""
 
     STRING = "string"
@@ -40,7 +40,7 @@ class ColumnEditorConfig(BaseModel):
     new_columns: list[NewColumn] = Field(default_factory=list)
 
 
-class JoinType(str, Enum):
+class JoinType(StrEnum):
     INNER = "inner"
     LEFT = "left"
     RIGHT = "right"

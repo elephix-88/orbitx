@@ -566,13 +566,13 @@ export const workflowTemplates: WorkflowTemplate[] = [
 
   // -------------------------------------------------------------------------
   // Template 6: Web + Ads Cross-Channel Report
-  // Fan-in: Google Ads + Facebook Ads + GA4 -> 2 unify -> join -> Google Sheets
+  // Fan-in: Google Ads + Facebook Ads -> 2 unify -> join -> Google Sheets
   // -------------------------------------------------------------------------
   {
     id: 'web-ads-cross-channel-sheets',
-    name: 'Web + Ads Cross-Channel Report',
+    name: 'Cross-Channel Ads Report',
     description:
-      'Combine Google Ads, Facebook Ads, and Google Analytics (GA4) into one unified report in Google Sheets. Normalize paid ad data via Unify Schema, then join with web analytics for a full-funnel view.',
+      'Combine Google Ads and Facebook Ads into one unified report in Google Sheets. Normalize ad data via Unify Schema, then join for a cross-platform comparison view.',
     category: 'reporting',
     icon: 'BarChart3',
     difficulty: 'advanced',
@@ -606,22 +606,6 @@ export const workflowTemplates: WorkflowTemplate[] = [
           connection_id: '',
           ad_account_id: [],
           fields: ['campaign_name', 'spend', 'impressions', 'clicks', 'conversions'],
-          time_config: { time_preset: 'last_7_days', time_increment: 1 },
-        },
-        inputs: [],
-        outputs: sourceOutputPort,
-      },
-      {
-        id: 'ga4_source',
-        type: 'source',
-        name: 'Google Analytics',
-        definitionId: 'source.ga4',
-        position: { x: COLUMN_X.source, y: ROW_Y.third },
-        data: {
-          connection_id: '',
-          property_id: '',
-          dimensions: ['date', 'sessionCampaignName', 'sessionSource', 'sessionMedium'],
-          metrics: ['sessions', 'activeUsers', 'conversions', 'purchaseRevenue', 'transactions'],
           time_config: { time_preset: 'last_7_days', time_increment: 1 },
         },
         inputs: [],
@@ -689,19 +673,16 @@ export const workflowTemplates: WorkflowTemplate[] = [
       // Sources -> Unify / direct to join
       connection('conn_gads_unify', 'gads_source', 'unify_gads'),
       connection('conn_fb_unify', 'fb_source', 'unify_fb'),
-      // Unified ads + GA4 -> Join
+      // Unified ads -> Join
       connection('conn_unify_gads_join', 'unify_gads', 'join_all'),
       connection('conn_unify_fb_join', 'unify_fb', 'join_all'),
-      connection('conn_ga4_join', 'ga4_source', 'join_all'),
       // Join -> Google Sheets
       connection('conn_join_sheets', 'join_all', 'sheets_dest'),
     ],
     setupTips: [
       'Connect Google Ads and Facebook Ads accounts in Connections',
-      'Connect a Google account with Google Analytics access',
-      'Select the GA4 property that tracks your website',
       'The Unify Schema nodes normalize ad platform data to a common schema',
-      'Join merges paid media metrics with web analytics for a full-funnel view',
+      'Join merges both normalized datasets for a cross-platform comparison',
       'Schedule daily to keep the report fresh',
     ],
   },

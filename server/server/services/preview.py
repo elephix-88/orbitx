@@ -55,7 +55,7 @@ def build_column_info(dataframe: pd.DataFrame) -> list[ColumnInfo]:
 
 
 def dataframe_to_preview(dataframe: pd.DataFrame) -> PreviewNodeResponse:
-    """Convert a DataFrame to a PreviewNodeResponse, limited to PREVIEW_ROW_LIMIT rows."""
+    """Convert a DataFrame to a PreviewNodeResponse."""
     total_row_count = len(dataframe)
     limited = dataframe.head(PREVIEW_ROW_LIMIT)
 
@@ -69,7 +69,9 @@ def dataframe_to_preview(dataframe: pd.DataFrame) -> PreviewNodeResponse:
     )
 
 
-async def extract_source_data(node_type: str, parameters: dict[str, Any]) -> pd.DataFrame:
+async def extract_source_data(
+    node_type: str, parameters: dict[str, Any]
+) -> pd.DataFrame:
     """Run an extractor directly and return the resulting DataFrame."""
     factory = SourceFactory()
     extractor = factory.create_extractor(parameters, node_type)

@@ -1,25 +1,24 @@
 import asyncio
 import os
 
-from dagster import Definitions
 from loguru import logger
+
+from dagster import Definitions
 
 engine_root = os.path.join(os.path.dirname(__file__), "..", "..", "engine")
 if os.path.isdir(engine_root):
     os.chdir(engine_root)
 
-from common.config.settings import register_settings
-from engine.configs.config import settings
+from common.config.settings import register_settings  # noqa: E402
+from engine.configs.config import settings  # noqa: E402
 
 register_settings(settings)
 
-from common.database.mongodb import get_mongodb
-from common.model.workflow import WorkflowData
-from dagster_orbitx.graph_builder import build_workflow_job
-from dagster_orbitx.jobs.workflow_executor import sanitize_dagster_name
-from dagster_orbitx.schedules import build_workflow_schedule
-
-
+from common.database.mongodb import close_mongodb, get_mongodb  # noqa: E402
+from common.model.workflow import WorkflowData  # noqa: E402
+from dagster_orbitx.graph_builder import build_workflow_job  # noqa: E402
+from dagster_orbitx.jobs.workflow_executor import sanitize_dagster_name  # noqa: E402
+from dagster_orbitx.schedules import build_workflow_schedule  # noqa: E402
 def load_all_workflows() -> list[WorkflowData]:
     async def fetch() -> list[WorkflowData]:
         mongodb = get_mongodb()
@@ -34,6 +33,8 @@ def load_all_workflows() -> list[WorkflowData]:
     except Exception as error:
         logger.warning(f"Failed to load workflows from MongoDB: {error}")
         return []
+    finally:
+        close_mongodb()
 
 
 def deduplicate_name(name: str, seen: set[str]) -> str:
@@ -62,14 +63,16 @@ def build_definitions() -> Definitions:
         if not workflow.id:
             continue
 
-        job_name = deduplicate_name(sanitize_dagster_name(workflow.job_name), seen_names)
+        job_name = deduplicate_name(
+            sanitize_dagster_name(workflow.job_name), seen_names
+        )
 
         try:
             job_definition = build_workflow_job(workflow, job_name)
             jobs.append(job_definition)
             logger.info(f"Job '{job_name}' → '{workflow.job_name}'")
         except Exception as error:
-            logger.error(f"Failed to build job for '{workflow.job_name}': {error}")
+            logger.warning(f"Skipped workflow '{workflow.job_name}': {error}")
             continue
 
         schedule_definition = build_workflow_schedule(workflow, job_name)
