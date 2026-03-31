@@ -1,7 +1,13 @@
+import asyncio
+import json
+
 from fastapi import APIRouter, Depends, HTTPException, Request, status
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, StreamingResponse
 from loguru import logger
 from pymongo.errors import DuplicateKeyError
+
+from common.database import get_mongodb
+from common.model.execution import Status
 
 from common.model.user import UserInDB
 from common.model.workflow import JobIdRequest, WorkflowData, WorkflowSummary
@@ -86,6 +92,76 @@ async def execute_workflow_endpoint(
                 ],
             },
         ) from error
+
+
+TERMINAL_STATUSES = {Status.SUCCESS, Status.FAILED}
+SSE_POLL_INTERVAL = 1.5
+SSE_MAX_DURATION = 600  # 10 minutes safety cap
+
+
+@router.get("/{workflow_id}/execution-stream")
+async def execution_stream(
+    workflow_id: str,
+    _current_user: UserInDB = Depends(get_current_user),
+):
+    """SSE endpoint that streams execution status changes for a workflow.
+
+    Watches the latest RUNNING execution in MongoDB and pushes updates
+    whenever the document changes. Closes when the execution reaches
+    a terminal status (SUCCESS/FAILED/CANCELED) or the safety cap expires.
+    """
+    mongodb = get_mongodb()
+    collection = mongodb.get_collection(settings.execution_history_collection)
+
+    async def find_latest(query: dict) -> dict | None:
+        cursor = collection.find(query).sort("start_time", -1).limit(1)
+        results = await cursor.to_list(length=1)
+        return results[0] if results else None
+
+    async def event_generator():
+        previous_snapshot = None
+        elapsed = 0.0
+
+        while elapsed < SSE_MAX_DURATION:
+            document = await find_latest(
+                {"workflow_id": workflow_id, "status": Status.RUNNING}
+            )
+
+            if document is None:
+                document = await find_latest(
+                    {"workflow_id": workflow_id}
+                )
+
+            if document is None:
+                yield "data: {}\n\n"
+                return
+
+            if "_id" in document:
+                document["_id"] = str(document["_id"])
+
+            current_snapshot = json.dumps(
+                document, default=str, sort_keys=True
+            )
+
+            if current_snapshot != previous_snapshot:
+                yield f"data: {json.dumps(document, default=str)}\n\n"
+                previous_snapshot = current_snapshot
+
+            execution_status = document.get("status", "")
+            if execution_status in TERMINAL_STATUSES:
+                return
+
+            await asyncio.sleep(SSE_POLL_INTERVAL)
+            elapsed += SSE_POLL_INTERVAL
+
+    return StreamingResponse(
+        event_generator(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "X-Accel-Buffering": "no",
+        },
+    )
 
 
 @router.post("/preview-node", response_model=PreviewNodeResponse)

@@ -1,6 +1,9 @@
+import time
+
 from loguru import logger
 
 from common.database import get_mongodb
+from common.model.execution import ExecutionHistory, Status
 from common.model.workflow import JobIdRequest, WorkflowData, WorkflowSummary
 from common.model.workflow_rules import validate_workflow_structure
 from server.configs.config import settings
@@ -116,13 +119,19 @@ async def create_new_workflow(workflow_data: WorkflowData) -> WorkflowData:
     return workflow_data
 
 
-async def execute_workflow(job_id: str) -> bool:
-    """Execute a workflow with ownership check."""
+async def execute_workflow(job_id: str) -> dict[str, str]:
+    """Execute a workflow with ownership check.
+
+    Creates an initial execution document in MongoDB with status RUNNING,
+    then launches the Dagster run. Returns the run_id so the frontend
+    can subscribe to the execution stream.
+    """
     if not job_id:
         raise ValidationError("workflow_id", "Workflow ID is required")
 
     user = get_current_user()
-    workflow = await get_mongodb().get_document(
+    mongodb = get_mongodb()
+    workflow = await mongodb.get_document(
         collection_name=settings.workflow_collection,
         query={"_id": job_id, "user_id": user.id},
         model_cls=WorkflowData,
@@ -142,5 +151,23 @@ async def execute_workflow(job_id: str) -> bool:
         user_id=user.id,
     )
 
+    execution = ExecutionHistory(
+        _id=run_id,
+        execution_id=run_id,
+        workflow_id=job_id,
+        workflow_name=workflow.job_name,
+        status=Status.RUNNING,
+        triggered_by="manual",
+        start_time=time.time(),
+        total_nodes=len(workflow.nodes),
+    )
+
+    collection = mongodb.get_collection(settings.execution_history_collection)
+    await collection.update_one(
+        {"execution_id": run_id},
+        {"$set": execution.model_dump(by_alias=True, exclude_none=True)},
+        upsert=True,
+    )
+
     logger.success(f"Dagster run {run_id} launched for workflow: {job_id}")
-    return True
+    return {"run_id": run_id}

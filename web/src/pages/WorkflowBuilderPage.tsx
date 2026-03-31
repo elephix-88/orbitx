@@ -82,7 +82,7 @@ const WorkflowBuilderPage: React.FC = () => {
 
   // Execution ID: prefer Mongo ObjectId, fall back to job_id
   const executionId = extractMongoId(originalBackendWorkflow?._id) || originalBackendWorkflow?.job_id;
-  const { executing, triggering, handleExecute } = useWorkflowExecution({
+  const { executing, handleExecute, stopExecuting } = useWorkflowExecution({
     workflowId: executionId,
     nodes,
     setNodes,
@@ -293,7 +293,7 @@ const WorkflowBuilderPage: React.FC = () => {
       map.set(instanceId, {
         failed: step.status === 'FAILED',
         succeeded: step.status === 'SUCCESS',
-        rowCount: step.output_row_count ?? step.output_rows?.length ?? 0,
+        rowCount: step.row_count ?? 0,
         errorMessage: step.error ?? null,
       });
     }
@@ -311,11 +311,11 @@ const WorkflowBuilderPage: React.FC = () => {
     const instanceId = debugInspectNode.data?.node_instance_id;
     if (instanceId === undefined) return null;
     const step = debugExecution.steps[String(instanceId)];
-    if (!step || !step.output_rows) return null;
+    if (!step) return null;
     return {
-      data: step.output_rows,
-      columns: step.output_columns ?? [],
-      row_count: step.output_row_count ?? step.output_rows.length,
+      data: [],
+      columns: [],
+      row_count: step.row_count ?? 0,
     };
   }, [debugInspectNode, debugExecution]);
 
@@ -1154,6 +1154,8 @@ const WorkflowBuilderPage: React.FC = () => {
             <Suspense fallback={null}>
               <ExecutionLogPanel
                 workflowId={extractMongoId(originalBackendWorkflow?._id) || docId}
+                executing={executing}
+                onExecutionComplete={stopExecuting}
               />
             </Suspense>
 
@@ -1280,16 +1282,7 @@ const WorkflowBuilderPage: React.FC = () => {
             </Suspense>
           )}
 
-          {/* Triggering Modal - Blocks user interaction during Cloud Run head-up */}
-          {triggering && (
-            <div className="fixed inset-0 z-[100] flex items-center justify-center bg-neutral-900/60">
-              <div className="p-8 flex flex-col items-center gap-4 bg-surface-primary border-2 border-primary-600 rounded-sm">
-                <Loader2 className="w-10 h-10 animate-spin text-primary-600" />
-                <p className="text-lg font-medium text-text-primary">Triggering...</p>
-                <p className="text-sm text-text-secondary">Starting workflow execution</p>
-              </div>
-            </div>
-          )}
+
         </div>
       </div>
     </div>

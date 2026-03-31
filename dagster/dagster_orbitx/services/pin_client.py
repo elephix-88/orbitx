@@ -3,7 +3,7 @@ import asyncio
 import pandas as pd
 from loguru import logger
 
-from common.database.mongodb import close_mongodb, get_mongodb
+from common.database.mongodb import get_mongodb
 from dagster_orbitx.ops.node_result import NodeResult
 
 PINNED_DATA_COLLECTION = "pinned_node_data"
@@ -30,8 +30,6 @@ def fetch_pinned_data(workflow_id: str) -> dict[int, NodeResult]:
             f"Failed to fetch pinned data for workflow {workflow_id}: {error}"
         )
         return {}
-    finally:
-        close_mongodb()
 
     if not documents:
         return {}

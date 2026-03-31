@@ -8,10 +8,8 @@ from common.model.execution import ExecutionHistory
 from common.model.workflow import WorkflowData
 from server.configs.config import settings
 from server.models.execution_debug import ExecutionSummary, RetryResponse
-from server.models.pin import ColumnInfo
 from server.services import dagster_client
 from server.services.exceptions import WorkflowNotFoundError
-from server.services.pin_service import pin_node
 
 EXECUTION_LIST_DAYS = 30
 EXECUTION_LIST_LIMIT = 100
@@ -133,64 +131,16 @@ async def get_execution_detail(
     return ExecutionHistory(**document)
 
 
-def infer_column_info_from_rows(rows: list[dict[str, Any]]) -> list[ColumnInfo]:
-    """Derive ColumnInfo from the keys of the first row.
-
-    All columns are typed as 'string' — the preview panel is responsible for
-    any further type display; exact dtype is not stored in output_rows.
-    Returns an empty list when rows is empty.
-    """
-    if not rows:
-        return []
-    return [ColumnInfo(name=key, data_type="string") for key in rows[0]]
-
-
 async def retry_execution(
     workflow_id: str, execution_id: str, user_id: str
 ) -> RetryResponse:
-    """Re-run a workflow using intermediate data from a previous execution.
-
-    For each step in the execution that has output_rows, pins those rows so
-    the next run skips re-fetching from source. Then launches the workflow
-    via Dagster.
+    """Re-run a workflow. Uses any existing pinned node data.
 
     Raises:
         WorkflowNotFoundError: workflow not found or not owned by user.
-        ValueError: execution not found, or Dagster fails to launch.
+        ValueError: Dagster fails to launch.
     """
     workflow = await verify_workflow_ownership(workflow_id, user_id)
-    execution = await get_execution_detail(workflow_id, execution_id, user_id)
-
-    pinned_count = 0
-    for step_key, step in execution.steps.items():
-        if not step.output_rows:
-            continue
-
-        try:
-            node_instance_id = int(step.node_instance_id)
-        except ValueError:
-            logger.warning(
-                "Step key '%s' is not a valid integer node_instance_id — skipping pin",
-                step_key,
-            )
-            continue
-
-        columns = infer_column_info_from_rows(step.output_rows)
-        await pin_node(
-            workflow_id=workflow_id,
-            node_instance_id=node_instance_id,
-            user_id=user_id,
-            data=step.output_rows,
-            columns=columns,
-        )
-        pinned_count += 1
-
-    logger.info(
-        "Retry: pinned %d node outputs for workflow %s (execution %s)",
-        pinned_count,
-        workflow_id,
-        execution_id,
-    )
 
     run_id = dagster_client.launch_run(
         workflow_id=workflow_id,

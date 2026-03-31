@@ -5,6 +5,9 @@ async def ensure_indexes(database) -> None:
     logger.info("Ensuring MongoDB indexes...")
     await database["workflow"].create_index("user_id")
     await database["connections"].create_index("user_id")
+    await database["execution_history"].create_index(
+        "execution_id", unique=True, sparse=True
+    )
     await database["execution_history"].create_index("workflow_id")
     await database["execution_history"].create_index(
         [("workflow_id", 1), ("start_time", -1)]

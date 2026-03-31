@@ -133,6 +133,19 @@ STEP 4: BUILD (engineers + consultants)
          │            │            │
          └────────────┼────────────┘
                       │
+STEP 4b: WRITE TESTS (Test Engineer)
+                      ▼
+               ┌──────────────┐
+               │ Test Engineer │
+               │              │
+               │ Writes tests  │
+               │ for delivered │
+               │ feature       │
+               │              │
+               │ P0 first,     │
+               │ always        │
+               └──────┬───────┘
+                      │
 STEP 5: QA REVIEW (no coding)
                       ▼
                ┌──────────────┐
@@ -204,13 +217,26 @@ Research team works as a **pair**. They debate and discuss until they reach **co
 
 | Agent | Model | Role |
 |---|---|---|
-| **QA Tester** | sonnet | Reviews ONLY — does NOT write code, tests, or implementations. Checks: (1) code follows global config rules, (2) feature makes product sense, (3) nothing is broken. Reports bugs to PM with file, line, and description. |
+| **QA Tester** | sonnet | Reviews ONLY — does NOT write code, tests, or implementations. Checks: (1) code follows global config rules, (2) feature makes product sense, (3) nothing is broken, (4) Test Engineer's coverage includes all P0 critical paths. Reports bugs to PM with file, line, and description. |
+
+### Infrastructure
+
+| Agent | Model | Role |
+|---|---|---|
+| **DevOps Engineer** | sonnet | Owns `docker/`, `docker-compose.yml`, `.github/workflows/`, `configs/`, `Makefile`. Responsible for CI/CD pipelines, Sentry error tracking setup, environment config, health checks, and production deployment checklist. Never writes application feature code. |
+
+### Testing
+
+| Agent | Model | Role |
+|---|---|---|
+| **Test Engineer** | sonnet | Writes automated tests only — vitest for frontend (`web/tests/`), pytest for backend and engine. Dispatched by PM after an engineer delivers a feature. Owns test coverage. Never implements features, never reviews product quality. |
 
 ### Consultant Agents (on-demand)
 
 | Agent | Model | Role |
 |---|---|---|
-| **API Docs Researcher** | sonnet | On-demand, multi-instance. Engineers request when they need platform API documentation (Facebook, Google, TikTok, LINE, Slack, etc.). Delivers structured integration guides. |
+| **API Docs Researcher** | sonnet | On-demand, multi-instance. Engineers request when they need platform API documentation (Facebook, Google, TikTok, LINE, Slack, Shopee, Lazada, etc.). Delivers structured integration guides. |
+| **Thai Growth Agent** | sonnet | On-demand. Dispatched by Team Lead or Product Owner when a decision requires Thai market grounding. Researches Thai agency landscape, Shopee/Lazada/TikTok Shop ecosystem, Thai marketing communities, and distribution channels. |
 
 ## Model Strategy
 
@@ -220,14 +246,60 @@ OPUS (3 agents) — Deep reasoning, architecture, creativity
   Creative Strategist Lateral thinking, blue ocean ideas
   Data Engineer       Schema design, cross-platform data
 
-SONNET (6 agents) — Fast execution, pattern matching
+SONNET (9 agents) — Fast execution, pattern matching
   Project Manager     Task planning, sprint management
   Market Researcher   Data gathering, trend analysis
   Frontend Engineer   React/Tailwind component code
   Backend Engineer    FastAPI endpoint code
+  DevOps Engineer     CI/CD, Docker, monitoring, deployment
+  Test Engineer       Writes vitest + pytest tests (no features)
   QA Tester           Rule checking, review (no coding)
   API Docs Researcher Documentation lookup (on-demand)
+  Thai Growth Agent   Thai market research, GTM (on-demand)
 ```
+
+## Sprint Lanes
+
+Two lanes exist. Use the right one — do not run bug fixes through the full sprint loop.
+
+### Full Sprint Loop (Steps 1–6)
+**Use for:** New features, new connectors, new pages, architecture changes, anything that crosses package boundaries.
+
+### Fast Lane (Steps 3–6 only, skip Research + PO)
+**Use for:** Bug fixes, UI polish, test coverage, DevOps changes, documentation.
+
+```text
+Fast Lane:
+
+  Founder identifies bug or small task
+          │
+          ▼
+    Project Manager
+    (receives task directly — no Research or PO step)
+          │
+          ▼
+    Engineer fixes it
+          │
+          ▼
+    Test Engineer writes/updates tests
+          │
+          ▼
+    QA Tester verifies
+          │
+          ▼
+    Done
+```
+
+**Fast Lane eligibility rules:**
+- Fix must touch only ONE package boundary (e.g., only `web/` or only `server/`)
+- No new Pydantic models in `common/`
+- No new API endpoints
+- No OAuth or data platform integration changes
+- Estimated effort under 4 hours
+
+If a "bug fix" turns out to require multiple packages or new models — escalate to PM to run through Full Sprint Loop instead.
+
+---
 
 ## Rules
 

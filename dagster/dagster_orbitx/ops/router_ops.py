@@ -1,15 +1,18 @@
+import time
 import traceback as traceback_module
 
 import pandas as pd
 from loguru import logger
 
 from common.model.conditional import SwitchNodeConfig
+from common.model.execution import Status
 from common.model.workflow import Node
 from dagster import OpExecutionContext, Out, op
-from dagster_orbitx.ops.node_result import NodeResult, capture_output_rows
+from dagster_orbitx.ops.node_result import NodeResult
 from dagster_orbitx.services.execution_persistence import (
-    persist_error_sync,
-    persist_output_sync,
+    notify_node_status,
+    persist_node_error,
+    persist_node_output,
 )
 from engine.factories.transform import TransformFactory
 
@@ -48,6 +51,11 @@ def make_if_router_op(
             f"(#{node.node_instance_id})"
         )
 
+        notify_node_status(
+            context, node, Status.RUNNING,
+            start_time=time.time(),
+        )
+
         try:
             factory = TransformFactory()
             router = factory.create_router(
@@ -59,27 +67,13 @@ def make_if_router_op(
             true_data = outputs["true"]
             false_data = outputs["false"]
 
-            true_rows = capture_output_rows(true_data)
-            false_rows = capture_output_rows(false_data)
-
-            # Persist combined output rows for debug
-            combined_rows = true_rows[:500] + false_rows[:500]
-            persist_output_sync(
-                run_id=context.run_id,
-                workflow_id=context.run_tags.get(
-                    "workflow_id", ""
-                ),
-                node_instance_id=node.node_instance_id,
-                node_id=node.node_id,
-                output_rows=combined_rows,
-            )
+            persist_node_output(context, node, len(input_result.data))
 
             true_result = NodeResult(
                 data=true_data,
                 primary_keys=input_result.primary_keys,
                 report_level=input_result.report_level,
                 field_schemas=input_result.field_schemas,
-                output_rows=true_rows,
             )
 
             false_result = NodeResult(
@@ -87,7 +81,6 @@ def make_if_router_op(
                 primary_keys=input_result.primary_keys,
                 report_level=input_result.report_level,
                 field_schemas=input_result.field_schemas,
-                output_rows=false_rows,
             )
 
             logger.success(
@@ -97,18 +90,19 @@ def make_if_router_op(
                 f"(#{node.node_instance_id})"
             )
 
+            notify_node_status(
+                context, node, Status.SUCCESS,
+                end_time=time.time(),
+            )
+
             return true_result, false_result
 
         except Exception:
             error_trace = traceback_module.format_exc()
-            persist_error_sync(
-                run_id=context.run_id,
-                workflow_id=context.run_tags.get(
-                    "workflow_id", ""
-                ),
-                node_instance_id=node.node_instance_id,
-                node_id=node.node_id,
-                error_trace=error_trace,
+            persist_node_error(context, node, error_trace)
+            notify_node_status(
+                context, node, Status.FAILED,
+                end_time=time.time(),
             )
             raise
 
@@ -160,6 +154,11 @@ def make_switch_router_op(
             f"(#{node.node_instance_id})"
         )
 
+        notify_node_status(
+            context, node, Status.RUNNING,
+            start_time=time.time(),
+        )
+
         try:
             factory = TransformFactory()
             router = factory.create_router(
@@ -168,23 +167,7 @@ def make_switch_router_op(
 
             outputs = router.route(input_result.data)
 
-            # Persist combined output for debug
-            combined_rows: list[dict] = []
-            for port_name in output_names:
-                port_data = outputs.get(port_name)
-                if port_data is not None and not port_data.empty:
-                    rows = capture_output_rows(port_data)
-                    combined_rows.extend(rows[:200])
-
-            persist_output_sync(
-                run_id=context.run_id,
-                workflow_id=context.run_tags.get(
-                    "workflow_id", ""
-                ),
-                node_instance_id=node.node_instance_id,
-                node_id=node.node_id,
-                output_rows=combined_rows[:1000],
-            )
+            persist_node_output(context, node, len(input_result.data))
 
             results = []
             for port_name in output_names:
@@ -198,9 +181,6 @@ def make_switch_router_op(
                         primary_keys=input_result.primary_keys,
                         report_level=input_result.report_level,
                         field_schemas=input_result.field_schemas,
-                        output_rows=capture_output_rows(
-                            port_data
-                        ),
                     )
                 )
 
@@ -215,18 +195,19 @@ def make_switch_router_op(
                 f"(#{node.node_instance_id})"
             )
 
+            notify_node_status(
+                context, node, Status.SUCCESS,
+                end_time=time.time(),
+            )
+
             return tuple(results)
 
         except Exception:
             error_trace = traceback_module.format_exc()
-            persist_error_sync(
-                run_id=context.run_id,
-                workflow_id=context.run_tags.get(
-                    "workflow_id", ""
-                ),
-                node_instance_id=node.node_instance_id,
-                node_id=node.node_id,
-                error_trace=error_trace,
+            persist_node_error(context, node, error_trace)
+            notify_node_status(
+                context, node, Status.FAILED,
+                end_time=time.time(),
             )
             raise
 

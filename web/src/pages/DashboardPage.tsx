@@ -359,7 +359,9 @@ const DashboardPage = () => {
       })).filter((w: { id: string }) => w.id);
 
       const workflowIds = workflowData.map((w: { id: string }) => w.id);
-      const workflowNames = workflowData.map((w: { name: string }) => w.name);
+      const workflowNames: Record<string, string> = Object.fromEntries(
+        workflowData.map((w: { id: string; name: string }) => [w.id, w.name])
+      );
 
       const dashboardStats = await executionHistoryService.getDashboardStats(workflowIds, workflowNames);
       setStats(dashboardStats);

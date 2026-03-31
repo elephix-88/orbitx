@@ -358,10 +358,10 @@ class WorkflowApiService {
   /**
    * Start workflow execution
    */
-  async executeWorkflow(identifier: string): Promise<ApiResponse<{ success: boolean }>> {
+  async executeWorkflow(identifier: string): Promise<ApiResponse<{ success: boolean; run_id?: string }>> {
     try {
       const payload = { _id: identifier };
-      const raw = await this.makeRequestWithRetry<{ success?: boolean } | boolean>(
+      const raw = await this.makeRequestWithRetry<{ run_id?: string; success?: boolean } | boolean>(
         `/api/workflows/execute`,
         {
           method: 'POST',
@@ -374,11 +374,16 @@ class WorkflowApiService {
           maxDelay: API_CONFIG.MAX_RETRY_DELAY,
         }
       );
-      
-      const isBool = typeof raw?.data === 'boolean';
-      const isObjWithSuccess = raw?.data && typeof raw.data === 'object' && 'success' in raw.data;
-      const success: boolean = isBool ? (raw.data as boolean) : (isObjWithSuccess ? !!(raw.data as { success: boolean }).success : true);
-      return { data: { success }, message: raw?.message };
+
+      const data = raw?.data;
+      const isObject = data && typeof data === 'object';
+      const runId = isObject ? (data as { run_id?: string }).run_id : undefined;
+      // Backend now returns { run_id: "..." }; treat presence of run_id as success
+      const success = isObject
+        ? ('success' in data ? !!(data as { success?: boolean }).success : !!runId)
+        : typeof data === 'boolean' ? data : true;
+
+      return { data: { success, run_id: runId }, message: raw?.message };
     } catch (error) {
       console.error(`Failed to execute workflow ${identifier}:`, error);
       throw error;

@@ -6,10 +6,11 @@ from datetime import datetime, timezone
 import httpx
 from loguru import logger
 
-from common.database.mongodb import close_mongodb, get_mongodb
+from common.database.mongodb import get_mongodb
 from common.model.error_trigger import ErrorPayload
 from dagster import HookContext, failure_hook, success_hook
 from dagster_orbitx.services.execution_persistence import (
+    finalize_execution_sync,
     set_execution_ttl,
 )
 
@@ -41,6 +42,10 @@ def on_workflow_success(context: HookContext) -> None:
         f"Run completed — workflow={workflow_id} user={user_id}"
     )
 
+    finalize_execution_sync(
+        run_id=context.run_id,
+        end_time=time.time(),
+    )
     _set_ttl_on_execution(context.run_id)
 
 
@@ -55,6 +60,10 @@ def on_workflow_failure(context: HookContext) -> None:
         f"Run failed — workflow={workflow_id} user={user_id}"
     )
 
+    finalize_execution_sync(
+        run_id=context.run_id,
+        end_time=time.time(),
+    )
     _set_ttl_on_execution(context.run_id)
 
     is_error_workflow = tags.get(
@@ -142,10 +151,7 @@ def _lookup_error_workflow_id(
             return None
         return document.get("error_workflow_id")
 
-    try:
-        return asyncio.run(query())
-    finally:
-        close_mongodb()
+    return asyncio.run(query())
 
 
 def _trigger_error_workflow(
@@ -187,5 +193,3 @@ def _set_ttl_on_execution(run_id: str) -> None:
         logger.warning(
             f"Failed to set TTL on execution {run_id}: {error}"
         )
-    finally:
-        close_mongodb()

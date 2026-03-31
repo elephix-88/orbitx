@@ -1,15 +1,18 @@
 import asyncio
+import time
 import traceback as traceback_module
 
 from loguru import logger
 
+from common.model.execution import Status
 from common.model.transform import TransformType
 from common.model.workflow import Node
 from dagster import In, OpExecutionContext, op
-from dagster_orbitx.ops.node_result import NodeResult, capture_output_rows
+from dagster_orbitx.ops.node_result import NodeResult
 from dagster_orbitx.services.execution_persistence import (
-    persist_error_sync,
-    persist_output_sync,
+    notify_node_status,
+    persist_node_error,
+    persist_node_output,
 )
 from engine.factories.transform import TransformFactory
 from engine.utils.retry import with_retry
@@ -19,34 +22,6 @@ SCHEMA_UPDATE_TYPES = {
     TransformType.COLUMN_EDITOR.value,
     TransformType.UNIFY.value,
 }
-
-
-def persist_success(
-    context: OpExecutionContext,
-    node: Node,
-    output_rows: list[dict],
-) -> None:
-    persist_output_sync(
-        run_id=context.run_id,
-        workflow_id=context.run_tags.get("workflow_id", ""),
-        node_instance_id=node.node_instance_id,
-        node_id=node.node_id,
-        output_rows=output_rows,
-    )
-
-
-def persist_failure(
-    context: OpExecutionContext,
-    node: Node,
-    error_trace: str,
-) -> None:
-    persist_error_sync(
-        run_id=context.run_id,
-        workflow_id=context.run_tags.get("workflow_id", ""),
-        node_instance_id=node.node_instance_id,
-        node_id=node.node_id,
-        error_trace=error_trace,
-    )
 
 
 def make_transformer_op(
@@ -81,6 +56,11 @@ def make_transformer_op(
                 f"(#{node.node_instance_id})"
             )
 
+            notify_node_status(
+                context, node, Status.RUNNING,
+                start_time=time.time(),
+            )
+
             try:
                 factory = TransformFactory()
                 transformer = factory.create_transformer(
@@ -102,7 +82,6 @@ def make_transformer_op(
                 first_input = next(
                     iter(kwargs.values()), None
                 )
-                output_rows = capture_output_rows(transformed)
 
                 node_result = NodeResult(
                     data=transformed,
@@ -121,17 +100,24 @@ def make_transformer_op(
                         if first_input
                         else None
                     ),
-                    output_rows=output_rows,
                 )
 
-                persist_success(
-                    context, node, output_rows
+                persist_node_output(
+                    context, node, len(transformed)
+                )
+                notify_node_status(
+                    context, node, Status.SUCCESS,
+                    end_time=time.time(),
                 )
                 return node_result
 
             except Exception:
                 error_trace = traceback_module.format_exc()
-                persist_failure(context, node, error_trace)
+                persist_node_error(context, node, error_trace)
+                notify_node_status(
+                    context, node, Status.FAILED,
+                    end_time=time.time(),
+                )
                 raise
 
         return join_transformer_op
@@ -152,6 +138,11 @@ def make_transformer_op(
         logger.info(
             f"Transforming: {node.node_id} "
             f"(#{node.node_instance_id})"
+        )
+
+        notify_node_status(
+            context, node, Status.RUNNING,
+            start_time=time.time(),
         )
 
         try:
@@ -179,22 +170,27 @@ def make_transformer_op(
                 f"(#{node.node_instance_id})"
             )
 
-            output_rows = capture_output_rows(transformed)
-
             node_result = NodeResult(
                 data=transformed,
                 primary_keys=input_result.primary_keys,
                 report_level=input_result.report_level,
                 field_schemas=field_schemas,
-                output_rows=output_rows,
             )
 
-            persist_success(context, node, output_rows)
+            persist_node_output(context, node, len(transformed))
+            notify_node_status(
+                context, node, Status.SUCCESS,
+                end_time=time.time(),
+            )
             return node_result
 
         except Exception:
             error_trace = traceback_module.format_exc()
-            persist_failure(context, node, error_trace)
+            persist_node_error(context, node, error_trace)
+            notify_node_status(
+                context, node, Status.FAILED,
+                end_time=time.time(),
+            )
             raise
 
     return transformer_op

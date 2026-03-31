@@ -1,3 +1,4 @@
+import { API_CONFIG } from '@/config/env';
 import type { ExecutionHistory } from '@/types/backend';
 
 export interface DashboardStats {
@@ -13,28 +14,54 @@ export interface DashboardStats {
 }
 
 class ExecutionHistoryService {
-  /**
-   * Get all execution history for a workflow
-   * TODO: Re-enable when execution history backend is ready
-   */
-  async getExecutionHistory(_workflowId: string): Promise<ExecutionHistory[]> {
-    return [];
+  private baseUrl = API_CONFIG.BASE_URL;
+
+  async getExecutionHistory(workflowId: string): Promise<ExecutionHistory[]> {
+    const response = await fetch(
+      `${this.baseUrl}/api/execution-history/workflow/${workflowId}`,
+      { credentials: 'include' }
+    );
+    if (!response.ok) return [];
+    return response.json();
   }
 
-  /**
-   * TODO: Re-enable when execution history backend is ready
-   */
-  async getDashboardStats(_workflowIds?: string[], _workflowNames?: string[]): Promise<DashboardStats> {
+  async getDashboardStats(workflowIds?: string[], workflowNames?: Record<string, string>): Promise<DashboardStats> {
+    const params = new URLSearchParams();
+    if (workflowIds?.length) {
+      params.set('workflow_ids', workflowIds.join(','));
+    }
+    if (workflowNames) {
+      params.set('workflow_names', JSON.stringify(workflowNames));
+    }
+    const query = params.toString();
+    const response = await fetch(
+      `${this.baseUrl}/api/execution-history/dashboard-stats${query ? `?${query}` : ''}`,
+      { credentials: 'include' }
+    );
+    if (!response.ok) {
+      return {
+        totalExecutions: 0,
+        successfulExecutions: 0,
+        failedExecutions: 0,
+        runningExecutions: 0,
+        successRate: 0,
+        avgDuration: 0,
+        totalCost: 0,
+        recentExecutions: [],
+        executionsByWorkflow: {},
+      };
+    }
+    const data = await response.json();
     return {
-      totalExecutions: 0,
-      successfulExecutions: 0,
-      failedExecutions: 0,
-      runningExecutions: 0,
-      successRate: 0,
-      avgDuration: 0,
+      totalExecutions: data.total_executions ?? 0,
+      successfulExecutions: data.successful_executions ?? 0,
+      failedExecutions: data.failed_executions ?? 0,
+      runningExecutions: data.running_executions ?? 0,
+      successRate: data.success_rate ?? 0,
+      avgDuration: data.avg_duration ?? 0,
       totalCost: 0,
-      recentExecutions: [],
-      executionsByWorkflow: {},
+      recentExecutions: data.recent_executions ?? [],
+      executionsByWorkflow: data.executions_by_workflow ?? {},
     };
   }
 }

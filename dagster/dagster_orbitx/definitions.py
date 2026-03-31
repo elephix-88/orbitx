@@ -14,11 +14,12 @@ from engine.configs.config import settings  # noqa: E402
 
 register_settings(settings)
 
-from common.database.mongodb import close_mongodb, get_mongodb  # noqa: E402
+from common.database.mongodb import get_mongodb  # noqa: E402
 from common.model.workflow import WorkflowData  # noqa: E402
 from dagster_orbitx.graph_builder import build_workflow_job  # noqa: E402
 from dagster_orbitx.jobs.workflow_executor import sanitize_dagster_name  # noqa: E402
 from dagster_orbitx.schedules import build_workflow_schedule  # noqa: E402
+
 def load_all_workflows() -> list[WorkflowData]:
     async def fetch() -> list[WorkflowData]:
         mongodb = get_mongodb()
@@ -33,8 +34,6 @@ def load_all_workflows() -> list[WorkflowData]:
     except Exception as error:
         logger.warning(f"Failed to load workflows from MongoDB: {error}")
         return []
-    finally:
-        close_mongodb()
 
 
 def deduplicate_name(name: str, seen: set[str]) -> str:

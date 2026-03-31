@@ -114,10 +114,7 @@ class ExecutionStep(ExecutionBase):
     error_trace: str | None = None
     message: str | None = None
     output: NodeOutput | None = None
-    output_rows: list[dict[str, Any]] | None = None
-    # Raw row data captured during execution, capped at 1000 rows.
-    # Populated by the Dagster op layer (F4-ENG-1) during actual workflow runs.
-    # Used by the Debug Failed Executions feature to replay data via retry.
+    row_count: int = 0
 
 
 class ExecutionHistory(BaseModel):

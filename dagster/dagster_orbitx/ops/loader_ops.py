@@ -1,14 +1,17 @@
 import asyncio
+import time
 import traceback as traceback_module
 
 from loguru import logger
 
+from common.model.execution import Status
 from common.model.workflow import Node
 from dagster import OpExecutionContext, op
-from dagster_orbitx.ops.node_result import NodeResult, capture_output_rows
+from dagster_orbitx.ops.node_result import NodeResult
 from dagster_orbitx.services.execution_persistence import (
-    persist_error_sync,
-    persist_output_sync,
+    notify_node_status,
+    persist_node_error,
+    persist_node_output,
 )
 from engine.exceptions import ValidationException
 from engine.factories.loader import LoaderFactory
@@ -34,6 +37,11 @@ def make_loader_op(
                 f"({len(pinned_result.data)} rows)"
             )
             return pinned_result
+
+        notify_node_status(
+            context, node, Status.RUNNING,
+            start_time=time.time(),
+        )
 
         logger.info(
             f"Loading: {node.node_id} "
@@ -74,10 +82,6 @@ def make_loader_op(
                 )
                 raise
 
-            output_rows = capture_output_rows(
-                validated_dataframe
-            )
-
             asyncio.run(
                 with_retry(loader.load, validated_dataframe)
             )
@@ -92,32 +96,26 @@ def make_loader_op(
                 primary_keys=input_result.primary_keys,
                 report_level=input_result.report_level,
                 field_schemas=input_result.field_schemas,
-                output_rows=output_rows,
             )
 
-            persist_output_sync(
-                run_id=context.run_id,
-                workflow_id=context.run_tags.get(
-                    "workflow_id", ""
-                ),
-                node_instance_id=node.node_instance_id,
-                node_id=node.node_id,
-                output_rows=output_rows,
+            persist_node_output(context, node, len(validated_dataframe))
+
+            notify_node_status(
+                context, node, Status.SUCCESS,
+                end_time=time.time(),
             )
 
             return node_result
 
         except Exception:
             error_trace = traceback_module.format_exc()
-            persist_error_sync(
-                run_id=context.run_id,
-                workflow_id=context.run_tags.get(
-                    "workflow_id", ""
-                ),
-                node_instance_id=node.node_instance_id,
-                node_id=node.node_id,
-                error_trace=error_trace,
+            persist_node_error(context, node, error_trace)
+
+            notify_node_status(
+                context, node, Status.FAILED,
+                end_time=time.time(),
             )
+
             raise
 
     return loader_op

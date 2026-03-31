@@ -94,7 +94,7 @@ app.add_middleware(AuthContextMiddleware)
 
 app.include_router(auth_router)
 app.include_router(workflow_router)
-# app.include_router(execution_history_router)  # disabled temporarily
+app.include_router(execution_history_router)
 app.include_router(google_bigquery_router)
 app.include_router(google_oauth)
 app.include_router(facebook_oauth_router)

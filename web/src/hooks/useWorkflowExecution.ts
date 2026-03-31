@@ -34,7 +34,9 @@ interface UseWorkflowExecutionProps {
 interface UseWorkflowExecutionReturn {
   executing: boolean;
   triggering: boolean;
+  runId: string | undefined;
   handleExecute: () => Promise<void>;
+  stopExecuting: () => void;
 }
 
 /**
@@ -47,6 +49,7 @@ export const useWorkflowExecution = ({
 }: UseWorkflowExecutionProps): UseWorkflowExecutionReturn => {
   const [executing, setExecuting] = useState(false);
   const [triggering, setTriggering] = useState(false);
+  const [runId, setRunId] = useState<string | undefined>(undefined);
   const { notify } = useNotification();
 
   const handleExecute = useCallback(async () => {
@@ -71,7 +74,8 @@ export const useWorkflowExecution = ({
       );
 
       // Execute workflow - wait for trigger API to complete
-      await workflowApiService.executeWorkflow(workflowId);
+      const result = await workflowApiService.executeWorkflow(workflowId);
+      setRunId(result.data.run_id);
 
       // Start tracking execution status (modal will close when first node status changes)
       setExecuting(true);
@@ -145,9 +149,16 @@ export const useWorkflowExecution = ({
     }
   }, [nodes, executing]);
 
+  const stopExecuting = useCallback(() => {
+    setExecuting(false);
+    setTriggering(false);
+  }, []);
+
   return {
     executing,
     triggering,
+    runId,
     handleExecute,
+    stopExecuting,
   };
 };

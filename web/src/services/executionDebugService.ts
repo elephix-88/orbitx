@@ -1,5 +1,4 @@
 import { BaseApiService } from './baseApiService';
-import type { ColumnInfo } from './previewService';
 
 // ---------------------------------------------------------------------------
 // Types — shapes delivered by F4-BE-1
@@ -21,7 +20,7 @@ export interface ExecutionSummary {
 }
 
 /**
- * Per-node execution step data, including the stored output rows.
+ * Per-node execution step data.
  * Part of ExecutionDetail.steps (keyed by node_instance_id as string).
  */
 export interface ExecutionStepDetail {
@@ -34,12 +33,7 @@ export interface ExecutionStepDetail {
   error: string | null;
   error_trace: string | null;
   message: string | null;
-  /** Up to 1000 stored rows from the node's output. */
-  output_rows: Record<string, unknown>[];
-  /** Columns for the stored output rows. */
-  output_columns: ColumnInfo[];
-  /** Total row count before the 1000-row cap. */
-  output_row_count: number;
+  row_count: number;
 }
 
 /**
@@ -72,18 +66,27 @@ export interface RetryResponse {
 // Service
 // ---------------------------------------------------------------------------
 
-// TODO: Re-enable when execution history backend is ready
 class ExecutionDebugService extends BaseApiService {
-  async listExecutions(_workflowId: string): Promise<ExecutionSummary[]> {
-    return [];
+  async listExecutions(workflowId: string): Promise<ExecutionSummary[]> {
+    const response = await this.get<ExecutionSummary[]>(
+      `/api/execution-history/workflow/${workflowId}/executions`
+    );
+    return response.data;
   }
 
-  async getExecutionDetail(_workflowId: string, _executionId: string): Promise<ExecutionDetail> {
-    throw new Error('Execution history is temporarily disabled');
+  async getExecutionDetail(workflowId: string, executionId: string): Promise<ExecutionDetail> {
+    const response = await this.get<ExecutionDetail>(
+      `/api/execution-history/workflow/${workflowId}/executions/${executionId}`
+    );
+    return response.data;
   }
 
-  async retryExecution(_workflowId: string, _executionId: string): Promise<RetryResponse> {
-    throw new Error('Execution history is temporarily disabled');
+  async retryExecution(workflowId: string, executionId: string): Promise<RetryResponse> {
+    const response = await this.post<RetryResponse>(
+      `/api/execution-history/workflow/${workflowId}/executions/${executionId}/retry`,
+      {}
+    );
+    return response.data;
   }
 }
 

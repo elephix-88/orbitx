@@ -21,6 +21,8 @@ import {
   BellOff,
 } from 'lucide-react';
 import { ExecutionHistory, ExecutionStep, ExecutionStatus, NodeOutput, ExecutionDeliveryResult } from '@/types/backend';
+import { API_CONFIG } from '@/config/env';
+import { authService } from '@/services/authService';
 import { executionHistoryService } from '@/services/executionHistoryService';
 import { DateRangePicker } from '@/components/ui/DateRangePicker';
 import { cn } from '@/lib/utils';
@@ -29,6 +31,8 @@ import { NodeStatus } from '@/types/workflow';
 
 interface ExecutionLogPanelProps {
   workflowId: string | null;
+  executing?: boolean;
+  onExecutionComplete?: () => void;
 }
 
 /**
@@ -241,7 +245,7 @@ const getDefaultCustomDates = () => {
   };
 };
 
-export const ExecutionLogPanel = ({ workflowId }: ExecutionLogPanelProps) => {
+export const ExecutionLogPanel = ({ workflowId, executing: externalExecuting, onExecutionComplete }: ExecutionLogPanelProps) => {
   const [expanded, setExpanded] = useState(false);
   const [panelHeight, setPanelHeight] = useState(DEFAULT_HEIGHT);
   const [executions, setExecutions] = useState<ExecutionHistory[]>([]);
@@ -300,37 +304,109 @@ export const ExecutionLogPanel = ({ workflowId }: ExecutionLogPanelProps) => {
     }
   }, [expanded, workflowId, fetchData]);
 
+  // Re-fetch when parent signals a new execution was triggered
+  useEffect(() => {
+    if (externalExecuting && workflowId) {
+      fetchData();
+    }
+  }, [externalExecuting, workflowId, fetchData]);
+
   // Track if any execution is running (ref to avoid re-triggering effect)
   const hasRunningRef = useRef(false);
-  hasRunningRef.current = executions.some(e => e.status === 'RUNNING');
+  hasRunningRef.current = executions.some(e => e.status === 'RUNNING') || !!externalExecuting;
 
-  // Auto-refresh: faster when running (to sync node statuses), slower otherwise
-  // Runs even when collapsed to keep canvas node statuses in sync
+  // SSE stream — opened once when running, closed on terminal status
+  const streamActiveRef = useRef(false);
+
   useEffect(() => {
     if (!workflowId) return;
 
-    // Use dynamic interval based on running status
-    // Fast polling (2s) when running to keep node statuses in sync
-    // Slow polling (30s) when not running (only if panel is expanded)
-    const getInterval = () => {
-      if (hasRunningRef.current) return 2000; // Fast when running
-      return expanded ? 30000 : 0; // Only poll when expanded and not running
-    };
+    if (hasRunningRef.current && !streamActiveRef.current) {
+      streamActiveRef.current = true;
+      const abortController = new AbortController();
+      const url = `${API_CONFIG.BASE_URL}/api/workflows/${workflowId}/execution-stream`;
 
-    let timeoutId: ReturnType<typeof setTimeout>;
-    const scheduleNext = () => {
-      const interval = getInterval();
-      if (interval === 0) return; // Stop polling
+      const TERMINAL = new Set(['SUCCESS', 'FAILED']);
 
-      timeoutId = setTimeout(() => {
-        fetchData();
-        scheduleNext();
-      }, interval);
-    };
+      (async () => {
+        try {
+          const response = await fetch(url, {
+            headers: authService.getAuthHeader(),
+            credentials: 'include',
+            signal: abortController.signal,
+          });
 
-    scheduleNext();
+          if (!response.ok || !response.body) {
+            streamActiveRef.current = false;
+            fetchData();
+            return;
+          }
+
+          const reader = response.body.getReader();
+          const decoder = new TextDecoder();
+          let buffer = '';
+
+          while (true) {
+            const { done, value } = await reader.read();
+            if (done) break;
+
+            buffer += decoder.decode(value, { stream: true });
+            const lines = buffer.split('\n');
+            buffer = lines.pop() || '';
+
+            for (const line of lines) {
+              if (!line.startsWith('data: ')) continue;
+              try {
+                const execution: ExecutionHistory = JSON.parse(line.slice(6));
+
+                setExecutions((previous) => {
+                  const index = previous.findIndex(
+                    (e) => e.execution_id === execution.execution_id
+                  );
+                  const updated =
+                    index >= 0
+                      ? previous.map((e, i) => (i === index ? execution : e))
+                      : [execution, ...previous];
+                  return updated.sort((a, b) => b.start_time - a.start_time);
+                });
+
+                syncNodeStatusesFromExecution(execution);
+
+                if (TERMINAL.has(execution.status)) {
+                  streamActiveRef.current = false;
+                  onExecutionComplete?.();
+                  return;
+                }
+              } catch {
+                // Ignore malformed messages
+              }
+            }
+          }
+        } catch (error) {
+          if ((error as Error).name !== 'AbortError') {
+            fetchData();
+          }
+        } finally {
+          streamActiveRef.current = false;
+        }
+      })();
+
+      return () => {
+        abortController.abort();
+        streamActiveRef.current = false;
+      };
+    }
+
+    // Not running: slow poll only when expanded
+    if (!expanded) return;
+
+    const timeoutId = setTimeout(() => {
+      fetchData();
+    }, 30000);
+
     return () => clearTimeout(timeoutId);
-  }, [expanded, workflowId, fetchData]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [expanded, workflowId, externalExecuting]);
 
   // Resize handlers
   const handleResizeStart = useCallback((e: React.MouseEvent) => {
