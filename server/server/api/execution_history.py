@@ -1,3 +1,4 @@
+import json
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query
@@ -28,34 +29,10 @@ router = APIRouter(prefix="/api/execution-history", tags=["Execution History"])
 @router.get("/dashboard-stats")
 async def get_dashboard_statistics(
     current_user: UserInDB = Depends(get_current_user),
-    workflow_ids: str | None = Query(
-        None, description="Comma-separated workflow IDs"
-    ),
-    workflow_names: str | None = Query(
-        None, description="Comma-separated workflow names (same order as IDs)"
-    ),
+    workflows: str | None = Query(None),
 ) -> dict[str, Any]:
-    """Get aggregated dashboard statistics for all workflows owned by the current user.
-
-    If workflow_ids and workflow_names are provided, skips workflow DB query entirely.
-    Otherwise, fetches workflow data from DB.
-
-    Returns stats computed via MongoDB aggregation in a single query:
-    - total_executions, successful_executions, failed_executions, running_executions
-    - success_rate (percentage)
-    - avg_duration (in seconds)
-    - recent_executions (top 10 most recent)
-    - executions_by_workflow (per-workflow stats)
-    """
-    ids_list = workflow_ids.split(",") if workflow_ids else None
-    names_dict = None
-    if ids_list and workflow_names:
-        names_list = workflow_names.split(",")
-        if len(names_list) == len(ids_list):
-            names_dict = dict(zip(ids_list, names_list, strict=False))
-    return await get_dashboard_stats(
-        current_user.id, workflow_ids=ids_list, workflow_names=names_dict
-    )
+    parsed = json.loads(workflows) if workflows else None
+    return await get_dashboard_stats(current_user.id, workflows=parsed)
 
 
 @router.get("/workflow/{workflow_id}")
@@ -151,11 +128,11 @@ async def retry_execution_endpoint(
 ) -> RetryResponse:
     """Re-run a workflow using intermediate data from a previous execution.
 
-    Pins output_rows from each completed step, then launches a new Dagster
+    Pins output_rows from each completed step, then launches a new Prefect
     run so the engine skips re-fetching from source for pinned nodes.
 
     Raises 404 when the workflow or execution is not found.
-    Raises 422 when Dagster fails to launch the retry run.
+    Raises 422 when Prefect fails to launch the retry run.
     """
     try:
         return await retry_execution(workflow_id, execution_id, current_user.id)

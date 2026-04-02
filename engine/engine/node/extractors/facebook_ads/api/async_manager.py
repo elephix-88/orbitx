@@ -41,7 +41,15 @@ async def wait_for_all_reports(
         poll_attempt += 1
         next_round: list[ReportMeta] = []
         for report in pending:
-            status = await get_report_status(report.report_run_id, access_token)
+            try:
+                status = await get_report_status(report.report_run_id, access_token)
+            except Exception as error:
+                logger.warning(
+                    f"Poll attempt {poll_attempt} failed for report "
+                    f"{report.report_run_id}: {error}"
+                )
+                next_round.append(report)
+                continue
 
             if status == "Job Completed":
                 completed.append(report)

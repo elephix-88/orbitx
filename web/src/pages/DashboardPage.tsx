@@ -33,93 +33,21 @@ import { fetchClient } from '@/lib/fetchClient';
 import {
   ExecutionHistory,
   ExecutionStep,
-  ExecutionStatus,
-  NodeOutput,
 } from '@/types/backend';
-
-// Time range filter options
-type TimeRange = 'all' | '1h' | '24h' | '7d' | '30d' | 'custom';
-const timeRangeOptions: { value: TimeRange; label: string }[] = [
-  { value: 'all', label: 'All time' },
-  { value: '1h', label: 'Last hour' },
-  { value: '24h', label: 'Last 24h' },
-  { value: '7d', label: 'Last 7 days' },
-  { value: '30d', label: 'Last 30 days' },
-  { value: 'custom', label: 'Custom' },
-];
-
-// Status filter options
-type StatusFilter = 'all' | ExecutionStatus;
-const statusFilterOptions: { value: StatusFilter; label: string }[] = [
-  { value: 'all', label: 'All' },
-  { value: 'SUCCESS', label: 'Success' },
-  { value: 'FAILED', label: 'Failed' },
-  { value: 'RUNNING', label: 'Running' },
-];
-
-// Max custom range: 2 months in milliseconds
-const MAX_CUSTOM_RANGE_DAYS = 60;
-
-// Get timestamp for time range filter
-const getTimeRangeStart = (range: TimeRange): number | null => {
-  if (range === 'all' || range === 'custom') return null;
-  const now = Date.now() / 1000;
-  switch (range) {
-    case '1h': return now - 3600;
-    case '24h': return now - 86400;
-    case '7d': return now - 604800;
-    case '30d': return now - 2592000;
-    default: return null;
-  }
-};
-
-// Format date for input
-const formatDateForInput = (date: Date): string => {
-  return date.toISOString().split('T')[0];
-};
-
-// Get default dates for custom range
-const getDefaultCustomDates = () => {
-  const end = new Date();
-  const start = new Date();
-  start.setDate(start.getDate() - 7);
-  return {
-    start: formatDateForInput(start),
-    end: formatDateForInput(end),
-  };
-};
-
-// Format helpers
-const formatDuration = (seconds: number | null): string => {
-  if (seconds === null || seconds === undefined) return '-';
-  if (seconds < 60) return `${seconds.toFixed(1)}s`;
-  if (seconds < 3600) return `${Math.floor(seconds / 60)}m ${Math.floor(seconds % 60)}s`;
-  return `${Math.floor(seconds / 3600)}h ${Math.floor((seconds % 3600) / 60)}m`;
-};
-
-const formatRelativeTime = (timestamp: number): string => {
-  const now = Date.now() / 1000;
-  const diff = now - timestamp;
-
-  if (diff < 60) return 'Just now';
-  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
-  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
-  if (diff < 604800) return `${Math.floor(diff / 86400)}d ago`;
-  return new Date(timestamp * 1000).toLocaleDateString();
-};
-
-const formatNumber = (num: number): string => {
-  if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
-  if (num >= 1000) return `${(num / 1000).toFixed(1)}K`;
-  return num.toString();
-};
-
-const formatCost = (cost: number | null): string => {
-  if (cost === null || cost === undefined) return '-';
-  if (cost < 0.01) return `$${cost.toFixed(4)}`;
-  if (cost < 1) return `$${cost.toFixed(3)}`;
-  return `$${cost.toFixed(2)}`;
-};
+import {
+  type TimeRange,
+  type StatusFilter,
+  timeRangeOptions,
+  statusFilterOptions,
+  MAX_CUSTOM_RANGE_DAYS,
+  getTimeRangeStart,
+  getDefaultCustomDates,
+  formatDuration,
+  formatRelativeTime,
+  formatNumber,
+  formatCost,
+  getRecordsCount,
+} from '@/utils/executionFormatters';
 
 const getStepDuration = (step: ExecutionStep): number | null => {
   if (step.start_time && step.end_time) {
@@ -148,15 +76,6 @@ const getNodeTypeColor = (nodeType: string): string => {
   if (type === 'transform') return 'text-primary-400';
   if (type === 'destinations' || type === 'destination') return 'text-success';
   return 'text-text-tertiary';
-};
-
-// Get records count from node output
-const getRecordsCount = (output?: NodeOutput): number | null => {
-  if (!output) return null;
-  if (output.extractor_output) return output.extractor_output.records_extracted;
-  if (output.transformer_output) return output.transformer_output.records_output;
-  if (output.loader_output) return output.loader_output.records_total;
-  return null;
 };
 
 // Status configuration
@@ -352,18 +271,14 @@ const DashboardPage = () => {
         : [];
       setConnectionCount(connections.length);
 
-      // Extract workflow IDs and names to pass to dashboard stats (avoids duplicate DB query)
-      const workflowData = workflows.map((w: { _id?: { $oid?: string } | string; job_id?: string; job_name?: string }) => ({
-        id: ((typeof w._id === 'object' ? w._id?.$oid : w._id) || w.job_id) as string,
-        name: w.job_name || '',
-      })).filter((w: { id: string }) => w.id);
+      // Build workflow id→name map to pass to dashboard stats (avoids duplicate DB query)
+      const workflowMap: Record<string, string> = {};
+      for (const w of workflows) {
+        const id = (typeof w._id === 'object' ? w._id?.$oid : w._id) || w.job_id;
+        if (id) workflowMap[id] = w.job_name || '';
+      }
 
-      const workflowIds = workflowData.map((w: { id: string }) => w.id);
-      const workflowNames: Record<string, string> = Object.fromEntries(
-        workflowData.map((w: { id: string; name: string }) => [w.id, w.name])
-      );
-
-      const dashboardStats = await executionHistoryService.getDashboardStats(workflowIds, workflowNames);
+      const dashboardStats = await executionHistoryService.getDashboardStats(workflowMap);
       setStats(dashboardStats);
     } catch (error) {
       console.error('Failed to fetch dashboard data:', error);

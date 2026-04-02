@@ -7,7 +7,7 @@ from typing import Any
 import pandas as pd
 from loguru import logger
 
-from common.database.mongodb import get_mongodb
+from common.database.mongodb import find_many
 from common.model.result import ExtractorResult
 from common.model.tiktok.config import TikTokAdsConfig
 from common.model.tiktok.fields import TikTokField
@@ -143,8 +143,7 @@ class TikTokAdsExtractor(Extractor):
             )
             access_token = token.access_token
 
-            mongodb = get_mongodb()
-            field_configs = await mongodb.get_all_documents(
+            field_configs = await find_many(
                 settings.tiktok_fields,
                 {"field": {"$in": self.config.fields}},
                 TikTokField,

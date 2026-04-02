@@ -13,9 +13,8 @@ Marketing Data Intelligence Platform. Collects data from ad platforms (Facebook,
 ```
 web/          React 18 + TypeScript + Vite + Tailwind + Zustand + React Flow
 server/       Python 3.13 + FastAPI + MongoDB + JWT auth
-engine/       Python 3.13 + async extractors/transformers/loaders (factory pattern)
-dagster/      Dagster orchestration — maps workflows to jobs/schedules
-common/       Shared Pydantic models across server/engine/dagster
+engine/       Python 3.13 + async extractors/transformers/loaders + Prefect orchestration
+common/       Shared Pydantic models across server/engine
 ```
 
 ## Key Patterns
@@ -64,11 +63,12 @@ Same pattern as source but with `Loader` interface:
 ```
 User clicks "Run" in web UI
   → POST /api/workflow/workflows/execute
-  → Server calls Dagster client to launch run
-  → Dagster executes job (topologically sorted ops)
-  → Each op: extractor.extract() → transformer.transform() → loader.load()
-  → Results stored in MongoDB execution history
-  → Frontend polls/SSE for status updates
+  → Server creates ExecutionHistory doc, calls prefect_client.launch_run()
+  → Prefect Cloud dispatches to local worker
+  → @flow loads workflow from MongoDB, executes @tasks in topological order
+  → Each task: extractor.extract() → transformer.transform() → loader.load()
+  → Per-node status written to MongoDB execution_history
+  → Frontend SSE polls MongoDB for real-time status updates
 ```
 
 ### Design System

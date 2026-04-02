@@ -1,6 +1,6 @@
 from typing import Any, cast
 
-from common.database.mongodb import get_mongodb
+from common.database.mongodb import find_many
 from common.model.facebook.config import FacebookAdsConfig
 from common.model.facebook.fields import FacebookField as FieldConfig
 from common.model.facebook.request import BatchPlannerConfig
@@ -43,8 +43,7 @@ class FacebookAdsExtractor(Extractor):
             )
             access_token = token.access_token
 
-            mongodb = get_mongodb()
-            field_config = await mongodb.get_all_documents(
+            field_config = await find_many(
                 settings.facebook_fields,
                 {"field": {"$in": self.config.fields}},
                 FieldConfig,

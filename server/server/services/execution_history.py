@@ -2,7 +2,7 @@ from typing import Any
 
 from loguru import logger
 
-from common.database import get_mongodb
+from common.database.mongodb import database, find_many, find_one
 from common.model.workflow import WorkflowData
 from server.configs.config import settings
 from server.services.auth.context import get_current_user
@@ -10,16 +10,14 @@ from server.services.auth.context import get_current_user
 
 async def get_dashboard_stats(
     user_id: str,
-    workflow_ids: list[str] | None = None,
-    workflow_names: dict[str, str] | None = None,
+    workflows: dict[str, str] | None = None,
 ) -> dict[str, Any]:
     """Get aggregated dashboard statistics for all workflows owned by the user.
 
     Args:
         user_id: The user's ID for ownership verification
-        workflow_ids: Optional list of workflow IDs.
-        workflow_names: Optional dict of workflow_id -> name. If both workflow_ids
-                       and workflow_names are provided, skips DB query entirely.
+        workflows: Optional dict of workflow_id -> name. If provided, skips
+                   workflow DB query entirely.
 
     Returns stats computed via MongoDB aggregation pipeline in a single query.
     """
@@ -34,28 +32,16 @@ async def get_dashboard_stats(
         "executions_by_workflow": {},
     }
 
-    # If both workflow_ids and names provided, skip DB query
-    if workflow_ids and workflow_names:
-        pass  # Use provided data directly
-    else:
-        # Fetch workflows from DB - always include user_id for ownership verification
-        query: dict[str, Any] = {"user_id": user_id}
-        if workflow_ids:
-            query["_id"] = {"$in": workflow_ids}
-
-        mongodb = get_mongodb()
-        workflows = await mongodb.get_all_documents(
-            collection_name=settings.workflow_collection,
-            query=query,
-            model_cls=WorkflowData,
+    if not workflows:
+        workflow_list = await find_many(
+            settings.workflow_collection, {"user_id": user_id}, WorkflowData
         )
-        if not workflows:
+        if not workflow_list:
             return empty_response
+        workflows = {w.id: w.job_name for w in workflow_list}
 
-        workflow_ids = [w.id for w in workflows]
-        workflow_names = {w.id: w.job_name for w in workflows}
+    workflow_ids = list(workflows.keys())
 
-    mongodb = get_mongodb()
     logger.info(f"Fetching dashboard stats for {len(workflow_ids)} workflows")
 
     # Aggregation pipeline to compute all stats in one query
@@ -140,10 +126,9 @@ async def get_dashboard_stats(
         },
     ]
 
-    result = await mongodb.aggregate(
-        collection_name=settings.execution_history_collection,
-        pipeline=pipeline,
-    )
+    result = await database[settings.execution_history_collection].aggregate(
+        pipeline
+    ).to_list(length=None)
 
     if not result:
         return {
@@ -177,7 +162,7 @@ async def get_dashboard_stats(
         wf_count = wf["count"]
         wf_successful = wf["successful"]
         executions_by_workflow[wf_id] = {
-            "name": workflow_names.get(wf_id, wf_id),
+            "name": workflows.get(wf_id, wf_id),
             "count": wf_count,
             "success_rate": round((wf_successful / wf_count) * 100)
             if wf_count > 0
@@ -187,7 +172,7 @@ async def get_dashboard_stats(
     # Process recent executions - add workflow_name field
     recent_executions = data["recent"]
     for exec_record in recent_executions:
-        exec_record["workflow_name"] = workflow_names.get(
+        exec_record["workflow_name"] = workflows.get(
             exec_record.get("workflow_id"), exec_record.get("workflow_id")
         )
         # Convert ObjectId to string if present
@@ -218,21 +203,16 @@ async def get_execution_history_by_workflow(workflow_id: str) -> list[dict[str, 
     user = get_current_user()
 
     # First verify that the user owns this workflow
-    mongodb = get_mongodb()
-    workflow = await mongodb.get_document(
-        collection_name=settings.workflow_collection,
-        query={"_id": workflow_id, "user_id": user.id},
-        model_cls=WorkflowData,
+    workflow_doc = await find_one(
+        settings.workflow_collection, {"_id": workflow_id, "user_id": user.id}
     )
-    if not workflow:
+    if not workflow_doc:
         return []  # User doesn't own this workflow or it doesn't exist
 
     # Get raw documents to preserve all nested data including output
-    documents = await mongodb.get_all_documents(
-        collection_name=settings.execution_history_collection,
-        query={"workflow_id": workflow_id},
-        model_cls=None,  # Get raw dicts, not Pydantic models
-    )
+    documents = await database[settings.execution_history_collection].find(
+        {"workflow_id": workflow_id}
+    ).to_list(length=None)
     for document in documents:
         if "_id" in document:
             document["_id"] = str(document["_id"])

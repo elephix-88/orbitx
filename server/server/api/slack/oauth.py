@@ -60,14 +60,13 @@ async def slack_oauth_callback(
         await save_slack_connection_to_mongo(code=code, state=state)
         redirect_url = f"{settings.frontend_oauth_success_url}?provider=slack"
         return RedirectResponse(url=redirect_url)
-    except ValueError as error:
-        logger.error(f"Slack OAuth state verification failed: {error}")
-        raise HTTPException(
-            status_code=400, detail="Invalid or expired OAuth state"
-        ) from error
-    except ExternalAPIError as error:
-        logger.error(f"Slack token exchange failed: {error.message}")
-        raise HTTPException(status_code=502, detail=error.message) from error
+    except Exception as error:
+        logger.error(f"Slack OAuth callback failed: {error}")
+        error_url = (
+            f"{settings.frontend_oauth_success_url}"
+            "?provider=slack&error=Authentication+failed"
+        )
+        return RedirectResponse(url=error_url)
 
 
 @router.get("/channels", response_model=SlackChannelsResponse)

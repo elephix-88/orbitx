@@ -7,7 +7,7 @@ from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 from loguru import logger
 
-from common.database import get_mongodb
+from common.database.mongodb import find_one
 from common.model.connection import ConnectionItem
 from common.model.google.bigquery import BigQueryDataset, BigQueryProject
 from server.configs.config import settings
@@ -24,10 +24,10 @@ async def get_bigquery_credentials(connection_id: str) -> Credentials:
     """Helper to get BigQuery credentials with ownership verification."""
     user = get_current_user()
 
-    connection_item = await get_mongodb().get_document(
-        collection_name=settings.connection_collection,
-        query={"_id": connection_id, "user_id": user.id},
-        model_cls=ConnectionItem,
+    connection_item = await find_one(
+        settings.connection_collection,
+        {"_id": connection_id, "user_id": user.id},
+        ConnectionItem,
     )
 
     if not connection_item:

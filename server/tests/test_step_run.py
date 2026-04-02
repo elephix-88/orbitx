@@ -36,9 +36,8 @@ _mock_executor_module.SingleNodeResult = _MockSingleNodeResult
 _mock_executor_module.execute_single_node = AsyncMock()
 
 sys.modules.setdefault("engine", MagicMock())
-sys.modules.setdefault("engine.engine", MagicMock())
-sys.modules.setdefault("engine.engine.services", MagicMock())
-sys.modules["engine.engine.services.single_node_executor"] = _mock_executor_module
+sys.modules.setdefault("engine.services", MagicMock())
+sys.modules["engine.services.single_node_executor"] = _mock_executor_module
 
 WORKFLOW_ID = "workflow_step_run_test"
 NODE_INSTANCE_ID = 5

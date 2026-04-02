@@ -7,18 +7,19 @@ ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 
 RUN python -m venv $VIRTUAL_ENV
 RUN pip install uv
+RUN apt-get update && apt-get install -y supervisor && rm -rf /var/lib/apt/lists/*
 
 COPY pyproject.toml uv.lock ./
 COPY common/ common/
 COPY engine/ engine/
 COPY server/ server/
+COPY docker/server-supervisord.conf /etc/supervisor/conf.d/server.conf
 
 RUN cd server && uv sync --frozen --no-dev
 
 ENV PYTHONPATH="$VIRTUAL_ENV/lib/python3.13/site-packages:/app"
-
-WORKDIR /app/server
+ENV PREFECT_WORK_POOL=orbitx-worker-pool
 
 EXPOSE 8080
 
-CMD ["uvicorn", "server.main:app", "--host", "0.0.0.0", "--port", "8080"]
+CMD ["supervisord", "-n", "-c", "/etc/supervisor/conf.d/server.conf"]

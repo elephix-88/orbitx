@@ -69,6 +69,7 @@ class TestExtractToken:
         assert token is None
 
 
+@pytest.mark.asyncio
 class TestGetCurrentUser:
     """Tests for get_current_user dependency."""
 
@@ -103,7 +104,7 @@ class TestGetCurrentUser:
             is_active=True,
         )
 
-    def test_get_current_user_success(
+    async def test_get_current_user_success(
         self, mock_settings, mock_decode_token, mock_get_user_by_id, sample_user
     ):
         """Test successful user retrieval."""
@@ -120,13 +121,13 @@ class TestGetCurrentUser:
         }
         mock_get_user_by_id.return_value = sample_user
 
-        user = get_current_user(mock_request, credentials)
+        user = await get_current_user(mock_request, credentials)
 
         assert user == sample_user
         mock_decode_token.assert_called_once_with("valid_token")
         mock_get_user_by_id.assert_called_once_with("user_123")
 
-    def test_get_current_user_no_token(self, mock_settings):
+    async def test_get_current_user_no_token(self, mock_settings):
         """Test that 401 is raised when no token is provided."""
         from server.services.auth.dependencies import get_current_user
 
@@ -134,12 +135,12 @@ class TestGetCurrentUser:
         mock_request.cookies.get.return_value = None
 
         with pytest.raises(HTTPException) as exc_info:
-            get_current_user(mock_request, None)
+            await get_current_user(mock_request, None)
 
         assert exc_info.value.status_code == 401
         assert exc_info.value.detail == "Not authenticated"
 
-    def test_get_current_user_invalid_token(self, mock_settings, mock_decode_token):
+    async def test_get_current_user_invalid_token(self, mock_settings, mock_decode_token):
         """Test that 401 is raised for invalid token."""
         from server.services.auth.dependencies import get_current_user
 
@@ -151,12 +152,12 @@ class TestGetCurrentUser:
         mock_decode_token.return_value = None
 
         with pytest.raises(HTTPException) as exc_info:
-            get_current_user(mock_request, credentials)
+            await get_current_user(mock_request, credentials)
 
         assert exc_info.value.status_code == 401
         assert exc_info.value.detail == "Invalid or expired token"
 
-    def test_get_current_user_missing_sub_claim(self, mock_settings, mock_decode_token):
+    async def test_get_current_user_missing_sub_claim(self, mock_settings, mock_decode_token):
         """Test that 401 is raised when token has no sub claim."""
         from server.services.auth.dependencies import get_current_user
 
@@ -168,12 +169,12 @@ class TestGetCurrentUser:
         mock_decode_token.return_value = {"email": "test@example.com"}  # No "sub"
 
         with pytest.raises(HTTPException) as exc_info:
-            get_current_user(mock_request, credentials)
+            await get_current_user(mock_request, credentials)
 
         assert exc_info.value.status_code == 401
         assert exc_info.value.detail == "Invalid token: missing user ID"
 
-    def test_get_current_user_user_not_found(
+    async def test_get_current_user_user_not_found(
         self, mock_settings, mock_decode_token, mock_get_user_by_id
     ):
         """Test that 401 is raised when user is not found in database."""
@@ -191,12 +192,12 @@ class TestGetCurrentUser:
         mock_get_user_by_id.return_value = None
 
         with pytest.raises(HTTPException) as exc_info:
-            get_current_user(mock_request, credentials)
+            await get_current_user(mock_request, credentials)
 
         assert exc_info.value.status_code == 401
         assert exc_info.value.detail == "User not found"
 
-    def test_get_current_user_inactive_user(
+    async def test_get_current_user_inactive_user(
         self, mock_settings, mock_decode_token, mock_get_user_by_id
     ):
         """Test that 403 is raised for inactive user."""
@@ -221,12 +222,12 @@ class TestGetCurrentUser:
         mock_get_user_by_id.return_value = inactive_user
 
         with pytest.raises(HTTPException) as exc_info:
-            get_current_user(mock_request, credentials)
+            await get_current_user(mock_request, credentials)
 
         assert exc_info.value.status_code == 403
         assert exc_info.value.detail == "User account is disabled"
 
-    def test_get_current_user_from_cookie(
+    async def test_get_current_user_from_cookie(
         self, mock_settings, mock_decode_token, mock_get_user_by_id, sample_user
     ):
         """Test that token can be retrieved from cookie."""
@@ -240,12 +241,13 @@ class TestGetCurrentUser:
         }
         mock_get_user_by_id.return_value = sample_user
 
-        user = get_current_user(mock_request, None)
+        user = await get_current_user(mock_request, None)
 
         assert user == sample_user
         mock_decode_token.assert_called_once_with("cookie_token")
 
 
+@pytest.mark.asyncio
 class TestGetCurrentUserOptional:
     """Tests for get_current_user_optional dependency."""
 
@@ -280,7 +282,7 @@ class TestGetCurrentUserOptional:
             is_active=True,
         )
 
-    def test_get_current_user_optional_with_valid_token(
+    async def test_get_current_user_optional_with_valid_token(
         self, mock_settings, mock_decode_token, mock_get_user_by_id, sample_user
     ):
         """Test successful optional user retrieval."""
@@ -297,22 +299,22 @@ class TestGetCurrentUserOptional:
         }
         mock_get_user_by_id.return_value = sample_user
 
-        user = get_current_user_optional(mock_request, credentials)
+        user = await get_current_user_optional(mock_request, credentials)
 
         assert user == sample_user
 
-    def test_get_current_user_optional_no_token(self, mock_settings):
+    async def test_get_current_user_optional_no_token(self, mock_settings):
         """Test that None is returned when no token is provided."""
         from server.services.auth.dependencies import get_current_user_optional
 
         mock_request = MagicMock()
         mock_request.cookies.get.return_value = None
 
-        user = get_current_user_optional(mock_request, None)
+        user = await get_current_user_optional(mock_request, None)
 
         assert user is None
 
-    def test_get_current_user_optional_invalid_token(
+    async def test_get_current_user_optional_invalid_token(
         self, mock_settings, mock_decode_token
     ):
         """Test that None is returned for invalid token."""
@@ -325,11 +327,11 @@ class TestGetCurrentUserOptional:
         )
         mock_decode_token.return_value = None
 
-        user = get_current_user_optional(mock_request, credentials)
+        user = await get_current_user_optional(mock_request, credentials)
 
         assert user is None
 
-    def test_get_current_user_optional_missing_sub(
+    async def test_get_current_user_optional_missing_sub(
         self, mock_settings, mock_decode_token
     ):
         """Test that None is returned when token has no sub claim."""
@@ -342,11 +344,11 @@ class TestGetCurrentUserOptional:
         )
         mock_decode_token.return_value = {"email": "test@example.com"}  # No "sub"
 
-        user = get_current_user_optional(mock_request, credentials)
+        user = await get_current_user_optional(mock_request, credentials)
 
         assert user is None
 
-    def test_get_current_user_optional_user_not_found(
+    async def test_get_current_user_optional_user_not_found(
         self, mock_settings, mock_decode_token, mock_get_user_by_id
     ):
         """Test that None is returned when user is not found."""
@@ -363,6 +365,6 @@ class TestGetCurrentUserOptional:
         }
         mock_get_user_by_id.return_value = None
 
-        user = get_current_user_optional(mock_request, credentials)
+        user = await get_current_user_optional(mock_request, credentials)
 
         assert user is None

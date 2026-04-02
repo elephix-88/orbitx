@@ -5,7 +5,7 @@ import json
 import httpx
 from loguru import logger
 
-from common.database import get_mongodb
+from common.database.mongodb import find_one
 from common.model.connection import ConnectionItem
 from common.model.tiktok.account import TikTokAdsAccount
 from common.model.token import TikTokConnectionParams
@@ -97,10 +97,10 @@ async def get_tiktok_ads_accounts(connection_id: str) -> list[TikTokAdsAccount]:
     user = get_current_user()
 
     # Query with user_id to ensure ownership
-    connection = await get_mongodb().get_document(
-        collection_name=settings.connection_collection,
-        query={"_id": connection_id, "user_id": user.id},
-        model_cls=ConnectionItem,
+    connection = await find_one(
+        settings.connection_collection,
+        {"_id": connection_id, "user_id": user.id},
+        ConnectionItem,
     )
     if not connection:
         logger.warning(

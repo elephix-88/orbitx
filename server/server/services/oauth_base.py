@@ -12,7 +12,7 @@ from typing import Any
 from fastapi import HTTPException
 from loguru import logger
 
-from common.database import get_mongodb
+from common.database.mongodb import database, find_one
 from common.model.connection import (
     ConnectionItem,
     ConnectionKey,
@@ -121,10 +121,10 @@ async def save_connection_to_mongo(
         params=validated_params.model_dump(),
     )
 
-    await get_mongodb().insert_document(
-        collection_name=settings.connection_collection,
-        data=connection_item,
-    )
+    doc = connection_item.model_dump(by_alias=True, exclude_none=True)
+    if "_id" not in doc:
+        raise ValueError("ConnectionItem must have an _id before inserting")
+    await database[settings.connection_collection].insert_one(doc)
 
     logger.info(
         "OAuth connection saved",
@@ -150,8 +150,8 @@ async def get_connection_with_ownership(
     Returns:
         ConnectionItem if found and owned by user, None otherwise
     """
-    return await get_mongodb().get_document(
-        collection_name=settings.connection_collection,
-        query={"_id": connection_id, "user_id": user_id},
-        model_cls=model_cls,
+    return await find_one(
+        settings.connection_collection,
+        {"_id": connection_id, "user_id": user_id},
+        model_cls,
     )

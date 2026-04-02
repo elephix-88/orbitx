@@ -61,7 +61,7 @@ class TestFacebookAPI:
 
             # Assert
             assert response.status_code == 502
-            assert "Facebook API error" in response.json()["detail"]
+            assert "Facebook API error" in response.json()["error"]
 
     @pytest.mark.unit
     def test_facebook_fields_success(self, client: TestClient):
@@ -118,4 +118,4 @@ class TestFacebookAPI:
 
             # Assert
             assert response.status_code == 502
-            assert "Facebook API error" in response.json()["detail"]
+            assert "Facebook API error" in response.json()["error"]

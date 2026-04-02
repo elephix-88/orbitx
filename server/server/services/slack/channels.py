@@ -1,7 +1,7 @@
 import httpx
 from loguru import logger
 
-from common.database import get_mongodb
+from common.database.mongodb import find_one
 from common.model.connection import ConnectionItem
 from server.configs.config import settings
 from server.models.slack import SlackChannel
@@ -13,10 +13,10 @@ async def list_slack_channels(connection_id: str) -> list[SlackChannel]:
     """List Slack channels the bot can post to, using the stored connection token."""
     user = get_current_user()
 
-    connection = await get_mongodb().get_document(
-        collection_name=settings.connection_collection,
-        query={"_id": connection_id, "user_id": user.id},
-        model_cls=ConnectionItem,
+    connection = await find_one(
+        settings.connection_collection,
+        {"_id": connection_id, "user_id": user.id},
+        ConnectionItem,
     )
 
     if connection is None:

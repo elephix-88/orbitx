@@ -75,9 +75,11 @@ default:
   # CSRF Protection
   csrf_enabled: true
 
-  # Dagster Integration
-  dagster_host: dagster
-  dagster_port: 3000
+  # Internal service auth (engine → server calls)
+  internal_service_key:
+
+  # Prefect Integration
+  prefect_work_pool: orbitx-worker-pool
 
   # Slack OAuth (MUST be set via environment variable in production)
   slack_client_id:

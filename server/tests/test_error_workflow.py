@@ -132,9 +132,9 @@ class TestTriggerErrorWorkflow:
     @pytest.fixture
     def mock_dagster(self):
         with patch(
-            "server.services.error_workflow.dagster_client"
+            "server.services.error_workflow.prefect_client"
         ) as mock:
-            mock.launch_run.return_value = "run_dagster_001"
+            mock.launch_run = AsyncMock(return_value="run_dagster_001")
             yield mock
 
     def make_service_request(self):
@@ -233,7 +233,7 @@ class TestTriggerErrorWorkflow:
         request = self.make_service_request()
         result = await trigger_error_workflow(WORKFLOW_ID, request, USER_ID)
 
-        mock_dagster.launch_run.assert_called_once()
+        mock_dagster.launch_run.assert_awaited_once()
         call_kwargs = mock_dagster.launch_run.call_args.kwargs
         assert call_kwargs["workflow_id"] == WORKFLOW_ID
         assert call_kwargs["user_id"] == USER_ID
@@ -257,7 +257,7 @@ class TestTriggerErrorWorkflow:
             error_workflow_id=None,
         )
         mock_load_workflow.side_effect = [error_workflow, caller_workflow]
-        mock_dagster.launch_run.return_value = None  # Dagster unavailable
+        mock_dagster.launch_run.side_effect = Exception("Prefect unavailable")
 
         request = self.make_service_request()
         result = await trigger_error_workflow(WORKFLOW_ID, request, USER_ID)
@@ -319,58 +319,6 @@ class TestTriggerErrorWorkflow:
         second_call = mock_load_workflow.await_args_list[1]
         assert first_call.args == (WORKFLOW_ID, USER_ID)
         assert second_call.args == (CALLER_WORKFLOW_ID, USER_ID)
-
-
-# ---------------------------------------------------------------------------
-# dagster_client.launch_run extra_tags
-# ---------------------------------------------------------------------------
-
-
-class TestLaunchRunExtraTags:
-    def test_extra_tags_merged_into_run_tags(self):
-        with patch(
-            "server.services.dagster_client.get_dagster_client"
-        ) as mock_get_client:
-            mock_client = MagicMock()
-            mock_client.submit_job_execution.return_value = "run_001"
-            mock_get_client.return_value = mock_client
-
-            from server.services.dagster_client import launch_run
-
-            launch_run(
-                workflow_id="wf_1",
-                workflow_name="My Workflow",
-                run_type="all",
-                user_id="user_1",
-                extra_tags={"error_payload": '{"key": "value"}'},
-            )
-
-            call_kwargs = mock_client.submit_job_execution.call_args.kwargs
-            tags = call_kwargs["tags"]
-            assert tags["workflow_id"] == "wf_1"
-            assert tags["user_id"] == "user_1"
-            assert tags["error_payload"] == '{"key": "value"}'
-
-    def test_no_extra_tags_leaves_base_tags_unchanged(self):
-        with patch(
-            "server.services.dagster_client.get_dagster_client"
-        ) as mock_get_client:
-            mock_client = MagicMock()
-            mock_client.submit_job_execution.return_value = "run_002"
-            mock_get_client.return_value = mock_client
-
-            from server.services.dagster_client import launch_run
-
-            launch_run(
-                workflow_id="wf_2",
-                workflow_name="Another Workflow",
-                run_type="all",
-                user_id="user_2",
-            )
-
-            call_kwargs = mock_client.submit_job_execution.call_args.kwargs
-            tags = call_kwargs["tags"]
-            assert set(tags.keys()) == {"workflow_id", "user_id", "run_type"}
 
 
 # ---------------------------------------------------------------------------

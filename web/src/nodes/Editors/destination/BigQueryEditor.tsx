@@ -114,10 +114,13 @@ const BigQueryEditor: React.FC<BigQueryEditorProps> = ({ data, onChange, onClose
     }
   }, [cachedConnections]);
 
-  // Auto-select connection only once when connections load and none selected
+  // Auto-select or clear stale connection when connections load
   useEffect(() => {
-    if (connections.length === 1 && !formData.connection_id) {
-      setFormData((prev) => ({ ...prev, connection_id: connections[0].id }));
+    if (connections.length === 0) return;
+    const currentValid = connections.some(c => c.id === formData.connection_id);
+    if (!currentValid) {
+      const nextId = connections.length === 1 ? connections[0].id : '';
+      setFormData((prev) => ({ ...prev, connection_id: nextId }));
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [connections]);

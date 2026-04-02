@@ -13,7 +13,7 @@ export const errorTriggerSourceSpec: NodeSpec = {
   ports: [{ id: 'out', name: 'Output', io: 'output', dataType: 'records' }],
   defaults: {
     // No user-configurable fields.
-    // The error payload is injected at runtime by the Dagster failure hook.
+    // The error payload is injected at runtime by the Prefect failure hook.
   },
   paramsSchema: z.object({}),
   ui: { editor: ErrorTriggerEditor },

@@ -1,6 +1,6 @@
 from loguru import logger
 
-from common.database import get_mongodb
+from common.database.mongodb import database, find_one
 from common.model.workflow import WorkflowData
 from server.configs.config import settings
 from server.models.execution import DeliveryStatus, ExecutionDeliveryStatus
@@ -17,10 +17,9 @@ async def set_execution_delivery_status(
     Called by the delivery layer after attempting to send to configured channels.
     """
     user = get_current_user()
-    mongodb = get_mongodb()
-    collection = mongodb.get_collection(settings.execution_history_collection)
-
-    document = await collection.find_one({"execution_id": execution_id})
+    document = await find_one(
+        settings.execution_history_collection, {"execution_id": execution_id}
+    )
 
     if document is None:
         logger.warning(
@@ -29,10 +28,10 @@ async def set_execution_delivery_status(
         return
 
     workflow_id = document.get("workflow_id")
-    owned_workflow = await mongodb.get_document(
-        collection_name=settings.workflow_collection,
-        query={"_id": workflow_id, "user_id": user.id},
-        model_cls=WorkflowData,
+    owned_workflow = await find_one(
+        settings.workflow_collection,
+        {"_id": workflow_id, "user_id": user.id},
+        WorkflowData,
     )
 
     if owned_workflow is None:
@@ -42,7 +41,7 @@ async def set_execution_delivery_status(
         )
         return
 
-    await collection.update_one(
+    await database[settings.execution_history_collection].update_one(
         {"execution_id": execution_id},
         {"$set": {"delivery_status": delivery_status.model_dump()}},
     )
@@ -57,19 +56,19 @@ async def get_execution_delivery_status(
 ) -> ExecutionDeliveryStatus | None:
     """Get the delivery_status for an execution, with ownership verification."""
     user = get_current_user()
-    mongodb = get_mongodb()
-    collection = mongodb.get_collection(settings.execution_history_collection)
 
-    document = await collection.find_one({"execution_id": execution_id})
+    document = await find_one(
+        settings.execution_history_collection, {"execution_id": execution_id}
+    )
 
     if document is None:
         return None
 
     workflow_id = document.get("workflow_id")
-    owned_workflow = await mongodb.get_document(
-        collection_name=settings.workflow_collection,
-        query={"_id": workflow_id, "user_id": user.id},
-        model_cls=WorkflowData,
+    owned_workflow = await find_one(
+        settings.workflow_collection,
+        {"_id": workflow_id, "user_id": user.id},
+        WorkflowData,
     )
 
     if owned_workflow is None:

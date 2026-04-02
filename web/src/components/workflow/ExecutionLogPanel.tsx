@@ -20,14 +20,27 @@ import {
   Bell,
   BellOff,
 } from 'lucide-react';
-import { ExecutionHistory, ExecutionStep, ExecutionStatus, NodeOutput, ExecutionDeliveryResult } from '@/types/backend';
-import { API_CONFIG } from '@/config/env';
-import { authService } from '@/services/authService';
+import { ExecutionHistory, ExecutionStep, ExecutionStatus, ExecutionDeliveryResult } from '@/types/backend';
 import { executionHistoryService } from '@/services/executionHistoryService';
 import { DateRangePicker } from '@/components/ui/DateRangePicker';
 import { cn } from '@/lib/utils';
 import { useWorkflowStore } from '@/store/workflowStore';
 import { NodeStatus } from '@/types/workflow';
+import {
+  type TimeRange,
+  type StatusFilter,
+  timeRangeOptions as sharedTimeRangeOptions,
+  statusFilterOptions as sharedStatusFilterOptions,
+  MAX_CUSTOM_RANGE_DAYS,
+  getTimeRangeStart,
+  getDefaultCustomDates,
+  formatDuration,
+  formatTimestamp,
+  formatRelativeTime,
+  formatNumber,
+  formatCost,
+  getRecordsCount,
+} from '@/utils/executionFormatters';
 
 interface ExecutionLogPanelProps {
   workflowId: string | null;
@@ -48,32 +61,29 @@ const syncNodeStatusesFromExecution = (execution: ExecutionHistory | null) => {
   // Build a map of node_instance_id to status from execution steps
   const stepStatuses = new Map<string, string>();
   for (const [nodeInstanceId, step] of Object.entries(execution.steps)) {
-    // Normalize status: FAILED -> error, others lowercase
     let status = step.status.toLowerCase();
     if (status === 'failed') status = 'error';
     stepStatuses.set(nodeInstanceId, status);
   }
 
-  // Always update nodes - reset status to 'pending' if no matching step found
-  // This ensures nodes don't stay stuck in 'running' state from a previous execution
-  useWorkflowStore.getState().updateNodes((nodes) =>
-    nodes.map((node) => {
+  useWorkflowStore.getState().updateNodes((nodes) => {
+    let changed = false;
+    const next = nodes.map((node) => {
       const nodeInstanceId = String(node.data?.node_instance_id);
       const stepStatus = stepStatuses.get(nodeInstanceId);
 
-      if (stepStatus) {
-        // Found matching step - update to its status
-        if (node.status !== stepStatus) {
-          return { ...node, status: stepStatus as NodeStatus };
-        }
-      } else if (node.status === 'running') {
-        // No matching step but node shows running - reset to pending
-        // This handles edge cases where execution data doesn't include all nodes
+      if (stepStatus && node.status !== stepStatus) {
+        changed = true;
+        return { ...node, status: stepStatus as NodeStatus };
+      }
+      if (!stepStatus && node.status === 'running') {
+        changed = true;
         return { ...node, status: 'pending' as NodeStatus };
       }
       return node;
-    })
-  );
+    });
+    return changed ? next : nodes;
+  });
 };
 
 const MIN_HEIGHT = 150;
@@ -112,57 +122,6 @@ const statusConfig: Record<ExecutionStatus, {
   },
 };
 
-const formatTimestamp = (timestamp: number | null): string => {
-  if (!timestamp) return '-';
-  const date = new Date(timestamp * 1000);
-  return date.toLocaleString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-  });
-};
-
-const formatDuration = (seconds: number | null): string => {
-  if (seconds === null || seconds === undefined) return '-';
-  if (seconds < 60) return `${seconds.toFixed(1)}s`;
-  if (seconds < 3600) return `${Math.floor(seconds / 60)}m ${Math.floor(seconds % 60)}s`;
-  return `${Math.floor(seconds / 3600)}h ${Math.floor((seconds % 3600) / 60)}m`;
-};
-
-const formatRelativeTime = (timestamp: number): string => {
-  const now = Date.now() / 1000;
-  const diff = now - timestamp;
-  
-  if (diff < 60) return 'Just now';
-  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
-  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
-  if (diff < 604800) return `${Math.floor(diff / 86400)}d ago`;
-  return formatTimestamp(timestamp);
-};
-
-// Get records count from NodeOutput
-const getRecordsCount = (output?: NodeOutput): number | null => {
-  if (!output) return null;
-  if (output.extractor_output) return output.extractor_output.records_extracted;
-  if (output.transformer_output) return output.transformer_output.records_output;
-  if (output.loader_output) return output.loader_output.records_total;
-  return null;
-};
-
-const formatNumber = (num: number): string => {
-  if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
-  if (num >= 1000) return `${(num / 1000).toFixed(1)}K`;
-  return num.toString();
-};
-
-const formatCost = (cost: number | null): string => {
-  if (cost === null || cost === undefined) return '-';
-  if (cost < 0.0001) return '<$0.0001';
-  if (cost < 0.01) return `$${cost.toFixed(4)}`;
-  return `$${cost.toFixed(2)}`;
-};
 
 // Delivery status badge — shown per-execution
 const DeliveryBadge: React.FC<{ result: ExecutionDeliveryResult }> = ({ result }) => {
@@ -193,57 +152,16 @@ const DeliveryBadge: React.FC<{ result: ExecutionDeliveryResult }> = ({ result }
   );
 };
 
-// Time range filter options
-type TimeRange = 'all' | '1h' | '24h' | '7d' | '30d' | 'custom';
-const timeRangeOptions: { value: TimeRange; label: string }[] = [
-  { value: 'all', label: 'All' },
-  { value: '1h', label: '1h' },
-  { value: '24h', label: '24h' },
-  { value: '7d', label: '7d' },
-  { value: '30d', label: '30d' },
-  { value: 'custom', label: 'Custom' },
-];
-
-// Status filter options
-type StatusFilter = 'all' | ExecutionStatus;
-const statusFilterOptions: { value: StatusFilter; label: string }[] = [
-  { value: 'all', label: 'All' },
-  { value: 'SUCCESS', label: 'Success' },
-  { value: 'FAILED', label: 'Failed' },
-  { value: 'RUNNING', label: 'Running' },
-];
-
-// Max custom range: 2 months
-const MAX_CUSTOM_RANGE_DAYS = 60;
-
-// Get timestamp for time range filter
-const getTimeRangeStart = (range: TimeRange): number | null => {
-  if (range === 'all' || range === 'custom') return null;
-  const now = Date.now() / 1000;
-  switch (range) {
-    case '1h': return now - 3600;
-    case '24h': return now - 86400;
-    case '7d': return now - 604800;
-    case '30d': return now - 2592000;
-    default: return null;
-  }
-};
-
-// Format date for input
-const formatDateForInput = (date: Date): string => {
-  return date.toISOString().split('T')[0];
-};
-
-// Get default dates for custom range
-const getDefaultCustomDates = () => {
-  const end = new Date();
-  const start = new Date();
-  start.setDate(start.getDate() - 7);
-  return {
-    start: formatDateForInput(start),
-    end: formatDateForInput(end),
-  };
-};
+// ExecutionLogPanel uses shorter labels for the compact sidebar layout
+const timeRangeOptions = sharedTimeRangeOptions.map((opt) =>
+  opt.value === 'all' ? { ...opt, label: 'All' }
+    : opt.value === '1h' ? { ...opt, label: '1h' }
+    : opt.value === '24h' ? { ...opt, label: '24h' }
+    : opt.value === '7d' ? { ...opt, label: '7d' }
+    : opt.value === '30d' ? { ...opt, label: '30d' }
+    : opt
+);
+const statusFilterOptions = sharedStatusFilterOptions;
 
 export const ExecutionLogPanel = ({ workflowId, executing: externalExecuting, onExecutionComplete }: ExecutionLogPanelProps) => {
   const [expanded, setExpanded] = useState(false);
@@ -275,11 +193,9 @@ export const ExecutionLogPanel = ({ workflowId, executing: externalExecuting, on
         setLoading(false);
 
         // Sync canvas node statuses from the most recent execution
-        // Priority: RUNNING execution > most recent execution
-        const runningExecution = sorted.find(e => e.status === 'RUNNING');
-        const targetExecution = runningExecution || sorted[0];
-        if (targetExecution) {
-          syncNodeStatusesFromExecution(targetExecution);
+        const target = sorted.find(e => e.status === 'RUNNING') || sorted[0];
+        if (target) {
+          syncNodeStatusesFromExecution(target);
         }
       })
       .catch((err) => {
@@ -288,7 +204,7 @@ export const ExecutionLogPanel = ({ workflowId, executing: externalExecuting, on
       });
   }, [workflowId]);
 
-  // Fetch on initial mount to sync node statuses (even when collapsed)
+  // Fetch on initial mount
   const initialFetchDone = useRef(false);
   useEffect(() => {
     if (workflowId && !initialFetchDone.current) {
@@ -311,102 +227,31 @@ export const ExecutionLogPanel = ({ workflowId, executing: externalExecuting, on
     }
   }, [externalExecuting, workflowId, fetchData]);
 
-  // Track if any execution is running (ref to avoid re-triggering effect)
-  const hasRunningRef = useRef(false);
-  hasRunningRef.current = executions.some(e => e.status === 'RUNNING') || !!externalExecuting;
+  // Derived: is any execution currently running?
+  const isRunning = executions.some(e => e.status === 'RUNNING') || !!externalExecuting;
 
-  // SSE stream — opened once when running, closed on terminal status
-  const streamActiveRef = useRef(false);
+  // Detect transition from running → done and notify parent
+  const wasRunningRef = useRef(false);
+  useEffect(() => {
+    if (wasRunningRef.current && !isRunning) {
+      onExecutionComplete?.();
+    }
+    wasRunningRef.current = isRunning;
+  }, [isRunning, onExecutionComplete]);
 
+  // Poll for execution status updates.
+  // Polls every 5s while an execution is running, 30s otherwise (only when expanded).
   useEffect(() => {
     if (!workflowId) return;
+    if (!isRunning && !expanded) return;
 
-    if (hasRunningRef.current && !streamActiveRef.current) {
-      streamActiveRef.current = true;
-      const abortController = new AbortController();
-      const url = `${API_CONFIG.BASE_URL}/api/workflows/${workflowId}/execution-stream`;
-
-      const TERMINAL = new Set(['SUCCESS', 'FAILED']);
-
-      (async () => {
-        try {
-          const response = await fetch(url, {
-            headers: authService.getAuthHeader(),
-            credentials: 'include',
-            signal: abortController.signal,
-          });
-
-          if (!response.ok || !response.body) {
-            streamActiveRef.current = false;
-            fetchData();
-            return;
-          }
-
-          const reader = response.body.getReader();
-          const decoder = new TextDecoder();
-          let buffer = '';
-
-          while (true) {
-            const { done, value } = await reader.read();
-            if (done) break;
-
-            buffer += decoder.decode(value, { stream: true });
-            const lines = buffer.split('\n');
-            buffer = lines.pop() || '';
-
-            for (const line of lines) {
-              if (!line.startsWith('data: ')) continue;
-              try {
-                const execution: ExecutionHistory = JSON.parse(line.slice(6));
-
-                setExecutions((previous) => {
-                  const index = previous.findIndex(
-                    (e) => e.execution_id === execution.execution_id
-                  );
-                  const updated =
-                    index >= 0
-                      ? previous.map((e, i) => (i === index ? execution : e))
-                      : [execution, ...previous];
-                  return updated.sort((a, b) => b.start_time - a.start_time);
-                });
-
-                syncNodeStatusesFromExecution(execution);
-
-                if (TERMINAL.has(execution.status)) {
-                  streamActiveRef.current = false;
-                  onExecutionComplete?.();
-                  return;
-                }
-              } catch {
-                // Ignore malformed messages
-              }
-            }
-          }
-        } catch (error) {
-          if ((error as Error).name !== 'AbortError') {
-            fetchData();
-          }
-        } finally {
-          streamActiveRef.current = false;
-        }
-      })();
-
-      return () => {
-        abortController.abort();
-        streamActiveRef.current = false;
-      };
-    }
-
-    // Not running: slow poll only when expanded
-    if (!expanded) return;
-
+    const interval = isRunning ? 5000 : 30000;
     const timeoutId = setTimeout(() => {
       fetchData();
-    }, 30000);
+    }, interval);
 
     return () => clearTimeout(timeoutId);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [expanded, workflowId, externalExecuting]);
+  }, [expanded, workflowId, isRunning, fetchData]);
 
   // Resize handlers
   const handleResizeStart = useCallback((e: React.MouseEvent) => {

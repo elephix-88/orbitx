@@ -5,7 +5,7 @@ from google.ads.googleads.errors import GoogleAdsException
 from google.auth.exceptions import RefreshError
 from loguru import logger
 
-from common.database import get_mongodb
+from common.database.mongodb import find_one
 from common.model.connection import ConnectionItem
 from common.model.google.ads import GoogleAdsAccount, GoogleAdsField
 from common.model.token import GoogleConnectionParams
@@ -86,10 +86,10 @@ async def get_google_ads_accounts(
     Verifies user ownership of the connection.
     Runs blocking Google Ads API calls in a thread pool.
     """
-    google_ads_connection = await get_mongodb().get_document(
-        collection_name=settings.connection_collection,
-        query={"_id": connection_id, "user_id": user_id},
-        model_cls=ConnectionItem,
+    google_ads_connection = await find_one(
+        settings.connection_collection,
+        {"_id": connection_id, "user_id": user_id},
+        ConnectionItem,
     )
     if not google_ads_connection:
         logger.error("Connection not found for id=%s", connection_id)

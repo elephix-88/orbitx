@@ -2,7 +2,7 @@ import time
 
 from loguru import logger
 
-from common.database import get_mongodb
+from common.database.mongodb import database
 from server.configs.config import settings
 from server.models.pin import (
     ColumnInfo,
@@ -25,7 +25,7 @@ async def pin_node(
     Truncates data to MAX_PINNED_ROWS rows on write.
     Raises ValueError if the workflow does not belong to the user.
     """
-    collection = get_mongodb().get_collection(settings.pinned_data_collection)
+    collection = database[settings.pinned_data_collection]
 
     truncated_data = data[:MAX_PINNED_ROWS]
     if len(data) > MAX_PINNED_ROWS:
@@ -74,7 +74,7 @@ async def unpin_node(
 
     Returns True if a document was deleted, False if no pin existed.
     """
-    collection = get_mongodb().get_collection(settings.pinned_data_collection)
+    collection = database[settings.pinned_data_collection]
 
     result = await collection.delete_one(
         {
@@ -107,7 +107,7 @@ async def get_all_pinned_data(workflow_id: str, user_id: str) -> PinnedDataMap:
 
     Only returns pins owned by the given user.
     """
-    collection = get_mongodb().get_collection(settings.pinned_data_collection)
+    collection = database[settings.pinned_data_collection]
 
     cursor = collection.find({"workflow_id": workflow_id, "user_id": user_id})
     documents = await cursor.to_list(length=None)

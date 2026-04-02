@@ -130,7 +130,11 @@ async def fetch_insights_paged(
         while url:
             resp = await client.get(url, params=params)
             if resp.status_code != 200:
-                logger.error(f"Failed to fetch insights: {resp.status_code}")
+                body = resp.text[:500]
+                logger.error(
+                    f"Failed to fetch insights for report {report_run_id}: "
+                    f"status={resp.status_code}, body={body}"
+                )
                 raise Exception(f"Error fetching report data: {resp.status_code}")
             result = resp.json()
             current_page_data = result.get("data", [])

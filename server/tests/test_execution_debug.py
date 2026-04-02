@@ -157,75 +157,45 @@ class TestDocumentToExecutionSummary:
 
 
 # ---------------------------------------------------------------------------
-# infer_column_info_from_rows
-# ---------------------------------------------------------------------------
-
-
-class TestInferColumnInfoFromRows:
-    def test_returns_empty_list_for_empty_rows(self):
-        from server.services.execution_debug import infer_column_info_from_rows
-
-        assert infer_column_info_from_rows([]) == []
-
-    def test_returns_column_for_each_key_in_first_row(self):
-        from server.services.execution_debug import infer_column_info_from_rows
-
-        rows = [{"campaign": "Summer", "clicks": 100, "cost": 5.0}]
-        columns = infer_column_info_from_rows(rows)
-        assert len(columns) == 3
-        names = [col.name for col in columns]
-        assert "campaign" in names
-        assert "clicks" in names
-        assert "cost" in names
-
-    def test_all_column_data_types_are_string(self):
-        from server.services.execution_debug import infer_column_info_from_rows
-
-        rows = [{"campaign": "Summer", "clicks": 100}]
-        columns = infer_column_info_from_rows(rows)
-        for column in columns:
-            assert column.data_type == "string"
-
-    def test_uses_only_first_row_keys(self):
-        from server.services.execution_debug import infer_column_info_from_rows
-
-        rows = [
-            {"col_a": 1, "col_b": 2},
-            {"col_a": 3, "col_b": 4, "col_c": 5},
-        ]
-        columns = infer_column_info_from_rows(rows)
-        assert len(columns) == 2
-
-
-# ---------------------------------------------------------------------------
 # verify_workflow_ownership
 # ---------------------------------------------------------------------------
 
 
 class TestVerifyWorkflowOwnership:
     @pytest.fixture
-    def mock_mongodb(self):
-        with patch("server.services.execution_debug.get_mongodb") as mock:
-            mock_db = MagicMock()
-            mock.return_value = mock_db
-            yield mock_db
+    def mock_database(self):
+        mock_collection = MagicMock()
+        mock_db = MagicMock()
+        mock_db.__getitem__ = MagicMock(return_value=mock_collection)
+        with patch("common.database.mongodb.database", mock_db):
+            yield mock_collection
 
     @pytest.mark.asyncio
-    async def test_returns_workflow_when_found(self, mock_mongodb):
+    async def test_returns_workflow_when_found(self, mock_database):
         from server.services.execution_debug import verify_workflow_ownership
 
-        mock_workflow = MagicMock()
-        mock_mongodb.get_document = AsyncMock(return_value=mock_workflow)
+        workflow_doc = {
+            "_id": WORKFLOW_ID,
+            "user_id": USER_ID,
+            "job_name": "My Pipeline",
+            "nodes": [],
+            "connections": [],
+            "status": "ACTIVE",
+            "schedule_expression": "0 0 * * *",
+            "created_at": "2024-01-01T00:00:00Z",
+            "updated_at": "2024-01-01T00:00:00Z",
+        }
+        mock_database.find_one = AsyncMock(return_value=workflow_doc)
 
         result = await verify_workflow_ownership(WORKFLOW_ID, USER_ID)
-        assert result is mock_workflow
+        assert result.id == WORKFLOW_ID
 
     @pytest.mark.asyncio
-    async def test_raises_workflow_not_found_error_when_absent(self, mock_mongodb):
+    async def test_raises_workflow_not_found_error_when_absent(self, mock_database):
         from server.services.exceptions import WorkflowNotFoundError
         from server.services.execution_debug import verify_workflow_ownership
 
-        mock_mongodb.get_document = AsyncMock(return_value=None)
+        mock_database.find_one = AsyncMock(return_value=None)
 
         with pytest.raises(WorkflowNotFoundError):
             await verify_workflow_ownership(WORKFLOW_ID, USER_ID)
@@ -247,11 +217,12 @@ class TestGetExecutionSummaries:
             yield mock
 
     @pytest.fixture
-    def mock_mongodb(self):
-        with patch("server.services.execution_debug.get_mongodb") as mock:
-            mock_db = MagicMock()
-            mock.return_value = mock_db
-            yield mock_db
+    def mock_database(self):
+        mock_collection = MagicMock()
+        mock_db = MagicMock()
+        mock_db.__getitem__ = MagicMock(return_value=mock_collection)
+        with patch("server.services.execution_debug.database", mock_db):
+            yield mock_collection
 
     @pytest.mark.asyncio
     async def test_returns_empty_list_when_workflow_not_found(self):
@@ -268,7 +239,7 @@ class TestGetExecutionSummaries:
 
     @pytest.mark.asyncio
     async def test_returns_summaries_sorted_newest_first(
-        self, mock_verify, mock_mongodb
+        self, mock_verify, mock_database
     ):
         from server.services.execution_debug import get_execution_summaries
 
@@ -285,7 +256,7 @@ class TestGetExecutionSummaries:
         mock_cursor.sort.return_value = mock_cursor
         mock_cursor.limit.return_value = mock_cursor
         mock_cursor.to_list = AsyncMock(return_value=[doc_new, doc_old])
-        mock_mongodb.get_collection.return_value.find.return_value = mock_cursor
+        mock_database.find.return_value = mock_cursor
 
         result = await get_execution_summaries(WORKFLOW_ID, USER_ID)
 
@@ -295,7 +266,7 @@ class TestGetExecutionSummaries:
 
     @pytest.mark.asyncio
     async def test_returns_empty_list_when_no_executions(
-        self, mock_verify, mock_mongodb
+        self, mock_verify, mock_database
     ):
         from server.services.execution_debug import get_execution_summaries
 
@@ -303,7 +274,7 @@ class TestGetExecutionSummaries:
         mock_cursor.sort.return_value = mock_cursor
         mock_cursor.limit.return_value = mock_cursor
         mock_cursor.to_list = AsyncMock(return_value=[])
-        mock_mongodb.get_collection.return_value.find.return_value = mock_cursor
+        mock_database.find.return_value = mock_cursor
 
         result = await get_execution_summaries(WORKFLOW_ID, USER_ID)
         assert result == []
@@ -325,31 +296,32 @@ class TestGetExecutionDetail:
             yield mock
 
     @pytest.fixture
-    def mock_mongodb(self):
-        with patch("server.services.execution_debug.get_mongodb") as mock:
-            mock_db = MagicMock()
-            mock.return_value = mock_db
-            yield mock_db
+    def mock_database(self):
+        mock_collection = MagicMock()
+        mock_db = MagicMock()
+        mock_db.__getitem__ = MagicMock(return_value=mock_collection)
+        with patch("common.database.mongodb.database", mock_db):
+            yield mock_collection
 
     @pytest.mark.asyncio
     async def test_raises_value_error_when_execution_not_found(
-        self, mock_verify, mock_mongodb
+        self, mock_verify, mock_database
     ):
         from server.services.execution_debug import get_execution_detail
 
-        mock_mongodb.get_document = AsyncMock(return_value=None)
+        mock_database.find_one = AsyncMock(return_value=None)
 
         with pytest.raises(ValueError, match=EXECUTION_ID):
             await get_execution_detail(WORKFLOW_ID, EXECUTION_ID, USER_ID)
 
     @pytest.mark.asyncio
     async def test_returns_execution_history_with_normalised_id(
-        self, mock_verify, mock_mongodb
+        self, mock_verify, mock_database
     ):
         from server.services.execution_debug import get_execution_detail
 
         document = make_execution_document()
-        mock_mongodb.get_document = AsyncMock(return_value=document)
+        mock_database.find_one = AsyncMock(return_value=document)
 
         result = await get_execution_detail(WORKFLOW_ID, EXECUTION_ID, USER_ID)
 
@@ -359,12 +331,12 @@ class TestGetExecutionDetail:
 
     @pytest.mark.asyncio
     async def test_verifies_ownership_before_fetching(
-        self, mock_verify, mock_mongodb
+        self, mock_verify, mock_database
     ):
         from server.services.execution_debug import get_execution_detail
 
         document = make_execution_document()
-        mock_mongodb.get_document = AsyncMock(return_value=document)
+        mock_database.find_one = AsyncMock(return_value=document)
 
         await get_execution_detail(WORKFLOW_ID, EXECUTION_ID, USER_ID)
 
@@ -389,98 +361,34 @@ class TestRetryExecution:
             yield mock
 
     @pytest.fixture
-    def mock_get_detail(self):
-        with patch(
-            "server.services.execution_debug.get_execution_detail",
-            new_callable=AsyncMock,
-        ) as mock:
+    def mock_prefect(self):
+        with patch("server.services.execution_debug.prefect_client") as mock:
+            mock.launch_run = AsyncMock(return_value="run_retry_001")
             yield mock
-
-    @pytest.fixture
-    def mock_pin_node(self):
-        with patch(
-            "server.services.execution_debug.pin_node",
-            new_callable=AsyncMock,
-        ) as mock:
-            yield mock
-
-    @pytest.fixture
-    def mock_dagster(self):
-        with patch("server.services.execution_debug.dagster_client") as mock:
-            mock.launch_run.return_value = "run_retry_001"
-            yield mock
-
-    def make_execution_with_output_rows(self) -> MagicMock:
-        step = MagicMock()
-        step.node_instance_id = "1"
-        step.output_rows = [{"campaign": "Summer", "clicks": 100}]
-
-        execution = MagicMock()
-        execution.steps = {"step_1": step}
-        return execution
 
     @pytest.mark.asyncio
-    async def test_launches_dagster_run_on_success(
-        self, mock_verify, mock_get_detail, mock_pin_node, mock_dagster
-    ):
+    async def test_launches_prefect_run_on_success(self, mock_verify, mock_prefect):
         from server.services.execution_debug import retry_execution
-
-        mock_get_detail.return_value = self.make_execution_with_output_rows()
 
         result = await retry_execution(WORKFLOW_ID, EXECUTION_ID, USER_ID)
 
-        mock_dagster.launch_run.assert_called_once()
+        mock_prefect.launch_run.assert_awaited_once()
         assert result.execution_id == "run_retry_001"
 
     @pytest.mark.asyncio
-    async def test_pins_steps_with_output_rows(
-        self, mock_verify, mock_get_detail, mock_pin_node, mock_dagster
+    async def test_launch_passes_workflow_id_and_user_id(
+        self, mock_verify, mock_prefect
     ):
         from server.services.execution_debug import retry_execution
 
-        mock_get_detail.return_value = self.make_execution_with_output_rows()
-
         await retry_execution(WORKFLOW_ID, EXECUTION_ID, USER_ID)
 
-        mock_pin_node.assert_awaited_once()
-        call_kwargs = mock_pin_node.call_args.kwargs
+        call_kwargs = mock_prefect.launch_run.call_args.kwargs
         assert call_kwargs["workflow_id"] == WORKFLOW_ID
         assert call_kwargs["user_id"] == USER_ID
 
     @pytest.mark.asyncio
-    async def test_skips_steps_without_output_rows(
-        self, mock_verify, mock_get_detail, mock_pin_node, mock_dagster
-    ):
-        from server.services.execution_debug import retry_execution
-
-        step = MagicMock()
-        step.node_instance_id = "1"
-        step.output_rows = None
-
-        execution = MagicMock()
-        execution.steps = {"step_1": step}
-        mock_get_detail.return_value = execution
-
-        await retry_execution(WORKFLOW_ID, EXECUTION_ID, USER_ID)
-
-        mock_pin_node.assert_not_awaited()
-
-    @pytest.mark.asyncio
-    async def test_raises_value_error_when_dagster_launch_fails(
-        self, mock_verify, mock_get_detail, mock_pin_node, mock_dagster
-    ):
-        from server.services.execution_debug import retry_execution
-
-        mock_get_detail.return_value = self.make_execution_with_output_rows()
-        mock_dagster.launch_run.return_value = None
-
-        with pytest.raises(ValueError, match=WORKFLOW_ID):
-            await retry_execution(WORKFLOW_ID, EXECUTION_ID, USER_ID)
-
-    @pytest.mark.asyncio
-    async def test_raises_when_workflow_not_owned(
-        self, mock_get_detail, mock_pin_node, mock_dagster
-    ):
+    async def test_raises_when_workflow_not_owned(self, mock_prefect):
         from server.services.exceptions import WorkflowNotFoundError
         from server.services.execution_debug import retry_execution
 
@@ -568,22 +476,23 @@ class TestListExecutionSummariesEndpoint:
 class TestGetExecutionDetailEndpoint:
     @pytest.fixture
     def mock_service(self):
-        mock_execution = MagicMock()
-        mock_execution.model_dump.return_value = {
-            "_id": "mongo_doc_id_001",
-            "execution_id": EXECUTION_ID,
-            "workflow_id": WORKFLOW_ID,
-            "workflow_name": "My Pipeline",
-            "status": "SUCCESS",
-            "triggered_by": "manual",
-            "start_time": 1_700_000_000.0,
-            "end_time": 1_700_000_060.0,
-            "duration": 60.0,
-            "steps": {},
-            "total_nodes": 2,
-            "successful_nodes": 2,
-            "failed_nodes": 0,
-        }
+        from common.model.execution import ExecutionHistory, Status
+
+        mock_execution = ExecutionHistory(
+            _id="mongo_doc_id_001",
+            execution_id=EXECUTION_ID,
+            workflow_id=WORKFLOW_ID,
+            workflow_name="My Pipeline",
+            status=Status.SUCCESS,
+            triggered_by="manual",
+            start_time=1_700_000_000.0,
+            end_time=1_700_000_060.0,
+            duration=60.0,
+            steps={},
+            total_nodes=2,
+            successful_nodes=2,
+            failed_nodes=0,
+        )
         with patch(
             "server.api.execution_history.get_execution_detail",
             new_callable=AsyncMock,

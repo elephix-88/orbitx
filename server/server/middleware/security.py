@@ -16,6 +16,7 @@ CSRF_SAFE_METHODS = {"GET", "HEAD", "OPTIONS"}
 CSRF_EXCLUDED_PATHS = {
     "/oauth2callback",
     "/api/facebook/oauth2callback",
+    "/api/tiktok/oauth2callback",
     "/api/auth/google",
     "/api/auth/refresh",
     "/api/auth/logout",

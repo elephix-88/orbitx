@@ -3,12 +3,12 @@ from typing import Any
 
 from loguru import logger
 
-from common.database import get_mongodb
+from common.database.mongodb import database, find_one
 from common.model.execution import ExecutionHistory
 from common.model.workflow import WorkflowData
 from server.configs.config import settings
 from server.models.execution_debug import ExecutionSummary, RetryResponse
-from server.services import dagster_client
+from server.services import prefect_client
 from server.services.exceptions import WorkflowNotFoundError
 
 EXECUTION_LIST_DAYS = 30
@@ -20,10 +20,10 @@ async def verify_workflow_ownership(workflow_id: str, user_id: str) -> WorkflowD
 
     Raises WorkflowNotFoundError if absent or not owned.
     """
-    workflow = await get_mongodb().get_document(
-        collection_name=settings.workflow_collection,
-        query={"_id": workflow_id, "user_id": user_id},
-        model_cls=WorkflowData,
+    workflow = await find_one(
+        settings.workflow_collection,
+        {"_id": workflow_id, "user_id": user_id},
+        WorkflowData,
     )
     if workflow is None:
         raise WorkflowNotFoundError(workflow_id)
@@ -70,7 +70,7 @@ async def get_execution_summaries(
         return []
 
     cutoff = time.time() - EXECUTION_LIST_DAYS * 24 * 3600
-    collection = get_mongodb().get_collection(settings.execution_history_collection)
+    collection = database[settings.execution_history_collection]
 
     cursor = (
         collection.find(
@@ -113,10 +113,9 @@ async def get_execution_detail(
     """
     await verify_workflow_ownership(workflow_id, user_id)
 
-    document = await get_mongodb().get_document(
-        collection_name=settings.execution_history_collection,
-        query={"execution_id": execution_id, "workflow_id": workflow_id},
-        model_cls=None,
+    document = await find_one(
+        settings.execution_history_collection,
+        {"execution_id": execution_id, "workflow_id": workflow_id},
     )
 
     if document is None:
@@ -138,25 +137,20 @@ async def retry_execution(
 
     Raises:
         WorkflowNotFoundError: workflow not found or not owned by user.
-        ValueError: Dagster fails to launch.
+        ValueError: Prefect fails to launch.
     """
     workflow = await verify_workflow_ownership(workflow_id, user_id)
 
-    run_id = dagster_client.launch_run(
+    execution_id = await prefect_client.launch_run(
         workflow_id=workflow_id,
         workflow_name=workflow.job_name,
         run_type="all",
         user_id=user_id,
     )
 
-    if run_id is None:
-        raise ValueError(
-            f"Dagster failed to launch retry run for workflow '{workflow_id}'"
-        )
-
     logger.info(
         "Retry run %s launched for workflow %s",
-        run_id,
+        execution_id,
         workflow_id,
     )
-    return RetryResponse(execution_id=run_id)
+    return RetryResponse(execution_id=execution_id)

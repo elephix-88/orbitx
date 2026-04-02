@@ -48,16 +48,7 @@ async def oauth2callback(code: str | None = None, state: str | None = None):
             f"{settings.frontend_oauth_success_url}?provider={provider}"
         )
         return RedirectResponse(url=redirect_url)
-    except ValueError as e:
-        logger.error(
-            f"OAuth callback state verification failed: {e}"
-        )
-        raise HTTPException(
-            status_code=400, detail="Invalid or expired OAuth state"
-        ) from e
-    except httpx.HTTPStatusError as e:
-        logger.error(f"OAuth token exchange failed: {e}")
-        raise HTTPException(
-            status_code=502,
-            detail="Token exchange with provider failed",
-        ) from e
+    except Exception as error:
+        logger.error(f"Google OAuth callback failed: {error}")
+        error_url = f"{settings.frontend_oauth_success_url}?error=Authentication+failed"
+        return RedirectResponse(url=error_url)

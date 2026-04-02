@@ -1,7 +1,7 @@
 import pandas as pd
 from loguru import logger
 
-from common.database import get_mongodb
+from common.database.mongodb import find_one
 from common.model.workflow import Node, WorkflowData
 from engine.services.single_node_executor import (
     SingleNodeResult,
@@ -19,10 +19,10 @@ async def load_workflow_for_user(workflow_id: str, user_id: str) -> WorkflowData
     Raises WorkflowNotFoundError if the workflow does not exist or belongs to
     a different user.
     """
-    workflow = await get_mongodb().get_document(
-        collection_name=settings.workflow_collection,
-        query={"_id": workflow_id, "user_id": user_id},
-        model_cls=WorkflowData,
+    workflow = await find_one(
+        settings.workflow_collection,
+        {"_id": workflow_id, "user_id": user_id},
+        WorkflowData,
     )
     if workflow is None:
         raise WorkflowNotFoundError(workflow_id)

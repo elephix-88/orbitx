@@ -21,17 +21,16 @@ class ExecutionHistoryService {
       `${this.baseUrl}/api/execution-history/workflow/${workflowId}`,
       { credentials: 'include' }
     );
-    if (!response.ok) return [];
+    if (!response.ok) {
+      throw new Error(`Failed to fetch execution history (${response.status})`);
+    }
     return response.json();
   }
 
-  async getDashboardStats(workflowIds?: string[], workflowNames?: Record<string, string>): Promise<DashboardStats> {
+  async getDashboardStats(workflows?: Record<string, string>): Promise<DashboardStats> {
     const params = new URLSearchParams();
-    if (workflowIds?.length) {
-      params.set('workflow_ids', workflowIds.join(','));
-    }
-    if (workflowNames) {
-      params.set('workflow_names', JSON.stringify(workflowNames));
+    if (workflows && Object.keys(workflows).length > 0) {
+      params.set('workflows', JSON.stringify(workflows));
     }
     const query = params.toString();
     const response = await fetch(

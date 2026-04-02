@@ -8,7 +8,7 @@ from google.auth.transport import requests as google_requests
 from google.oauth2 import id_token
 from loguru import logger
 
-from common.database.mongodb import get_mongodb
+from common.database.mongodb import database, find_one
 from common.model.user import UserInDB, UserResponse, UserRole
 from server.configs.config import settings
 
@@ -79,24 +79,15 @@ def decode_refresh_token(token: str) -> dict | None:
 
 
 async def get_user_by_email(email: str) -> UserInDB | None:
-    user_doc = await get_mongodb().get_document(
-        settings.users_collection, {"email": email}
-    )
-    return UserInDB.model_validate(user_doc) if user_doc else None
+    return await find_one(settings.users_collection, {"email": email}, UserInDB)
 
 
 async def get_user_by_id(user_id: str) -> UserInDB | None:
-    user_doc = await get_mongodb().get_document(
-        settings.users_collection, {"_id": user_id}
-    )
-    return UserInDB.model_validate(user_doc) if user_doc else None
+    return await find_one(settings.users_collection, user_id, UserInDB)
 
 
 async def get_user_by_google_id(google_id: str) -> UserInDB | None:
-    user_doc = await get_mongodb().get_document(
-        settings.users_collection, {"google_id": google_id}
-    )
-    return UserInDB.model_validate(user_doc) if user_doc else None
+    return await find_one(settings.users_collection, {"google_id": google_id}, UserInDB)
 
 
 async def create_user(
@@ -119,7 +110,10 @@ async def create_user(
         created_at=now,
         updated_at=now,
     )
-    await get_mongodb().insert_document(settings.users_collection, user)
+    doc = user.model_dump(by_alias=True, exclude_none=True)
+    if "_id" not in doc:
+        raise ValueError("UserInDB must have an _id before inserting")
+    await database[settings.users_collection].insert_one(doc)
     return user
 
 
@@ -158,8 +152,7 @@ async def authenticate_google_user(credential: str) -> UserInDB | None:
         # Check existing user by email and link Google account
         user = await get_user_by_email(email)
         if user:
-            collection = get_mongodb().get_collection(settings.users_collection)
-            await collection.update_one(
+            await database[settings.users_collection].update_one(
                 {"_id": user.id}, {"$set": {"google_id": google_id, "picture": picture}}
             )
             user.google_id = google_id

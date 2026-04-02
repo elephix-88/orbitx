@@ -38,7 +38,7 @@ const PAYLOAD_FIELDS: PayloadField[] = [
   {
     key: 'execution_id',
     label: 'Execution ID',
-    description: 'The Dagster run ID for the failed execution.',
+    description: 'The Prefect run ID for the failed execution.',
   },
   {
     key: 'failed_node',

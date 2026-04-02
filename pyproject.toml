@@ -4,23 +4,18 @@ version = "0.1.0"
 description = "OrbitX marketing data integration platform"
 requires-python = ">=3.13"
 dependencies = [
-    "loguru>=0.7.3",
-    "pydantic>=2.12.5",
     "common",
     "engine",
     "server",
-    "dagster-orbitx",
-    "pytest>=9.0.2",
 ]
 
 [tool.uv.sources]
 common = { workspace = true }
 engine = { workspace = true }
 server = { workspace = true }
-dagster-orbitx = { workspace = true }
 
 [tool.uv.workspace]
-members = ["common", "server", "engine", "dagster"]
+members = ["common", "server", "engine"]
 
 [tool.ruff]
 line-length = 88
@@ -31,7 +26,7 @@ select = ["E", "F", "I", "W", "UP", "B", "SIM"]
 ignore = ["E713", "E221", "B008"]
 
 [tool.ruff.lint.isort]
-known-first-party = ["common", "server", "engine", "dagster_orbitx"]
+known-first-party = ["common", "server", "engine"]
 
 [tool.mypy]
 python_version = "3.13"
@@ -44,4 +39,5 @@ show_error_codes = true
 [dependency-groups]
 dev = [
     "ruff>=0.15.6",
+    "pytest>=9.0.2",
 ]

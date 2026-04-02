@@ -109,11 +109,12 @@ export function openOAuthPopup<T = void>(
 
     window.addEventListener('message', messageHandler);
 
-    // Fallback: check if popup is closed manually
+    // Fallback: reject if popup is closed without completing OAuth
     const timer = setInterval(() => {
-      if (popup.closed) {
-        // User closed popup manually - treat as success (they may have completed auth)
-        handleSuccess();
+      if (popup.closed && !isResolved) {
+        isResolved = true;
+        cleanup();
+        reject(new Error('OAuth popup was closed before completing'));
       }
     }, pollInterval);
   });

@@ -200,7 +200,10 @@ const ConnectionsPage = () => {
         notify.info("Info", `${label} connection via API will be available soon.`);
       }
     } catch (error) {
-      notify.error("Error", error instanceof Error ? error.message : "Failed to initiate connection");
+      const message = error instanceof Error ? error.message : '';
+      if (!message.includes('popup was closed')) {
+        notify.error("Error", message || "Failed to initiate connection");
+      }
     } finally {
       setConnectingType(null);
     }

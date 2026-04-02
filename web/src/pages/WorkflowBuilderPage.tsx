@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo, lazy, Suspense, useRef } from "react";
+import React, { useState, useEffect, useCallback, useMemo, lazy, Suspense } from "react";
 import { useLocation, useSearchParams, useNavigate } from "react-router-dom";
 // React Flow canvas (migrated from custom canvas)
 import { ReactFlowCanvas } from "../components/workflow/reactflow";
@@ -16,9 +16,8 @@ import { getNodeSpec } from "../workflow/registry";
 import { AlertTriangle, Loader2 } from "lucide-react";
 import { Button } from "@/components/shared/Button";
 import { useWorkflowExecution } from "../hooks/useWorkflowExecution";
-import { WorkflowData, BackendWorkflow } from "../types/backend";
+import { WorkflowData, BackendWorkflow, ExecutionHistory } from "../types/backend";
 import { DeliveryConfig, DEFAULT_DELIVERY_CONFIG } from "../types/delivery";
-import { prefetchWorkflowNodeData } from "../services/nodeDataPrefetch";
 import { extractMongoId } from "../utils/mongoUtils";
 import { useResponsiveLayout } from "../hooks/useResponsiveLayout";
 import { useElementSize } from "../hooks/useElementSize";
@@ -26,6 +25,8 @@ import { autoLayoutDynamic } from "../utils/workflowLayout";
 import { pinService } from "../services/pinService";
 import { stepRunService, type StepRunResponse } from "../services/stepRunService";
 import { executionDebugService, type ExecutionDetail } from "../services/executionDebugService";
+import { executionHistoryService } from "../services/executionHistoryService";
+import type { NodeStatus } from "../types/workflow";
 
 // Lazy load heavy components (modals and panels)
 const ExecutionLogPanel = lazy(() => import("../components/workflow/ExecutionLogPanel").then(m => ({ default: m.ExecutionLogPanel })));
@@ -44,6 +45,33 @@ interface LocationState {
     nodes: WorkflowNode[];
     connections: WorkflowConnection[];
   };
+}
+
+/**
+ * Apply execution statuses from the latest execution to workflow nodes.
+ * Called during bootstrap so nodes have correct status from the start.
+ */
+function applyExecutionStatuses(
+  nodes: WorkflowNode[],
+  executions: ExecutionHistory[]
+): WorkflowNode[] {
+  if (executions.length === 0) return nodes;
+
+  const sorted = [...executions].sort((a, b) => b.start_time - a.start_time);
+  const target = sorted.find((e) => e.status === "RUNNING") || sorted[0];
+  if (!target?.steps) return nodes;
+
+  const stepStatuses = new Map<string, NodeStatus>();
+  for (const [key, step] of Object.entries(target.steps)) {
+    const normalized = step.status === "FAILED" ? "error" : step.status.toLowerCase();
+    stepStatuses.set(key, normalized as NodeStatus);
+  }
+
+  return nodes.map((node) => {
+    const instanceId = String(node.data?.node_instance_id);
+    const status = stepStatuses.get(instanceId);
+    return status ? { ...node, status } : node;
+  });
 }
 
 const WorkflowBuilderPage: React.FC = () => {
@@ -498,12 +526,23 @@ const WorkflowBuilderPage: React.FC = () => {
           }
           setOriginalBackendWorkflow(backendData);
 
-          // Use positions from transformer (dagre layout based on connections)
-          // Don't re-layout - dagre already calculated optimal positions
+          // Fetch execution history to set initial node statuses.
+          // Done here (not in ExecutionLogPanel) to avoid race conditions.
+          const workflowDocId = extractMongoId(backendData?._id) || docId;
+          let nodesWithStatus = workflowNodes;
+          if (workflowDocId) {
+            try {
+              const executions = await executionHistoryService.getExecutionHistory(workflowDocId);
+              nodesWithStatus = applyExecutionStatuses(workflowNodes, executions);
+            } catch {
+              // Non-critical — nodes will just show validation status instead
+            }
+          }
+
           updateWorkflow({
             ...workflow,
           });
-          setNodes(workflowNodes);
+          setNodes(nodesWithStatus);
           setConnections(workflowConnections);
           markAsSaved();
         }
@@ -547,25 +586,6 @@ const WorkflowBuilderPage: React.FC = () => {
         // Non-fatal: pin state is a UI enhancement; silently ignore if unavailable
       });
   }, [workflowId, loadPinnedNodes]);
-
-  // Prefetch all node data when workflow is loaded
-  const prefetchedRef = useRef(false);
-
-  useEffect(() => {
-    // Prefetch node data when nodes are available and not already prefetched
-    if (!isLoading && nodes.length > 0 && !prefetchedRef.current) {
-      prefetchedRef.current = true;
-      // Fire and forget - don't block UI
-      prefetchWorkflowNodeData(nodes).catch(console.error);
-    }
-  }, [isLoading, nodes]);
-
-  // Reset prefetch flag when component unmounts
-  useEffect(() => {
-    return () => {
-      prefetchedRef.current = false;
-    };
-  }, []);
 
   useEffect(() => {
     if (isMobile || isTablet) {
@@ -708,7 +728,16 @@ const WorkflowBuilderPage: React.FC = () => {
 
         setOriginalBackendWorkflow(newWorkflowData);
         updateWorkflow(wf);
-        setNodes(() => applyLayoutIfMissing(wfNodes, layoutNodes));
+        setNodes((prev) => {
+          const statusByInstanceId = new Map(
+            prev.map((n) => [String(n.data?.node_instance_id), n.status])
+          );
+          const laid = applyLayoutIfMissing(wfNodes, layoutNodes);
+          return laid.map((n) => {
+            const prevStatus = statusByInstanceId.get(String(n.data?.node_instance_id));
+            return prevStatus && prevStatus !== 'pending' ? { ...n, status: prevStatus } : n;
+          });
+        });
         setConnections(() => wfConnections);
         markAsSaved();
 
@@ -749,7 +778,16 @@ const WorkflowBuilderPage: React.FC = () => {
           );
         }
         updateWorkflow(wf);
-        setNodes(() => applyLayoutIfMissing(wfNodes, layoutNodes));
+        setNodes((prev) => {
+          const statusByInstanceId = new Map(
+            prev.map((n) => [String(n.data?.node_instance_id), n.status])
+          );
+          const laid = applyLayoutIfMissing(wfNodes, layoutNodes);
+          return laid.map((n) => {
+            const prevStatus = statusByInstanceId.get(String(n.data?.node_instance_id));
+            return prevStatus && prevStatus !== 'pending' ? { ...n, status: prevStatus } : n;
+          });
+        });
         setConnections(() => wfConnections);
       } catch (refetchErr) {
         console.warn("Refetch after save failed:", refetchErr);

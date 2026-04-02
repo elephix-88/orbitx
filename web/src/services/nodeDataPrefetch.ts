@@ -7,7 +7,6 @@
 
 import { fetchClient } from '@/lib/fetchClient';
 import { useNodeDataCache, ConnectionOption, FieldDefinition, FacebookAdsAccount, GoogleAdsAccount, TikTokAdsAccount } from '@/store/nodeDataCache';
-import { WorkflowNode } from '@/types/workflow';
 
 interface ConnectionResponse {
   _id?: string | { $oid: string };
@@ -188,68 +187,3 @@ export async function prefetchTikTokAccounts(connectionId: string): Promise<TikT
   return prefetchAccounts('tiktok', connectionId) as Promise<TikTokAdsAccount[]>;
 }
 
-function findPlatformForService(serviceName: string): Platform | null {
-  const name = serviceName.toLowerCase();
-  for (const [platform, config] of Object.entries(PLATFORM_CONFIG) as [Platform, typeof PLATFORM_CONFIG[Platform]][]) {
-    if (config.serviceMatch(name)) return platform;
-  }
-  return null;
-}
-
-export async function prefetchWorkflowNodeData(nodes: WorkflowNode[]): Promise<void> {
-  const connections = await prefetchConnections();
-
-  const usedPlatforms = new Set<Platform>();
-  const connectionIds = new Set<string>();
-
-  for (const node of nodes) {
-    const definitionId = node.definitionId || '';
-    for (const [platform, config] of Object.entries(PLATFORM_CONFIG) as [Platform, typeof PLATFORM_CONFIG[Platform]][]) {
-      if (definitionId === config.definitionId) {
-        usedPlatforms.add(platform);
-        const connId = node.data?.connection_id || node.data?.token_id || node.data?.accessToken;
-        if (connId) connectionIds.add(String(connId));
-      }
-    }
-  }
-
-  const promises: Promise<unknown>[] = [];
-
-  // Fetch fields for used platforms
-  for (const platform of usedPlatforms) {
-    promises.push(prefetchFields(platform));
-  }
-
-  // Fetch accounts for connections used in nodes
-  for (const connId of connectionIds) {
-    const conn = connections.find(c => c.id === connId);
-    const platform = conn?.service_name ? findPlatformForService(conn.service_name) : null;
-    if (platform) {
-      promises.push(prefetchAccounts(platform, connId));
-    }
-  }
-
-  // Prefetch accounts for all available connections of used platforms
-  for (const platform of usedPlatforms) {
-    const config = PLATFORM_CONFIG[platform];
-    const platformConnections = connections.filter(c =>
-      c.service_name ? config.serviceMatch(c.service_name.toLowerCase()) : false
-    );
-    for (const conn of platformConnections) {
-      if (!connectionIds.has(conn.id)) {
-        promises.push(prefetchAccounts(platform, conn.id));
-      }
-    }
-  }
-
-  await Promise.allSettled(promises);
-}
-
-export function usePrefetchWorkflowData(nodes: WorkflowNode[], isReady: boolean) {
-  const prefetchedRef = { current: false };
-
-  if (isReady && nodes.length > 0 && !prefetchedRef.current) {
-    prefetchedRef.current = true;
-    prefetchWorkflowNodeData(nodes).catch(console.error);
-  }
-}

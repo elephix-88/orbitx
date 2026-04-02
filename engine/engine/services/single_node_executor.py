@@ -178,7 +178,7 @@ async def execute_single_node(
     node: Node,
     upstream_data: pd.DataFrame | None = None,
 ) -> SingleNodeResult:
-    """Execute a single workflow node outside of Dagster context.
+    """Execute a single workflow node outside of Prefect context.
 
     Routes by node_type:
     - source: runs the extractor via SourceFactory

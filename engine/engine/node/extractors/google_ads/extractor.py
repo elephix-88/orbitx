@@ -5,7 +5,7 @@ import pandas as pd
 from google.ads.googleads.client import GoogleAdsClient
 from loguru import logger
 
-from common.database.mongodb import get_mongodb
+from common.database.mongodb import find_many
 from common.model.google.ads import GoogleAdsField as FieldConfig
 from common.model.google.config import GoogleAdsConfig
 from common.model.result import ExtractorResult
@@ -70,8 +70,7 @@ class GoogleAdsExtractor(Extractor):
                 login_customer_id=settings.google_ads_login_customer_id,
             )
 
-            mongodb = get_mongodb()
-            field_config = await mongodb.get_all_documents(
+            field_config = await find_many(
                 settings.google_fields,
                 {"field": {"$in": self.config.fields}},
                 FieldConfig,

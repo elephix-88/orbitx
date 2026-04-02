@@ -64,10 +64,9 @@ class TestPinNode:
     @pytest.fixture
     def mock_collection(self):
         collection = make_mock_collection()
-        with patch("server.services.pin_service.get_mongodb") as mock_get_mongodb:
-            mock_client = MagicMock()
-            mock_client.get_collection.return_value = collection
-            mock_get_mongodb.return_value = mock_client
+        mock_db = MagicMock()
+        mock_db.__getitem__ = MagicMock(return_value=collection)
+        with patch("server.services.pin_service.database", mock_db):
             yield collection
 
     @pytest.fixture
@@ -149,19 +148,17 @@ class TestUnpinNode:
     @pytest.fixture
     def mock_collection_with_pin(self):
         collection = make_mock_collection(delete_count=1)
-        with patch("server.services.pin_service.get_mongodb") as mock_get_mongodb:
-            mock_client = MagicMock()
-            mock_client.get_collection.return_value = collection
-            mock_get_mongodb.return_value = mock_client
+        mock_db = MagicMock()
+        mock_db.__getitem__ = MagicMock(return_value=collection)
+        with patch("server.services.pin_service.database", mock_db):
             yield collection
 
     @pytest.fixture
     def mock_collection_without_pin(self):
         collection = make_mock_collection(delete_count=0)
-        with patch("server.services.pin_service.get_mongodb") as mock_get_mongodb:
-            mock_client = MagicMock()
-            mock_client.get_collection.return_value = collection
-            mock_get_mongodb.return_value = mock_client
+        mock_db = MagicMock()
+        mock_db.__getitem__ = MagicMock(return_value=collection)
+        with patch("server.services.pin_service.database", mock_db):
             yield collection
 
     @pytest.fixture
@@ -234,11 +231,9 @@ class TestGetAllPinnedData:
     async def test_returns_empty_map_when_no_pins(self, mock_settings):
         """get_all_pinned_data returns PinnedDataMap with empty dict."""
         collection = make_mock_collection(find_result=[])
-        with patch("server.services.pin_service.get_mongodb") as mock_get_mongodb:
-            mock_client = MagicMock()
-            mock_client.get_collection.return_value = collection
-            mock_get_mongodb.return_value = mock_client
-
+        mock_db = MagicMock()
+        mock_db.__getitem__ = MagicMock(return_value=collection)
+        with patch("server.services.pin_service.database", mock_db):
             from server.services.pin_service import get_all_pinned_data
 
             result = await get_all_pinned_data(WORKFLOW_ID, USER_ID)
@@ -254,11 +249,9 @@ class TestGetAllPinnedData:
             self.make_db_document(node_instance_id=5),
         ]
         collection = make_mock_collection(find_result=documents)
-        with patch("server.services.pin_service.get_mongodb") as mock_get_mongodb:
-            mock_client = MagicMock()
-            mock_client.get_collection.return_value = collection
-            mock_get_mongodb.return_value = mock_client
-
+        mock_db = MagicMock()
+        mock_db.__getitem__ = MagicMock(return_value=collection)
+        with patch("server.services.pin_service.database", mock_db):
             from server.services.pin_service import get_all_pinned_data
 
             result = await get_all_pinned_data(WORKFLOW_ID, USER_ID)
@@ -273,11 +266,9 @@ class TestGetAllPinnedData:
         pinned_at = 9999999.0
         documents = [self.make_db_document(node_instance_id=3, pinned_at=pinned_at)]
         collection = make_mock_collection(find_result=documents)
-        with patch("server.services.pin_service.get_mongodb") as mock_get_mongodb:
-            mock_client = MagicMock()
-            mock_client.get_collection.return_value = collection
-            mock_get_mongodb.return_value = mock_client
-
+        mock_db = MagicMock()
+        mock_db.__getitem__ = MagicMock(return_value=collection)
+        with patch("server.services.pin_service.database", mock_db):
             from server.services.pin_service import get_all_pinned_data
 
             result = await get_all_pinned_data(WORKFLOW_ID, USER_ID)
@@ -292,11 +283,9 @@ class TestGetAllPinnedData:
     async def test_queries_by_workflow_id_and_user_id(self, mock_settings):
         """get_all_pinned_data filters by both workflow_id and user_id."""
         collection = make_mock_collection(find_result=[])
-        with patch("server.services.pin_service.get_mongodb") as mock_get_mongodb:
-            mock_client = MagicMock()
-            mock_client.get_collection.return_value = collection
-            mock_get_mongodb.return_value = mock_client
-
+        mock_db = MagicMock()
+        mock_db.__getitem__ = MagicMock(return_value=collection)
+        with patch("server.services.pin_service.database", mock_db):
             from server.services.pin_service import get_all_pinned_data
 
             await get_all_pinned_data(WORKFLOW_ID, USER_ID)

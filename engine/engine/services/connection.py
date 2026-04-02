@@ -1,15 +1,11 @@
 """Connection utilities for loading and validating service connections."""
 
-from typing import TypeVar
-
 from pydantic import BaseModel
 
-from common.database.mongodb import get_mongodb
+from common.database.mongodb import find_one
 from common.model.connection import ConnectionItem as Connection
 from engine.configs.config import settings
 from engine.exceptions import ConnectionException
-
-T = TypeVar("T", bound=BaseModel)
 
 
 async def get_connection_token[T: BaseModel](
@@ -30,11 +26,16 @@ async def get_connection_token[T: BaseModel](
     Raises:
         ConnectionException: If connection not found or params missing
     """
-    mongodb = get_mongodb()
-    connection_info = await mongodb.get_document(
-        settings.connections_collection, {"_id": connection_id}, Connection
+    connection_info = await find_one(
+        settings.connections_collection, connection_id, Connection
     )
-    if not connection_info or not connection_info.params:
+    if not connection_info:
+        raise ConnectionException(
+            f"Connection info not found for connection_id: {connection_id}",
+            service_name=service_name,
+            connection_id=connection_id,
+        )
+    if not connection_info.params:
         raise ConnectionException(
             f"Connection info not found for connection_id: {connection_id}",
             service_name=service_name,

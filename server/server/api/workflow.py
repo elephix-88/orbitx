@@ -6,9 +6,8 @@ from fastapi.responses import JSONResponse, StreamingResponse
 from loguru import logger
 from pymongo.errors import DuplicateKeyError
 
-from common.database import get_mongodb
+from common.database.mongodb import database, find_one
 from common.model.execution import Status
-
 from common.model.user import UserInDB
 from common.model.workflow import JobIdRequest, WorkflowData, WorkflowSummary
 from server.configs.config import settings
@@ -17,7 +16,7 @@ from server.models.error_workflow import TriggerErrorRequest, TriggerErrorRespon
 from server.models.pin import PinnedDataMap, PinNodeRequest
 from server.models.schedule import ScheduleConfig, ScheduleResponse
 from server.models.step_run import StepRunRequest
-from server.services.auth.dependencies import get_current_user
+from server.services.auth.dependencies import get_current_user, get_current_user_optional
 from server.services.error_workflow import trigger_error_workflow
 from server.services.exceptions import WorkflowNotFoundError, WorkflowStructureError
 from server.services.pin_service import (
@@ -110,8 +109,7 @@ async def execution_stream(
     whenever the document changes. Closes when the execution reaches
     a terminal status (SUCCESS/FAILED/CANCELED) or the safety cap expires.
     """
-    mongodb = get_mongodb()
-    collection = mongodb.get_collection(settings.execution_history_collection)
+    collection = database[settings.execution_history_collection]
 
     async def find_latest(query: dict) -> dict | None:
         cursor = collection.find(query).sort("start_time", -1).limit(1)
@@ -347,7 +345,7 @@ async def step_run_node_endpoint(
     step_run_request: StepRunRequest,
     current_user: UserInDB = Depends(get_current_user),
 ) -> dict:
-    """Execute a single workflow node outside of Dagster.
+    """Execute a single workflow node outside of Prefect.
 
     Resolves upstream data from pins (fast path) or via live execution (fallback).
     Always returns 200. Execution errors are reported inline via error_message
@@ -382,23 +380,44 @@ async def trigger_error_endpoint(
     request: Request,
     workflow_id: str,
     trigger_request: TriggerErrorRequest,
-    current_user: UserInDB = Depends(get_current_user),
+    current_user: UserInDB | None = Depends(get_current_user_optional),
 ) -> TriggerErrorResponse:
     """Trigger an error-handling workflow on behalf of a failed execution.
 
-    Called by the Dagster on_workflow_failure hook when a workflow that has
-    error_workflow_id configured fails. Returns triggered=False (not an error)
-    when Dagster accepts the request but the run cannot be launched.
+    Called by the engine on_flow_failure hook when a workflow with
+    error_workflow_id configured fails. Accepts either JWT auth or
+    X-Internal-Service-Key header for engine-to-server calls.
 
     HTTP 404 — workflow_id or caller_workflow_id not found.
     HTTP 400 — target workflow has no error_trigger node, or loop prevention
                triggered (caller is itself an error-handling workflow).
     """
+    if current_user:
+        user_id = current_user.id
+    else:
+        # Engine-to-server call: validate internal service key
+        service_key = request.headers.get("X-Internal-Service-Key")
+        if not service_key or service_key != settings.internal_service_key:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Not authenticated",
+            )
+        doc = await find_one(
+            settings.workflow_collection,
+            trigger_request.caller_workflow_id,
+            projection={"user_id": 1},
+        )
+        if not doc or not doc.get("user_id"):
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"Caller workflow {trigger_request.caller_workflow_id} not found",
+            )
+        user_id = doc["user_id"]
     try:
         return await trigger_error_workflow(
             workflow_id=workflow_id,
             request=trigger_request,
-            user_id=current_user.id,
+            user_id=user_id,
         )
     except WorkflowNotFoundError as error:
         raise HTTPException(

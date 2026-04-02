@@ -17,4 +17,4 @@ class ExecutionSummary(BaseModel):
 
 class RetryResponse(BaseModel):
     execution_id: str
-    # Dagster run ID of the newly-launched execution
+    # Prefect run ID of the newly-launched execution

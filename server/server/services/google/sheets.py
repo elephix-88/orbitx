@@ -5,7 +5,7 @@ from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 from loguru import logger
 
-from common.database import get_mongodb
+from common.database.mongodb import find_one
 from common.model.connection import ConnectionItem
 from common.model.google.sheets import (
     GoogleSheetsFile,
@@ -71,10 +71,10 @@ async def get_google_sheets_spreadsheets(
     Returns Google Sheets spreadsheets for the given connection_id.
     Verifies user ownership. Runs blocking API calls in a thread pool.
     """
-    connection = await get_mongodb().get_document(
-        collection_name=settings.connection_collection,
-        query={"_id": connection_id, "user_id": user_id},
-        model_cls=ConnectionItem,
+    connection = await find_one(
+        settings.connection_collection,
+        {"_id": connection_id, "user_id": user_id},
+        ConnectionItem,
     )
     if not connection:
         logger.error(f"Connection not found for id={connection_id}")
@@ -153,10 +153,10 @@ async def get_google_sheets_worksheets(
     Verifies user ownership of the connection.
     Runs blocking Google API calls in a thread pool.
     """
-    connection = await get_mongodb().get_document(
-        collection_name=settings.connection_collection,
-        query={"_id": connection_id, "user_id": user_id},
-        model_cls=ConnectionItem,
+    connection = await find_one(
+        settings.connection_collection,
+        {"_id": connection_id, "user_id": user_id},
+        ConnectionItem,
     )
     if not connection:
         logger.error(f"Connection not found for id={connection_id}")

@@ -11,13 +11,12 @@ from common.model.user import UserInDB
 
 # Adjust imports based on your project structure
 from server.api.facebook.oauth import router
+from server.services.auth.dependencies import get_current_user
 
 # from server.configs.config import settings
 
 app = FastAPI()
 app.include_router(router)
-
-client = TestClient(app)
 
 # Mock user for tests
 _MOCK_USER = UserInDB(
@@ -30,12 +29,23 @@ _MOCK_USER = UserInDB(
 )
 
 
+def _authenticated_client() -> TestClient:
+    """Return a TestClient with the get_current_user dependency overridden."""
+    app.dependency_overrides[get_current_user] = lambda: _MOCK_USER
+    return TestClient(app)
+
+
+client = _authenticated_client()
+
+
 @pytest.fixture
 def mock_mongo():
-    with patch("server.services.oauth_base.get_mongodb") as mock:
-        mock_db = Mock()
-        mock.return_value = mock_db
-        yield mock_db
+    mock_collection = MagicMock()
+    mock_collection.insert_one = AsyncMock()
+    mock_db = MagicMock()
+    mock_db.__getitem__ = MagicMock(return_value=mock_collection)
+    with patch("server.services.oauth_base.database", mock_db):
+        yield mock_collection
 
 
 @pytest.fixture
@@ -65,10 +75,11 @@ def mock_settings():
 
 
 def test_login_endpoint(mock_settings):
-    # Patch settings and user context in both modules where they are used
+    # Patch settings in both modules where they are used.
+    # Authentication is handled via dependency_overrides set on the app.
     with patch("server.api.facebook.oauth.settings", mock_settings), patch(
         "server.services.facebook.oauth.settings", mock_settings
-    ), patch("server.api.facebook.oauth.get_current_user", return_value=_MOCK_USER):
+    ):
         payload = {"connection_name": "My Facebook Connection"}
         response = client.post("/api/facebook/login", json=payload)
 
@@ -117,14 +128,11 @@ def test_oauth2callback_success(mock_mongo, mock_httpx, mock_settings):
         # It redirects
         assert response.history or response.url
 
-        # Verify DB save
-        mock_mongo.insert_document.assert_called_once()
-        call_args = mock_mongo.insert_document.call_args
-        # Collection name comes from settings ("connections" or "test_connections")
-        assert "connection" in call_args.kwargs["collection_name"].lower()
-        inserted_data = call_args.kwargs["data"]
-        assert inserted_data.service_name == ServiceName.FACEBOOK_ADS.value
-        assert inserted_data.params["access_token"] == "test_access_token"
+        # Verify DB save — new pattern uses insert_one with a plain dict
+        mock_mongo.insert_one.assert_awaited_once()
+        inserted_doc = mock_mongo.insert_one.call_args[0][0]
+        assert inserted_doc["service_name"] == ServiceName.FACEBOOK_ADS.value
+        assert inserted_doc["params"]["access_token"] == "test_access_token"
 
 
 def test_oauth2callback_missing_params():
@@ -153,8 +161,11 @@ def test_oauth2callback_token_failure(mock_httpx, mock_settings):
 
         with patch("server.api.facebook.oauth.settings", mock_settings):
             response = client.get(
-                "/api/facebook/oauth2callback?code=bad_code&state=valid_state"
+                "/api/facebook/oauth2callback?code=bad_code&state=valid_state",
+                follow_redirects=False,
             )
 
-        assert response.status_code == 400
-        assert "Token exchange failed" in response.json()["detail"]
+        # The callback catches all exceptions and redirects to the frontend
+        # error URL rather than raising HTTP 400.
+        assert response.status_code == 307
+        assert "error=" in response.headers["location"]

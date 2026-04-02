@@ -5,7 +5,7 @@ import httpx
 from loguru import logger
 from pydantic import BaseModel
 
-from common.database import get_mongodb
+from common.database.mongodb import database
 from common.model.connection import ConnectionItem, ConnectionStatus, ConnectionType
 from server.configs.config import settings
 from server.services.exceptions import ExternalAPIError
@@ -106,10 +106,10 @@ async def save_slack_connection_to_mongo(code: str, state: str) -> str:
         },
     )
 
-    await get_mongodb().insert_document(
-        collection_name=settings.connection_collection,
-        data=connection_item,
-    )
+    doc = connection_item.model_dump(by_alias=True, exclude_none=True)
+    if "_id" not in doc:
+        raise ValueError("ConnectionItem must have an _id before inserting")
+    await database[settings.connection_collection].insert_one(doc)
 
     logger.info(
         f"Slack connection saved: connection_id={connection_id} "

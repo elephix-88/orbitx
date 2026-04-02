@@ -291,10 +291,14 @@ class WorkflowApiService {
         `/api/workflows/${encodeURIComponent(idOrJobId)}`
       );
       
-      const workflowData: BackendWorkflowDetailed = Array.isArray(result.data) 
-        ? result.data[0] 
+      const workflowData = Array.isArray(result.data)
+        ? result.data[0]
         : result.data;
-      
+
+      if (!workflowData) {
+        throw new Error(`Workflow not found: ${idOrJobId}`);
+      }
+
       return {
         data: workflowData,
         message: result.message,

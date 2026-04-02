@@ -135,7 +135,7 @@ class ExecutionHistory(BaseModel):
     failed_nodes: int = 0
     ttl_expires_at: float | None = None
     # Unix timestamp after which this document should be deleted.
-    # Set by the Dagster hook (F4-DAG-1) at write time.
+    # Set by the Prefect hook at write time.
     # MongoDB TTL index on ttl_expires_at enforces deletion (30-day default).
 
     model_config = ConfigDict(

@@ -458,7 +458,7 @@ const ReactFlowCanvasInner: React.FC<ReactFlowCanvasProps> = ({
             .filter((p) => p.io === 'output')
             .map((p) => ({ id: p.id, name: p.name }));
           newNode = {
-            id: `node_${Date.now()}`,
+            id: `node_${uuidv4()}`,
             type: typeLower,
             name: spec.displayName,
             definitionId: nodeType.registryTypeId,
@@ -473,7 +473,7 @@ const ReactFlowCanvasInner: React.FC<ReactFlowCanvasProps> = ({
           };
         } else {
           newNode = {
-            id: `node_${Date.now()}`,
+            id: `node_${uuidv4()}`,
             type: nodeType.type,
             name: nodeType.name,
             definitionId: nodeType.registryTypeId,
@@ -489,7 +489,7 @@ const ReactFlowCanvasInner: React.FC<ReactFlowCanvasProps> = ({
         }
       } else {
         newNode = {
-          id: `node_${Date.now()}`,
+          id: `node_${uuidv4()}`,
           type: nodeType.type,
           name: nodeType.name,
           definitionId: nodeType.type,

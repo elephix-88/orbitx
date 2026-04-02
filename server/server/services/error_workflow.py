@@ -1,11 +1,11 @@
 from loguru import logger
 
-from common.database import get_mongodb
+from common.database.mongodb import find_one
 from common.model.error_trigger import ErrorPayload
 from common.model.workflow import WorkflowData
 from server.configs.config import settings
 from server.models.error_workflow import TriggerErrorRequest, TriggerErrorResponse
-from server.services import dagster_client
+from server.services import prefect_client
 from server.services.exceptions import WorkflowNotFoundError
 
 ERROR_TRIGGER_NODE_ID = "error_trigger"
@@ -17,10 +17,10 @@ async def load_workflow(workflow_id: str, user_id: str) -> WorkflowData | None:
 
     Returns None if the workflow does not exist or belongs to a different user.
     """
-    return await get_mongodb().get_document(
-        collection_name=settings.workflow_collection,
-        query={"_id": workflow_id, "user_id": user_id},
-        model_cls=WorkflowData,
+    return await find_one(
+        settings.workflow_collection,
+        {"_id": workflow_id, "user_id": user_id},
+        WorkflowData,
     )
 
 
@@ -30,10 +30,10 @@ def workflow_has_error_trigger_node(workflow: WorkflowData) -> bool:
 
 
 def serialise_error_payload_as_tags(payload: ErrorPayload) -> dict[str, str]:
-    """Encode ErrorPayload as a single JSON string tag for Dagster.
+    """Encode ErrorPayload as a single JSON string tag for Prefect.
 
-    Dagster run tags are string→string. We pack the full payload into one
-    tag so the ErrorTriggerExtractor can deserialise it from context.run_tags.
+    Packed into extra_tags so the ErrorTriggerExtractor can deserialise it
+    from the flow run parameters.
     """
     return {ERROR_PAYLOAD_TAG_KEY: payload.model_dump_json()}
 
@@ -52,7 +52,7 @@ async def trigger_error_workflow(
     4. Loop prevention: the caller workflow must NOT have error_workflow_id set.
        Error workflows cannot themselves trigger further error workflows.
 
-    On success, launches the error workflow via Dagster with the ErrorPayload
+    On success, launches the error workflow via Prefect with the ErrorPayload
     serialised into the run tags under the key 'error_payload'.
     """
     error_workflow = await load_workflow(workflow_id, user_id)
@@ -82,25 +82,26 @@ async def trigger_error_workflow(
         request.error_payload.execution_id,
     )
 
-    run_id = dagster_client.launch_run(
-        workflow_id=workflow_id,
-        workflow_name=error_workflow.job_name,
-        run_type="all",
-        user_id=user_id,
-        extra_tags=serialise_error_payload_as_tags(request.error_payload),
-    )
-
-    if run_id is None:
+    try:
+        execution_id = await prefect_client.launch_run(
+            workflow_id=workflow_id,
+            workflow_name=error_workflow.job_name,
+            run_type="all",
+            user_id=user_id,
+            extra_tags=serialise_error_payload_as_tags(request.error_payload),
+        )
+    except Exception as error:
         logger.error(
-            "Dagster failed to launch error workflow %s for execution %s",
+            "Prefect failed to launch error workflow %s for execution %s: %s",
             workflow_id,
             request.error_payload.execution_id,
+            error,
         )
         return TriggerErrorResponse(triggered=False, execution_id=None)
 
     logger.info(
-        "Error workflow %s launched as Dagster run %s",
+        "Error workflow %s launched as Prefect run %s",
         workflow_id,
-        run_id,
+        execution_id,
     )
-    return TriggerErrorResponse(triggered=True, execution_id=run_id)
+    return TriggerErrorResponse(triggered=True, execution_id=execution_id)
