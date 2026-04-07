@@ -22,10 +22,9 @@ import { extractMongoId } from "../utils/mongoUtils";
 import { useResponsiveLayout } from "../hooks/useResponsiveLayout";
 import { useElementSize } from "../hooks/useElementSize";
 import { autoLayoutDynamic } from "../utils/workflowLayout";
-import { pinService } from "../services/pinService";
-import { stepRunService, type StepRunResponse } from "../services/stepRunService";
 import { executionDebugService, type ExecutionDetail } from "../services/executionDebugService";
 import { executionHistoryService } from "../services/executionHistoryService";
+import { previewService, type PreviewResponse } from "../services/previewService";
 import type { NodeStatus } from "../types/workflow";
 
 // Lazy load heavy components (modals and panels)
@@ -97,11 +96,6 @@ const WorkflowBuilderPage: React.FC = () => {
     (state) => state.setOriginalBackendWorkflow
   );
   const markAsSaved = useWorkflowStore((state) => state.markAsSaved);
-  const pinnedNodes = useWorkflowStore((state) => state.pinnedNodes);
-  const previewCache = useWorkflowStore((state) => state.previewCache);
-  const loadPinnedNodes = useWorkflowStore((state) => state.loadPinnedNodes);
-  const addPinnedNode = useWorkflowStore((state) => state.addPinnedNode);
-  const removePinnedNode = useWorkflowStore((state) => state.removePinnedNode);
   const debugExecution = useWorkflowStore((state) => state.debugExecution);
   const enterDebugMode = useWorkflowStore((state) => state.enterDebugMode);
   const exitDebugMode = useWorkflowStore((state) => state.exitDebugMode);
@@ -120,6 +114,11 @@ const WorkflowBuilderPage: React.FC = () => {
   const [saving, setSaving] = useState(false);
   const [previewNodeId, setPreviewNodeId] = useState<string | null>(null);
 
+  // Canvas play-button preview state (separate from editor-driven preview)
+  const [previewStatusMap, setPreviewStatusMap] = useState<Map<string, string>>(new Map());
+  const [canvasPreviewNodeId, setCanvasPreviewNodeId] = useState<string | null>(null);
+  const [canvasPreviewResult, setCanvasPreviewResult] = useState<PreviewResponse | null>(null);
+
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(!!docId); // Only show loading if we have a docId to fetch
   const [bootstrapped, setBootstrapped] = useState(false); // Track if bootstrap has run
@@ -134,168 +133,8 @@ const WorkflowBuilderPage: React.FC = () => {
     () => originalBackendWorkflow?.error_workflow_id ?? null
   );
 
-  // Derived sets for the canvas — recomputed only when maps change
-  const pinnedNodeInstanceIds = useMemo(
-    () => new Set(Object.keys(pinnedNodes)),
-    [pinnedNodes]
-  );
-  const previewedNodeIds = useMemo(
-    () => new Set(Object.keys(previewCache)),
-    [previewCache]
-  );
-
-  // Pin / unpin handlers wired to the pin service
-  const handlePinNode = useCallback(
-    async (node: WorkflowNode) => {
-      const instanceId = node.data?.node_instance_id;
-      const preview = previewCache[node.id];
-      if (!workflowId || instanceId === undefined || !preview) return;
-      try {
-        await pinService.pinNode(workflowId, Number(instanceId), preview);
-        addPinnedNode(String(instanceId), {
-          data: preview.data,
-          columns: preview.columns,
-          pinned_at: Date.now() / 1000,
-        });
-        notify.success("Pinned", `${node.display_name || node.name} data is now pinned.`);
-      } catch {
-        notify.error("Pin failed", "Could not pin node data. Please try again.");
-      }
-    },
-    [workflowId, previewCache, addPinnedNode, notify]
-  );
-
-  const handleUnpinNode = useCallback(
-    async (node: WorkflowNode) => {
-      const instanceId = node.data?.node_instance_id;
-      if (!workflowId || instanceId === undefined) return;
-      try {
-        await pinService.unpinNode(workflowId, Number(instanceId));
-        removePinnedNode(String(instanceId));
-        notify.success("Unpinned", `${node.display_name || node.name} pin cleared.`);
-      } catch {
-        notify.error("Unpin failed", "Could not remove pin. Please try again.");
-      }
-    },
-    [workflowId, removePinnedNode, notify]
-  );
-
   // ---------------------------------------------------------------------------
-  // F2-FE-1 / F2-FE-2 — Step-run state
-  // ---------------------------------------------------------------------------
-
-  /**
-   * Per-node step-run status map. Key = node React ID.
-   * Lives in page state — not Zustand (it's ephemeral per session interaction).
-   */
-  const [stepRunStatusMap, setStepRunStatusMap] = useState<
-    Map<string, 'idle' | 'running' | 'done' | 'error'>
-  >(new Map());
-
-  /** The node ID whose step-run result is currently shown in PreviewPanel. */
-  const [stepRunNodeId, setStepRunNodeId] = useState<string | null>(null);
-
-  /** The last step-run response for the active step-run panel node. */
-  const [stepRunResult, setStepRunResult] = useState<StepRunResponse | null>(null);
-
-  /** Whether the auto-pin checkbox is checked for the current step-run result. */
-  const [autoPinChecked, setAutoPinChecked] = useState(false);
-
-  const setNodeStepRunStatus = useCallback(
-    (nodeId: string, status: 'idle' | 'running' | 'done' | 'error') => {
-      setStepRunStatusMap((prev) => {
-        const next = new Map(prev);
-        next.set(nodeId, status);
-        return next;
-      });
-    },
-    []
-  );
-
-  const handleStepRunNode = useCallback(
-    async (node: WorkflowNode) => {
-      const instanceId = node.data?.node_instance_id;
-      if (!workflowId || instanceId === undefined) return;
-
-      setNodeStepRunStatus(node.id, 'running');
-      setStepRunNodeId(node.id);
-      setStepRunResult(null);
-      setAutoPinChecked(false);
-
-      try {
-        const result = await stepRunService.stepRunNode(
-          workflowId,
-          Number(instanceId),
-          false // auto_pin controlled by checkbox, not sent as true here
-        );
-        setStepRunResult(result);
-
-        if (result.error_message) {
-          setNodeStepRunStatus(node.id, 'error');
-        } else {
-          setNodeStepRunStatus(node.id, 'done');
-          // Cache the result so the Pin button becomes active
-          const preview = {
-            data: result.data,
-            columns: result.columns,
-            row_count: result.row_count,
-          };
-          useWorkflowStore.getState().cachePreviewResult(node.id, preview);
-        }
-      } catch {
-        setNodeStepRunStatus(node.id, 'error');
-        setStepRunResult({
-          data: [],
-          columns: [],
-          row_count: 0,
-          node_output: {},
-          error_message: 'Step run request failed. Check your network connection.',
-          traceback: null,
-        });
-      }
-    },
-    [workflowId, setNodeStepRunStatus]
-  );
-
-  /**
-   * When the auto-pin checkbox is toggled ON after a successful step-run,
-   * immediately pin the cached result.
-   */
-  const handleAutoPinChange = useCallback(
-    async (checked: boolean) => {
-      setAutoPinChecked(checked);
-      if (!checked || !stepRunNodeId || !stepRunResult || stepRunResult.error_message) return;
-
-      const node = nodes.find((n) => n.id === stepRunNodeId);
-      if (!node) return;
-
-      const instanceId = node.data?.node_instance_id;
-      if (!workflowId || instanceId === undefined) return;
-
-      const preview = {
-        data: stepRunResult.data,
-        columns: stepRunResult.columns,
-        row_count: stepRunResult.row_count,
-      };
-
-      try {
-        await pinService.pinNode(workflowId, Number(instanceId), preview);
-        addPinnedNode(String(instanceId), {
-          data: preview.data,
-          columns: preview.columns,
-          pinned_at: Date.now() / 1000,
-        });
-        notify.success("Pinned", `${node.display_name || node.name} result pinned.`);
-      } catch {
-        setAutoPinChecked(false);
-        notify.error("Pin failed", "Could not auto-pin result. Please try again.");
-      }
-    },
-    [stepRunNodeId, stepRunResult, nodes, workflowId, addPinnedNode, notify]
-  );
-
-  // ---------------------------------------------------------------------------
-  // F4-FE-1 / F4-FE-2 — Execution history + debug mode
+  // Execution history + debug mode
   // ---------------------------------------------------------------------------
 
   const [historyPanelOpen, setHistoryPanelOpen] = useState(false);
@@ -349,10 +188,25 @@ const WorkflowBuilderPage: React.FC = () => {
 
   const handleDebugInspectNode = useCallback((node: WorkflowNode) => {
     setDebugInspectNode(node);
-    // Close any open step-run panel so the two panels don't stack
-    setStepRunNodeId(null);
-    setStepRunResult(null);
   }, []);
+
+  const handlePreviewNode = useCallback(async (node: WorkflowNode) => {
+    const instanceId = node.data?.node_instance_id;
+    if (!instanceId || !workflowId) return;
+
+    setPreviewStatusMap((prev) => new Map(prev).set(node.id, 'running'));
+    setCanvasPreviewNodeId(node.id);
+    setCanvasPreviewResult(null);
+
+    try {
+      const result = await previewService.previewNode(workflowId, Number(instanceId));
+      setPreviewStatusMap((prev) => new Map(prev).set(node.id, 'done'));
+      setCanvasPreviewResult(result);
+    } catch {
+      setPreviewStatusMap((prev) => new Map(prev).set(node.id, 'error'));
+      setCanvasPreviewResult({ data: [], columns: [], row_count: 0 });
+    }
+  }, [workflowId]);
 
   const handleExitDebugMode = useCallback(() => {
     exitDebugMode();
@@ -574,18 +428,6 @@ const WorkflowBuilderPage: React.FC = () => {
       setErrorWorkflowId(originalBackendWorkflow.error_workflow_id ?? null);
     }
   }, [originalBackendWorkflow?.error_workflow_id]);
-
-  // F1-FE-2: Load pinned node data from server when a workflow is opened.
-  // Pin state is server-authoritative — never stored in sessionStorage or localStorage.
-  useEffect(() => {
-    if (!workflowId) return;
-    pinService
-      .getPinnedData(workflowId)
-      .then(loadPinnedNodes)
-      .catch(() => {
-        // Non-fatal: pin state is a UI enhancement; silently ignore if unavailable
-      });
-  }, [workflowId, loadPinnedNodes]);
 
   useEffect(() => {
     if (isMobile || isTablet) {
@@ -1184,14 +1026,10 @@ const WorkflowBuilderPage: React.FC = () => {
               onNodeSelect={() => {}}
               onNodeOpenEditor={debugExecution ? undefined : (n) => setEditorNode(n)}
               isMobile={isMobile}
-              pinnedNodeInstanceIds={pinnedNodeInstanceIds}
-              previewedNodeIds={previewedNodeIds}
-              onPinNode={debugExecution ? undefined : handlePinNode}
-              onUnpinNode={debugExecution ? undefined : handleUnpinNode}
-              stepRunStatusMap={debugExecution ? undefined : stepRunStatusMap}
-              onStepRunNode={debugExecution ? undefined : handleStepRunNode}
               debugNodeMap={debugNodeMap}
               onDebugInspectNode={debugExecution ? handleDebugInspectNode : undefined}
+              previewStatusMap={previewStatusMap}
+              onPreviewNode={debugExecution ? undefined : handlePreviewNode}
             />
             {/* Execution Log Panel */}
             <Suspense fallback={<div className="flex items-center justify-center p-8"><Loader2 className="w-5 h-5 animate-spin text-text-secondary" /></div>}>
@@ -1285,35 +1123,13 @@ const WorkflowBuilderPage: React.FC = () => {
                 isOpen={!!previewNodeId}
                 onClose={() => setPreviewNodeId(null)}
                 source="preview"
-                onPreviewSuccess={useWorkflowStore.getState().cachePreviewResult}
-              />
-            </Suspense>
-          )}
-
-          {/* Data Preview Panel — step-run mode (opened by Play button on node) */}
-          {stepRunNodeId && !previewNodeId && (
-            <Suspense fallback={<div className="flex items-center justify-center p-8"><Loader2 className="w-5 h-5 animate-spin text-text-secondary" /></div>}>
-              <PreviewPanel
-                nodeId={stepRunNodeId}
-                isOpen={!!stepRunNodeId}
-                onClose={() => {
-                  setStepRunNodeId(null);
-                  setStepRunResult(null);
-                  setAutoPinChecked(false);
-                }}
-                source="step-run"
-                stepRunResult={stepRunResult}
-                canAutoPin={
-                  !!stepRunResult && !stepRunResult.error_message
-                }
-                autoPinChecked={autoPinChecked}
-                onAutoPinChange={handleAutoPinChange}
+                workflowId={workflowId}
               />
             </Suspense>
           )}
 
           {/* Data Preview Panel — debug mode (opened by double-clicking a node in debug view) */}
-          {debugInspectNode && !previewNodeId && !stepRunNodeId && (
+          {debugInspectNode && !previewNodeId && (
             <Suspense fallback={<div className="flex items-center justify-center p-8"><Loader2 className="w-5 h-5 animate-spin text-text-secondary" /></div>}>
               <PreviewPanel
                 nodeId={debugInspectNode.id}
@@ -1321,6 +1137,22 @@ const WorkflowBuilderPage: React.FC = () => {
                 onClose={() => setDebugInspectNode(null)}
                 source="debug"
                 debugResult={debugPreviewResult}
+              />
+            </Suspense>
+          )}
+
+          {/* Data Preview Panel — canvas Play button (source nodes) */}
+          {canvasPreviewNodeId && canvasPreviewResult && !previewNodeId && !debugInspectNode && (
+            <Suspense fallback={<div className="flex items-center justify-center p-8"><Loader2 className="w-5 h-5 animate-spin text-text-secondary" /></div>}>
+              <PreviewPanel
+                nodeId={canvasPreviewNodeId}
+                isOpen={true}
+                onClose={() => {
+                  setCanvasPreviewNodeId(null);
+                  setCanvasPreviewResult(null);
+                }}
+                source="debug"
+                debugResult={canvasPreviewResult}
               />
             </Suspense>
           )}

@@ -12,8 +12,12 @@ class Extractor(ABC):
         pass
 
     @abstractmethod
-    async def extract(self) -> Any:
+    async def extract(self, row_limit: int | None = None) -> Any:
         """Extract data from source.
+
+        Args:
+            row_limit: When set, stop pagination early after reaching this many rows.
+                       Used for lightweight data previews.
 
         Returns:
             ExtractorResult containing the data

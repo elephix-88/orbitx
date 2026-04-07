@@ -6,7 +6,11 @@ from pydantic import BaseModel
 
 from engine.factories.source import SourceFactory
 from engine.factories.transform import TransformFactory
-from server.models.pin import ColumnInfo
+
+
+class ColumnInfo(BaseModel):
+    name: str
+    data_type: str
 
 PREVIEW_ROW_LIMIT = 25
 
@@ -65,13 +69,22 @@ def dataframe_to_preview(dataframe: pd.DataFrame) -> PreviewNodeResponse:
     )
 
 
+PREVIEW_TIME_CONFIG = {"time_preset": "last_1_days"}
+
+
 async def extract_source_data(
     node_type: str, parameters: dict[str, Any]
 ) -> pd.DataFrame:
-    """Run an extractor directly and return the resulting DataFrame."""
+    """Run an extractor directly and return the resulting DataFrame.
+
+    For preview, overrides the date range to last 1 day to minimize API calls.
+    """
+    if "time_config" in parameters:
+        parameters = {**parameters, "time_config": PREVIEW_TIME_CONFIG}
+
     factory = SourceFactory()
     extractor = factory.create_extractor(parameters, node_type)
-    result = await extractor.extract()
+    result = await extractor.extract(row_limit=PREVIEW_ROW_LIMIT)
     return result.data
 
 

@@ -49,7 +49,7 @@ def test_source_factory_register_and_create_custom_extractor():
         def __init__(self, config):
             self.config = config
 
-        def extract(self):
+        async def extract(self, row_limit=None):
             return "custom_data"
 
     factory = SourceFactory()

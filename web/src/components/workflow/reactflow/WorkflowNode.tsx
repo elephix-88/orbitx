@@ -1,7 +1,7 @@
-import React, { memo, useState } from 'react';
+import React, { memo } from 'react';
 import { Handle, Position } from '@xyflow/react';
 import { getIcon } from '@/utils/iconMap';
-import { X, Copy, Loader2, CheckCircle, AlertTriangle, XCircle, Pin, Play } from 'lucide-react';
+import { X, Copy, Loader2, CheckCircle, AlertTriangle, XCircle, Play } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import type { ValidationStatus, ValidationIssue } from '../WorkflowValidation';
 
@@ -20,21 +20,6 @@ export interface WorkflowNodeData {
   onOpenEditor?: () => void;
   onDelete?: () => void;
   onDuplicate?: () => void;
-  /** Whether this node's data is currently pinned on the server. */
-  isPinned?: boolean;
-  /** Whether this node has a cached preview result available for pinning. */
-  hasPreview?: boolean;
-  /** Called when user confirms a pin action. */
-  onPin?: () => void;
-  /** Called when user confirms an unpin action. */
-  onUnpin?: () => void;
-  /**
-   * Current step-run state for this node.
-   * 'running' shows a spinner overlay distinct from the full-workflow 'running'.
-   */
-  stepRunStatus?: 'idle' | 'running' | 'done' | 'error';
-  /** Called when user clicks the Play button to step-run this node. */
-  onStepRun?: () => void;
 
   // Debug mode — set when an execution is loaded for inspection
   /** Whether this node is the one that failed in the debug execution. */
@@ -47,6 +32,10 @@ export interface WorkflowNodeData {
   debugErrorMessage?: string | null;
   /** Called when user clicks the node in debug mode — opens PreviewPanel with stored rows. */
   onDebugInspect?: () => void;
+  /** Preview status driven from canvas — shown as Play button state on source nodes. */
+  previewStatus?: 'idle' | 'running' | 'done' | 'error';
+  /** Called when user clicks the Play button on a source node. */
+  onPreview?: () => void;
   [key: string]: unknown; // Index signature for React Flow compatibility
 }
 
@@ -81,9 +70,6 @@ const categoryStyles: Record<string, {
 
 const WorkflowNode = ({ data, selected }: WorkflowNodeProps) => {
   const styles = categoryStyles[data.category] || categoryStyles.transform;
-
-  // Unpin confirmation tooltip state — local UI only
-  const [confirmingUnpin, setConfirmingUnpin] = useState(false);
 
   const renderIcon = (iconName: string) => {
     const Icon = getIcon(iconName);
@@ -147,8 +133,6 @@ const WorkflowNode = ({ data, selected }: WorkflowNodeProps) => {
         'border-l-4',
         styles.borderClass,
         selected && 'border-primary-400 shadow-glow-sm scale-[1.02]',
-        // Amber ring when pinned — wraps the entire card
-        data.isPinned && 'ring-2 ring-amber-500/60',
         // Red ring for the failed node in debug mode
         data.debugFailed && 'ring-2 ring-red-500',
         // Subtle green border for succeeded nodes in debug mode
@@ -205,13 +189,6 @@ const WorkflowNode = ({ data, selected }: WorkflowNodeProps) => {
         </div>
       )}
 
-      {/* Step-run spinner overlay — shown only when step-run is in progress */}
-      {data.stepRunStatus === 'running' && data.status !== 'running' && (
-        <div className="absolute inset-0 z-50 flex items-center justify-center bg-surface-secondary/70 rounded-xl">
-          <Loader2 className="w-5 h-5 animate-spin text-emerald-400" />
-        </div>
-      )}
-
       {/* Node Content */}
       <div
         className={cn(
@@ -233,13 +210,8 @@ const WorkflowNode = ({ data, selected }: WorkflowNodeProps) => {
           >
             {data.name}
           </h4>
-          {/* Alias (shown if set) — or Pinned badge when pinned */}
-          {data.isPinned ? (
-            <p className="text-[10px] leading-tight font-semibold text-amber-400 flex items-center gap-0.5">
-              <Pin className="w-2.5 h-2.5" strokeWidth={2.5} />
-              Pinned
-            </p>
-          ) : data.display_name ? (
+          {/* Alias (shown if set) */}
+          {data.display_name ? (
             <p
               className="text-[10px] truncate leading-tight text-text-secondary"
               title={data.display_name}
@@ -354,108 +326,30 @@ const WorkflowNode = ({ data, selected }: WorkflowNodeProps) => {
 
       {/* Node Action Buttons */}
       <div className="absolute -top-2 -right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-all duration-200 z-10">
-        {/* Step-Run Play Button — hidden for destination nodes */}
-        {data.onStepRun && data.category !== 'destination' && (
+        {/* Play / Preview Button — source nodes only */}
+        {data.category === 'source' && data.onPreview && (
           <button
             className={cn(
               'w-5 h-5 flex items-center justify-center transition-all duration-200 rounded-md',
-              data.stepRunStatus === 'running'
-                ? 'bg-emerald-600 text-white cursor-not-allowed'
-                : data.stepRunStatus === 'done'
-                ? 'bg-emerald-600 text-white hover:bg-emerald-500'
-                : data.stepRunStatus === 'error'
-                ? 'bg-red-600 text-white hover:bg-red-500'
-                : 'bg-neutral-700 text-emerald-400 hover:bg-emerald-600 hover:text-white'
+              data.previewStatus === 'running' && 'bg-emerald-600 text-white',
+              data.previewStatus === 'done' && 'bg-emerald-600 text-white',
+              data.previewStatus === 'error' && 'bg-error text-text-inverse',
+              (!data.previewStatus || data.previewStatus === 'idle') && 'bg-neutral-700 text-emerald-400',
             )}
             onClick={(e) => {
               e.stopPropagation();
-              if (data.stepRunStatus !== 'running') data.onStepRun?.();
+              data.onPreview?.();
             }}
-            title={
-              data.stepRunStatus === 'running'
-                ? 'Running...'
-                : data.stepRunStatus === 'done'
-                ? 'Run again'
-                : data.stepRunStatus === 'error'
-                ? 'Run failed — click to retry'
-                : 'Step-run this node'
-            }
-            disabled={data.stepRunStatus === 'running'}
+            disabled={data.previewStatus === 'running'}
+            title="Preview node data"
           >
-            {data.stepRunStatus === 'running' ? (
-              <Loader2 size={9} className="animate-spin" strokeWidth={2.5} />
+            {data.previewStatus === 'running' ? (
+              <Loader2 size={10} strokeWidth={2.5} className="animate-spin" />
             ) : (
-              <Play size={9} strokeWidth={2.5} />
+              <Play size={10} strokeWidth={2.5} />
             )}
           </button>
         )}
-
-        {/* Pin / Unpin Button */}
-        {(data.onPin || data.onUnpin) && (
-          <>
-            {data.isPinned ? (
-              /* Already pinned — show unpin with confirmation */
-              confirmingUnpin ? (
-                /* Confirmation state: Confirm / Cancel */
-                <div className="flex items-center gap-0.5 bg-neutral-800 border border-amber-500/40 rounded-md px-1 py-0.5 shadow-lg">
-                  <span className="text-[9px] text-amber-400 whitespace-nowrap">Unpin?</span>
-                  <button
-                    className="text-[9px] px-1 py-0.5 rounded bg-amber-500 text-neutral-950 font-semibold hover:bg-amber-400 transition-colors"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setConfirmingUnpin(false);
-                      data.onUnpin?.();
-                    }}
-                    title="Confirm unpin"
-                  >
-                    Yes
-                  </button>
-                  <button
-                    className="text-[9px] px-1 py-0.5 rounded bg-neutral-700 text-text-secondary hover:bg-neutral-600 transition-colors"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setConfirmingUnpin(false);
-                    }}
-                    title="Cancel"
-                  >
-                    No
-                  </button>
-                </div>
-              ) : (
-                /* Pinned — amber pin button, click to request unpin confirmation */
-                <button
-                  className="w-5 h-5 flex items-center justify-center transition-all duration-200 bg-amber-500 text-neutral-950 rounded-md"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setConfirmingUnpin(true);
-                  }}
-                  title="Pinned — click to unpin"
-                >
-                  <Pin size={10} strokeWidth={2.5} />
-                </button>
-              )
-            ) : (
-              /* Not pinned */
-              <button
-                className={cn(
-                  'w-5 h-5 flex items-center justify-center transition-all duration-200 rounded-md',
-                  data.hasPreview
-                    ? 'bg-neutral-700 text-text-primary hover:bg-amber-500 hover:text-neutral-950'
-                    : 'bg-neutral-800 text-neutral-600 cursor-not-allowed'
-                )}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  if (data.hasPreview) data.onPin?.();
-                }}
-                title={data.hasPreview ? 'Pin this node\'s data' : 'Run or preview this node first'}
-                disabled={!data.hasPreview}
-              >
-                <Pin size={10} strokeWidth={2.5} />
-              </button>
-            )}
-          </>
-        )}
-
         {/* Duplicate Button */}
         {data.onDuplicate && (
           <button

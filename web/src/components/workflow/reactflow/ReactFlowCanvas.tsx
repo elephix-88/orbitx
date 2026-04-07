@@ -60,12 +60,10 @@ interface ReactFlowCanvasProps {
   previewedNodeIds?: ReadonlySet<string>;
   onPinNode?: (_node: WorkflowNodeType) => void;
   onUnpinNode?: (_node: WorkflowNodeType) => void;
-  /**
-   * Map of node React ID → step-run status.
-   * Drives the Play button color and spinner overlay inside WorkflowNode.
-   */
-  stepRunStatusMap?: ReadonlyMap<string, 'idle' | 'running' | 'done' | 'error'>;
-  onStepRunNode?: (_node: WorkflowNodeType) => void;
+  /** Map of node React ID → preview status for source node Play buttons. */
+  previewStatusMap?: ReadonlyMap<string, string>;
+  /** Called when user clicks the Play button on a source node. */
+  onPreviewNode?: (_node: WorkflowNodeType) => void;
 
   /**
    * Debug mode: map of node_instance_id (string) → overlay data.
@@ -99,10 +97,10 @@ const toReactFlowNode = (
   hasPreview: boolean,
   onPin: (() => void) | undefined,
   onUnpin: (() => void) | undefined,
-  stepRunStatus: 'idle' | 'running' | 'done' | 'error' | undefined,
-  onStepRun: (() => void) | undefined,
   debugData: DebugNodeData | undefined,
-  onDebugInspect: (() => void) | undefined
+  onDebugInspect: (() => void) | undefined,
+  previewStatus: string | undefined,
+  onPreview: (() => void) | undefined
 ): ReactFlowNodeType => ({
   id: node.id,
   type: 'custom',
@@ -125,13 +123,13 @@ const toReactFlowNode = (
     hasPreview,
     onPin,
     onUnpin,
-    stepRunStatus,
-    onStepRun,
     debugFailed: debugData?.failed,
     debugSucceeded: debugData?.succeeded,
     debugRowCount: debugData?.rowCount,
     debugErrorMessage: debugData?.errorMessage ?? null,
     onDebugInspect,
+    previewStatus: previewStatus as ('idle' | 'running' | 'done' | 'error' | undefined),
+    onPreview,
   },
 });
 
@@ -168,10 +166,10 @@ const ReactFlowCanvasInner: React.FC<ReactFlowCanvasProps> = ({
   previewedNodeIds,
   onPinNode,
   onUnpinNode,
-  stepRunStatusMap,
-  onStepRunNode,
   debugNodeMap,
   onDebugInspectNode,
+  previewStatusMap,
+  onPreviewNode,
 }) => {
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const { fitView, getViewport } = useReactFlow();
@@ -250,10 +248,10 @@ const ReactFlowCanvasInner: React.FC<ReactFlowCanvasProps> = ({
       const isPinned = instanceIdStr !== '' && (pinnedNodeInstanceIds?.has(instanceIdStr) ?? false);
       const hasPreview = previewedNodeIds?.has(node.id) ?? false;
 
-      const stepRunStatus = stepRunStatusMap?.get(node.id);
-
       // Debug overlay — reuse the same instanceIdStr computed above
       const debugData = instanceIdStr !== '' ? debugNodeMap?.get(instanceIdStr) : undefined;
+
+      const previewStatus = previewStatusMap?.get(node.id);
 
       return toReactFlowNode(
         node,
@@ -265,10 +263,10 @@ const ReactFlowCanvasInner: React.FC<ReactFlowCanvasProps> = ({
         hasPreview,
         onPinNode ? () => onPinNode(node) : undefined,
         onUnpinNode ? () => onUnpinNode(node) : undefined,
-        stepRunStatus,
-        onStepRunNode ? () => onStepRunNode(node) : undefined,
         debugData,
-        onDebugInspectNode ? () => onDebugInspectNode(node) : undefined
+        onDebugInspectNode ? () => onDebugInspectNode(node) : undefined,
+        previewStatus,
+        onPreviewNode ? () => onPreviewNode(node) : undefined
       );
     });
   }, [
@@ -281,10 +279,10 @@ const ReactFlowCanvasInner: React.FC<ReactFlowCanvasProps> = ({
     previewedNodeIds,
     onPinNode,
     onUnpinNode,
-    stepRunStatusMap,
-    onStepRunNode,
     debugNodeMap,
     onDebugInspectNode,
+    previewStatusMap,
+    onPreviewNode,
   ]);
 
   // Convert workflow connections to React Flow edges

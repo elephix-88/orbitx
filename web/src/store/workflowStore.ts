@@ -2,8 +2,6 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { WorkflowNode, WorkflowConnection, NodeTypeId } from '../types/workflow';
 import { WorkflowData } from '../types/backend';
-import type { PinnedNodeEntry } from '../services/pinService';
-import type { PreviewResponse } from '../services/previewService';
 import type { ExecutionDetail } from '../services/executionDebugService';
 
 type JsonValue = string | number | boolean | null | JsonValue[] | { [key: string]: JsonValue };
@@ -24,20 +22,6 @@ function deepEqual(a: unknown, b: unknown): boolean {
   }
 }
 
-/**
- * Keyed by node_instance_id (string).
- * Populated on workflow load from GET /api/workflows/{id}/pinned-data.
- * NOT persisted to sessionStorage — always refetched from server.
- */
-export type PinnedNodesMap = Record<string, PinnedNodeEntry>;
-
-/**
- * Last successful preview result per node, keyed by node React ID (e.g. "node_abc123").
- * Stored in memory only — gives the Pin button something to send to the server.
- * NOT persisted.
- */
-export type PreviewCacheMap = Record<string, PreviewResponse>;
-
 interface WorkflowState {
   nodes: WorkflowNode[];
   connections: WorkflowConnection[];
@@ -45,11 +29,6 @@ interface WorkflowState {
   originalBackendWorkflow: Partial<WorkflowData> | null;
   hasUnsavedChanges: boolean;
   lastSavedAt: Date | null;
-
-  /** Pinned nodes map — keyed by node_instance_id as string. */
-  pinnedNodes: PinnedNodesMap;
-  /** Last preview result per node React ID — used to populate the pin request. */
-  previewCache: PreviewCacheMap;
 
   updateNodes: (nodes: WorkflowNode[] | ((prev: WorkflowNode[]) => WorkflowNode[])) => void;
   updateConnections: (connections: WorkflowConnection[] | ((prev: WorkflowConnection[]) => WorkflowConnection[])) => void;
@@ -59,15 +38,6 @@ interface WorkflowState {
   setOriginalBackendWorkflow: (workflow: Partial<WorkflowData>) => void;
   markAsSaved: () => void;
   resetWorkflow: () => void;
-
-  /** Replace the full pinned-nodes map (called after loading from server). */
-  loadPinnedNodes: (pinned: PinnedNodesMap) => void;
-  /** Mark a node as pinned in local state after a successful PUT. */
-  addPinnedNode: (nodeInstanceId: string, entry: PinnedNodeEntry) => void;
-  /** Remove a node from local pin state after a successful DELETE. */
-  removePinnedNode: (nodeInstanceId: string) => void;
-  /** Store the last successful preview result for a node. */
-  cachePreviewResult: (nodeId: string, result: PreviewResponse) => void;
 
   /**
    * The execution currently loaded in "debug mode".
@@ -139,8 +109,6 @@ export const useWorkflowStore = create<WorkflowState>()(
       originalBackendWorkflow: null,
       hasUnsavedChanges: false,
       lastSavedAt: null,
-      pinnedNodes: {},
-      previewCache: {},
       debugExecution: null,
 
       updateNodes: (nodes) => set((state) => {
@@ -176,26 +144,8 @@ export const useWorkflowStore = create<WorkflowState>()(
         originalBackendWorkflow: null,
         hasUnsavedChanges: false,
         lastSavedAt: null,
-        pinnedNodes: {},
-        previewCache: {},
         debugExecution: null,
       }),
-
-      loadPinnedNodes: (pinned) => set({ pinnedNodes: pinned }),
-      addPinnedNode: (nodeInstanceId, entry) =>
-        set((state) => ({
-          pinnedNodes: { ...state.pinnedNodes, [nodeInstanceId]: entry },
-        })),
-      removePinnedNode: (nodeInstanceId) =>
-        set((state) => {
-          const next = { ...state.pinnedNodes };
-          delete next[nodeInstanceId];
-          return { pinnedNodes: next };
-        }),
-      cachePreviewResult: (nodeId, result) =>
-        set((state) => ({
-          previewCache: { ...state.previewCache, [nodeId]: result },
-        })),
 
       enterDebugMode: (execution) => set({ debugExecution: execution }),
       exitDebugMode: () => set({ debugExecution: null }),

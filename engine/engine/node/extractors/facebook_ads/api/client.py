@@ -118,7 +118,9 @@ async def get_report_status(report_run_id: str, access_token: str) -> str:
 
 
 async def fetch_insights_paged(
-    report_run_id: str, access_token: str
+    report_run_id: str,
+    access_token: str,
+    row_limit: int | None = None,
 ) -> list[dict[str, Any]]:
     """Fetch insights data for a report_run_id, following pagination."""
     url: str | None = f"{API_ROOT}{report_run_id}/insights"
@@ -139,6 +141,10 @@ async def fetch_insights_paged(
             result = resp.json()
             current_page_data = result.get("data", [])
             all_data.extend(current_page_data)
+
+            if row_limit and len(all_data) >= row_limit:
+                all_data = all_data[:row_limit]
+                break
 
             next_url = result.get("paging", {}).get("next")
             if next_url:

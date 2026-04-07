@@ -14,7 +14,7 @@ class S3Extractor(Extractor):
     def __init__(self, config: S3SourceConfig):
         self.config = config
 
-    async def extract(self) -> ExtractorResult:
+    async def extract(self, row_limit: int | None = None) -> ExtractorResult:
         logger.info(f"Extracting data from S3 - Bucket: {self.config.file_path}")
         try:
             data = await asyncio.to_thread(pd.read_csv, self.config.file_path)

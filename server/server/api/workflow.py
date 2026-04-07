@@ -13,17 +13,11 @@ from common.model.workflow import JobIdRequest, WorkflowData, WorkflowSummary
 from server.configs.config import settings
 from server.middleware import limiter
 from server.models.error_workflow import TriggerErrorRequest, TriggerErrorResponse
-from server.models.pin import PinnedDataMap, PinNodeRequest
 from server.models.schedule import ScheduleConfig, ScheduleResponse
-from server.models.step_run import StepRunRequest
 from server.services.auth.dependencies import get_current_user, get_current_user_optional
 from server.services.error_workflow import trigger_error_workflow
 from server.services.exceptions import WorkflowNotFoundError, WorkflowStructureError
-from server.services.pin_service import (
-    get_all_pinned_data,
-    pin_node,
-    unpin_node,
-)
+from server.services.workflow_utils import get_user_workflow
 from server.services.preview import (
     PreviewNodeRequest,
     PreviewNodeResponse,
@@ -34,7 +28,6 @@ from server.services.schedule import (
     remove_workflow_schedule,
     set_workflow_schedule,
 )
-from server.services.step_run import step_run_node
 from server.services.workflow import (
     create_new_workflow,
     delete_workflow,
@@ -172,6 +165,45 @@ async def preview_node(
     return await preview_node_data(preview_request)
 
 
+@router.post(
+    "/{workflow_id}/nodes/{node_instance_id}/preview",
+    response_model=PreviewNodeResponse,
+)
+@limiter.limit(settings.rate_limit_expensive)
+async def preview_workflow_node(
+    request: Request,
+    workflow_id: str,
+    node_instance_id: int,
+    current_user: UserInDB = Depends(get_current_user),
+) -> PreviewNodeResponse:
+    workflow = await get_user_workflow(workflow_id, current_user.id)
+
+    target_node = None
+    for node in workflow.nodes:
+        if node.node_instance_id == node_instance_id:
+            target_node = node
+            break
+
+    if target_node is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Node {node_instance_id} not found in workflow {workflow_id}",
+        )
+
+    if target_node.node_type != "source":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"Only source nodes can be previewed, got '{target_node.node_type}'",
+        )
+
+    preview_request = PreviewNodeRequest(
+        node_type=target_node.node_id,
+        node_category="source",
+        parameters=target_node.parameters.model_dump(),
+    )
+    return await preview_node_data(preview_request)
+
+
 @router.get("", response_model=list[WorkflowSummary])
 async def read_all_workflows_endpoint(
     _current_user: UserInDB = Depends(get_current_user),
@@ -272,103 +304,6 @@ async def remove_schedule_endpoint(
         return {"success": True}
     except WorkflowNotFoundError as error:
         raise HTTPException(status_code=404, detail=str(error)) from error
-
-
-@router.put("/{workflow_id}/nodes/{node_instance_id}/pin")
-@limiter.limit(settings.rate_limit_expensive)
-async def pin_node_endpoint(
-    request: Request,
-    workflow_id: str,
-    node_instance_id: int,
-    pin_request: PinNodeRequest,
-    current_user: UserInDB = Depends(get_current_user),
-) -> dict:
-    """Pin node output data for a workflow node.
-
-    Stores the provided data and column schema in MongoDB keyed by workflow_id
-    and node_instance_id. Data is truncated to 1000 rows on write.
-    """
-    await pin_node(
-        workflow_id=workflow_id,
-        node_instance_id=node_instance_id,
-        user_id=current_user.id,
-        data=pin_request.data,
-        columns=pin_request.columns,
-    )
-    return {"success": True}
-
-
-@router.delete("/{workflow_id}/nodes/{node_instance_id}/pin")
-async def unpin_node_endpoint(
-    workflow_id: str,
-    node_instance_id: int,
-    current_user: UserInDB = Depends(get_current_user),
-) -> dict:
-    """Remove pinned data for a workflow node.
-
-    Returns 404 if no pin exists for the given workflow and node.
-    """
-    removed = await unpin_node(
-        workflow_id=workflow_id,
-        node_instance_id=node_instance_id,
-        user_id=current_user.id,
-    )
-    if not removed:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=(
-                f"No pinned data found for node {node_instance_id}"
-                f" in workflow {workflow_id}"
-            ),
-        )
-    return {"success": True}
-
-
-@router.get("/{workflow_id}/pinned-data", response_model=PinnedDataMap)
-async def get_pinned_data_endpoint(
-    workflow_id: str,
-    current_user: UserInDB = Depends(get_current_user),
-) -> PinnedDataMap:
-    """Return all pinned nodes for a workflow as a dict keyed by node_instance_id."""
-    return await get_all_pinned_data(
-        workflow_id=workflow_id,
-        user_id=current_user.id,
-    )
-
-
-@router.post("/{workflow_id}/nodes/{node_instance_id}/step-run")
-@limiter.limit(settings.rate_limit_expensive)
-async def step_run_node_endpoint(
-    request: Request,
-    workflow_id: str,
-    node_instance_id: int,
-    step_run_request: StepRunRequest,
-    current_user: UserInDB = Depends(get_current_user),
-) -> dict:
-    """Execute a single workflow node outside of Prefect.
-
-    Resolves upstream data from pins (fast path) or via live execution (fallback).
-    Always returns 200. Execution errors are reported inline via error_message
-    and traceback fields so the frontend can display them next to the node.
-    """
-    try:
-        result = await step_run_node(
-            workflow_id=workflow_id,
-            node_instance_id=node_instance_id,
-            auto_pin=step_run_request.auto_pin,
-            user_id=current_user.id,
-        )
-        return result.model_dump()
-    except WorkflowNotFoundError as error:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=str(error),
-        ) from error
-    except ValueError as error:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=str(error),
-        ) from error
 
 
 @router.post(

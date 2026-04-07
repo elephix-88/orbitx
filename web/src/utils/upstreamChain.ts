@@ -1,6 +1,11 @@
 import { WorkflowNode, WorkflowConnection } from '@/types/workflow';
 import { getNodeSpec } from '@/workflow/registry';
-import type { UpstreamNodeRequest } from '@/services/previewService';
+
+export interface UpstreamNodeRequest {
+  node_type: string;
+  node_category: string;
+  parameters: Record<string, unknown>;
+}
 
 /**
  * Walk workflow connections backwards from a given node to build the ordered

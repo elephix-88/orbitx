@@ -32,20 +32,27 @@ class GoogleAdsExtractor(Extractor):
         query: str,
         selected_pairs: list[tuple[str, str]],
         customer_key: str,
+        row_limit: int | None = None,
     ) -> list[dict[str, str]]:
         """Fetch data for a single customer ID (sync)."""
         records: list[dict[str, str]] = []
+        limit_reached = False
 
         stream = ga_service.search_stream(customer_id=customer_id, query=query)
         for batch in stream:
+            if limit_reached:
+                break
             for row in batch.results:
                 rec = flatten_row(row, selected_pairs)
                 rec.setdefault(customer_key, str(customer_id))
                 records.append(rec)
+                if row_limit and len(records) >= row_limit:
+                    limit_reached = True
+                    break
 
         return records
 
-    async def extract(self) -> ExtractorResult:
+    async def extract(self, row_limit: int | None = None) -> ExtractorResult:
         """Extract data from Google Ads API."""
         async with extraction_lifecycle(
             "Google Ads Extraction",
@@ -110,6 +117,7 @@ class GoogleAdsExtractor(Extractor):
                     gaql.query,
                     gaql.selected_pairs,
                     customer_key,
+                    row_limit,
                 )
                 for customer_id in self.config.ad_account_id
             ]
@@ -134,6 +142,9 @@ class GoogleAdsExtractor(Extractor):
                 df = pd.DataFrame(columns=logical_columns)
             else:
                 df = pd.DataFrame(records)
+
+            if row_limit:
+                df = df.head(row_limit)
 
             primary_keys = list(dict.fromkeys([*gaql.primary_keys, customer_key]))
 

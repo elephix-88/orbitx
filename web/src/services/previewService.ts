@@ -11,27 +11,21 @@ export interface PreviewResponse {
   row_count: number;
 }
 
-export interface UpstreamNodeRequest {
-  node_type: string;
-  node_category: string;
-  parameters: Record<string, unknown>;
-}
-
-export interface PreviewNodeRequest {
-  node_type: string;
-  node_category: string;
-  parameters: Record<string, unknown>;
-  upstream_nodes: UpstreamNodeRequest[];
-}
-
 class PreviewService extends BaseApiService {
-  async previewNode(request: PreviewNodeRequest): Promise<PreviewResponse> {
-    const response = await this.post<PreviewResponse>(
-      '/api/workflows/preview-node',
-      request,
-      { timeout: 60000, retries: 0 }
+  async previewNode(workflowId: string, nodeInstanceId: number): Promise<PreviewResponse> {
+    // Use fetchClient directly because BaseApiService.parseSuccessResponse
+    // unwraps json.data — but our response shape IS { data, columns, row_count }
+    // where "data" is the preview rows, not a wrapper. Direct fetch avoids the conflict.
+    const { fetchClient } = await import('@/lib/fetchClient');
+    const response = await fetchClient(
+      `/api/workflows/${workflowId}/nodes/${nodeInstanceId}/preview`,
+      { method: 'POST', baseUrl: this.baseUrl }
     );
-    return response.data;
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ detail: 'Preview failed' }));
+      throw new Error(error.detail || `Preview failed (${response.status})`);
+    }
+    return response.json();
   }
 }
 

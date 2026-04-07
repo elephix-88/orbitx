@@ -11,44 +11,34 @@ import {
   ChevronUp,
   Columns3,
   Rows3,
-  Play,
-  Pin,
-  Terminal,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useWorkflowStore } from '@/store/workflowStore';
-import { getNodeSpec } from '@/workflow/registry';
 import { previewService, type PreviewResponse } from '@/services/previewService';
-import { getUpstreamChain } from '@/utils/upstreamChain';
 import { Skeleton } from '@/components/shared/Skeleton';
 import { motion, AnimatePresence } from 'framer-motion';
-import type { StepRunResponse } from '@/services/stepRunService';
 
 type PreviewPanelProps = {
   nodeId: string;
   isOpen: boolean;
   onClose: () => void;
-  /** Called when a preview succeeds — used to cache the result for the Pin button. */
+  /** Called when a preview succeeds. */
   onPreviewSuccess?: (_nodeId: string, _result: PreviewResponse) => void;
   /**
    * 'preview' — shows a full refresh button; fetches via previewService (default).
-   * 'step-run' — result was pushed in via stepRunResult; no internal fetch is done.
    * 'debug' — data was pushed in via debugResult; no internal fetch is done.
    */
-  source?: 'preview' | 'step-run' | 'debug';
-  /** When source='step-run', the result from the step-run endpoint. */
-  stepRunResult?: StepRunResponse | null;
-  /** Whether the auto-pin checkbox should be shown (step-run mode only). */
-  canAutoPin?: boolean;
-  /** Whether auto-pin is currently checked. */
-  autoPinChecked?: boolean;
-  /** Called when the user toggles the auto-pin checkbox. */
-  onAutoPinChange?: (_checked: boolean) => void;
+  source?: 'preview' | 'debug';
   /**
    * When source='debug', the stored execution rows for this node.
    * Passed directly in — no network call made.
    */
   debugResult?: PreviewResponse | null;
+  /**
+   * Required when source='preview'.
+   * Used to build the new endpoint: POST /api/workflows/{workflowId}/nodes/{nodeInstanceId}/preview
+   */
+  workflowId?: string | null;
 };
 
 type PreviewState =
@@ -209,82 +199,28 @@ const DataTable: React.FC<{ preview: PreviewResponse }> = ({ preview }) => {
   );
 };
 
-// ---------------------------------------------------------------------------
-// Step-run error card with collapsible traceback
-// ---------------------------------------------------------------------------
-const StepRunErrorCard: React.FC<{ errorMessage: string; traceback: string | null }> = ({
-  errorMessage,
-  traceback,
-}) => {
-  const [traceOpen, setTraceOpen] = useState(false);
-
-  return (
-    <div className="flex flex-col gap-3 p-4">
-      <div className="flex items-start gap-3 p-4 rounded-xl bg-red-900/20 border border-red-500/30">
-        <div className="w-8 h-8 rounded-lg bg-red-900/40 flex items-center justify-center flex-shrink-0 mt-0.5">
-          <AlertTriangle className="w-4 h-4 text-red-400" />
-        </div>
-        <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold text-red-300 mb-1">Node execution failed</p>
-          <p className="text-xs text-red-400/80 break-words">{errorMessage}</p>
-        </div>
-      </div>
-
-      {traceback && (
-        <div>
-          <button
-            onClick={() => setTraceOpen((prev) => !prev)}
-            className={cn(
-              'flex items-center gap-1.5 text-xs text-text-tertiary hover:text-text-secondary transition-colors',
-              'px-2 py-1 rounded-lg hover:bg-surface-secondary'
-            )}
-          >
-            <Terminal className="w-3 h-3" />
-            {traceOpen ? 'Hide' : 'Show'} traceback
-            {traceOpen ? (
-              <ChevronUp className="w-3 h-3" />
-            ) : (
-              <ChevronDown className="w-3 h-3" />
-            )}
-          </button>
-          {traceOpen && (
-            <pre className={cn(
-              'mt-2 p-3 rounded-xl text-[11px] leading-relaxed font-mono',
-              'bg-neutral-900 border border-neutral-700',
-              'text-neutral-400 overflow-auto max-h-48 whitespace-pre-wrap break-all'
-            )}>
-              {traceback}
-            </pre>
-          )}
-        </div>
-      )}
-    </div>
-  );
-};
-
 export const PreviewPanel: React.FC<PreviewPanelProps> = ({
   nodeId,
   isOpen,
   onClose,
   onPreviewSuccess,
   source = 'preview',
-  stepRunResult,
-  canAutoPin = false,
-  autoPinChecked = false,
-  onAutoPinChange,
   debugResult,
+  workflowId,
 }) => {
   const [previewState, setPreviewState] = useState<PreviewState>({ status: 'idle' });
   const [isExpanded, setIsExpanded] = useState(true);
   const abortControllerRef = useRef<AbortController | null>(null);
 
   const nodes = useWorkflowStore((state) => state.nodes);
-  const connections = useWorkflowStore((state) => state.connections);
 
   const currentNode = nodes.find((node) => node.id === nodeId);
 
   const fetchPreview = useCallback(async () => {
-    if (!currentNode) return;
+    if (!currentNode || !workflowId) return;
+
+    const instanceId = currentNode.data?.node_instance_id;
+    if (instanceId === undefined) return;
 
     // Cancel any in-flight request
     abortControllerRef.current?.abort();
@@ -292,25 +228,8 @@ export const PreviewPanel: React.FC<PreviewPanelProps> = ({
 
     setPreviewState({ status: 'loading' });
 
-    const spec = getNodeSpec(currentNode.definitionId);
-    let nodeType: string = currentNode.definitionId || currentNode.type;
-    let parameters: Record<string, unknown> = currentNode.data || {};
-
-    if (spec?.adapters?.toBackend) {
-      const adapted = spec.adapters.toBackend(currentNode.data || {});
-      nodeType = adapted.node_id;
-      parameters = adapted.parameters as Record<string, unknown>;
-    }
-
-    const upstreamNodes = getUpstreamChain(nodeId, nodes, connections);
-
     try {
-      const result = await previewService.previewNode({
-        node_type: nodeType,
-        node_category: currentNode.type,
-        parameters,
-        upstream_nodes: upstreamNodes,
-      });
+      const result = await previewService.previewNode(workflowId, Number(instanceId));
       setPreviewState({ status: 'success', data: result });
       onPreviewSuccess?.(nodeId, result);
     } catch (error) {
@@ -322,27 +241,7 @@ export const PreviewPanel: React.FC<PreviewPanelProps> = ({
             : 'Failed to load preview';
       setPreviewState({ status: 'error', message });
     }
-  }, [currentNode, nodeId, nodes, connections]);
-
-  // In step-run mode, sync the external result into local state instead of fetching
-  useEffect(() => {
-    if (source !== 'step-run') return;
-    if (!stepRunResult) {
-      setPreviewState({ status: 'idle' });
-      return;
-    }
-    if (stepRunResult.error_message) {
-      setPreviewState({ status: 'error', message: stepRunResult.error_message });
-    } else {
-      const preview: PreviewResponse = {
-        data: stepRunResult.data,
-        columns: stepRunResult.columns,
-        row_count: stepRunResult.row_count,
-      };
-      setPreviewState({ status: 'success', data: preview });
-      onPreviewSuccess?.(nodeId, preview);
-    }
-  }, [source, stepRunResult, nodeId, onPreviewSuccess]);
+  }, [currentNode, nodeId, workflowId]);
 
   // In debug mode, sync the stored execution rows into local state
   useEffect(() => {
@@ -387,19 +286,13 @@ export const PreviewPanel: React.FC<PreviewPanelProps> = ({
           <div className="flex items-center justify-between px-4 py-2 border-b border-border bg-surface-secondary shrink-0">
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-2">
-                {source === 'step-run' ? (
-                  <Play className="w-4 h-4 text-emerald-400" />
-                ) : source === 'debug' ? (
+                {source === 'debug' ? (
                   <Eye className="w-4 h-4 text-amber-400" />
                 ) : (
                   <Eye className="w-4 h-4 text-primary-400" />
                 )}
                 <span className="text-sm font-semibold text-text-primary">
-                  {source === 'step-run'
-                    ? 'Step Run Result'
-                    : source === 'debug'
-                    ? 'Execution Output'
-                    : 'Preview'}
+                  {source === 'debug' ? 'Execution Output' : 'Preview'}
                 </span>
               </div>
 
@@ -430,22 +323,6 @@ export const PreviewPanel: React.FC<PreviewPanelProps> = ({
             </div>
 
             <div className="flex items-center gap-2">
-              {/* Auto-pin checkbox — only in step-run mode when node succeeded */}
-              {source === 'step-run' && canAutoPin && previewState.status === 'success' && (
-                <label className="flex items-center gap-1.5 cursor-pointer select-none">
-                  <input
-                    type="checkbox"
-                    checked={autoPinChecked}
-                    onChange={(e) => onAutoPinChange?.(e.target.checked)}
-                    className="w-3.5 h-3.5 rounded accent-amber-500 cursor-pointer"
-                  />
-                  <span className="flex items-center gap-1 text-xs text-text-secondary">
-                    <Pin className="w-3 h-3" />
-                    Auto-pin result
-                  </span>
-                </label>
-              )}
-
               {/* Refresh — only shown in preview mode */}
               {source === 'preview' && (
                 <button
@@ -501,48 +378,35 @@ export const PreviewPanel: React.FC<PreviewPanelProps> = ({
               )}
 
               {previewState.status === 'error' && (
-                source === 'step-run' ? (
-                  // Step-run error: show structured card with traceback
-                  <div className="overflow-auto h-full">
-                    <StepRunErrorCard
-                      errorMessage={previewState.message}
-                      traceback={stepRunResult?.traceback ?? null}
-                    />
+                <div className="flex flex-col items-center justify-center h-full text-center px-6">
+                  <div className="w-14 h-14 rounded-2xl bg-red-900/20 flex items-center justify-center mb-4">
+                    <AlertTriangle className="w-6 h-6 text-red-400" />
                   </div>
-                ) : (
-                  // Preview error: generic centered card with retry button
-                  <div className="flex flex-col items-center justify-center h-full text-center px-6">
-                    <div className="w-14 h-14 rounded-2xl bg-red-900/20 flex items-center justify-center mb-4">
-                      <AlertTriangle className="w-6 h-6 text-red-400" />
-                    </div>
-                    <p className="text-sm font-medium text-text-primary mb-1">
-                      Preview failed
-                    </p>
-                    <p className="text-xs text-text-secondary mb-4 max-w-md">
-                      {previewState.message}
-                    </p>
-                    <button
-                      onClick={fetchPreview}
-                      className={cn(
-                        'flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all',
-                        'bg-surface-secondary border border-border',
-                        'hover:bg-surface-tertiary text-text-primary'
-                      )}
-                    >
-                      <RefreshCw className="w-3.5 h-3.5" />
-                      Retry
-                    </button>
-                  </div>
-                )
+                  <p className="text-sm font-medium text-text-primary mb-1">
+                    Preview failed
+                  </p>
+                  <p className="text-xs text-text-secondary mb-4 max-w-md">
+                    {previewState.message}
+                  </p>
+                  <button
+                    onClick={fetchPreview}
+                    className={cn(
+                      'flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all',
+                      'bg-surface-secondary border border-border',
+                      'hover:bg-surface-tertiary text-text-primary'
+                    )}
+                  >
+                    <RefreshCw className="w-3.5 h-3.5" />
+                    Retry
+                  </button>
+                </div>
               )}
 
               {previewState.status === 'idle' && (
                 <div className="flex flex-col items-center justify-center h-full text-center">
                   <Table2 className="w-8 h-8 text-text-tertiary mb-3" />
                   <p className="text-sm text-text-secondary">
-                    {source === 'step-run'
-                      ? 'Run the node to see results here.'
-                      : source === 'debug'
+                    {source === 'debug'
                       ? 'No output data stored for this node.'
                       : 'Click refresh to load preview data.'}
                   </p>

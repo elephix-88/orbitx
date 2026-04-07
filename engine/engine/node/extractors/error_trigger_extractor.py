@@ -17,7 +17,7 @@ class ErrorTriggerExtractor(Extractor):
     def __init__(self, config: ErrorTriggerConfig) -> None:
         self.config = config
 
-    async def extract(self) -> ExtractorResult:
+    async def extract(self, row_limit: int | None = None) -> ExtractorResult:
         logger.info("Extracting error trigger payload")
 
         if self.config.error_payload is None:

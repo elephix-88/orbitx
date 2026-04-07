@@ -27,6 +27,7 @@ class TikTokAdsClient:
         params: dict[str, Any],
         page_size: int,
         context: str = "",
+        row_limit: int | None = None,
     ) -> list[dict[str, Any]]:
         """Shared pagination logic for all TikTok API endpoints."""
         all_data: list[dict[str, Any]] = []
@@ -63,6 +64,10 @@ class TikTokAdsClient:
                 data = result.get("data", {})
                 rows = data.get("list", [])
                 all_data.extend(rows)
+
+                if row_limit and len(all_data) >= row_limit:
+                    all_data = all_data[:row_limit]
+                    break
 
                 page_info = data.get("page_info", {})
                 total_page = page_info.get("total_page", 1)
