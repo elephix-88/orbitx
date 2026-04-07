@@ -5,29 +5,14 @@ from loguru import logger
 
 from common.database.mongodb import database, find_one
 from common.model.execution import ExecutionHistory
-from common.model.workflow import WorkflowData
 from server.configs.config import settings
 from server.models.execution_debug import ExecutionSummary, RetryResponse
 from server.services import prefect_client
 from server.services.exceptions import WorkflowNotFoundError
+from server.services.workflow_utils import get_user_workflow
 
 EXECUTION_LIST_DAYS = 30
 EXECUTION_LIST_LIMIT = 100
-
-
-async def verify_workflow_ownership(workflow_id: str, user_id: str) -> WorkflowData:
-    """Load a workflow and verify it belongs to user_id.
-
-    Raises WorkflowNotFoundError if absent or not owned.
-    """
-    workflow = await find_one(
-        settings.workflow_collection,
-        {"_id": workflow_id, "user_id": user_id},
-        WorkflowData,
-    )
-    if workflow is None:
-        raise WorkflowNotFoundError(workflow_id)
-    return workflow
 
 
 def extract_failed_node(document: dict[str, Any]) -> str | None:
@@ -65,7 +50,7 @@ async def get_execution_summaries(
     not owned by the user.
     """
     try:
-        await verify_workflow_ownership(workflow_id, user_id)
+        await get_user_workflow(workflow_id, user_id)
     except WorkflowNotFoundError:
         return []
 
@@ -111,7 +96,7 @@ async def get_execution_detail(
         WorkflowNotFoundError: workflow not found or not owned by user.
         ValueError: execution_id not found in the given workflow.
     """
-    await verify_workflow_ownership(workflow_id, user_id)
+    await get_user_workflow(workflow_id, user_id)
 
     document = await find_one(
         settings.execution_history_collection,
@@ -139,7 +124,7 @@ async def retry_execution(
         WorkflowNotFoundError: workflow not found or not owned by user.
         ValueError: Prefect fails to launch.
     """
-    workflow = await verify_workflow_ownership(workflow_id, user_id)
+    workflow = await get_user_workflow(workflow_id, user_id)
 
     execution_id = await prefect_client.launch_run(
         workflow_id=workflow_id,

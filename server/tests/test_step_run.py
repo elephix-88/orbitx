@@ -309,7 +309,7 @@ class TestStepRunNode:
     @pytest.fixture
     def mock_load_workflow(self):
         with patch(
-            "server.services.step_run.load_workflow_for_user",
+            "server.services.step_run.get_user_workflow",
             new_callable=AsyncMock,
         ) as mock:
             yield mock

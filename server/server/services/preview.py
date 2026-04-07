@@ -6,6 +6,7 @@ from pydantic import BaseModel
 
 from engine.factories.source import SourceFactory
 from engine.factories.transform import TransformFactory
+from server.models.pin import ColumnInfo
 
 PREVIEW_ROW_LIMIT = 25
 
@@ -21,11 +22,6 @@ class PreviewNodeRequest(BaseModel):
     node_category: str
     parameters: dict[str, Any]
     upstream_nodes: list[UpstreamNodeConfig] = []
-
-
-class ColumnInfo(BaseModel):
-    name: str
-    data_type: str
 
 
 class PreviewNodeResponse(BaseModel):

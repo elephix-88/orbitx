@@ -1,10 +1,10 @@
 from loguru import logger
 
 from common.database.mongodb import database, find_one
-from common.model.workflow import WorkflowData
 from server.configs.config import settings
 from server.models.execution import DeliveryStatus, ExecutionDeliveryStatus
 from server.services.auth.context import get_current_user
+from server.services.workflow_utils import find_user_workflow
 
 
 async def set_execution_delivery_status(
@@ -28,11 +28,7 @@ async def set_execution_delivery_status(
         return
 
     workflow_id = document.get("workflow_id")
-    owned_workflow = await find_one(
-        settings.workflow_collection,
-        {"_id": workflow_id, "user_id": user.id},
-        WorkflowData,
-    )
+    owned_workflow = await find_user_workflow(workflow_id, user.id)
 
     if owned_workflow is None:
         logger.warning(
@@ -65,11 +61,7 @@ async def get_execution_delivery_status(
         return None
 
     workflow_id = document.get("workflow_id")
-    owned_workflow = await find_one(
-        settings.workflow_collection,
-        {"_id": workflow_id, "user_id": user.id},
-        WorkflowData,
-    )
+    owned_workflow = await find_user_workflow(workflow_id, user.id)
 
     if owned_workflow is None:
         return None

@@ -73,7 +73,7 @@ User clicks "Run" in web UI
 
 ### Design System
 
-- Tailwind CSS with CSS variable tokens (see STYLE_GUIDE.md)
+- Tailwind CSS with CSS variable tokens
 - Colors: indigo primary, cool gray neutrals, semantic status colors
 - Components: CVA-based variants in `web/src/components/shared/`
 - Use `cn()` from `web/src/lib/utils.ts` for class merging

@@ -3,7 +3,7 @@ import time
 from loguru import logger
 
 from common.database.mongodb import database, find_many, find_one
-from common.model.execution import ExecutionHistory, Status
+from common.model.execution import ExecutionHistory, ExecutionStep, Status
 from common.model.workflow import JobIdRequest, WorkflowData, WorkflowSummary
 from common.model.workflow_rules import validate_workflow_structure
 from server.configs.config import settings
@@ -137,6 +137,16 @@ async def execute_workflow(job_id: str) -> dict[str, str]:
 
     execution_id = generate_uuid()
 
+    steps = {}
+    for node in workflow.nodes:
+        key = str(node.node_instance_id)
+        steps[key] = ExecutionStep(
+            node_instance_id=key,
+            node_id=node.node_id,
+            node_type=node.node_type,
+            status=Status.PENDING,
+        )
+
     execution = ExecutionHistory(
         _id=execution_id,
         execution_id=execution_id,
@@ -146,6 +156,7 @@ async def execute_workflow(job_id: str) -> dict[str, str]:
         triggered_by="manual",
         start_time=time.time(),
         total_nodes=len(workflow.nodes),
+        steps=steps,
     )
 
     await database[settings.execution_history_collection].update_one(

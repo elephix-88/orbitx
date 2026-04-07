@@ -172,7 +172,7 @@ class TestVerifyWorkflowOwnership:
 
     @pytest.mark.asyncio
     async def test_returns_workflow_when_found(self, mock_database):
-        from server.services.execution_debug import verify_workflow_ownership
+        from server.services.workflow_utils import get_user_workflow
 
         workflow_doc = {
             "_id": WORKFLOW_ID,
@@ -187,18 +187,18 @@ class TestVerifyWorkflowOwnership:
         }
         mock_database.find_one = AsyncMock(return_value=workflow_doc)
 
-        result = await verify_workflow_ownership(WORKFLOW_ID, USER_ID)
+        result = await get_user_workflow(WORKFLOW_ID, USER_ID)
         assert result.id == WORKFLOW_ID
 
     @pytest.mark.asyncio
     async def test_raises_workflow_not_found_error_when_absent(self, mock_database):
         from server.services.exceptions import WorkflowNotFoundError
-        from server.services.execution_debug import verify_workflow_ownership
+        from server.services.workflow_utils import get_user_workflow
 
         mock_database.find_one = AsyncMock(return_value=None)
 
         with pytest.raises(WorkflowNotFoundError):
-            await verify_workflow_ownership(WORKFLOW_ID, USER_ID)
+            await get_user_workflow(WORKFLOW_ID, USER_ID)
 
 
 # ---------------------------------------------------------------------------
@@ -210,7 +210,7 @@ class TestGetExecutionSummaries:
     @pytest.fixture
     def mock_verify(self):
         with patch(
-            "server.services.execution_debug.verify_workflow_ownership",
+            "server.services.execution_debug.get_user_workflow",
             new_callable=AsyncMock,
         ) as mock:
             mock.return_value = MagicMock()
@@ -230,7 +230,7 @@ class TestGetExecutionSummaries:
         from server.services.execution_debug import get_execution_summaries
 
         with patch(
-            "server.services.execution_debug.verify_workflow_ownership",
+            "server.services.execution_debug.get_user_workflow",
             new_callable=AsyncMock,
             side_effect=WorkflowNotFoundError(WORKFLOW_ID),
         ):
@@ -289,7 +289,7 @@ class TestGetExecutionDetail:
     @pytest.fixture
     def mock_verify(self):
         with patch(
-            "server.services.execution_debug.verify_workflow_ownership",
+            "server.services.execution_debug.get_user_workflow",
             new_callable=AsyncMock,
         ) as mock:
             mock.return_value = MagicMock()
@@ -354,7 +354,7 @@ class TestRetryExecution:
         mock_workflow = MagicMock()
         mock_workflow.job_name = "My Pipeline"
         with patch(
-            "server.services.execution_debug.verify_workflow_ownership",
+            "server.services.execution_debug.get_user_workflow",
             new_callable=AsyncMock,
             return_value=mock_workflow,
         ) as mock:
@@ -393,7 +393,7 @@ class TestRetryExecution:
         from server.services.execution_debug import retry_execution
 
         with patch(
-            "server.services.execution_debug.verify_workflow_ownership",
+            "server.services.execution_debug.get_user_workflow",
             new_callable=AsyncMock,
             side_effect=WorkflowNotFoundError(WORKFLOW_ID),
         ), pytest.raises(WorkflowNotFoundError):

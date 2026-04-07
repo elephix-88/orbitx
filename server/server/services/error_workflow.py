@@ -1,27 +1,14 @@
 from loguru import logger
 
-from common.database.mongodb import find_one
 from common.model.error_trigger import ErrorPayload
 from common.model.workflow import WorkflowData
-from server.configs.config import settings
 from server.models.error_workflow import TriggerErrorRequest, TriggerErrorResponse
 from server.services import prefect_client
 from server.services.exceptions import WorkflowNotFoundError
+from server.services.workflow_utils import find_user_workflow
 
 ERROR_TRIGGER_NODE_ID = "error_trigger"
 ERROR_PAYLOAD_TAG_KEY = "error_payload"
-
-
-async def load_workflow(workflow_id: str, user_id: str) -> WorkflowData | None:
-    """Load a workflow by ID with ownership verification.
-
-    Returns None if the workflow does not exist or belongs to a different user.
-    """
-    return await find_one(
-        settings.workflow_collection,
-        {"_id": workflow_id, "user_id": user_id},
-        WorkflowData,
-    )
 
 
 def workflow_has_error_trigger_node(workflow: WorkflowData) -> bool:
@@ -55,7 +42,7 @@ async def trigger_error_workflow(
     On success, launches the error workflow via Prefect with the ErrorPayload
     serialised into the run tags under the key 'error_payload'.
     """
-    error_workflow = await load_workflow(workflow_id, user_id)
+    error_workflow = await find_user_workflow(workflow_id, user_id)
     if error_workflow is None:
         raise WorkflowNotFoundError(workflow_id)
 
@@ -65,7 +52,7 @@ async def trigger_error_workflow(
             f"and cannot be used as an error handler"
         )
 
-    caller_workflow = await load_workflow(request.caller_workflow_id, user_id)
+    caller_workflow = await find_user_workflow(request.caller_workflow_id, user_id)
     if caller_workflow is None:
         raise WorkflowNotFoundError(request.caller_workflow_id)
 

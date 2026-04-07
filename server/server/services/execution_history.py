@@ -2,10 +2,10 @@ from typing import Any
 
 from loguru import logger
 
-from common.database.mongodb import database, find_many, find_one
-from common.model.workflow import WorkflowData
+from common.database.mongodb import database, find_many
 from server.configs.config import settings
 from server.services.auth.context import get_current_user
+from server.services.workflow_utils import find_user_workflow
 
 
 async def get_dashboard_stats(
@@ -203,10 +203,8 @@ async def get_execution_history_by_workflow(workflow_id: str) -> list[dict[str, 
     user = get_current_user()
 
     # First verify that the user owns this workflow
-    workflow_doc = await find_one(
-        settings.workflow_collection, {"_id": workflow_id, "user_id": user.id}
-    )
-    if not workflow_doc:
+    workflow = await find_user_workflow(workflow_id, user.id)
+    if not workflow:
         return []  # User doesn't own this workflow or it doesn't exist
 
     # Get raw documents to preserve all nested data including output

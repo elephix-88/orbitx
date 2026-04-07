@@ -124,7 +124,7 @@ class TestTriggerErrorWorkflow:
     @pytest.fixture
     def mock_load_workflow(self):
         with patch(
-            "server.services.error_workflow.load_workflow",
+            "server.services.error_workflow.find_user_workflow",
             new_callable=AsyncMock,
         ) as mock:
             yield mock

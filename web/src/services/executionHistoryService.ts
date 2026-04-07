@@ -1,5 +1,5 @@
-import { API_CONFIG } from '@/config/env';
 import type { ExecutionHistory } from '@/types/backend';
+import { BaseApiService } from './baseApiService';
 
 export interface DashboardStats {
   totalExecutions: number;
@@ -13,57 +13,52 @@ export interface DashboardStats {
   executionsByWorkflow: Record<string, { name: string; count: number; successRate: number }>;
 }
 
-class ExecutionHistoryService {
-  private baseUrl = API_CONFIG.BASE_URL;
+const EMPTY_DASHBOARD_STATS: DashboardStats = {
+  totalExecutions: 0,
+  successfulExecutions: 0,
+  failedExecutions: 0,
+  runningExecutions: 0,
+  successRate: 0,
+  avgDuration: 0,
+  totalCost: 0,
+  recentExecutions: [],
+  executionsByWorkflow: {},
+};
 
+class ExecutionHistoryService extends BaseApiService {
   async getExecutionHistory(workflowId: string): Promise<ExecutionHistory[]> {
-    const response = await fetch(
-      `${this.baseUrl}/api/execution-history/workflow/${workflowId}`,
-      { credentials: 'include' }
+    const response = await this.get<ExecutionHistory[]>(
+      `/api/execution-history/workflow/${workflowId}`
     );
-    if (!response.ok) {
-      throw new Error(`Failed to fetch execution history (${response.status})`);
-    }
-    return response.json();
+    return response.data;
   }
 
   async getDashboardStats(workflows?: Record<string, string>): Promise<DashboardStats> {
-    const params = new URLSearchParams();
-    if (workflows && Object.keys(workflows).length > 0) {
-      params.set('workflows', JSON.stringify(workflows));
-    }
-    const query = params.toString();
-    const response = await fetch(
-      `${this.baseUrl}/api/execution-history/dashboard-stats${query ? `?${query}` : ''}`,
-      { credentials: 'include' }
-    );
-    if (!response.ok) {
+    try {
+      const params = new URLSearchParams();
+      if (workflows && Object.keys(workflows).length > 0) {
+        params.set('workflows', JSON.stringify(workflows));
+      }
+      const query = params.toString();
+      const response = await this.get<Record<string, unknown>>(
+        `/api/execution-history/dashboard-stats${query ? `?${query}` : ''}`
+      );
+      const data = response.data;
       return {
-        totalExecutions: 0,
-        successfulExecutions: 0,
-        failedExecutions: 0,
-        runningExecutions: 0,
-        successRate: 0,
-        avgDuration: 0,
+        totalExecutions: (data.total_executions as number) ?? 0,
+        successfulExecutions: (data.successful_executions as number) ?? 0,
+        failedExecutions: (data.failed_executions as number) ?? 0,
+        runningExecutions: (data.running_executions as number) ?? 0,
+        successRate: (data.success_rate as number) ?? 0,
+        avgDuration: (data.avg_duration as number) ?? 0,
         totalCost: 0,
-        recentExecutions: [],
-        executionsByWorkflow: {},
+        recentExecutions: (data.recent_executions as ExecutionHistory[]) ?? [],
+        executionsByWorkflow: (data.executions_by_workflow as DashboardStats['executionsByWorkflow']) ?? {},
       };
+    } catch {
+      return EMPTY_DASHBOARD_STATS;
     }
-    const data = await response.json();
-    return {
-      totalExecutions: data.total_executions ?? 0,
-      successfulExecutions: data.successful_executions ?? 0,
-      failedExecutions: data.failed_executions ?? 0,
-      runningExecutions: data.running_executions ?? 0,
-      successRate: data.success_rate ?? 0,
-      avgDuration: data.avg_duration ?? 0,
-      totalCost: 0,
-      recentExecutions: data.recent_executions ?? [],
-      executionsByWorkflow: data.executions_by_workflow ?? {},
-    };
   }
 }
 
 export const executionHistoryService = new ExecutionHistoryService();
-

@@ -1,32 +1,14 @@
 import pandas as pd
 from loguru import logger
 
-from common.database.mongodb import find_one
 from common.model.workflow import Node, WorkflowData
 from engine.services.single_node_executor import (
     SingleNodeResult,
     execute_single_node,
 )
-from server.configs.config import settings
 from server.models.pin import ColumnInfo
-from server.services.exceptions import WorkflowNotFoundError
 from server.services.pin_service import get_all_pinned_data, pin_node
-
-
-async def load_workflow_for_user(workflow_id: str, user_id: str) -> WorkflowData:
-    """Load a workflow from MongoDB, verifying ownership.
-
-    Raises WorkflowNotFoundError if the workflow does not exist or belongs to
-    a different user.
-    """
-    workflow = await find_one(
-        settings.workflow_collection,
-        {"_id": workflow_id, "user_id": user_id},
-        WorkflowData,
-    )
-    if workflow is None:
-        raise WorkflowNotFoundError(workflow_id)
-    return workflow
+from server.services.workflow_utils import get_user_workflow
 
 
 def find_node_by_instance_id(
@@ -142,7 +124,7 @@ async def step_run_node(
         WorkflowNotFoundError: if workflow does not exist or is not owned by user.
         ValueError: if node_instance_id does not exist in the workflow.
     """
-    workflow = await load_workflow_for_user(workflow_id, user_id)
+    workflow = await get_user_workflow(workflow_id, user_id)
 
     target_node = find_node_by_instance_id(workflow.nodes, node_instance_id)
     if target_node is None:
