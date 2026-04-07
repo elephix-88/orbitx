@@ -642,6 +642,11 @@ const WorkflowBuilderPage: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Only run once on mount - intentionally ignore isMobile/isTablet changes
 
+  // Clear debug execution state when navigating away from the builder (ORX-32)
+  useEffect(() => {
+    return () => { exitDebugMode(); };
+  }, [exitDebugMode]);
+
   const handleNodesChange = (
     newNodes: WorkflowNode[] | ((_prev: WorkflowNode[]) => WorkflowNode[])
   ) => {
@@ -1189,7 +1194,7 @@ const WorkflowBuilderPage: React.FC = () => {
               onDebugInspectNode={debugExecution ? handleDebugInspectNode : undefined}
             />
             {/* Execution Log Panel */}
-            <Suspense fallback={null}>
+            <Suspense fallback={<div className="flex items-center justify-center p-8"><Loader2 className="w-5 h-5 animate-spin text-text-secondary" /></div>}>
               <ExecutionLogPanel
                 workflowId={extractMongoId(originalBackendWorkflow?._id) || docId}
                 executing={executing}
@@ -1198,7 +1203,7 @@ const WorkflowBuilderPage: React.FC = () => {
             </Suspense>
 
             {/* Execution History Panel — absolute overlay inside canvas area */}
-            <Suspense fallback={null}>
+            <Suspense fallback={<div className="flex items-center justify-center p-8"><Loader2 className="w-5 h-5 animate-spin text-text-secondary" /></div>}>
               <ExecutionHistoryPanel
                 workflowId={workflowId}
                 isOpen={historyPanelOpen}
@@ -1249,7 +1254,7 @@ const WorkflowBuilderPage: React.FC = () => {
           )}
 
           {/* Schedule & Delivery Sheet */}
-          <Suspense fallback={null}>
+          <Suspense fallback={<div className="flex items-center justify-center p-8"><Loader2 className="w-5 h-5 animate-spin text-text-secondary" /></div>}>
             <ScheduleDeliverySheet
               isOpen={scheduleDeliveryOpen}
               onClose={() => setScheduleDeliveryOpen(false)}
@@ -1274,7 +1279,7 @@ const WorkflowBuilderPage: React.FC = () => {
 
           {/* Data Preview Panel — preview mode (opened from NodeConfigPanel) */}
           {previewNodeId && (
-            <Suspense fallback={null}>
+            <Suspense fallback={<div className="flex items-center justify-center p-8"><Loader2 className="w-5 h-5 animate-spin text-text-secondary" /></div>}>
               <PreviewPanel
                 nodeId={previewNodeId}
                 isOpen={!!previewNodeId}
@@ -1287,7 +1292,7 @@ const WorkflowBuilderPage: React.FC = () => {
 
           {/* Data Preview Panel — step-run mode (opened by Play button on node) */}
           {stepRunNodeId && !previewNodeId && (
-            <Suspense fallback={null}>
+            <Suspense fallback={<div className="flex items-center justify-center p-8"><Loader2 className="w-5 h-5 animate-spin text-text-secondary" /></div>}>
               <PreviewPanel
                 nodeId={stepRunNodeId}
                 isOpen={!!stepRunNodeId}
@@ -1309,7 +1314,7 @@ const WorkflowBuilderPage: React.FC = () => {
 
           {/* Data Preview Panel — debug mode (opened by double-clicking a node in debug view) */}
           {debugInspectNode && !previewNodeId && !stepRunNodeId && (
-            <Suspense fallback={null}>
+            <Suspense fallback={<div className="flex items-center justify-center p-8"><Loader2 className="w-5 h-5 animate-spin text-text-secondary" /></div>}>
               <PreviewPanel
                 nodeId={debugInspectNode.id}
                 isOpen={!!debugInspectNode}

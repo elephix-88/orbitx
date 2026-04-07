@@ -53,14 +53,14 @@ const connectionTypes: ConnectionType[] = [
     setupFields: [],
   },
   {
-    id: "facebookads",
+    id: "facebook_ads",
     name: "Facebook Ads",
     description: "Sync lead data and campaign performance metrics from Meta Ads.",
     icon: <FacebookIcon className="w-10 h-10" />,
     setupFields: [],
   },
   {
-    id: "tiktokads",
+    id: "tiktok_ads",
     name: "TikTok Ads",
     description: "Extract campaign performance and ad metrics from TikTok Ads Manager.",
     icon: <TikTokIcon className="w-10 h-10" />,
@@ -81,7 +81,7 @@ const connectionTypes: ConnectionType[] = [
     setupFields: ["host", "port", "database", "username", "password"],
   },
   {
-    id: "GoogleSheets",
+    id: "google_sheets",
     name: "Google Sheets",
     description: "Read and write data directly to Google Spreadsheets.",
     icon: <GoogleSheetsIcon className="w-10 h-10" />,
@@ -89,15 +89,26 @@ const connectionTypes: ConnectionType[] = [
   },
 ];
 
+const CONNECTOR_TYPE_MAP: Record<string, string> = {
+  bigquery: 'bigquery',
+  googlebigquery: 'bigquery',
+  mysql: 'mysql',
+  facebook: 'facebook_ads',
+  facebookads: 'facebook_ads',
+  fb: 'facebook_ads',
+  meta: 'facebook_ads',
+  tiktok: 'tiktok_ads',
+  tiktokads: 'tiktok_ads',
+  googleads: 'google_ads',
+  google_ads: 'google_ads',
+  sheet: 'google_sheets',
+  googlesheet: 'google_sheets',
+  googlesheets: 'google_sheets',
+};
+
 function normalizeConnectorType(raw?: string): string {
-  const t = (raw || "").toLowerCase().replace(/\s+/g, "");
-  if (t.includes("bigquery") || t === "googlebigquery") return "bigquery";
-  if (t.includes("mysql")) return "mysql";
-  if (t.includes("facebook") || t.includes("fb") || t.includes("meta")) return "facebookads";
-  if (t.includes("tiktok")) return "tiktokads";
-  if (t.includes("googleads") || t.includes("google_ads") || t === "googleads") return "google_ads";
-  if (t.includes("sheet") || t.includes("googlesheet")) return "GoogleSheets";
-  return t;
+  const cleaned = (raw || '').toLowerCase().replace(/[\s_-]+/g, '');
+  return CONNECTOR_TYPE_MAP[cleaned] ?? cleaned;
 }
 
 const ConnectionsPage = () => {
@@ -121,8 +132,8 @@ const ConnectionsPage = () => {
         : Array.isArray(raw)
           ? raw
           : [];
-      const list: Connection[] = arr.map((c: unknown) => {
-        const conn = c as Record<string, unknown>;
+      const list: Connection[] = arr.map((rawConnection: unknown) => {
+        const conn = rawConnection as Record<string, unknown>;
         const rawServiceName = (conn?.service_name || "").toString();
         const typeId = normalizeConnectorType(rawServiceName);
         const connectionId = conn?._id || `${typeId}_${conn?.connection_name || Date.now()}`;
@@ -157,7 +168,7 @@ const ConnectionsPage = () => {
       return match ? match.name : typeId;
     }
 
-    function handleOAuthMessage(event: MessageEvent) {
+    async function handleOAuthMessage(event: MessageEvent) {
       const msgType: string | undefined = event.data?.type;
       const providerFromMsg: string | undefined = event.data?.provider;
       if (!msgType) return;
@@ -169,11 +180,16 @@ const ConnectionsPage = () => {
       const normalized = normalizeConnectorType(providerType);
       const label = friendlyName(normalized);
 
-      notify.success("Success", `${label} Connected!`);
-      loadConnections();
+      try {
+        await loadConnections();
+        notify.success("Connected", `${label} connected successfully`);
+      } catch {
+        notify.error("Connection Error", `${label} connected but failed to refresh the list. Please reload.`);
+      }
     }
-    window.addEventListener("message", handleOAuthMessage);
-    return () => window.removeEventListener("message", handleOAuthMessage);
+    const handleMessage = (event: MessageEvent) => { void handleOAuthMessage(event); };
+    window.addEventListener("message", handleMessage);
+    return () => window.removeEventListener("message", handleMessage);
   }, [notify, loadConnections]);
 
   const handleConnect = async (typeId: string) => {
@@ -184,16 +200,16 @@ const ConnectionsPage = () => {
       if (typeId === "bigquery") {
         await bigQueryService.connectWithPopup(`BigQuery Connection ${Date.now()}`);
         loadConnections();
-      } else if (typeId === "GoogleSheets") {
+      } else if (typeId === "google_sheets") {
         await googleSheetsService.connectWithPopup(`Google Sheets Connection ${Date.now()}`);
         loadConnections();
       } else if (typeId === "google_ads") {
         await googleAdsService.connectWithPopup(`Google Ads Connection ${Date.now()}`);
         loadConnections();
-      } else if (typeId === "facebookads") {
+      } else if (typeId === "facebook_ads") {
         await facebookOAuthService.connectWithPopup(`Facebook Ads Connection ${Date.now()}`);
         loadConnections();
-      } else if (typeId === "tiktokads") {
+      } else if (typeId === "tiktok_ads") {
         await tiktokOAuthService.connectWithPopup(`TikTok Ads Connection ${Date.now()}`);
         loadConnections();
       } else {
@@ -465,7 +481,7 @@ const ConnectionsPage = () => {
 
             {/* Content */}
             <div className="p-5">
-              {viewing.type === "facebookads" ? (
+              {viewing.type === "facebook_ads" ? (
                 <FacebookAdsSelector
                   connectionId={viewing.id}
                   onSelect={(account) => {

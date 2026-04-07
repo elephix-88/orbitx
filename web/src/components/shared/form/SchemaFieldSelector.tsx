@@ -30,24 +30,28 @@ export function SchemaFieldSelector({
 }: SchemaFieldSelectorProps) {
   const [searchTerm, setSearchTerm] = useState('');
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
-  const [initialized, setInitialized] = useState(false);
 
-  // On first load, expand groups that contain selected fields
+  // When fields change (e.g. user switches connection), expand groups that contain selected fields.
+  // selectedIds is read but intentionally omitted from deps — we only recalculate on field list change,
+  // not on every user toggle.
   React.useEffect(() => {
-    if (fields.length > 0 && !initialized) {
-      const selectedFieldIds = new Set(selectedIds);
-      const groupsWithSelections = new Set<string>();
+    if (fields.length === 0) return;
+    const selectedFieldIds = new Set(selectedIds);
+    const groupsWithSelections = new Set<string>();
 
-      fields.forEach(f => {
-        if (selectedFieldIds.has(f.id)) {
-          groupsWithSelections.add(f.group || 'General');
-        }
-      });
+    fields.forEach(f => {
+      if (selectedFieldIds.has(f.id)) {
+        groupsWithSelections.add(f.group || 'General');
+      }
+    });
 
-      setExpandedGroups(groupsWithSelections);
-      setInitialized(true);
-    }
-  }, [fields, selectedIds, initialized]);
+    setExpandedGroups(previous => {
+      const next = new Set(previous);
+      groupsWithSelections.forEach(group => next.add(group));
+      return next;
+    });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fields]);
 
   const toggleGroup = (group: string) => {
     const next = new Set(expandedGroups);

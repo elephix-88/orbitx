@@ -41,6 +41,17 @@ export default defineConfig({
   build: {
     // Lower chunk warning limit to catch issues
     chunkSizeWarningLimit: 300,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+          'vendor-reactflow': ['@xyflow/react'],
+          'vendor-motion': ['framer-motion'],
+          'vendor-ui': ['lucide-react', 'class-variance-authority', 'tailwind-merge'],
+          'vendor-utils': ['date-fns', 'zod', 'uuid'],
+        },
+      },
+    },
   },
   server: {
     proxy: {},

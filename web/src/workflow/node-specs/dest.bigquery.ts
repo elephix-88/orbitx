@@ -47,22 +47,22 @@ export const bigQueryDestSpec: NodeSpec = {
       pass_through: p['pass_through'] || false,
     } }),
     fromBackend: (_nodeId, _nodeType, parameters) => ({ typeId: 'dest.bigquery', params: {
-      project_id: (parameters as any).project_id || '',
-      dataset: (parameters as any).dataset || '',
-      destination_table: (parameters as any).destination_table || '',
-      location: (parameters as any).location || 'US',
-      connection_id: (parameters as any).connection_id || '',
+      project_id: parameters['project_id'] || '',
+      dataset: parameters['dataset'] || '',
+      destination_table: parameters['destination_table'] || '',
+      location: parameters['location'] || 'US',
+      connection_id: parameters['connection_id'] || '',
       insert_mode: ((): string => {
-        const im = (parameters as any).insert_mode;
-        if (im) return im;
-        const wd = (parameters as any).write_disposition;
+        const im = parameters['insert_mode'];
+        if (im) return String(im);
+        const wd = parameters['write_disposition'];
         if (wd === 'WRITE_TRUNCATE') return 'truncate';
         if (wd === 'WRITE_APPEND' || wd === 'WRITE_EMPTY') return 'append';
         return 'append';
       })(),
-      batch_size: (parameters as any).batch_size,
-      num_partitions: (parameters as any).num_partitions,
-      pass_through: (parameters as any).pass_through || false,
+      batch_size: parameters['batch_size'],
+      num_partitions: parameters['num_partitions'],
+      pass_through: parameters['pass_through'] || false,
     } })
   }
 };

@@ -103,7 +103,7 @@ export const ConnectionRow: React.FC<ConnectionRowProps> = ({
         className={cn(
           'flex-shrink-0 w-14 h-14 rounded-xl flex items-center justify-center transition-colors',
           'bg-surface-tertiary text-text-secondary',
-          'group-hover:bg-brand-500/10 group-hover:text-brand-500'
+          'group-hover:bg-primary-500/10 group-hover:text-primary-500'
         )}
       >
         {icon}
@@ -198,8 +198,8 @@ export const ConnectionRow: React.FC<ConnectionRowProps> = ({
             className={cn(
               'flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-all',
               isConnecting
-                ? 'bg-brand-400 text-white cursor-wait'
-                : 'bg-brand-500 hover:bg-brand-600 text-white shadow-sm hover:shadow-md hover:shadow-brand-500/20'
+                ? 'bg-primary-400 text-white cursor-wait'
+                : 'bg-primary-500 hover:bg-primary-600 text-white shadow-sm hover:shadow-md hover:shadow-primary-500/20'
             )}
           >
             {isConnecting ? (

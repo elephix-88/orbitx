@@ -217,6 +217,11 @@ const ExecutionTreeRow = ({
           </motion.div>
         )}
       </AnimatePresence>
+      {isExpanded && steps.length === 0 && (
+        <div className="px-4 py-6 ml-8 text-center text-sm text-text-secondary">
+          No step data available for this execution.
+        </div>
+      )}
     </>
   );
 };
@@ -225,14 +230,13 @@ const DashboardPage = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-
+  const [fetchError, setFetchError] = useState<string | null>(null);
 
   // Filter state - show filters by default
   const [timeRange, setTimeRange] = useState<TimeRange>('all');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
   const [showFilters, setShowFilters] = useState(true);
   const [customDateRange, setCustomDateRange] = useState(getDefaultCustomDates);
-  const [customDateError, setCustomDateError] = useState<string | null>(null);
 
   const [stats, setStats] = useState<DashboardStats>({
     totalExecutions: 0,
@@ -250,6 +254,7 @@ const DashboardPage = () => {
 
   const fetchData = useCallback(async (isManualRefresh = false) => {
     try {
+      setFetchError(null);
       if (isManualRefresh) {
         setRefreshing(true);
       }
@@ -282,6 +287,7 @@ const DashboardPage = () => {
       setStats(dashboardStats);
     } catch (error) {
       console.error('Failed to fetch dashboard data:', error);
+      setFetchError('Failed to load dashboard data. Please try again.');
     } finally {
       setRefreshing(false);
       setLoading(false);
@@ -376,6 +382,19 @@ const DashboardPage = () => {
             <span className="hidden sm:inline text-xs">Refresh</span>
           </button>
         </div>
+
+        {/* API Error Banner */}
+        {fetchError && (
+          <div className="bg-error/10 border border-error/20 rounded-lg p-4 flex items-center justify-between">
+            <p className="text-sm text-error">{fetchError}</p>
+            <button
+              onClick={() => fetchData()}
+              className="text-sm text-primary-400 hover:text-primary-300 font-medium"
+            >
+              Retry
+            </button>
+          </div>
+        )}
 
         {/* Stats Grid */}
         <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
@@ -524,10 +543,8 @@ const DashboardPage = () => {
                             endDate={customDateRange.end}
                             onChange={(start, end) => {
                               setCustomDateRange({ start, end });
-                              setCustomDateError(null);
                             }}
                             maxDays={MAX_CUSTOM_RANGE_DAYS}
-                            error={customDateError}
                           />
                         </motion.div>
                       )}
@@ -561,7 +578,6 @@ const DashboardPage = () => {
                           onClick={() => {
                             setTimeRange('all');
                             setStatusFilter('all');
-                            setCustomDateError(null);
                           }}
                           className="px-2.5 py-1 text-xs font-semibold transition-colors text-error rounded-md"
                         >

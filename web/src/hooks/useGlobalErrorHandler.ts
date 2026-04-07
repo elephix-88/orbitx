@@ -1,3 +1,4 @@
+import * as Sentry from '@sentry/react';
 import { useEffect } from 'react';
 
 /**
@@ -9,19 +10,13 @@ export const useGlobalErrorHandler = () => {
     const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
       console.error('Unhandled promise rejection:', event.reason);
 
-      // TODO: Add error tracking service in production
-      // if (import.meta.env.PROD) {
-      //   errorTracker.captureException(event.reason, { type: 'unhandled_rejection' });
-      // }
+      Sentry.captureException(event.reason);
     };
 
     const handleError = (event: ErrorEvent) => {
       console.error('Unhandled error:', event.error);
 
-      // TODO: Add error tracking service in production
-      // if (import.meta.env.PROD) {
-      //   errorTracker.captureException(event.error, { type: 'unhandled_error' });
-      // }
+      Sentry.captureException(event.error);
     };
 
     window.addEventListener('unhandledrejection', handleUnhandledRejection);

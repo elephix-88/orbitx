@@ -83,6 +83,7 @@ export const AccountSelector: React.FC<AccountSelectorProps> = ({
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [loading, setLoading] = useState(false);
   const [fetchError, setFetchError] = useState<string | null>(null);
+  const [autoSelected, setAutoSelected] = useState(false);
 
   const loadAccounts = useCallback(async () => {
     if (!connectionId) {
@@ -111,6 +112,8 @@ export const AccountSelector: React.FC<AccountSelectorProps> = ({
       // Auto-select if only one account and none selected
       if (autoSelectSingle && transformed.length === 1 && value.length === 0) {
         onChange([transformed[0].id]);
+        setAutoSelected(true);
+        setTimeout(() => setAutoSelected(false), 3000);
       }
     } catch (err) {
       setFetchError(err instanceof Error ? err.message : 'Failed to load accounts');
@@ -256,6 +259,9 @@ export const AccountSelector: React.FC<AccountSelectorProps> = ({
         ))}
       </div>
 
+      {autoSelected && (
+        <p className="mt-1 text-xs text-primary-400">Auto-selected the only available account</p>
+      )}
       {displayError && (
         <p className="text-xs text-red-500">{displayError}</p>
       )}

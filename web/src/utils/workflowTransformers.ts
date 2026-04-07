@@ -48,19 +48,21 @@ export function transformBackendWorkflow(
   const now = new Date().toISOString();
 
   // Use Mongo _id as the primary identifier for routing
-  const publicId = (backendWorkflow as any)?._id?.$oid
-    || (backendWorkflow as any)?._id;
+  const rawId = backendWorkflow._id;
+  const publicId = rawId && typeof rawId === 'object' && '$oid' in rawId
+    ? rawId.$oid
+    : ((rawId as string | undefined) ?? '');
 
   return {
     id: publicId,
     job_id: backendWorkflow.job_id,
     name: backendWorkflow.job_name,
     // avoid hardcoded description; rely purely on backend fields when available
-    description: (backendWorkflow as any).description || '',
+    description: backendWorkflow.description || '',
     createdAt: backendWorkflow.created_at || now, // No creation date from backend, use current time
     updatedAt: backendWorkflow.updated_at || now, // No update date from backend, use current time
     // Prefer backend status if present; fallback to environment heuristic
-    status: ((backendWorkflow as any).status as WorkflowStatus) || WorkflowStatus.ACTIVE,
+    status: (backendWorkflow.status as WorkflowStatus) || WorkflowStatus.ACTIVE,
     environment_tag: backendWorkflow.environment_tag || '',
     schedule_expression: backendWorkflow.schedule_expression,
     runs,
@@ -282,16 +284,16 @@ export function transformBackendNode(
 
   const uiData = ((): Record<string, unknown> => {
     if (backendNode.node_id === 'sql') {
-      const p: any = backendNode.parameters || {};
-      const q = p.sql_query ?? p.query ?? p.sql ?? p.sqlQuery ?? '';
-      const t = p.table_name ?? p.tableName ?? '';
+      const p: Record<string, unknown> = backendNode.parameters || {};
+      const q = p['sql_query'] ?? p['query'] ?? p['sql'] ?? p['sqlQuery'] ?? '';
+      const t = p['table_name'] ?? p['tableName'] ?? '';
       return {
         query: q,
         sql_query: q,
         table_name: t,
         tableName: t,
         node_instance_id: backendNode.node_instance_id,
-      } as Record<string, unknown>;
+      };
     }
     return {
       ...backendNode.parameters,
@@ -325,7 +327,9 @@ export function transformBackendNode(
 
   return {
     id: backendNode.uid || backendNode.node_id,
-    definitionId: getDefinitionId(backendNode.node_id) as any,
+    // getDefinitionId maps engine node IDs to registry typeIds; cast needed because
+    // NodeTypeId is a finite union but new node types may arrive from the backend at runtime.
+    definitionId: getDefinitionId(backendNode.node_id) as import('../types/workflow').NodeTypeId,
     type: typeMapping[backendNode.node_type as keyof typeof typeMapping] || 'transform',
     name: nodeName,
     display_name: backendNode.display_name || undefined, // Alias from backend
@@ -505,14 +509,18 @@ export function transformBackendWorkflowDetailed(
   const workflow = transformBackendWorkflow(backendWorkflow as BackendWorkflow);
 
   const baseNodes = backendWorkflow.nodes || [];
-  const rawConnections: any = (backendWorkflow as any).connections;
+  const rawConnections = backendWorkflow.connections;
 
   // First pass: identify which node_instance_ids have outgoing connections
   // This helps us infer pass_through for destination nodes
+  // Cast each connection item to Record<string,unknown> to handle legacy field names
+  // (from/source/to/target) that predate the typed WorkflowConnectionData interface.
   const nodesWithOutgoingConnections = new Set<number>();
   if (Array.isArray(rawConnections)) {
-    for (const conn of rawConnections) {
-      const fromInst = (conn?.from_node ?? conn?.from ?? conn?.source) as number | undefined;
+    // Cast through unknown to handle legacy field names (from/source/to/target)
+    // that predate the typed WorkflowConnectionData interface.
+    for (const conn of rawConnections as unknown as Array<Record<string, unknown>>) {
+      const fromInst = (conn?.['from_node'] ?? conn?.['from'] ?? conn?.['source']) as number | undefined;
       if (typeof fromInst === 'number') {
         nodesWithOutgoingConnections.add(fromInst);
       }
@@ -530,10 +538,10 @@ export function transformBackendWorkflowDetailed(
     const base = transformBackendNode(bn, baseNodes);
     const count = (idCounters[bn.node_id] || 0) + 1;
     idCounters[bn.node_id] = count;
-    const uiId = (bn as any).uid || `${bn.node_id}_${count}`;
+    const uiId = bn.uid || `${bn.node_id}_${count}`;
 
     // Check if this destination node has outgoing connections - if so, infer pass_through
-    const nodeInstanceId = (bn as any).node_instance_id;
+    const nodeInstanceId = bn.node_instance_id;
     const hasOutgoingConnection = typeof nodeInstanceId === 'number' && nodesWithOutgoingConnections.has(nodeInstanceId);
 
     // Use connection-based position if available, otherwise use default position
@@ -564,7 +572,7 @@ export function transformBackendWorkflowDetailed(
     const instanceIdToUiNode = new Map<number, WorkflowNode>();
     const firstUiNodeByBackendNodeId = new Map<string, WorkflowNode>();
     baseNodes.forEach((bn, idx) => {
-      const maybeInstanceId = (bn as any).node_instance_id;
+      const maybeInstanceId = bn.node_instance_id;
       if (typeof maybeInstanceId === 'number') {
         instanceIdToUiNode.set(maybeInstanceId, nodes[idx]);
       }
@@ -575,20 +583,22 @@ export function transformBackendWorkflowDetailed(
 
     if (Array.isArray(rawConnections)) {
       // Shape: [{ from_node: number, to_node: number }, ...]
-      for (const conn of rawConnections) {
-        const fromInst = (conn?.from_node ?? conn?.from ?? conn?.source) as number | undefined;
-        const toInst = (conn?.to_node ?? conn?.to ?? conn?.target) as number | undefined;
+      // Cast through unknown to handle legacy field names (from/source/to/target)
+      // that predate the typed WorkflowConnectionData interface.
+      for (const conn of rawConnections as unknown as Array<Record<string, unknown>>) {
+        const fromInst = (conn?.['from_node'] ?? conn?.['from'] ?? conn?.['source']) as number | undefined;
+        const toInst = (conn?.['to_node'] ?? conn?.['to'] ?? conn?.['target']) as number | undefined;
         const fromUi = typeof fromInst === 'number' ? instanceIdToUiNode.get(fromInst) : undefined;
         const toUi = typeof toInst === 'number' ? instanceIdToUiNode.get(toInst) : undefined;
         if (!fromUi || !toUi) continue;
         // Use actual node ports (already calculated with dynamic ports) instead of spec lookup
         // Prefer from_port from the backend payload (set for multi-output nodes like IF/Switch)
         // Fall back to the first output port of the source node for single-output nodes
-        const backendFromPort = (conn as Record<string, unknown>)?.from_port;
+        const backendFromPort = conn?.['from_port'];
         const fromOutput = typeof backendFromPort === 'string' && backendFromPort
           ? backendFromPort
           : fromUi.outputs[0]?.id || 'out';
-        const backendToPort = (conn as Record<string, unknown>)?.to_port;
+        const backendToPort = conn?.['to_port'];
         const toInput = typeof backendToPort === 'string' && backendToPort
           ? backendToPort
           : toUi.inputs[0]?.id || 'in';

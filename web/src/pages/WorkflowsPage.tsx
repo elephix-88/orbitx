@@ -68,7 +68,9 @@ const WorkflowsPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [selectedStatus, setSelectedStatus] = useState<"All" | WorkflowStatus>("All");
-  const [isGridView, setIsGridView] = useState(false);
+  const [isGridView, setIsGridView] = useState(() => {
+    try { return localStorage.getItem('workflows-grid-view') === 'true'; } catch { return false; }
+  });
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [categoryDropdownOpen, setCategoryDropdownOpen] = useState(false);
   const [confirmTargetId, setConfirmTargetId] = useState<string | null>(null);
@@ -79,6 +81,11 @@ const WorkflowsPage = () => {
   const [showTemplateSelector, setShowTemplateSelector] = useState(false);
 
   const categories = useWorkflowCategories(workflows);
+
+  // Persist grid/list view preference
+  useEffect(() => {
+    try { localStorage.setItem('workflows-grid-view', String(isGridView)); } catch {}
+  }, [isGridView]);
 
   // Debounce search term
   useEffect(() => {

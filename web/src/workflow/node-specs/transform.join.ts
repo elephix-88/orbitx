@@ -45,31 +45,28 @@ export const joinTransformSpec: NodeSpec = {
   ui: { editor: JoinEditor },
   adapters: {
     toBackend: (p) => {
-      const params = p as any;
+      const baseKeys = p['base_keys'] as unknown[] | undefined;
       return {
         node_id: 'join',
         node_type: 'transform',
         parameters: {
-          base_node_id: params.base_node_id || 0,
+          base_node_id: (p['base_node_id'] as number) || 0,
           // Support both legacy and multi-key
-          ...(params.base_keys?.length ? { base_keys: params.base_keys } : { base_key: params.base_key || '' }),
-          sources: params.sources || [],
-          suffixes: params.suffixes || ['_x', '_y'],
+          ...(baseKeys?.length ? { base_keys: baseKeys } : { base_key: (p['base_key'] as string) || '' }),
+          sources: p['sources'] || [],
+          suffixes: p['suffixes'] || ['_x', '_y'],
         },
       };
     },
-    fromBackend: (_nodeId, _nodeType, parameters) => {
-      const params = parameters as any;
-      return {
-        typeId: 'transform.join',
-        params: {
-          base_node_id: params.base_node_id || 0,
-          base_key: params.base_key || '',
-          base_keys: params.base_keys || [],
-          sources: params.sources || [],
-          suffixes: params.suffixes || ['_x', '_y'],
-        },
-      };
-    },
+    fromBackend: (_nodeId, _nodeType, parameters) => ({
+      typeId: 'transform.join',
+      params: {
+        base_node_id: (parameters['base_node_id'] as number) || 0,
+        base_key: (parameters['base_key'] as string) || '',
+        base_keys: parameters['base_keys'] || [],
+        sources: parameters['sources'] || [],
+        suffixes: parameters['suffixes'] || ['_x', '_y'],
+      },
+    }),
   },
 };

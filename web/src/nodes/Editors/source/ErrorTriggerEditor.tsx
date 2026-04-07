@@ -74,8 +74,8 @@ const ErrorTriggerEditor: React.FC<ErrorTriggerEditorProps> = ({
   const content = (
     <div className="space-y-4">
       {/* Info banner */}
-      <div className="flex items-start gap-3 rounded-xl border border-red-500/20 bg-red-500/5 px-4 py-3">
-        <AlertTriangle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
+      <div className="flex items-start gap-3 rounded-xl border border-error/20 bg-error/5 px-4 py-3">
+        <AlertTriangle className="w-4 h-4 text-error shrink-0 mt-0.5" />
         <p className="text-xs text-text-secondary leading-relaxed">
           This node outputs the error payload when the workflow is triggered by a failure in a
           linked workflow. There are no user-configurable settings — the payload is injected

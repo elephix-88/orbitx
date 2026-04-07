@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState, useRef } from 'react';
+import { useNotification } from '@/hooks/useNotification';
 import BaseEditorWrapper from '@components/editors/BaseEditorWrapper';
 import { Link2, Calendar, Database, ChevronDown, Check, ExternalLink, RefreshCw, AlertCircle } from 'lucide-react';
 import { GoogleAdsIcon } from '@/components/icons/BrandIcons';
@@ -69,6 +70,8 @@ const DATE_PRESETS = [
 ];
 
 const GoogleAdsEditor: React.FC<GoogleAdsEditorProps> = ({ data, onChange, onClose, onValidate, compact = false }) => {
+  const { notify } = useNotification();
+
   // Cache store
   const cache = useNodeDataCache();
   const cachedConnections = cache.connections;
@@ -142,10 +145,10 @@ const GoogleAdsEditor: React.FC<GoogleAdsEditorProps> = ({ data, onChange, onClo
     const currentValid = connections.some(c => c.id === form.accessToken);
     if (!currentValid) {
       const nextId = connections.length === 1 ? connections[0].id : '';
+      notify.warning('Connection changed', 'Please re-select your ad accounts.');
       setForm((prev) => ({ ...prev, accessToken: nextId, adAccountIds: [] }));
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [connections]);
+  }, [connections, form.accessToken]);
 
   // Sync accounts from cache
   useEffect(() => {
@@ -277,7 +280,7 @@ const GoogleAdsEditor: React.FC<GoogleAdsEditorProps> = ({ data, onChange, onClo
             <label className="text-xs font-medium text-text-secondary">Google Ads Connection</label>
             <a
               href="/connections"
-              className="text-xs text-brand-500 hover:text-brand-600 inline-flex items-center gap-1"
+              className="text-xs text-primary-500 hover:text-primary-600 inline-flex items-center gap-1"
             >
               Manage <ExternalLink className="w-3 h-3" />
             </a>
@@ -290,7 +293,7 @@ const GoogleAdsEditor: React.FC<GoogleAdsEditorProps> = ({ data, onChange, onClo
               className={cn(
                 "w-full px-3 py-2.5 rounded-lg border text-left text-sm flex items-center justify-between transition-all",
                 connectionDropdownOpen
-                  ? "border-brand-500 ring-2 ring-brand-500/20"
+                  ? "border-primary-500 ring-2 ring-primary-500/20"
                   : "border-border-primary hover:border-border-primary/80",
                 "bg-surface-primary"
               )}
@@ -323,12 +326,12 @@ const GoogleAdsEditor: React.FC<GoogleAdsEditorProps> = ({ data, onChange, onClo
                       }}
                       className={cn(
                         "w-full px-3 py-2.5 text-left text-sm flex items-center justify-between hover:bg-surface-secondary transition-colors",
-                        conn.id === form.accessToken && "bg-brand-500/5"
+                        conn.id === form.accessToken && "bg-primary-500/5"
                       )}
                     >
                       <span className="text-text-primary">{conn.name}</span>
                       {conn.id === form.accessToken && (
-                        <Check className="w-4 h-4 text-brand-500" />
+                        <Check className="w-4 h-4 text-primary-500" />
                       )}
                     </button>
                   ))
@@ -343,7 +346,7 @@ const GoogleAdsEditor: React.FC<GoogleAdsEditorProps> = ({ data, onChange, onClo
           <div className="flex items-center justify-between">
             <label className="text-xs font-medium text-text-secondary">Ad Accounts</label>
             {form.adAccountIds.length > 0 && (
-              <span className="text-xs text-brand-500 font-medium">
+              <span className="text-xs text-primary-500 font-medium">
                 {form.adAccountIds.length} selected
               </span>
             )}
@@ -373,14 +376,14 @@ const GoogleAdsEditor: React.FC<GoogleAdsEditorProps> = ({ data, onChange, onClo
                       key={account.id}
                       className={cn(
                         "flex items-center gap-3 px-3 py-2.5 cursor-pointer transition-colors",
-                        isSelected ? "bg-brand-500/5" : "hover:bg-surface-secondary/50"
+                        isSelected ? "bg-primary-500/5" : "hover:bg-surface-secondary/50"
                       )}
                     >
                       <div
                         className={cn(
                           "w-4 h-4 rounded border-2 flex items-center justify-center transition-all flex-shrink-0",
                           isSelected
-                            ? "bg-brand-500 border-brand-500 text-white"
+                            ? "bg-primary-500 border-primary-500 text-white"
                             : "border-border-primary bg-surface-primary"
                         )}
                       >
@@ -426,7 +429,7 @@ const GoogleAdsEditor: React.FC<GoogleAdsEditorProps> = ({ data, onChange, onClo
             className={cn(
               "w-full px-3 py-2.5 rounded-lg border text-left text-sm flex items-center justify-between transition-all",
               dateDropdownOpen
-                ? "border-brand-500 ring-2 ring-brand-500/20"
+                ? "border-primary-500 ring-2 ring-primary-500/20"
                 : "border-border-primary hover:border-border-primary/80",
               "bg-surface-primary"
             )}
@@ -457,12 +460,12 @@ const GoogleAdsEditor: React.FC<GoogleAdsEditorProps> = ({ data, onChange, onClo
                   }}
                   className={cn(
                     "w-full px-3 py-2.5 text-left text-sm flex items-center justify-between hover:bg-surface-secondary transition-colors",
-                    preset.value === form.time_config?.time_preset && "bg-brand-500/5"
+                    preset.value === form.time_config?.time_preset && "bg-primary-500/5"
                   )}
                 >
                   <span className="text-text-primary">{preset.label}</span>
                   {preset.value === form.time_config?.time_preset && (
-                    <Check className="w-4 h-4 text-brand-500" />
+                    <Check className="w-4 h-4 text-primary-500" />
                   )}
                 </button>
               ))}
@@ -484,9 +487,9 @@ const GoogleAdsEditor: React.FC<GoogleAdsEditorProps> = ({ data, onChange, onClo
         </div>
 
         {error && (
-          <div className="mb-3 bg-red-500/10 border border-red-500/20 rounded-lg p-3 flex items-center gap-2">
-            <AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0" />
-            <span className="text-red-600 dark:text-red-400 text-sm">{error}</span>
+          <div className="mb-3 bg-error/10 border border-error/20 rounded-lg p-3 flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 text-error flex-shrink-0" />
+            <span className="text-error text-sm">{error}</span>
             <button
               type="button"
               onClick={() => {
@@ -499,7 +502,7 @@ const GoogleAdsEditor: React.FC<GoogleAdsEditorProps> = ({ data, onChange, onClo
                   setError(err instanceof Error ? err.message : 'Failed to load fields');
                 });
               }}
-              className="ml-auto text-sm text-red-600 hover:text-red-700 underline"
+              className="ml-auto text-sm text-error hover:underline"
             >
               Retry
             </button>

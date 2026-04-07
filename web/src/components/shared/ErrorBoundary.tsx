@@ -1,3 +1,4 @@
+import * as Sentry from '@sentry/react';
 import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { AlertTriangle, RefreshCw, Home, Bug } from 'lucide-react';
 
@@ -43,10 +44,7 @@ class ErrorBoundary extends Component<Props, State> {
     // Call optional error handler
     this.props.onError?.(error, errorInfo);
 
-    // TODO: Add error tracking service (Sentry, etc.) in production
-    // if (import.meta.env.PROD) {
-    //   errorTracker.captureException(error, { componentStack: errorInfo.componentStack });
-    // }
+    Sentry.captureException(error);
   }
 
   handleRetry = (): void => {
@@ -72,18 +70,18 @@ class ErrorBoundary extends Component<Props, State> {
       return (
         <div className="min-h-[400px] flex items-center justify-center p-8">
           <div className="max-w-lg w-full">
-            <div className="bg-surface-primary border border-red-200 dark:border-red-800 rounded-2xl shadow-lg overflow-hidden">
+            <div className="bg-surface-primary border border-error/20 rounded-2xl shadow-lg overflow-hidden">
               {/* Header */}
-              <div className="bg-red-50 dark:bg-red-900/20 px-6 py-4 border-b border-red-200 dark:border-red-800">
+              <div className="bg-error/10 px-6 py-4 border-b border-error/20">
                 <div className="flex items-center gap-3">
-                  <div className="p-2 bg-red-100 dark:bg-red-900/40 rounded-lg">
-                    <AlertTriangle className="w-6 h-6 text-red-600 dark:text-red-400" />
+                  <div className="p-2 bg-error/10 rounded-lg">
+                    <AlertTriangle className="w-6 h-6 text-error" />
                   </div>
                   <div>
-                    <h2 className="text-lg font-semibold text-red-800 dark:text-red-200">
+                    <h2 className="text-lg font-semibold text-error">
                       Something went wrong
                     </h2>
-                    <p className="text-sm text-red-600 dark:text-red-400">
+                    <p className="text-sm text-error">
                       An unexpected error occurred
                     </p>
                   </div>
@@ -105,7 +103,7 @@ class ErrorBoundary extends Component<Props, State> {
                       <span>Show error details</span>
                     </summary>
                     <div className="mt-3 p-3 bg-surface-secondary rounded-lg border border-border-primary">
-                      <p className="font-mono text-xs text-red-600 dark:text-red-400 break-all">
+                      <p className="font-mono text-xs text-error break-all">
                         {this.state.error.message}
                       </p>
                       {this.state.errorInfo?.componentStack && (
@@ -121,7 +119,7 @@ class ErrorBoundary extends Component<Props, State> {
                 <div className="flex flex-wrap gap-3 pt-2">
                   <button
                     onClick={this.handleRetry}
-                    className="flex items-center gap-2 px-4 py-2 bg-brand-500 hover:bg-brand-600 text-white rounded-lg transition-colors text-sm font-medium"
+                    className="flex items-center gap-2 px-4 py-2 bg-primary-500 hover:bg-primary-600 text-white rounded-lg transition-colors text-sm font-medium"
                   >
                     <RefreshCw className="w-4 h-4" />
                     Try Again

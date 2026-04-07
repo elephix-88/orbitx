@@ -762,14 +762,14 @@ const OnFailureTab: React.FC<OnFailureTabProps> = ({
   return (
     <div className="space-y-5">
       {/* Explanation */}
-      <div className="flex items-start gap-3 rounded-xl border border-red-500/20 bg-red-500/5 px-4 py-3">
-        <ShieldAlert className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
+      <div className="flex items-start gap-3 rounded-xl border border-error/20 bg-error/5 px-4 py-3">
+        <ShieldAlert className="w-4 h-4 text-error shrink-0 mt-0.5" />
         <div>
           <p className="text-sm font-medium text-text-primary">Error Workflow</p>
           <p className="text-xs text-text-secondary mt-1 leading-relaxed">
             When this workflow fails, OrbitX will automatically trigger the selected error workflow
             and pass the error context as input. The error workflow must contain an{' '}
-            <span className="font-mono text-red-400">Error Trigger</span> source node to receive the
+            <span className="font-mono text-error">Error Trigger</span> source node to receive the
             payload.
           </p>
         </div>
@@ -786,7 +786,7 @@ const OnFailureTab: React.FC<OnFailureTabProps> = ({
             className={cn(
               'w-full px-3 py-2.5 rounded-lg border text-left text-sm flex items-center justify-between transition-all bg-surface-primary',
               workflowDropdownOpen
-                ? 'border-red-500/50 ring-2 ring-red-500/20'
+                ? 'border-primary-500 ring-2 ring-primary-500/20'
                 : 'border-border-primary hover:border-border-primary/80'
             )}
           >
@@ -813,19 +813,19 @@ const OnFailureTab: React.FC<OnFailureTabProps> = ({
                 onClick={() => handleSelect(null)}
                 className={cn(
                   'w-full px-3 py-2.5 text-left text-sm flex items-center justify-between hover:bg-surface-secondary transition-colors',
-                  errorWorkflowId === null && 'bg-brand-500/5'
+                  errorWorkflowId === null && 'bg-primary-500/5'
                 )}
               >
                 <span className="text-text-tertiary italic">None</span>
                 {errorWorkflowId === null && (
-                  <Check className="w-4 h-4 text-brand-500" />
+                  <Check className="w-4 h-4 text-primary-500" />
                 )}
               </button>
 
               {workflows.length === 0 ? (
                 <div className="px-3 py-4 text-sm text-text-tertiary text-center border-t border-border-primary">
                   No other workflows found.{' '}
-                  <a href="/workflows" className="text-brand-500 hover:underline">
+                  <a href="/workflows" className="text-primary-500 hover:underline">
                     Create one
                   </a>
                 </div>
@@ -838,12 +838,12 @@ const OnFailureTab: React.FC<OnFailureTabProps> = ({
                       onClick={() => handleSelect(workflow.id)}
                       className={cn(
                         'w-full px-3 py-2.5 text-left text-sm flex items-center justify-between hover:bg-surface-secondary transition-colors',
-                        workflow.id === errorWorkflowId && 'bg-brand-500/5'
+                        workflow.id === errorWorkflowId && 'bg-primary-500/5'
                       )}
                     >
                       <span className="text-text-primary">{workflow.name}</span>
                       {workflow.id === errorWorkflowId && (
-                        <Check className="w-4 h-4 text-brand-500" />
+                        <Check className="w-4 h-4 text-primary-500" />
                       )}
                     </button>
                   ))}

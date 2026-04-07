@@ -37,12 +37,12 @@ export const googleAdsSourceSpec: NodeSpec = {
       node_type: 'source',
       parameters: {
         // Prefer UI accessToken; fallback to existing backend connection_id or legacy token_id
-        connection_id: (p['accessToken'] as string) || (p as any)['connection_id'] || (p as any)['token_id'] || '',
+        connection_id: (p['accessToken'] as string) || (p['connection_id'] as string) || (p['token_id'] as string) || '',
         // Map UI adAccountIds (preferred) or legacy customerIds -> backend ad_account_id[]
         ad_account_id: ((): string[] => {
           if (Array.isArray(p['adAccountIds'])) return p['adAccountIds'] as string[];
-          if (Array.isArray((p as any)['ad_account_id'])) return (p as any)['ad_account_id'] as string[];
-          if (Array.isArray((p as any)['customerIds'])) return (p as any)['customerIds'] as string[];
+          if (Array.isArray(p['ad_account_id'])) return p['ad_account_id'] as string[];
+          if (Array.isArray(p['customerIds'])) return p['customerIds'] as string[];
           return [];
         })(),
         // Optional fields list
@@ -50,9 +50,7 @@ export const googleAdsSourceSpec: NodeSpec = {
         // Provide time_config with sensible defaults
         ...(p['time_config']
           ? { time_config: p['time_config'] as { time_preset: string; time_increment: number } }
-          : (typeof (p as any)['time_config'] === 'object' && (p as any)['time_config']
-            ? { time_config: (p as any)['time_config'] as { time_preset: string; time_increment: number } }
-            : { time_config: { time_preset: 'last_7_days', time_increment: 1 } })),
+          : { time_config: { time_preset: 'last_7_days', time_increment: 1 } }),
       }
     }),
     fromBackend: (_nodeId, _nodeType, parameters) => ({
@@ -61,10 +59,10 @@ export const googleAdsSourceSpec: NodeSpec = {
         accessToken: (parameters['connection_id'] as string) || (parameters['token_id'] as string) || '',
         // Prefer modern ad_account_id, fallback to legacy customer_ids if present
         adAccountIds: Array.isArray(parameters['ad_account_id'])
-          ? ((parameters['ad_account_id'] as string[]) || [])
-          : (Array.isArray((parameters as any)['customer_ids']) ? ((parameters as any)['customer_ids'] as string[]) : []),
-        fields: Array.isArray((parameters as any)['fields']) ? ((parameters as any)['fields'] as string[]) : [],
-        time_config: (parameters as any)['time_config'] as { time_preset: string; time_increment: number } | undefined,
+          ? (parameters['ad_account_id'] as string[])
+          : (Array.isArray(parameters['customer_ids']) ? (parameters['customer_ids'] as string[]) : []),
+        fields: Array.isArray(parameters['fields']) ? (parameters['fields'] as string[]) : [],
+        time_config: parameters['time_config'] as { time_preset: string; time_increment: number } | undefined,
       }
     })
   },

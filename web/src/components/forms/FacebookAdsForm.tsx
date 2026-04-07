@@ -20,24 +20,20 @@ import { prefetchConnections, prefetchFacebookFields, prefetchFacebookAccounts }
 // Helpers
 // =============================================================================
 
-const stripAllActPrefixes = (id: string): string => {
-  if (!id) return "";
-  let result = id;
-  while (result.startsWith("act_")) {
-    result = result.slice(4);
-  }
-  return result;
-};
-
 const normalizeAccountId = (id: string): string => {
-  const stripped = stripAllActPrefixes(id);
+  if (!id) return "";
+  let stripped = id;
+  while (stripped.startsWith("act_")) {
+    stripped = stripped.slice(4);
+  }
   return stripped ? `act_${stripped}` : "";
 };
 
+const stripActPrefix = (id: string): string => normalizeAccountId(id).replace(/^act_/, "");
 
 const isAccountSelected = (selectedIds: string[], accountId: string): boolean => {
-  const normalizedAccountId = stripAllActPrefixes(accountId);
-  return selectedIds.some((id) => stripAllActPrefixes(id) === normalizedAccountId);
+  const normalizedAccountId = stripActPrefix(accountId);
+  return selectedIds.some((id) => stripActPrefix(id) === normalizedAccountId);
 };
 
 const normalizeAccountIdArray = (ids: string[] | undefined): string[] => {
@@ -376,7 +372,7 @@ export const FacebookAdsForm: React.FC<FacebookAdsFormProps> = ({
             <label className="text-xs font-medium text-text-secondary">Facebook Connection</label>
             <a
               href="/connections"
-              className="text-xs text-brand-500 hover:text-brand-600 inline-flex items-center gap-1"
+              className="text-xs text-primary-500 hover:text-primary-600 inline-flex items-center gap-1"
             >
               Manage <ExternalLink className="w-3 h-3" />
             </a>
@@ -389,7 +385,7 @@ export const FacebookAdsForm: React.FC<FacebookAdsFormProps> = ({
               className={cn(
                 "w-full px-3 py-2.5 rounded-lg border text-left text-sm flex items-center justify-between transition-all",
                 connectionDropdownOpen
-                  ? "border-brand-500 ring-2 ring-brand-500/20"
+                  ? "border-primary-500 ring-2 ring-primary-500/20"
                   : "border-border-primary hover:border-border-primary/80",
                 "bg-surface-primary"
               )}
@@ -426,12 +422,12 @@ export const FacebookAdsForm: React.FC<FacebookAdsFormProps> = ({
                       }}
                       className={cn(
                         "w-full px-3 py-2.5 text-left text-sm flex items-center justify-between hover:bg-surface-secondary transition-colors",
-                        conn.id === formData.connection_id && "bg-brand-500/5"
+                        conn.id === formData.connection_id && "bg-primary-500/5"
                       )}
                     >
                       <span className="text-text-primary">{conn.name}</span>
                       {conn.id === formData.connection_id && (
-                        <Check className="w-4 h-4 text-brand-500" />
+                        <Check className="w-4 h-4 text-primary-500" />
                       )}
                     </button>
                   ))
@@ -446,7 +442,7 @@ export const FacebookAdsForm: React.FC<FacebookAdsFormProps> = ({
           <div className="flex items-center justify-between">
             <label className="text-xs font-medium text-text-secondary">Ad Accounts</label>
             {formData.ad_account_id.length > 0 && (
-              <span className="text-xs text-brand-500 font-medium">
+              <span className="text-xs text-primary-500 font-medium">
                 {formData.ad_account_id.length} selected
               </span>
             )}
@@ -470,7 +466,7 @@ export const FacebookAdsForm: React.FC<FacebookAdsFormProps> = ({
               <div className="max-h-48 overflow-y-auto divide-y divide-border-primary/50">
                 {adAccounts.map((account) => {
                   const normalizedId = normalizeAccountId(account.account_id);
-                  const rawId = stripAllActPrefixes(account.account_id);
+                  const rawId = stripActPrefix(account.account_id);
                   const isSelected = isAccountSelected(formData.ad_account_id, account.account_id);
 
                   return (
@@ -478,14 +474,14 @@ export const FacebookAdsForm: React.FC<FacebookAdsFormProps> = ({
                       key={account.account_id}
                       className={cn(
                         "flex items-center gap-3 px-3 py-2.5 cursor-pointer transition-colors",
-                        isSelected ? "bg-brand-500/5" : "hover:bg-surface-secondary/50"
+                        isSelected ? "bg-primary-500/5" : "hover:bg-surface-secondary/50"
                       )}
                     >
                       <div
                         className={cn(
                           "w-4 h-4 rounded border-2 flex items-center justify-center transition-all flex-shrink-0",
                           isSelected
-                            ? "bg-brand-500 border-brand-500 text-white"
+                            ? "bg-primary-500 border-primary-500 text-white"
                             : "border-border-primary bg-surface-primary"
                         )}
                       >
@@ -509,7 +505,7 @@ export const FacebookAdsForm: React.FC<FacebookAdsFormProps> = ({
                               next = current;
                             }
                           } else {
-                            next = current.filter((id) => stripAllActPrefixes(id) !== rawId);
+                            next = current.filter((id) => stripActPrefix(id) !== rawId);
                           }
                           updateFormData({ ad_account_id: next });
                         }}
@@ -537,7 +533,7 @@ export const FacebookAdsForm: React.FC<FacebookAdsFormProps> = ({
             className={cn(
               "w-full px-3 py-2.5 rounded-lg border text-left text-sm flex items-center justify-between transition-all",
               dateDropdownOpen
-                ? "border-brand-500 ring-2 ring-brand-500/20"
+                ? "border-primary-500 ring-2 ring-primary-500/20"
                 : "border-border-primary hover:border-border-primary/80",
               "bg-surface-primary"
             )}
@@ -567,12 +563,12 @@ export const FacebookAdsForm: React.FC<FacebookAdsFormProps> = ({
                   }}
                   className={cn(
                     "w-full px-3 py-2.5 text-left text-sm flex items-center justify-between hover:bg-surface-secondary transition-colors",
-                    preset.value === formData.time_config?.time_preset && "bg-brand-500/5"
+                    preset.value === formData.time_config?.time_preset && "bg-primary-500/5"
                   )}
                 >
                   <span className="text-text-primary">{preset.label}</span>
                   {preset.value === formData.time_config?.time_preset && (
-                    <Check className="w-4 h-4 text-brand-500" />
+                    <Check className="w-4 h-4 text-primary-500" />
                   )}
                 </button>
               ))}
@@ -594,13 +590,13 @@ export const FacebookAdsForm: React.FC<FacebookAdsFormProps> = ({
         </div>
 
         {error && (
-          <div className="mb-3 bg-red-500/10 border border-red-500/20 rounded-lg p-3 flex items-center gap-2">
-            <AlertCircle className="w-4 h-4 text-red-500 flex-shrink-0" />
-            <span className="text-red-600 dark:text-red-400 text-sm">{error}</span>
+          <div className="mb-3 bg-error/10 border border-error/20 rounded-lg p-3 flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 text-error flex-shrink-0" />
+            <span className="text-error text-sm">{error}</span>
             <button
               type="button"
               onClick={loadFacebookFields}
-              className="ml-auto text-sm text-red-600 hover:text-red-700 underline"
+              className="ml-auto text-sm text-error hover:underline"
             >
               Retry
             </button>

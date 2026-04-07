@@ -226,7 +226,7 @@ export const ConnectionHelp: React.FC<ConnectionHelpProps> = ({
         className="w-full flex items-center justify-between px-4 py-3 bg-surface-secondary hover:bg-surface-tertiary transition-colors"
       >
         <div className="flex items-center gap-2">
-          <HelpCircle className="w-4 h-4 text-brand-500" />
+          <HelpCircle className="w-4 h-4 text-primary-500" />
           <span className="text-sm font-medium text-text-primary">
             How to set up {help.title.replace(' Setup', '')}
           </span>
@@ -266,7 +266,7 @@ export const ConnectionHelp: React.FC<ConnectionHelpProps> = ({
                       href={step.link.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 text-xs text-brand-500 hover:text-brand-600 mt-1"
+                      className="inline-flex items-center gap-1 text-xs text-primary-500 hover:text-primary-600 mt-1"
                     >
                       {step.link.text}
                       <ExternalLink className="w-3 h-3" />
@@ -304,7 +304,7 @@ export const ConnectionHelp: React.FC<ConnectionHelpProps> = ({
                 href={help.documentation.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 text-sm text-brand-500 hover:text-brand-600 font-medium"
+                className="inline-flex items-center gap-1.5 text-sm text-primary-500 hover:text-primary-600 font-medium"
               >
                 <ExternalLink className="w-4 h-4" />
                 {help.documentation.text}
@@ -334,7 +334,7 @@ export const ConnectionHelpLink: React.FC<{
       target="_blank"
       rel="noopener noreferrer"
       className={cn(
-        'inline-flex items-center gap-1 text-xs text-brand-500 hover:text-brand-600',
+        'inline-flex items-center gap-1 text-xs text-primary-500 hover:text-primary-600',
         className
       )}
     >

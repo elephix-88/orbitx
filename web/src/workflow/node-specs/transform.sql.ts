@@ -22,15 +22,15 @@ export const sqlTransformSpec: NodeSpec = {
       node_id: 'sql',
       node_type: 'transform',
       parameters: {
-        table_name: (p as any)['table_name'] || (p as any)['tableName'] || '',
-        sql_query: (p as any)['sql_query'] || (p as any)['query'] || '',
+        table_name: p['table_name'] || p['tableName'] || '',
+        sql_query: p['sql_query'] || p['query'] || '',
       }
     }),
     fromBackend: (_nodeId, _nodeType, parameters) => ({
       typeId: 'transform.sql',
       params: {
-        query: (parameters as any).sql_query || (parameters as any).query || '',
-        table_name: (parameters as any).table_name || '',
+        query: parameters['sql_query'] || parameters['query'] || '',
+        table_name: parameters['table_name'] || '',
       }
     })
   }

@@ -23,7 +23,7 @@ def make_state(
         "cn": connection_name,
         "uid": user_id,  # Add user_id to state
         "nonce": secrets.token_urlsafe(8),
-        "ts": int(time.time()),
+        "timestamp": int(time.time()),
     }
     raw = json.dumps(payload, separators=(",", ":")).encode()
     sig = hmac.new(secret, raw, hashlib.sha256).digest()
@@ -51,8 +51,8 @@ def verify_state(state: str, max_age: int = 600) -> dict[str, str]:
         raise ValueError("Invalid state signature")
 
     data = json.loads(raw.decode())
-    ts = data.get("ts", 0)
-    if abs(time.time() - ts) > max_age:
+    timestamp = data.get("timestamp", 0)
+    if abs(time.time() - timestamp) > max_age:
         raise ValueError("State expired")
 
     return {

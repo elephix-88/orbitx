@@ -86,8 +86,8 @@ async def execute_workflow_endpoint(
                 "error": error.message,
                 "details": error.details,
                 "validation_errors": [
-                    {"error_type": e.error_type, "message": e.message}
-                    for e in error.validation_errors
+                    {"error_type": validation_error.error_type, "message": validation_error.message}
+                    for validation_error in error.validation_errors
                 ],
             },
         ) from error

@@ -157,15 +157,15 @@ async def get_dashboard_stats(
 
     # Build executions by workflow with names
     executions_by_workflow = {}
-    for wf in data["by_workflow"]:
-        wf_id = wf["_id"]
-        wf_count = wf["count"]
-        wf_successful = wf["successful"]
-        executions_by_workflow[wf_id] = {
-            "name": workflows.get(wf_id, wf_id),
-            "count": wf_count,
-            "success_rate": round((wf_successful / wf_count) * 100)
-            if wf_count > 0
+    for workflow in data["by_workflow"]:
+        workflow_id = workflow["_id"]
+        workflow_count = workflow["count"]
+        workflow_successful = workflow["successful"]
+        executions_by_workflow[workflow_id] = {
+            "name": workflows.get(workflow_id, workflow_id),
+            "count": workflow_count,
+            "success_rate": round((workflow_successful / workflow_count) * 100)
+            if workflow_count > 0
             else 0,
         }
 

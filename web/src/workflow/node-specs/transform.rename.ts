@@ -24,13 +24,13 @@ export const renameTransformSpec: NodeSpec = {
       node_id: 'rename',
       node_type: 'transform',
       parameters: {
-        column_mapping: (p as any)['column_mapping'] || {},
+        column_mapping: p['column_mapping'] || {},
       },
     }),
     fromBackend: (_nodeId, _nodeType, parameters) => ({
       typeId: 'transform.rename',
       params: {
-        column_mapping: (parameters as any).column_mapping || {},
+        column_mapping: parameters['column_mapping'] || {},
       },
     }),
   },

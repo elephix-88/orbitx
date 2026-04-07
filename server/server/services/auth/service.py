@@ -1,3 +1,4 @@
+import asyncio
 import secrets
 import uuid
 from datetime import UTC, datetime, timedelta
@@ -130,8 +131,6 @@ async def authenticate_user(email: str, password: str) -> UserInDB | None:
 
 async def authenticate_google_user(credential: str) -> UserInDB | None:
     try:
-        import asyncio
-
         idinfo = await asyncio.to_thread(
             id_token.verify_oauth2_token,
             credential,

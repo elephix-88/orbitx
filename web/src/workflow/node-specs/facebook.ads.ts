@@ -34,7 +34,7 @@ export const facebookAdsSpec: NodeSpec = {
         connection_id: p['connection_id'] || p['accessToken'] || p['token_id'] || '',
         fields: Array.isArray(p['fields']) ? p['fields'] : 
                (Array.isArray(p['selectedFields']) ? p['selectedFields'] : []),
-        time_config: (p as any).time_config || { time_preset: 'last_7_days', time_increment: 1 }
+        time_config: p['time_config'] || { time_preset: 'last_7_days', time_increment: 1 }
       }
     }),
     fromBackend: (_nodeId, _nodeType, parameters) => ({
@@ -44,7 +44,7 @@ export const facebookAdsSpec: NodeSpec = {
         ad_account_id: Array.isArray(parameters['ad_account_id']) ? parameters['ad_account_id'] : [],
         connection_id: (parameters['connection_id'] as string) || (parameters['token_id'] as string) || '',
         fields: Array.isArray(parameters['fields']) ? parameters['fields'] : [],
-        time_config: (parameters as any).time_config || { time_preset: 'last_7_days', time_increment: 1 }
+        time_config: parameters['time_config'] || { time_preset: 'last_7_days', time_increment: 1 }
       }
     })
   },

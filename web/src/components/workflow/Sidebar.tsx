@@ -67,6 +67,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
     const spec = getNodeSpecByDisplayName(nodeType.name);
     const payload = spec ? { ...nodeType, registryTypeId: spec.typeId } : nodeType;
     e.dataTransfer.setData('application/json', JSON.stringify(payload));
+    e.dataTransfer.effectAllowed = 'move';
+
+    const ghost = document.createElement('div');
+    ghost.textContent = nodeType.name;
+    ghost.className = 'px-3 py-2 bg-surface-primary border border-border-subtle rounded-lg text-sm text-text-primary shadow-lg';
+    ghost.style.position = 'absolute';
+    ghost.style.top = '-1000px';
+    document.body.appendChild(ghost);
+    e.dataTransfer.setDragImage(ghost, 0, 0);
+    setTimeout(() => document.body.removeChild(ghost), 0);
+
     onNodeDragStart();
   }, [onNodeDragStart]);
 

@@ -1,4 +1,5 @@
 import React from 'react';
+import { cn } from '@/lib/utils';
 
 export interface FieldProps extends React.HTMLAttributes<HTMLDivElement> {
   label: string;
@@ -18,7 +19,7 @@ export const Field: React.FC<FieldProps> = ({
   ...rest
 }) => {
   return (
-    <div className={`bg-surface-secondary rounded-md p-3 ring-1 ring-border-subtle ${className || ''}`} {...rest}>
+    <div className={cn("bg-surface-secondary rounded-md p-3 ring-1 ring-border-subtle", className)} {...rest}>
       <label htmlFor={htmlFor} className="block text-sm font-medium text-text-primary mb-2">
         {label}
       </label>
@@ -34,7 +35,12 @@ export const TextInput = React.forwardRef<HTMLInputElement, React.InputHTMLAttri
   ({ className, hasError, ...props }, ref) => (
     <input
       ref={ref}
-      className={`w-full h-11 px-3 rounded-md ring-1 ${hasError ? 'ring-error/50' : 'ring-border-subtle'} bg-surface-primary focus:outline-none focus:ring-1 focus:ring-primary-500/20 focus:border-primary-500 shadow-sm placeholder:text-text-tertiary text-text-primary transition-all ${className || ''}`}
+      className={cn(
+        "w-full h-11 px-3 rounded-md ring-1",
+        hasError ? "ring-error/50" : "ring-border-subtle",
+        "bg-surface-primary focus:outline-none focus:ring-1 focus:ring-primary-500/20 focus:border-primary-500 shadow-sm placeholder:text-text-tertiary text-text-primary transition-all",
+        className
+      )}
       {...props}
     />
   )
@@ -46,7 +52,12 @@ export const SelectInput = React.forwardRef<HTMLSelectElement, React.SelectHTMLA
     <div className="relative">
       <select
         ref={ref}
-        className={`w-full h-11 pr-10 pl-3 rounded-md ring-1 ${hasError ? 'ring-error/50' : 'ring-border-subtle'} bg-surface-primary appearance-none focus:outline-none focus:ring-1 focus:ring-primary-500/20 focus:border-primary-500 shadow-sm text-text-primary transition-all ${className || ''}`}
+        className={cn(
+          "w-full h-11 pr-10 pl-3 rounded-md ring-1",
+          hasError ? "ring-error/50" : "ring-border-subtle",
+          "bg-surface-primary appearance-none focus:outline-none focus:ring-1 focus:ring-primary-500/20 focus:border-primary-500 shadow-sm text-text-primary transition-all",
+          className
+        )}
         {...props}
       >
         {children}
@@ -63,7 +74,12 @@ export const TextArea = React.forwardRef<HTMLTextAreaElement, React.TextareaHTML
   ({ className, hasError, ...props }, ref) => (
     <textarea
       ref={ref}
-      className={`w-full bg-surface-primary ring-1 ${hasError ? 'ring-error/50' : 'ring-border-subtle'} p-4 rounded-md placeholder:text-text-tertiary focus:outline-none focus:ring-1 focus:ring-primary-500/20 focus:border-primary-500 text-base font-mono text-text-primary shadow-sm transition-all ${className || ''}`}
+      className={cn(
+        "w-full bg-surface-primary ring-1",
+        hasError ? "ring-error/50" : "ring-border-subtle",
+        "p-4 rounded-md placeholder:text-text-tertiary focus:outline-none focus:ring-1 focus:ring-primary-500/20 focus:border-primary-500 text-base font-mono text-text-primary shadow-sm transition-all",
+        className
+      )}
       {...props}
     />
   )
