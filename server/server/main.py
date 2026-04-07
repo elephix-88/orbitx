@@ -26,7 +26,6 @@ from server.api.tiktok.ads import router as tiktok_ads_router
 from server.api.tiktok.oauth import router as tiktok_oauth_router
 from server.api.tiktok.tiktok_fields import router as tiktok_fields_router
 from server.api.workflow import router as workflow_router
-from server.configs.adapter import init_settings
 from server.configs.config import settings
 from server.middleware import (
     AuthContextMiddleware,
@@ -37,8 +36,6 @@ from server.middleware import (
 )
 from server.services import prefect_client
 from server.services.exceptions import OrbitXError
-
-init_settings()
 
 logger.remove()
 logger.add(sys.stdout, colorize=True)

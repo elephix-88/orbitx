@@ -6,14 +6,8 @@ Usage:
 """
 
 import argparse
-import os
 
-os.chdir(os.path.dirname(__file__))
-
-from common.config.settings import register_settings
-from engine.configs.config import settings
-
-register_settings(settings)
+from loguru import logger
 
 from engine.orchestration.runner import (
     build_and_execute_workflow,
@@ -21,7 +15,6 @@ from engine.orchestration.runner import (
     sanitize_name,
 )
 from server.services.utils import generate_uuid
-from loguru import logger
 
 
 def main():

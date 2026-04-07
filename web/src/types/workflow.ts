@@ -1,14 +1,4 @@
 // src/types/workflow.ts
-import { z } from 'zod';
-
-// Base Types
-export interface BaseEntity {
-  id: string;
-  createdAt: string;
-  updatedAt: string;
-  createdBy: string;
-  updatedBy: string;
-}
 
 // Workflow Status
 // eslint-disable-next-line no-unused-vars
@@ -49,24 +39,6 @@ export interface Schedule {
   timezone: string;
   startDate?: string;
   endDate?: string;
-}
-
-// Resource Configuration
-export interface ResourceConfig {
-  memoryAllocation: number; // in MB
-  cpuCores: number;
-  timeoutMinutes: number;
-  maxRetries: number;
-}
-
-// Version Control
-export interface Version {
-  id: string;
-  workflowId: string;
-  versionNumber: number;
-  changes: string;
-  createdAt: string;
-  createdBy: string;
 }
 
 export interface WorkflowNode {
@@ -126,26 +98,6 @@ export interface Workflow {
   updatedAt: string;
 }
 
-// Workflow Execution
-export interface WorkflowExecution extends BaseEntity {
-  workflowId: string;
-  versionId: string;
-  status: ExecutionStatus;
-  startTime?: string;
-  endTime?: string;
-  duration?: number;
-  error?: string;
-  logs: string[];
-  metrics: {
-    resourceUsage: {
-      memoryUsage: number;
-      cpuUsage: number;
-    };
-    processedRecords: number;
-    failedRecords: number;
-  };
-}
-
 // Workflow Node Types
 // eslint-disable-next-line no-unused-vars
 export enum NodeCategory {
@@ -156,36 +108,6 @@ export enum NodeCategory {
   // eslint-disable-next-line no-unused-vars
   DESTINATION = 'DESTINATION',
 }
-
-// Remove duplicate WorkflowNode interface - using the one defined above
-
-// Validation Schemas
-export const scheduleSchema = z.object({
-  type: z.nativeEnum(ScheduleType),
-  expression: z.string(),
-  timezone: z.string(),
-  startDate: z.string().optional(),
-  endDate: z.string().optional(),
-});
-
-export const resourceConfigSchema = z.object({
-  memoryAllocation: z.number().min(128),
-  cpuCores: z.number().min(0.1),
-  timeoutMinutes: z.number().min(1),
-  maxRetries: z.number().min(0),
-});
-
-export const workflowSchema = z.object({
-  name: z.string().min(1),
-  description: z.string().optional(),
-  status: z.nativeEnum(WorkflowStatus),
-  schedule: scheduleSchema,
-  resources: resourceConfigSchema,
-  environmentTag: z.string(),
-  projectId: z.string(),
-  version: z.number(),
-  tags: z.array(z.string()),
-});
 
 export type NodeTypeId =
   | 'facebook.ads'

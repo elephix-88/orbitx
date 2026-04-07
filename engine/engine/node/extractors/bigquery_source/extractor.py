@@ -23,7 +23,7 @@ class BigQueryExtractor(Extractor):
             logger.info(
                 f"Extracting data from BigQuery - Project: {self.config.project_id}"
             )
-            logger.debug(f"Query: {self.config.query[:100]}...")
+            logger.info(f"Query: {self.config.query[:100]}...")
 
             credentials = await build_connection_credentials(self.config.connection_id)
             client = bigquery.Client(

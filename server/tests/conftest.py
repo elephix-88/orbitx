@@ -175,11 +175,6 @@ def setup_test_environment() -> None:
         }
     )
 
-    # Register orbitx-common settings
-    from common.config.settings import register_settings
-
-    register_settings(mock_settings)
-
     # Patch the Motor database variable that all production modules import
     patch("common.database.mongodb.database", mock_database).start()
     # Patch close_mongodb if it exists (optional cleanup hook)

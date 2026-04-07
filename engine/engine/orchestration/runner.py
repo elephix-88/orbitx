@@ -1,4 +1,3 @@
-import os
 import re
 import sys
 from collections import deque
@@ -6,26 +5,13 @@ from collections import deque
 from loguru import logger
 from prefect import flow
 
-# Force colorized output — Prefect subprocess pipes stdout so loguru
-# disables colors by default (no TTY detected).
-logger.remove()
-logger.add(sys.stderr, colorize=True)
-
-engine_root = os.path.join(os.path.dirname(__file__), "..", "..")
-if os.path.isdir(engine_root):
-    os.chdir(engine_root)
-
-from common.config.settings import register_settings  # noqa: E402
-from common.database.mongodb import find_one  # noqa: E402
-from engine.configs.config import settings  # noqa: E402
-
-register_settings(settings)
-
-from common.model.workflow import Connection, Node, NodeType, WorkflowData  # noqa: E402
-from common.model.workflow_rules import validate_workflow_structure  # noqa: E402
-from engine.orchestration.hooks import on_flow_completion, on_flow_failure  # noqa: E402
-from engine.orchestration.node_result import NodeResult  # noqa: E402
-from engine.orchestration.tasks import (  # noqa: E402
+from common.database.mongodb import find_one
+from common.model.workflow import Connection, Node, NodeType, WorkflowData
+from common.model.workflow_rules import validate_workflow_structure
+from engine.configs.config import settings
+from engine.orchestration.hooks import on_flow_completion, on_flow_failure
+from engine.orchestration.node_result import NodeResult
+from engine.orchestration.tasks import (
     ROUTER_NODE_IDS,
     make_delivery_task,
     make_extractor_task,
@@ -34,7 +20,12 @@ from engine.orchestration.tasks import (  # noqa: E402
     make_switch_router_task,
     make_transformer_task,
 )
-from engine.utils.async_runner import run_async  # noqa: E402
+from engine.utils.async_runner import run_async
+
+# Force colorized output — Prefect subprocess pipes stdout so loguru
+# disables colors by default (no TTY detected).
+logger.remove()
+logger.add(sys.stderr, colorize=True)
 
 
 def sanitize_name(name: str) -> str:
