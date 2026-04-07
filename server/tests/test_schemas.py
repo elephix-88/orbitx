@@ -1,6 +1,8 @@
 """Tests for Pydantic schemas."""
 
 import pytest
+from pydantic import ValidationError
+
 from common.model.connection import (
     ConnectionItem,
     ConnectionNamePayload,
@@ -14,7 +16,6 @@ from common.model.connection import (
 # from common.model.google import OAuthLoginResponse
 from common.model.token import GoogleConnectionParams
 from common.model.workflow import JobIdRequest, WorkflowData, WorkflowSummary
-from pydantic import ValidationError
 
 
 class TestWorkflowSchemas:
@@ -131,7 +132,7 @@ class TestConnectionSchemas:
 
     @pytest.mark.unit
     def test_connection_name_payload_empty_name(self):
-        """Test ConnectionNamePayload with empty name - should fail with min_length=1."""
+        """ConnectionNamePayload with empty name should fail."""
         # Act & Assert - Empty string should raise ValidationError
         with pytest.raises(ValidationError) as exc_info:
             ConnectionNamePayload(connection_name="")
@@ -303,7 +304,10 @@ class TestSchemaIntegration:
                     "node_id": "sql_transform",
                     "node_type": "transform",
                     "parameters": {
-                        "sql_query": "SELECT *, clicks/impressions as ctr FROM input_table WHERE cost > 0"
+                        "sql_query": (
+                            "SELECT *, clicks/impressions as ctr "
+                            "FROM input_table WHERE cost > 0"
+                        )
                     },
                 },
                 {

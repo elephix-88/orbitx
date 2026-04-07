@@ -26,17 +26,17 @@ export const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
             ref={ref}
             {...props}
           />
-          
+
           {/* Checkbox Background */}
           <div className={cn(
-            "w-5 h-5 rounded-none border-2 transition-all duration-200 ease-out",
-            "bg-white dark:bg-slate-900",
-            "border-[#1D3557] dark:border-slate-600",
-            "peer-focus:ring-2 peer-focus:ring-[#1D3557]/20 peer-focus:border-[#1D3557]",
+            "w-5 h-5 rounded-md border-2 transition-all duration-200 ease-out",
+            "bg-neutral-900",
+            "border-neutral-600",
+            "peer-focus:ring-1 peer-focus:ring-primary-400/20 peer-focus:border-primary-400",
             checked
-              ? "bg-[#E63946] border-[#E63946] dark:bg-[#E63946] dark:border-[#E63946]"
-              : "group-hover:border-[#457B9D] dark:group-hover:border-[#457B9D]",
-            error && "border-red-500"
+              ? "bg-primary-400 border-primary-400"
+              : "group-hover:border-neutral-500",
+            error && "border-error"
           )} />
 
           {/* Checkmark Icon */}
@@ -49,7 +49,7 @@ export const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
                 transition={{ duration: 0.2, ease: "backOut" }}
                 className="absolute inset-0 flex items-center justify-center pointer-events-none"
               >
-                <Check className="w-3.5 h-3.5 text-white stroke-[3]" />
+                <Check className="w-3.5 h-3.5 text-neutral-950 stroke-[3]" />
               </motion.div>
             )}
           </AnimatePresence>
@@ -57,9 +57,9 @@ export const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
 
         {label && (
           <span className={cn(
-            "text-sm text-slate-700 dark:text-slate-300 transition-colors",
-            checked && "text-slate-900 dark:text-slate-100 font-medium",
-            error && "text-red-500"
+            "text-sm text-text-secondary transition-colors",
+            checked && "text-text-primary font-medium",
+            error && "text-error"
           )}>
             {label}
           </span>

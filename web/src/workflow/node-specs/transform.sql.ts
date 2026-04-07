@@ -9,7 +9,7 @@ export const sqlTransformSpec: NodeSpec = {
   displayName: 'SQL Transform',
   category: 'TRANSFORM',
   icon: 'Database',
-  color: '#16A34A',
+  color: '#F59E0B',
   ports: [
     { id: 'in', name: 'Input', io: 'input', dataType: 'records' },
     { id: 'out', name: 'Output', io: 'output', dataType: 'records' }

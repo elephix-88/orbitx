@@ -22,7 +22,7 @@ TRANSIENT_EXCEPTIONS = (
 )
 
 
-async def with_retry(func: Callable[..., T], *args: Any, **kwargs: Any) -> T:
+async def with_retry[T](func: Callable[..., T], *args: Any, **kwargs: Any) -> T:
     """Execute an async function with retry logic for transient failures.
 
     Retries up to 3 times with exponential backoff (1-30s) and jitter.

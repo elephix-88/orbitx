@@ -1,10 +1,14 @@
-from datetime import datetime
-from enum import Enum
+from datetime import UTC, datetime
+from enum import StrEnum
 
 from pydantic import BaseModel, EmailStr, Field
 
 
-class UserRole(str, Enum):
+def utc_now() -> datetime:
+    return datetime.now(UTC)
+
+
+class UserRole(StrEnum):
     ADMIN = "admin"
     USER = "user"
 
@@ -21,8 +25,8 @@ class UserInDB(UserBase):
     google_id: str | None = None
     role: UserRole = UserRole.USER
     is_active: bool = True
-    created_at: datetime = Field(default_factory=datetime.utcnow)
-    updated_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime = Field(default_factory=utc_now)
+    updated_at: datetime = Field(default_factory=utc_now)
 
     model_config = {"populate_by_name": True}
 
@@ -34,17 +38,6 @@ class UserResponse(UserBase):
     created_at: datetime
 
 
-class LoginRequest(BaseModel):
-    email: EmailStr
-    password: str
-
-
-class RegisterRequest(BaseModel):
-    email: EmailStr
-    password: str = Field(min_length=8, max_length=128)
-    name: str = Field(min_length=1, max_length=100)
-
-
 class GoogleAuthRequest(BaseModel):
     credential: str = Field(min_length=1)
 
@@ -53,7 +46,3 @@ class TokenResponse(BaseModel):
     access_token: str
     token_type: str = "bearer"
     user: UserResponse
-
-
-class RefreshTokenRequest(BaseModel):
-    refresh_token: str

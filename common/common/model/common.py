@@ -1,19 +1,9 @@
-from enum import Enum
-from typing import Protocol, runtime_checkable
+from enum import StrEnum
 
 from pydantic import BaseModel
 
 
-@runtime_checkable
-class BaseFieldSchema(Protocol):
-    """Protocol for field schemas with type information.
-
-    Any class with `field` and `data_type` attributes satisfies this protocol.
-    Used by loaders to determine column types.
-
-    Supported data_type values: "integer", "float", "string", "boolean", "date"
-    """
-
+class BaseFieldSchema(BaseModel):
     field: str
     data_type: str
 
@@ -23,6 +13,17 @@ class DateTimeConfig(BaseModel):
     time_window_days: int | None = None
     time_range: dict | None = None
     time_increment: int = 1
+
+
+class ConnectionParamsConfig(BaseModel):
+    refresh_token: str
+    access_token: str
+
+
+class ConnectionConfig(BaseModel):
+    connection_name: str
+    connection_type: str
+    params: ConnectionParamsConfig
 
 
 class BaseConnectedConfig(BaseModel):
@@ -35,7 +36,7 @@ class BaseAdsConfig(BaseConnectedConfig):
     time_config: DateTimeConfig
 
 
-class InsertMode(str, Enum):
+class InsertMode(StrEnum):
     """Insert mode for data loaders."""
 
     APPEND = "append"

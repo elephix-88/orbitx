@@ -11,6 +11,8 @@ class ServiceName(Enum):
     GOOGLE_ADS = "GoogleAds"
     FACEBOOK_ADS = "FacebookAds"
     TIKTOK_ADS = "TikTokAds"
+    SLACK = "Slack"
+    LINE = "Line"
 
 
 class ConnectionType(Enum):

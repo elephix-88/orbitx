@@ -15,6 +15,10 @@ import {
   Loader2,
   Sun,
   Moon,
+  CalendarClock,
+  History,
+  RotateCcw,
+  XCircle,
 } from "lucide-react";
 
 import { useNavigate } from "react-router-dom";
@@ -30,6 +34,7 @@ interface ToolbarProps {
   onLoad: () => void;
 
   onSettings?: () => void;
+  onScheduleDelivery?: () => void;
   onImport: (_file: File) => void;
   onExportJson?: () => void;
   leftSidebarCollapsed?: boolean;
@@ -41,6 +46,17 @@ interface ToolbarProps {
 
   hasUnsavedChanges?: boolean;
   lastSavedAt?: Date | null;
+
+  /** Called to toggle the execution history panel open/closed. */
+  onToggleHistory?: () => void;
+  /** Whether the history panel is currently open. */
+  historyOpen?: boolean;
+
+  // Debug mode controls — only visible when an execution is loaded on the canvas
+  isDebugMode?: boolean;
+  isRetrying?: boolean;
+  onRetryExecution?: () => void;
+  onExitDebugMode?: () => void;
 }
 
 export const Toolbar: React.FC<ToolbarProps> = ({
@@ -50,6 +66,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
   onLoad,
 
   onSettings,
+  onScheduleDelivery,
   onImport,
   onExportJson,
   leftSidebarCollapsed = false,
@@ -61,14 +78,54 @@ export const Toolbar: React.FC<ToolbarProps> = ({
 
   hasUnsavedChanges = false,
   lastSavedAt = null,
+
+  onToggleHistory,
+  historyOpen = false,
+  isDebugMode = false,
+  isRetrying = false,
+  onRetryExecution,
+  onExitDebugMode,
 }) => {
   const navigate = useNavigate();
   const { isDark, toggleTheme } = useThemeStore();
 
   return (
+    <div className="flex flex-col z-50">
+    {/* Debug mode banner */}
+    {isDebugMode && (
+      <div className="flex items-center justify-between px-6 py-1.5 bg-amber-950/60 border-b border-amber-700/50">
+        <span className="text-xs font-medium text-amber-300 flex items-center gap-1.5">
+          <History size={12} />
+          Debug view — canvas is read-only. Double-click a node to inspect its stored output.
+        </span>
+        <div className="flex items-center gap-2">
+          {onRetryExecution && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onRetryExecution}
+              disabled={isRetrying}
+              isLoading={isRetrying}
+              leftIcon={<RotateCcw size={13} />}
+              className="text-amber-300 hover:text-amber-100 hover:bg-amber-900/40 text-xs h-6 px-2"
+            >
+              Retry with same data
+            </Button>
+          )}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onExitDebugMode}
+            leftIcon={<XCircle size={13} />}
+            className="text-amber-400/70 hover:text-amber-200 hover:bg-amber-900/30 text-xs h-6 px-2"
+          >
+            Exit debug
+          </Button>
+        </div>
+      </div>
+    )}
     <div
-      className="h-16 flex items-center justify-between px-6 z-50"
-      style={{ backgroundColor: '#1D3557', borderBottom: '2px solid #E63946' }}
+      className="h-16 flex items-center justify-between px-6 bg-surface-dark border-b border-neutral-800"
     >
       {/* Left Side */}
       <div className="flex items-center gap-4">
@@ -107,17 +164,19 @@ export const Toolbar: React.FC<ToolbarProps> = ({
 
         {/* Workflow Name */}
         <div className="flex items-center gap-2.5">
-          <div className="p-1.5" style={{ backgroundColor: '#E63946', borderRadius: '2px' }}>
-            <Zap className="text-white" size={16} />
+          <div className="p-1.5 bg-primary-400 rounded-md">
+            <Zap className="text-neutral-950" size={16} />
           </div>
           <div>
-            <h1 className="text-sm font-semibold text-white uppercase tracking-wider">
+            <h1 className="text-sm font-semibold text-white">
               {workflow.name}
             </h1>
             <div className="flex items-center gap-1.5">
               <span
-                className="w-1.5 h-1.5 rounded-full"
-                style={{ backgroundColor: workflow.isActive ? '#34d399' : '#94a3b8' }}
+                className={cn(
+                  "w-1.5 h-1.5 rounded-full",
+                  workflow.isActive ? "bg-success" : "bg-neutral-400"
+                )}
               />
               <span className="text-[10px] font-medium text-white/50 uppercase tracking-wider">
                 {workflow.isActive ? "ACTIVE" : "DRAFT"}
@@ -131,8 +190,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
       <button
         onClick={onExecute}
         disabled={workflow.nodes.length === 0 || executing}
-        className="px-8 py-2 flex items-center gap-2 text-white font-semibold uppercase tracking-wider text-sm transition-colors disabled:opacity-50"
-        style={{ backgroundColor: '#E63946', borderRadius: '2px' }}
+        className="px-6 py-2 flex items-center gap-2 text-neutral-950 font-medium text-sm rounded-md transition-colors disabled:opacity-50 bg-primary-400 hover:bg-primary-500"
       >
         {executing ? (
           <Loader2 size={18} className="animate-spin" />
@@ -146,11 +204,11 @@ export const Toolbar: React.FC<ToolbarProps> = ({
       <div className="flex items-center gap-3">
         {/* Status Indicators */}
         {hasUnsavedChanges ? (
-          <span className="flex items-center gap-1.5 text-xs font-medium" style={{ color: '#F4A261' }}>
+          <span className="flex items-center gap-1.5 text-xs font-medium text-warning">
             <Clock size={14} /> Unsaved changes
           </span>
         ) : lastSavedAt ? (
-          <span className="flex items-center gap-1.5 text-xs font-medium" style={{ color: '#34d399' }}>
+          <span className="flex items-center gap-1.5 text-xs font-medium text-success">
             <CheckCircle2 size={14} /> Saved
           </span>
         ) : null}
@@ -184,6 +242,18 @@ export const Toolbar: React.FC<ToolbarProps> = ({
           Export
         </Button>
 
+        {onScheduleDelivery && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onScheduleDelivery}
+            leftIcon={<CalendarClock size={16} />}
+            className="text-white/70 hover:text-white hover:bg-white/10"
+          >
+            Schedule
+          </Button>
+        )}
+
         <Button
           variant="ghost"
           size="sm"
@@ -193,6 +263,23 @@ export const Toolbar: React.FC<ToolbarProps> = ({
         >
           Settings
         </Button>
+
+        {onToggleHistory && (
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            onClick={onToggleHistory}
+            title={historyOpen ? "Close execution history" : "View execution history"}
+            className={cn(
+              "hover:bg-white/10",
+              historyOpen
+                ? "text-primary-400 bg-white/10"
+                : "text-white/70 hover:text-white"
+            )}
+          >
+            <History size={16} />
+          </Button>
+        )}
 
         <Button
           variant="ghost"
@@ -241,6 +328,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
           </>
         )}
       </div>
+    </div>
     </div>
   );
 };

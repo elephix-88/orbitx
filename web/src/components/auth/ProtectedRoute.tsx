@@ -9,10 +9,14 @@ interface ProtectedRouteProps {
 
 export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   const location = useLocation();
-  const { isAuthenticated, isLoading, initialize } = useAuthStore();
-  const [isInitialized, setIsInitialized] = useState(false);
+  const { isAuthenticated, isLoading, user, initialize } = useAuthStore();
+
+  // Skip the loading spinner if the user is already in the store
+  const [isInitialized, setIsInitialized] = useState(!!user);
 
   useEffect(() => {
+    if (isInitialized) return;
+
     let isMounted = true;
 
     const init = async () => {
@@ -26,7 +30,7 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
     return () => {
       isMounted = false;
     };
-  }, [initialize]);
+  }, [initialize, isInitialized]);
 
   // Show loading while initializing
   if (!isInitialized || isLoading) {

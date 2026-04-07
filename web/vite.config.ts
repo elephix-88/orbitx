@@ -43,10 +43,6 @@ export default defineConfig({
     chunkSizeWarningLimit: 300,
   },
   server: {
-    headers: {
-      'Cross-Origin-Opener-Policy': 'same-origin-allow-popups',
-      'Cross-Origin-Embedder-Policy': 'unsafe-none',
-    },
     proxy: {},
   },
   test: {

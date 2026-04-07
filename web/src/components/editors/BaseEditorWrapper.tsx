@@ -70,21 +70,21 @@ const BaseEditorWrapper = ({
     }
   };
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 lg:p-8 bg-black/20 dark:bg-black/50 backdrop-blur-sm animate-fade-in">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 lg:p-8 bg-black/50 backdrop-blur-sm animate-fade-in">
       <form
         onSubmit={onSubmit}
-        className="w-full max-w-5xl h-[85vh] sm:h-[80vh] flex flex-col bg-white dark:bg-slate-800 rounded-2xl shadow-2xl border border-slate-200 dark:border-slate-700/50 animate-scale-in"
+        className="w-full max-w-5xl h-[85vh] sm:h-[80vh] flex flex-col bg-surface-primary rounded-2xl shadow-2xl border border-border animate-scale-in"
       >
-        <div className="flex-shrink-0 flex justify-between items-center px-6 py-4 border-b border-slate-200 dark:border-slate-700/50">
+        <div className="flex-shrink-0 flex justify-between items-center px-6 py-4 border-b border-border">
           <div className="flex items-center gap-4">
-            <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-slate-100 dark:bg-slate-700">
-              {icon || <Settings className="w-5 h-5 text-slate-500 dark:text-slate-400" />}
+            <div className="w-10 h-10 rounded-lg flex items-center justify-center bg-surface-secondary">
+              {icon || <Settings className="w-5 h-5 text-text-secondary" />}
             </div>
             <div>
-              <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+              <h2 className="text-lg font-semibold text-text-primary">
                 {title}
               </h2>
-              <p className="text-sm text-slate-500 dark:text-slate-400">
+              <p className="text-sm text-text-secondary">
                 Configure this node
               </p>
             </div>
@@ -94,7 +94,7 @@ const BaseEditorWrapper = ({
               <button
                 type="button"
                 onClick={handleClickDelete}
-                className="p-2 text-slate-400 hover:text-red-500 dark:text-slate-500 dark:hover:text-red-400 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
+                className="p-2 text-text-tertiary hover:text-error hover:bg-surface-secondary rounded-lg transition-colors"
                 title="Delete node"
               >
                 <Trash2 size={18} />
@@ -103,7 +103,7 @@ const BaseEditorWrapper = ({
             <button
               type="button"
               onClick={onClose}
-              className="p-2 text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
+              className="p-2 text-text-tertiary hover:text-text-primary hover:bg-surface-secondary rounded-lg transition-colors"
               title="Close"
             >
               <X size={18} />
@@ -111,13 +111,13 @@ const BaseEditorWrapper = ({
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto bg-slate-50 dark:bg-slate-800">
+        <div className="flex-1 overflow-y-auto bg-surface-secondary">
           <div className="h-full p-6 lg:p-8">
             <div className="space-y-6">{children}</div>
           </div>
         </div>
 
-        <div className="flex-shrink-0 border-t border-slate-200 dark:border-slate-700/50 px-6 py-4">
+        <div className="flex-shrink-0 border-t border-border px-6 py-4">
           <Button
             type="submit"
             disabled={!isValid || !isDirty}
@@ -138,7 +138,7 @@ const BaseEditorWrapper = ({
             <p className="mb-1">
               This will remove this node from the workflow.
             </p>
-            <p className="text-slate-500">
+            <p className="text-text-secondary">
               Connected edges may also be removed.
             </p>
           </div>

@@ -184,7 +184,7 @@ def validate_df_with_fields(
     """Validate DataFrame against selected fields using pure Pandas."""
     dtype_map = create_dtype_mapping(selected_fields)
 
-    for field in dtype_map.keys():
+    for field in dtype_map:
         if field not in df.columns:
             df[field] = None
 

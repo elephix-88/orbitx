@@ -7,8 +7,16 @@ export type EngineNodeRuntimeType = 'source' | 'transform' | 'destinations';
 export type EngineNodeId =
   | 'facebook_ads'
   | 'google_ads'
+  | 'tiktok_ads'
   | 's3'
+  | 'error_trigger'
   | 'sql'
+  | 'rename'
+  | 'join'
+  | 'column_editor'
+  | 'unify'
+  | 'if'
+  | 'switch'
   | 'mysql'
   | 'bigquery'
   | 'google_sheet';
@@ -26,6 +34,10 @@ export interface WorkflowNodeData {
 export interface WorkflowConnectionData {
   from_node: number;
   to_node: number;
+  /** Output port on the source node (e.g. "true", "false", "case_1", "default"). */
+  from_port?: string;
+  /** Input port on the target node (always "in" for current node types). */
+  to_port?: string;
 }
 
 export interface BackendConnection extends WorkflowConnectionData {
@@ -50,6 +62,8 @@ export interface WorkflowData {
   project_id?: string;
   nodes: WorkflowNodeData[];
   connections?: WorkflowConnectionData[] | Record<string, string[]>;
+  /** ID of the workflow to trigger when this workflow fails. null = no error workflow. */
+  error_workflow_id?: string | null;
 }
 
 export interface BackendWorkflow extends WorkflowData {
@@ -68,9 +82,9 @@ export interface WorkflowExecution {
   _id: { $oid: string };
   workflow_id: string;
   execution_id: string;
-  status: 'running' | 'completed' | 'failed' | 'pending';
+  status: 'PENDING' | 'RUNNING' | 'SUCCESS' | 'FAILED';
   started_at: string;
-  completed__at?: string;
+  completed_at?: string;
   duration?: number;
   error_message?: string;
 }
@@ -150,6 +164,13 @@ export interface ExecutionStep {
   output?: NodeOutput;
 }
 
+export interface ExecutionDeliveryResult {
+  channel_type: 'slack' | 'line';
+  status: 'delivered' | 'failed';
+  channel_label?: string; // e.g. "#marketing-alerts"
+  error?: string;
+}
+
 export interface ExecutionHistory {
   _id: string;
   execution_id: string;
@@ -166,4 +187,10 @@ export interface ExecutionHistory {
   total_nodes: number;
   successful_nodes: number;
   failed_nodes: number;
+  // Optional: populated when delivery channels are configured
+  delivery_results?: ExecutionDeliveryResult[];
 }
+
+// Re-export execution debug types from service — stored in backend.ts to keep
+// the Zustand store import chain clean (store → types/backend, not store → services).
+export type { ExecutionDetail, ExecutionSummary, ExecutionStepDetail } from '../services/executionDebugService';

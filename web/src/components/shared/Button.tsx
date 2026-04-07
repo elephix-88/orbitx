@@ -11,23 +11,23 @@ const buttonVariants = cva("btn-base relative overflow-hidden", {
       ghost: "btn-ghost",
       destructive: "btn-destructive",
       outline:
-        "bg-transparent border-2 border-[#1D3557] text-[#1D3557] hover:bg-[#1D3557] hover:text-[#F1FAEE] uppercase tracking-wider rounded-sm",
-      link: "text-[#1D3557] hover:underline p-0 h-auto shadow-none hover:shadow-none hover:translate-y-0 active:scale-100 uppercase tracking-wider",
+        "bg-transparent border border-neutral-700 text-text-primary hover:bg-neutral-800 rounded-lg",
+      link: "text-primary-400 hover:text-primary-300 hover:underline p-0 h-auto shadow-none hover:shadow-none hover:translate-y-0 active:scale-100",
       warning:
-        "bg-[#F4A261] hover:bg-[#E08C4A] text-[#1D3557] uppercase tracking-wider rounded-sm border-2 border-transparent",
+        "bg-warning hover:bg-warning-dark text-neutral-950 rounded-lg border-2 border-transparent",
       success:
-        "bg-emerald-600 hover:bg-emerald-700 text-white uppercase tracking-wider rounded-sm border-2 border-transparent",
+        "bg-success hover:bg-success-dark text-neutral-950 rounded-lg border-2 border-transparent",
     },
     size: {
-      xs: "h-7 px-2 text-sm font-semibold",
-      sm: "h-8 px-3 text-sm font-semibold",
-      md: "h-10 px-5 text-[15px] font-semibold",
-      lg: "h-12 px-8 text-base font-bold",
-      xl: "h-14 px-10 text-lg font-bold",
-      icon: "h-10 w-10 p-0 flex items-center justify-center font-semibold", // Fixed size for icons
-      "icon-sm": "h-8 w-8 p-0 flex items-center justify-center font-semibold",
-      "icon-xs": "h-6 w-6 p-0 flex items-center justify-center font-semibold",
-      auto: "h-auto p-0 font-semibold",
+      xs: "h-7 px-2 text-sm font-medium",
+      sm: "h-8 px-3 text-sm font-medium",
+      md: "h-10 px-5 text-[15px] font-medium",
+      lg: "h-12 px-8 text-base font-medium",
+      xl: "h-14 px-10 text-lg font-medium",
+      icon: "h-10 w-10 p-0 flex items-center justify-center font-medium",
+      "icon-sm": "h-8 w-8 p-0 flex items-center justify-center font-medium",
+      "icon-xs": "h-6 w-6 p-0 flex items-center justify-center font-medium",
+      auto: "h-auto p-0 font-medium",
     },
     width: {
       auto: "w-auto",

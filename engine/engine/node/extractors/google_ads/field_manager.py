@@ -1,5 +1,5 @@
 from common.model.google.ads import GoogleAdsBase
-from common.model.google.ads import GoogleAdsFields as FieldConfig
+from common.model.google.ads import GoogleAdsField as FieldConfig
 
 BASE_DEPTH = {
     GoogleAdsBase.CUSTOMER: 0,

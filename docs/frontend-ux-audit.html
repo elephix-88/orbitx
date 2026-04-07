@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Frontend UX Audit — OrbitX</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', system-ui, sans-serif; background: #0f1117; color: #e2e8f0; padding: 32px; font-size: 14px; }
+
+  h1 { font-size: 1.4rem; font-weight: 700; color: #fff; margin-bottom: 4px; }
+  .subtitle { color: #64748b; font-size: 0.8rem; margin-bottom: 28px; }
+
+  .section { margin-bottom: 36px; }
+  .section-title {
+    font-size: 0.65rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
+    padding: 4px 10px; border-radius: 20px; display: inline-flex; align-items: center; gap-6px;
+    margin-bottom: 14px;
+  }
+  .section-title.critical { background: #450a0a; color: #f87171; border: 1px solid #7f1d1d; }
+  .section-title.high { background: #431407; color: #fb923c; border: 1px solid #7c2d12; }
+  .section-title.medium { background: #1c1917; color: #a8a29e; border: 1px solid #44403c; }
+
+  .issues { display: flex; flex-direction: column; gap: 12px; }
+
+  .issue {
+    background: #161b2e; border: 1px solid #1e2a45; border-radius: 10px; padding: 16px 18px;
+  }
+  .issue.critical { border-left: 3px solid #ef4444; }
+  .issue.high { border-left: 3px solid #f97316; }
+  .issue.medium { border-left: 3px solid #78716c; }
+
+  .issue-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 8px; gap: 12px; }
+  .issue-title { font-size: 0.88rem; font-weight: 600; color: #f1f5f9; }
+  .file-tag {
+    background: #0f172a; color: #7dd3fc; font-size: 0.62rem; padding: 3px 8px; border-radius: 4px;
+    font-family: monospace; border: 1px solid #1e3a5f; white-space: nowrap; flex-shrink: 0;
+  }
+  .issue-desc { font-size: 0.78rem; color: #94a3b8; line-height: 1.6; margin-bottom: 10px; }
+
+  pre {
+    background: #0d1117; border: 1px solid #21262d; border-radius: 6px;
+    padding: 10px 14px; font-size: 0.72rem; color: #e6edf3; overflow-x: auto;
+    font-family: 'JetBrains Mono', 'Fira Code', monospace; line-height: 1.6;
+    margin-top: 8px;
+  }
+  .bad { color: #f85149; }
+  .good { color: #56d364; }
+  .comment { color: #8b949e; }
+
+  .fix-label { font-size: 0.65rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 4px; }
+  .fix-label.bad-code { color: #f85149; }
+  .fix-label.good-code { color: #56d364; }
+
+  .impact-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+  .badge {
+    font-size: 0.62rem; font-weight: 600; padding: 2px 8px; border-radius: 20px;
+  }
+  .badge.ux { background: #1a1f4b; color: #93c5fd; border: 1px solid #2d3a8c; }
+  .badge.bug { background: #2d0f0f; color: #fca5a5; border: 1px solid #7f1d1d; }
+  .badge.perf { background: #1a2e1a; color: #86efac; border: 1px solid #166534; }
+  .badge.ts { background: #1f1b2e; color: #c4b5fd; border: 1px solid #4c1d95; }
+  .badge.design { background: #1c1917; color: #fbbf24; border: 1px solid #78350f; }
+
+  hr { border: none; border-top: 1px solid #1e2a45; margin: 28px 0; }
+
+  .summary-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 28px; }
+  .summary-card { background: #161b2e; border: 1px solid #1e2a45; border-radius: 10px; padding: 14px 16px; text-align: center; }
+  .summary-num { font-size: 2rem; font-weight: 800; }
+  .summary-num.c { color: #ef4444; }
+  .summary-num.h { color: #f97316; }
+  .summary-num.m { color: #78716c; }
+  .summary-label { font-size: 0.7rem; color: #64748b; margin-top: 2px; }
+</style>
+</head>
+<body>
+
+<h1>🔍 Frontend UX / Code Audit</h1>
+<p class="subtitle">OrbitX Web — Deep analysis of actual rendering problems and bad patterns · 2026-04-07</p>
+
+<div class="summary-grid">
+  <div class="summary-card"><div class="summary-num c">4</div><div class="summary-label">Critical — Fix Before Launch</div></div>
+  <div class="summary-card"><div class="summary-num h">7</div><div class="summary-label">High — Fix This Sprint</div></div>
+  <div class="summary-card"><div class="summary-num m">6</div><div class="summary-label">Medium — Accumulating Tech Debt</div></div>
+</div>
+
+<!-- CRITICAL -->
+<div class="section">
+  <div class="section-title critical">🔴 Critical — Broken UX / User-Facing Bugs</div>
+  <div class="issues">
+
+    <div class="issue critical">
+      <div class="issue-header">
+        <div class="issue-title">1. normalizeConnectorType() returns inconsistent casing — connections never match</div>
+        <div class="file-tag">ConnectionsPage.tsx</div>
+      </div>
+      <div class="issue-desc">
+        The function that maps raw connector strings to type IDs returns different formats for each platform. This means connection icons, labels, and OAuth flows silently mis-match. Users see wrong icons or unlabeled connections.
+      </div>
+      <div class="fix-label bad-code">❌ Current code</div>
+      <pre><span class="bad">if (t.includes("facebook")) return "facebookads";      // lowercase, no separator
+if (t.includes("googleads")) return "google_ads";       // snake_case
+if (t.includes("sheet")) return "GoogleSheets";         // PascalCase — 3 different formats!</span></pre>
+      <div class="fix-label good-code">✅ Fix — pick ONE format and use it everywhere</div>
+      <pre><span class="good">const TYPE_MAP: Record&lt;string, ConnectorType&gt; = {
+  facebook: "facebook_ads",
+  meta: "facebook_ads",
+  googleads: "google_ads",
+  sheet: "google_sheets",
+  bigquery: "bigquery",
+  tiktok: "tiktok_ads",
+};</span></pre>
+      <div class="impact-row"><span class="badge bug">Silent Bug</span><span class="badge ux">Wrong UI</span><span class="badge design">Data Mismatch</span></div>
+    </div>
+
+    <div class="issue critical">
+      <div class="issue-header">
+        <div class="issue-title">2. Dashboard API failure is completely silent — shows all zeros with no error UI</div>
+        <div class="file-tag">DashboardPage.tsx</div>
+      </div>
+      <div class="issue-desc">
+        When the dashboard API call fails, the error is caught and logged to console only. The page renders as if data loaded — stats show 0, charts show empty, no toast, no error state. Users think they have no data when the API is actually down.
+      </div>
+      <div class="fix-label bad-code">❌ Current code</div>
+      <pre><span class="bad">} catch (error) {
+  console.error('Failed to fetch dashboard data:', error);
+  <span class="comment">// User sees a page of zeros. No feedback at all.</span>
+}</span></pre>
+      <div class="fix-label good-code">✅ Fix</div>
+      <pre><span class="good">} catch (error) {
+  setFetchError('Failed to load dashboard data. Please refresh.');
+  notify.error('Error', 'Could not load dashboard data');
+}</span>
+<span class="comment">// Then in JSX: {fetchError &amp;&amp; &lt;ErrorBanner message={fetchError} /&gt;}</span></pre>
+      <div class="impact-row"><span class="badge bug">Silent Failure</span><span class="badge ux">Confusing UX</span></div>
+    </div>
+
+    <div class="issue critical">
+      <div class="issue-header">
+        <div class="issue-title">3. OAuth success notification fires before connection actually loads — race condition</div>
+        <div class="file-tag">ConnectionsPage.tsx</div>
+      </div>
+      <div class="issue-desc">
+        When a platform OAuth completes, the handler immediately shows "Connected!" and calls loadConnections(). If loadConnections() fails or returns stale data, user thinks they're connected but the connection doesn't appear in the list.
+      </div>
+      <div class="fix-label bad-code">❌ Current code</div>
+      <pre><span class="bad">notify.success("Success", `${label} Connected!`);  <span class="comment">// fires immediately</span>
+loadConnections();                                  <span class="comment">// async, no await, no error handling</span></span></pre>
+      <div class="fix-label good-code">✅ Fix</div>
+      <pre><span class="good">try {
+  await loadConnections();
+  notify.success("Connected", `${label} connected successfully`);
+} catch {
+  notify.error("Error", `${label} connected but failed to refresh. Please reload.`);
+}</span></pre>
+      <div class="impact-row"><span class="badge bug">Race Condition</span><span class="badge ux">False Positive</span></div>
+    </div>
+
+    <div class="issue critical">
+      <div class="issue-header">
+        <div class="issue-title">4. ExecutionTreeRow shows blank when expanded with 0 steps — no empty state</div>
+        <div class="file-tag">DashboardPage.tsx</div>
+      </div>
+      <div class="issue-desc">
+        When a user expands a workflow execution row that has no step data, the row expands to reveal nothing — no spinner, no "no steps", nothing. It looks broken.
+      </div>
+      <div class="fix-label bad-code">❌ Current code</div>
+      <pre><span class="bad">{isExpanded &amp;&amp; steps.length &gt; 0 &amp;&amp; (
+  &lt;motion.div&gt;...table...&lt;/motion.div&gt;
+)}
+<span class="comment">// If isExpanded = true but steps.length = 0 → blank</span></span></pre>
+      <div class="fix-label good-code">✅ Fix</div>
+      <pre><span class="good">{isExpanded &amp;&amp; (
+  steps.length === 0
+    ? &lt;p className="text-text-tertiary text-sm py-3 text-center"&gt;No steps recorded&lt;/p&gt;
+    : &lt;motion.div&gt;...table...&lt;/motion.div&gt;
+)}</span></pre>
+      <div class="impact-row"><span class="badge ux">Looks Broken</span><span class="badge bug">Missing State</span></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- HIGH -->
+<div class="section">
+  <div class="section-title high">🟠 High — Broken Design System / Bad Patterns</div>
+  <div class="issues">
+
+    <div class="issue high">
+      <div class="issue-header">
+        <div class="issue-title">5. Hardcoded colors everywhere — design system completely ignored in node editors</div>
+        <div class="file-tag">GoogleAdsEditor · FacebookAdsEditor · TikTokAdsEditor · ErrorTriggerEditor · ErrorBoundary</div>
+      </div>
+      <div class="issue-desc">
+        5 files use raw Tailwind colors (red-50, red-200, red-800, brand-500, brand-600) that don't exist as design tokens. This means dark mode doesn't work on these components and colors are visually inconsistent from the rest of the app.
+      </div>
+      <pre><span class="bad"><span class="comment">// ❌ These don't exist as tokens. Dark mode: broken.</span>
+bg-red-50 border-red-200 text-red-800
+bg-brand-500 hover:bg-brand-600
+bg-red-500/5 border-red-500/20 text-red-400</span>
+
+<span class="good"><span class="comment">// ✅ Use existing tokens</span>
+bg-error/10 border-error/30 text-error
+bg-primary-400 hover:bg-primary-500
+bg-error/5 border-error/20 text-error</span></pre>
+      <div class="impact-row"><span class="badge design">Design System</span><span class="badge ux">Dark Mode Broken</span></div>
+    </div>
+
+    <div class="issue high">
+      <div class="issue-header">
+        <div class="issue-title">6. GoogleAdsEditor silently clears account selection with no user notification</div>
+        <div class="file-tag">GoogleAdsEditor.tsx</div>
+      </div>
+      <div class="issue-desc">
+        When a connection becomes invalid, the editor silently resets adAccountIds to an empty array. User has no idea why their account selection disappeared. Also disables exhaustive-deps lint rule with no explanation — hides potential stale closure.
+      </div>
+      <pre><span class="bad">setForm((prev) => ({ ...prev, accessToken: nextId, adAccountIds: [] }));
+<span class="comment">// eslint-disable-next-line react-hooks/exhaustive-deps — no reason given</span>
+}, [connections]);</span>
+
+<span class="good"><span class="comment">// ✅ Notify the user</span>
+setForm((prev) => ({ ...prev, accessToken: nextId, adAccountIds: [] }));
+notify.warning('Connection changed', 'Please re-select your ad accounts.');</span></pre>
+      <div class="impact-row"><span class="badge ux">Silent Change</span><span class="badge bug">Lint Suppressed</span><span class="badge ts">Stale Closure Risk</span></div>
+    </div>
+
+    <div class="issue high">
+      <div class="issue-header">
+        <div class="issue-title">7. WorkflowBuilderPage — lazy panels have no Suspense fallback</div>
+        <div class="file-tag">WorkflowBuilderPage.tsx</div>
+      </div>
+      <div class="issue-desc">
+        6 heavy panels are lazy-loaded (ExecutionLogPanel, NodeConfigPanel, PreviewPanel, etc.) but there's no Suspense wrapper around them. On slow connections, opening a panel causes a blank flash or layout jump.
+      </div>
+      <pre><span class="bad">const ExecutionLogPanel = lazy(() => import("..."));
+const NodeConfigPanel = lazy(() => import("..."));
+<span class="comment">// No &lt;Suspense fallback={}&gt; wrapping these in the render tree</span></span>
+
+<span class="good">&lt;Suspense fallback={&lt;PanelSkeleton /&gt;}&gt;
+  {showExecutionLog &amp;&amp; &lt;ExecutionLogPanel /&gt;}
+&lt;/Suspense&gt;</span></pre>
+      <div class="impact-row"><span class="badge ux">Layout Jump</span><span class="badge perf">Blank Flash</span></div>
+    </div>
+
+    <div class="issue high">
+      <div class="issue-header">
+        <div class="issue-title">8. AccountSelector auto-selects silently — magic behavior confuses users</div>
+        <div class="file-tag">AccountSelector.tsx</div>
+      </div>
+      <div class="issue-desc">
+        When there's only one available account, it auto-selects without any indication. Users editing a node don't understand why an account is pre-selected, or why re-opening the editor has a different state than they expect.
+      </div>
+      <pre><span class="bad">if (autoSelectSingle &amp;&amp; transformed.length === 1 &amp;&amp; value.length === 0) {
+  onChange([transformed[0].id]);  <span class="comment">// Silent. No visual cue.</span>
+}</span>
+
+<span class="good">if (autoSelectSingle &amp;&amp; transformed.length === 1 &amp;&amp; value.length === 0) {
+  onChange([transformed[0].id]);
+  <span class="comment">// Show subtle "Auto-selected" badge next to the account</span>
+}</span></pre>
+      <div class="impact-row"><span class="badge ux">Confusing</span><span class="badge bug">Unexpected State</span></div>
+    </div>
+
+    <div class="issue high">
+      <div class="issue-header">
+        <div class="issue-title">9. SchemaFieldSelector expanded groups don't update when fields change</div>
+        <div class="file-tag">SchemaFieldSelector.tsx</div>
+      </div>
+      <div class="issue-desc">
+        Uses an `initialized` boolean flag to prevent re-running the expand logic. But if fields prop changes after mount (e.g., user switches connections), the expanded group state is stale — wrong groups shown as expanded.
+      </div>
+      <pre><span class="bad">useEffect(() => {
+  if (fields.length &gt; 0 &amp;&amp; !initialized) {  <span class="comment">// runs ONCE only</span>
+    setExpandedGroups(...);
+    setInitialized(true);  <span class="comment">// never re-runs even if fields change</span>
+  }
+}, [fields, selectedIds, initialized]);</span>
+
+<span class="good">useEffect(() => {
+  if (fields.length === 0) return;
+  const selectedSet = new Set(selectedIds);
+  const groupsToExpand = new Set(
+    fields.filter(f =&gt; selectedSet.has(f.id)).map(f =&gt; f.group ?? 'General')
+  );
+  setExpandedGroups(groupsToExpand);
+}, [fields]);  <span class="comment">// Re-run when fields actually change</span></span></pre>
+      <div class="impact-row"><span class="badge bug">Stale State</span><span class="badge ux">Wrong Groups Shown</span></div>
+    </div>
+
+    <div class="issue high">
+      <div class="issue-header">
+        <div class="issue-title">10. FacebookAdsForm uses `as any` — bypasses all TypeScript safety</div>
+        <div class="file-tag">FacebookAdsForm.tsx · GoogleAdsEditor.tsx</div>
+      </div>
+      <div class="issue-desc">
+        Multiple editors cast incoming `data` prop to `any` before reading fields. If the backend schema changes or returns unexpected shape, this causes silent runtime errors instead of caught TypeScript errors.
+      </div>
+      <pre><span class="bad">const formData = data as FacebookAdsFormData;  <span class="comment">// no runtime check</span>
+const anyd = (d || {}) as any;                 <span class="comment">// explicitly bypasses TS</span></span>
+
+<span class="good">import { z } from 'zod';
+const FacebookAdsSchema = z.object({
+  connection_id: z.string(),
+  ad_account_id: z.array(z.string()),
+});
+const parsed = FacebookAdsSchema.safeParse(data);
+if (!parsed.success) { <span class="comment">/* show error */</span> return; }
+const formData = parsed.data;</span></pre>
+      <div class="impact-row"><span class="badge ts">TypeScript Bypass</span><span class="badge bug">Runtime Error Risk</span></div>
+    </div>
+
+    <div class="issue high">
+      <div class="issue-header">
+        <div class="issue-title">11. Field.tsx uses string concatenation instead of cn() — fragile class merging</div>
+        <div class="file-tag">form/Field.tsx</div>
+      </div>
+      <div class="issue-desc">
+        Form input classnames are built with template literals and `|| ''` fallbacks. This causes class conflicts when both a base class and override class apply — tailwind-merge can't deduplicate them.
+      </div>
+      <pre><span class="bad">className={`w-full h-11 px-3 rounded-md ring-1 ${hasError ? 'ring-error/50' : 'ring-border-subtle'} ... ${className || ''}`}</span>
+
+<span class="good">className={cn(
+  "w-full h-11 px-3 rounded-md ring-1",
+  hasError ? 'ring-error/50' : 'ring-border-subtle',
+  "focus:outline-none focus:ring-primary-500/20",
+  className
+)}</span></pre>
+      <div class="impact-row"><span class="badge design">Style Conflicts</span><span class="badge ts">Bad Pattern</span></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- MEDIUM -->
+<div class="section">
+  <div class="section-title medium">⚪ Medium — Tech Debt / Minor UX Issues</div>
+  <div class="issues">
+
+    <div class="issue medium">
+      <div class="issue-header">
+        <div class="issue-title">12. WorkflowsPage grid/list toggle resets on every visit</div>
+        <div class="file-tag">WorkflowsPage.tsx</div>
+      </div>
+      <div class="issue-desc">View preference (grid vs list) is local state — resets to list every time user navigates away. 1-line fix: persist to localStorage.</div>
+      <pre><span class="bad">const [isGridView, setIsGridView] = useState(false);</span>
+<span class="good">const [isGridView, setIsGridView] = useLocalStorage('workflows-grid-view', false);</span></pre>
+      <div class="impact-row"><span class="badge ux">Annoyance</span></div>
+    </div>
+
+    <div class="issue medium">
+      <div class="issue-header">
+        <div class="issue-title">13. WorkflowBuilderPage — debug state persists across navigation</div>
+        <div class="file-tag">workflowStore.ts · WorkflowBuilderPage.tsx</div>
+      </div>
+      <div class="issue-desc">Debug execution state in Zustand isn't cleared on page unmount. Return to builder and you see stale debug data from a previous run, making it look like you just executed something.</div>
+      <div class="impact-row"><span class="badge bug">Stale State</span><span class="badge ux">Confusing</span></div>
+    </div>
+
+    <div class="issue medium">
+      <div class="issue-header">
+        <div class="issue-title">14. FacebookAdsForm — triple normalization functions doing the same job</div>
+        <div class="file-tag">FacebookAdsForm.tsx</div>
+      </div>
+      <div class="issue-desc">Three separate functions `stripAllActPrefixes`, `normalizeAccountId`, `normalizeAccountIdArray` for the same purpose — stripping "act_" prefix from Facebook account IDs. One function handles all cases.</div>
+      <div class="impact-row"><span class="badge ts">DRY Violation</span><span class="badge bug">Inconsistent Logic</span></div>
+    </div>
+
+    <div class="issue medium">
+      <div class="issue-header">
+        <div class="issue-title">15. Sidebar drag — no visual feedback when dragging a node</div>
+        <div class="file-tag">Sidebar.tsx</div>
+      </div>
+      <div class="issue-desc">When user drags a node from the sidebar, there's no custom drag image, no cursor change, no ghost. The default browser drag ghost (blurry element snapshot) looks terrible.</div>
+      <div class="impact-row"><span class="badge ux">Poor Feel</span></div>
+    </div>
+
+    <div class="issue medium">
+      <div class="issue-header">
+        <div class="issue-title">16. aria-label on notification emoji uses type string ("success") not descriptive text</div>
+        <div class="file-tag">Notification.tsx</div>
+      </div>
+      <div class="issue-desc">Screen readers announce "success image" instead of "Success notification". Minor a11y issue but easy fix.</div>
+      <pre><span class="bad">&lt;span role="img" aria-label={type}&gt;{emoji}&lt;/span&gt;</span>
+<span class="good">&lt;span role="img" aria-label={`${type} notification icon`}&gt;{emoji}&lt;/span&gt;</span></pre>
+      <div class="impact-row"><span class="badge ux">Accessibility</span></div>
+    </div>
+
+    <div class="issue medium">
+      <div class="issue-header">
+        <div class="issue-title">17. customDateError never gets set in DashboardPage — dead error prop</div>
+        <div class="file-tag">DashboardPage.tsx</div>
+      </div>
+      <div class="issue-desc">`customDateError` state is initialized and passed to DateRangePicker as `error` prop, but there's no code path that ever calls `setCustomDateError()` with an actual error value. Dead code.</div>
+      <div class="impact-row"><span class="badge bug">Dead Code</span><span class="badge ux">Error Never Shown</span></div>
+    </div>
+
+  </div>
+</div>
+
+<hr>
+<div style="font-size:0.72rem; color: #475569; text-align:right;">OrbitX Frontend UX Audit · 2026-04-07 · 17 issues found across 10 files</div>
+</body>
+</html>

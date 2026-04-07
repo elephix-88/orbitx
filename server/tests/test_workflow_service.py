@@ -1,22 +1,19 @@
 from datetime import datetime
-from unittest.mock import MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-from fastapi import HTTPException
+
 from common.model.user import UserInDB
 from common.model.workflow import JobIdRequest, WorkflowData
-
 from server.services.workflow import (
     create_new_workflow,
     delete_workflow,
-    execute_workflow,
     get_all_workflows,
     get_workflow_builder,
     update_workflow,
 )
 
-# Create a mock user for context
-_MOCK_USER = UserInDB(
+MOCK_USER = UserInDB(
     id="test_user_id_123",
     email="test@example.com",
     name="Test User",
@@ -26,39 +23,8 @@ _MOCK_USER = UserInDB(
 )
 
 
-@pytest.fixture
-def mock_mongodb():
-    with patch("server.services.workflow.mongodb_client") as mock:
-        yield mock
-
-
-@pytest.fixture
-def mock_scheduler_service():
-    with patch("server.services.workflow.scheduler_service") as mock:
-        yield mock
-
-
-@pytest.fixture
-def mock_settings():
-    with patch("server.services.workflow.settings") as mock:
-        mock.workflow_collection = "workflows"
-        mock.google_cloud_project_id = "test-project"
-        mock.google_cloud_location = "us-central1"
-        mock.google_cloud_job_name = "test-job"
-        yield mock
-
-
-@pytest.fixture
-def mock_user_context():
-    """Mock the user context for service functions."""
-    with patch("server.services.workflow.get_current_user") as mock:
-        mock.return_value = _MOCK_USER
-        yield mock
-
-
-@pytest.fixture
-def valid_workflow_data():
-    return {
+def make_workflow_doc(**overrides) -> dict:
+    base = {
         "_id": "123",
         "user_id": "test_user_id_123",
         "job_name": "Test Job",
@@ -69,350 +35,198 @@ def valid_workflow_data():
         "nodes": [],
         "connections": [],
     }
+    base.update(overrides)
+    return base
 
 
-class TestWorkflowService:
-    def test_get_all_workflows(
-        self, mock_mongodb, mock_settings, mock_user_context, valid_workflow_data
-    ):
-        # Arrange
-        data1 = valid_workflow_data.copy()
-        data1["_id"] = "1"
-        data2 = valid_workflow_data.copy()
-        data2["_id"] = "2"
+def make_mock_database(collection: MagicMock) -> MagicMock:
+    mock_db = MagicMock()
+    mock_db.__getitem__ = MagicMock(return_value=collection)
+    return mock_db
 
-        mock_mongodb.get_all_documents.return_value = [data1, data2]
 
-        # Act
-        result = get_all_workflows()
+@pytest.fixture
+def mock_user_context():
+    with patch("server.services.workflow.get_current_user") as mock:
+        mock.return_value = MOCK_USER
+        yield mock
 
-        # Assert
+
+@pytest.fixture
+def mock_prefect_client():
+    with patch("server.services.workflow.prefect_client") as mock:
+        mock.sync_deployment = AsyncMock()
+        mock.delete_deployment = AsyncMock()
+        mock.launch_run = AsyncMock(return_value="run_abc123")
+        yield mock
+
+
+class TestGetAllWorkflows:
+    @pytest.mark.asyncio
+    async def test_returns_all_user_workflows(self, mock_user_context):
+        doc1 = make_workflow_doc(_id="1")
+        doc2 = make_workflow_doc(_id="2")
+
+        mock_collection = MagicMock()
+        mock_cursor = MagicMock()
+        mock_cursor.to_list = AsyncMock(return_value=[doc1, doc2])
+        mock_collection.find.return_value = mock_cursor
+
+        mock_db = make_mock_database(mock_collection)
+        with patch("common.database.mongodb.database", mock_db):
+            result = await get_all_workflows()
+
         assert len(result) == 2
         assert result[0].id == "1"
         assert result[1].id == "2"
-        mock_mongodb.get_all_documents.assert_called_once()
 
-    def test_get_workflow_builder_success(
-        self, mock_mongodb, mock_settings, mock_user_context, valid_workflow_data
-    ):
-        # Arrange
-        request = JobIdRequest(_id="123")
-        mock_mongodb.get_document.return_value = WorkflowData(**valid_workflow_data)
+    @pytest.mark.asyncio
+    async def test_returns_empty_list_when_no_workflows(self, mock_user_context):
+        mock_collection = MagicMock()
+        mock_cursor = MagicMock()
+        mock_cursor.to_list = AsyncMock(return_value=[])
+        mock_collection.find.return_value = mock_cursor
 
-        # Act
-        result = get_workflow_builder(request)
+        mock_db = make_mock_database(mock_collection)
+        with patch("common.database.mongodb.database", mock_db):
+            result = await get_all_workflows()
 
-        # Assert
+        assert result == []
+
+
+class TestGetWorkflowBuilder:
+    @pytest.mark.asyncio
+    async def test_returns_workflow_when_found(self, mock_user_context):
+        doc = make_workflow_doc()
+        mock_collection = MagicMock()
+        mock_collection.find_one = AsyncMock(return_value=doc)
+
+        mock_db = make_mock_database(mock_collection)
+        with patch("common.database.mongodb.database", mock_db):
+            result = await get_workflow_builder(JobIdRequest(_id="123"))
+
         assert result.id == "123"
-        mock_mongodb.get_document.assert_called_once()
 
-    def test_get_workflow_builder_missing_id(self, mock_user_context):
-        # JobIdRequest validates presence of id, but if we pass empty string it might fail validation or logic
-        # If we pass None, pydantic raises ValidationError before function call if not optional
-        # The function checks `if not request.id`.
-        request = JobIdRequest(_id="")
-        with pytest.raises(HTTPException) as exc:
-            get_workflow_builder(request)
-        assert exc.value.status_code == 400
+    @pytest.mark.asyncio
+    async def test_raises_validation_error_when_id_missing(self, mock_user_context):
+        from server.services.exceptions import ValidationError
 
-    def test_get_workflow_builder_not_found(
-        self, mock_mongodb, mock_settings, mock_user_context
-    ):
-        request = JobIdRequest(_id="123")
-        mock_mongodb.get_document.return_value = None
+        with pytest.raises(ValidationError):
+            await get_workflow_builder(JobIdRequest(_id=""))
 
-        with pytest.raises(HTTPException) as exc:
-            get_workflow_builder(request)
-        assert exc.value.status_code == 404
+    @pytest.mark.asyncio
+    async def test_raises_not_found_when_doc_absent(self, mock_user_context):
+        from server.services.exceptions import WorkflowNotFoundError
 
-    def test_update_workflow_success(
-        self,
-        mock_mongodb,
-        mock_scheduler_service,
-        mock_settings,
-        mock_user_context,
-        valid_workflow_data,
-    ):
-        # Arrange
-        workflow = WorkflowData(**valid_workflow_data)
+        mock_collection = MagicMock()
+        mock_collection.find_one = AsyncMock(return_value=None)
+
+        mock_db = make_mock_database(mock_collection)
+        with patch("common.database.mongodb.database", mock_db), pytest.raises(WorkflowNotFoundError):
+            await get_workflow_builder(JobIdRequest(_id="123"))
+
+
+class TestUpdateWorkflow:
+    @pytest.mark.asyncio
+    async def test_success(self, mock_user_context, mock_prefect_client):
         mock_update_result = MagicMock()
         mock_update_result.matched_count = 1
-        mock_mongodb.update_document.return_value = mock_update_result
-        mock_scheduler_service.update_workflow_schedule.return_value = True
+        mock_collection = MagicMock()
+        mock_collection.update_one = AsyncMock(return_value=mock_update_result)
 
-        # Act
-        result = update_workflow(workflow)
+        workflow = WorkflowData(**make_workflow_doc())
 
-        # Assert
+        mock_db = make_mock_database(mock_collection)
+        with patch("common.database.mongodb.database", mock_db), patch(
+            "server.services.workflow.database", mock_db
+        ):
+            result = await update_workflow(workflow)
+
         assert result is True
-        mock_mongodb.update_document.assert_called_once()
-        mock_scheduler_service.update_workflow_schedule.assert_called_once()
+        mock_collection.update_one.assert_awaited_once()
+        mock_prefect_client.sync_deployment.assert_awaited_once()
 
-    def test_update_workflow_missing_id(self, mock_user_context, valid_workflow_data):
-        data = valid_workflow_data.copy()
-        data["_id"] = None  # Pydantic might allow None if optional, or we omit it
-        del data["_id"]
-        # WorkflowData id is optional (default None) or alias _id
-        workflow = WorkflowData(**data)
-        # Ensure id is None
+    @pytest.mark.asyncio
+    async def test_raises_validation_error_when_id_missing(self, mock_user_context):
+        from server.services.exceptions import ValidationError
+
+        doc = make_workflow_doc()
+        del doc["_id"]
+        workflow = WorkflowData(**doc)
         workflow.id = None
 
-        with pytest.raises(HTTPException) as exc:
-            update_workflow(workflow)
-        assert exc.value.status_code == 400
+        with pytest.raises(ValidationError):
+            await update_workflow(workflow)
 
-    def test_update_workflow_not_found(
-        self, mock_mongodb, mock_settings, mock_user_context, valid_workflow_data
-    ):
-        workflow = WorkflowData(**valid_workflow_data)
+    @pytest.mark.asyncio
+    async def test_raises_not_found_when_no_match(self, mock_user_context):
+        from server.services.exceptions import WorkflowNotFoundError
+
         mock_update_result = MagicMock()
         mock_update_result.matched_count = 0
-        mock_mongodb.update_document.return_value = mock_update_result
+        mock_collection = MagicMock()
+        mock_collection.update_one = AsyncMock(return_value=mock_update_result)
 
-        with pytest.raises(HTTPException) as exc:
-            update_workflow(workflow)
-        assert exc.value.status_code == 404
+        workflow = WorkflowData(**make_workflow_doc())
 
-    def test_update_workflow_scheduler_failure(
-        self,
-        mock_mongodb,
-        mock_scheduler_service,
-        mock_settings,
-        mock_user_context,
-        valid_workflow_data,
-    ):
-        # Arrange
-        workflow = WorkflowData(**valid_workflow_data)
-        mock_update_result = MagicMock()
-        mock_update_result.matched_count = 1
-        mock_mongodb.update_document.return_value = mock_update_result
-        mock_scheduler_service.update_workflow_schedule.return_value = False
+        mock_db = make_mock_database(mock_collection)
+        with patch("common.database.mongodb.database", mock_db), patch(
+            "server.services.workflow.database", mock_db
+        ), pytest.raises(WorkflowNotFoundError):
+            await update_workflow(workflow)
 
-        # Act
-        result = update_workflow(workflow)
 
-        # Assert
-        assert result is True  # Should still return true as DB update succeeded
-        mock_scheduler_service.update_workflow_schedule.assert_called_once()
+class TestDeleteWorkflow:
+    @pytest.mark.asyncio
+    async def test_success(self, mock_user_context, mock_prefect_client):
+        doc = make_workflow_doc()
+        mock_delete_result = MagicMock()
+        mock_delete_result.deleted_count = 1
+        mock_collection = MagicMock()
+        mock_collection.find_one = AsyncMock(return_value=doc)
+        mock_collection.delete_one = AsyncMock(return_value=mock_delete_result)
 
-    def test_update_workflow_scheduler_exception(
-        self,
-        mock_mongodb,
-        mock_scheduler_service,
-        mock_settings,
-        mock_user_context,
-        valid_workflow_data,
-    ):
-        # Arrange
-        workflow = WorkflowData(**valid_workflow_data)
-        mock_update_result = MagicMock()
-        mock_update_result.matched_count = 1
-        mock_mongodb.update_document.return_value = mock_update_result
-        mock_scheduler_service.update_workflow_schedule.side_effect = Exception(
-            "Scheduler Error"
-        )
+        mock_db = make_mock_database(mock_collection)
+        with patch("common.database.mongodb.database", mock_db), patch(
+            "server.services.workflow.database", mock_db
+        ):
+            result = await delete_workflow("123")
 
-        # Act
-        result = update_workflow(workflow)
-
-        # Assert
         assert result is True
+        mock_prefect_client.delete_deployment.assert_awaited_once_with("123")
 
-    def test_delete_workflow_success(
-        self,
-        mock_mongodb,
-        mock_scheduler_service,
-        mock_settings,
-        mock_user_context,
-        valid_workflow_data,
-    ):
-        # Arrange
-        mock_mongodb.get_document.return_value = WorkflowData(**valid_workflow_data)
-        mock_scheduler_service.delete_workflow_schedule.return_value = True
-        mock_mongodb.delete_document.return_value = True
+    @pytest.mark.asyncio
+    async def test_returns_false_when_id_empty(self, mock_user_context):
+        assert await delete_workflow("") is False
 
-        # Act
-        result = delete_workflow("123")
+    @pytest.mark.asyncio
+    async def test_returns_false_when_workflow_not_found(self, mock_user_context):
+        mock_collection = MagicMock()
+        mock_collection.find_one = AsyncMock(return_value=None)
 
-        # Assert
-        assert result is True
-        mock_scheduler_service.delete_workflow_schedule.assert_called_once_with(
-            job_id="123"
-        )
-        mock_mongodb.delete_document.assert_called_once()
+        mock_db = make_mock_database(mock_collection)
+        with patch("common.database.mongodb.database", mock_db), patch(
+            "server.services.workflow.database", mock_db
+        ):
+            result = await delete_workflow("123")
 
-    def test_delete_workflow_missing_id(self, mock_user_context):
-        assert delete_workflow("") is False
-
-    def test_delete_workflow_scheduler_failure(
-        self,
-        mock_mongodb,
-        mock_scheduler_service,
-        mock_settings,
-        mock_user_context,
-        valid_workflow_data,
-    ):
-        # Arrange
-        mock_mongodb.get_document.return_value = WorkflowData(**valid_workflow_data)
-        mock_scheduler_service.delete_workflow_schedule.return_value = False
-        mock_mongodb.delete_document.return_value = True
-
-        # Act
-        result = delete_workflow("123")
-
-        # Assert
-        assert result is True  # Should proceed to delete from DB
-
-    def test_delete_workflow_scheduler_exception(
-        self,
-        mock_mongodb,
-        mock_scheduler_service,
-        mock_settings,
-        mock_user_context,
-        valid_workflow_data,
-    ):
-        # Arrange
-        mock_mongodb.get_document.return_value = WorkflowData(**valid_workflow_data)
-        mock_scheduler_service.delete_workflow_schedule.side_effect = Exception("Error")
-        mock_mongodb.delete_document.return_value = True
-
-        # Act
-        result = delete_workflow("123")
-
-        # Assert
-        assert result is True
-
-    def test_delete_workflow_get_error(
-        self, mock_mongodb, mock_settings, mock_user_context
-    ):
-        # Arrange
-        mock_mongodb.get_document.side_effect = Exception("DB Error")
-        mock_mongodb.delete_document.return_value = True
-
-        # Act
-        result = delete_workflow("123")
-
-        # Assert - when get_document fails, delete_workflow returns False
         assert result is False
 
-    def test_create_new_workflow_success(
-        self,
-        mock_mongodb,
-        mock_scheduler_service,
-        mock_settings,
-        mock_user_context,
-        valid_workflow_data,
-    ):
-        # Arrange
-        workflow = WorkflowData(**valid_workflow_data)
-        # Ensure ID is None to trigger generation (though we pass 123 in valid_workflow_data, let's clear it)
-        workflow.id = None
 
-        mock_mongodb.insert_document.return_value = "new_id_123"
-        mock_scheduler_service.create_workflow_schedule.return_value = True
+class TestCreateNewWorkflow:
+    @pytest.mark.asyncio
+    async def test_success(self, mock_user_context, mock_prefect_client):
+        mock_collection = MagicMock()
+        mock_collection.insert_one = AsyncMock()
 
-        # Act
-        result = create_new_workflow(workflow)
+        workflow = WorkflowData(**make_workflow_doc())
 
-        # Assert
-        assert result.id == "new_id_123"
-        mock_scheduler_service.create_workflow_schedule.assert_called_once()
+        mock_db = make_mock_database(mock_collection)
+        with patch("common.database.mongodb.database", mock_db), patch(
+            "server.services.workflow.database", mock_db
+        ):
+            result = await create_new_workflow(workflow)
 
-    def test_create_new_workflow_scheduler_failure(
-        self,
-        mock_mongodb,
-        mock_scheduler_service,
-        mock_settings,
-        mock_user_context,
-        valid_workflow_data,
-    ):
-        # Arrange
-        workflow = WorkflowData(**valid_workflow_data)
-        workflow.id = None
-        mock_mongodb.insert_document.return_value = "new_id_123"
-        mock_scheduler_service.create_workflow_schedule.return_value = False
-
-        # Act
-        result = create_new_workflow(workflow)
-
-        # Assert
-        assert result.id == "new_id_123"
-
-    def test_create_new_workflow_scheduler_exception(
-        self,
-        mock_mongodb,
-        mock_scheduler_service,
-        mock_settings,
-        mock_user_context,
-        valid_workflow_data,
-    ):
-        # Arrange
-        workflow = WorkflowData(**valid_workflow_data)
-        workflow.id = None
-        mock_mongodb.insert_document.return_value = "new_id_123"
-        mock_scheduler_service.create_workflow_schedule.side_effect = Exception("Error")
-
-        # Act
-        result = create_new_workflow(workflow)
-
-        # Assert
-        assert result.id == "new_id_123"
-
-    def test_execute_workflow_success(
-        self,
-        mock_mongodb,
-        mock_scheduler_service,
-        mock_settings,
-        mock_user_context,
-        valid_workflow_data,
-    ):
-        # Arrange
-        mock_mongodb.get_document.return_value = valid_workflow_data
-        mock_scheduler_service.run_workflow_schedule.return_value = True
-
-        # Act
-        result = execute_workflow("job_123")
-
-        # Assert
-        assert result is True
-        mock_scheduler_service.run_workflow_schedule.assert_called_once_with("job_123")
-
-    def test_execute_workflow_failure(
-        self,
-        mock_mongodb,
-        mock_scheduler_service,
-        mock_settings,
-        mock_user_context,
-        valid_workflow_data,
-    ):
-        # Arrange
-        mock_mongodb.get_document.return_value = valid_workflow_data
-        mock_scheduler_service.run_workflow_schedule.side_effect = Exception(
-            "Scheduler Error"
-        )
-
-        # Act & Assert
-        with pytest.raises(HTTPException) as exc:
-            execute_workflow("job_123")
-        assert exc.value.status_code == 500
-
-    def test_execute_workflow_not_found(
-        self,
-        mock_mongodb,
-        mock_scheduler_service,
-        mock_settings,
-        mock_user_context,
-    ):
-        # Arrange
-        mock_mongodb.get_document.return_value = None
-
-        # Act & Assert
-        with pytest.raises(HTTPException) as exc:
-            execute_workflow("job_123")
-        assert exc.value.status_code == 404
-
-    def test_execute_workflow_missing_id(self, mock_user_context):
-        # Act & Assert
-        with pytest.raises(HTTPException) as exc:
-            execute_workflow("")
-        assert exc.value.status_code == 400
+        assert result.id is not None
+        mock_collection.insert_one.assert_awaited_once()
+        mock_prefect_client.sync_deployment.assert_awaited_once()

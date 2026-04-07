@@ -93,7 +93,8 @@ const GoogleSheetsEditor: React.FC<GoogleSheetsEditorProps> = ({ data, onChange,
   });
 
   const [connections, setConnections] = useState<ConnectionOption[]>([]);
-  const [connectionsLoading, setConnectionsLoading] = useState(false);
+  const [connectionsLoading, setConnectionsLoading] = useState(true);
+  const [connectionsReady, setConnectionsReady] = useState(false);
 
   const [spreadsheets, setSpreadsheets] = useState<GoogleSheetsFile[]>([]);
   const [spreadsheetsLoading, setSpreadsheetsLoading] = useState(false);
@@ -115,13 +116,21 @@ const GoogleSheetsEditor: React.FC<GoogleSheetsEditorProps> = ({ data, onChange,
     }
   }, [cachedConnections]);
 
-  // Auto-select connection only once when connections load and none selected
+  // Validate connection_id against loaded connections, clear stale ones
   useEffect(() => {
-    if (connections.length === 1 && !formData.connection_id) {
-      setFormData((prev) => ({ ...prev, connection_id: connections[0].id }));
+    if (connections.length === 0 && !connectionsLoading) {
+      setConnectionsReady(true);
+      return;
     }
+    if (connections.length === 0) return;
+    const currentValid = connections.some(c => c.id === formData.connection_id);
+    if (!currentValid) {
+      const nextId = connections.length === 1 ? connections[0].id : '';
+      setFormData((prev) => ({ ...prev, connection_id: nextId }));
+    }
+    setConnectionsReady(true);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [connections]);
+  }, [connections, connectionsLoading]);
 
   // Load connections on mount - use cache first
   useEffect(() => {
@@ -220,21 +229,21 @@ const GoogleSheetsEditor: React.FC<GoogleSheetsEditorProps> = ({ data, onChange,
   }, [data?.connection_id]);
 
   useEffect(() => {
-    if (!formData.connection_id) {
+    if (!connectionsReady || !formData.connection_id) {
       setSpreadsheets([]);
       setWorksheets([]);
       return;
     }
     loadSpreadsheets();
-  }, [formData.connection_id, loadSpreadsheets]);
+  }, [connectionsReady, formData.connection_id, loadSpreadsheets]);
 
   useEffect(() => {
-    if (!formData.connection_id || !formData.spreadsheet_id) {
+    if (!connectionsReady || !formData.connection_id || !formData.spreadsheet_id) {
       setWorksheets([]);
       return;
     }
     loadWorksheets();
-  }, [formData.connection_id, formData.spreadsheet_id, loadWorksheets]);
+  }, [connectionsReady, formData.connection_id, formData.spreadsheet_id, loadWorksheets]);
 
   const handleChange = (updates: Partial<GoogleSheetsFormData>) => {
     setFormData((prev) => ({ ...prev, ...updates }));

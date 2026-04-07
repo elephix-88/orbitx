@@ -14,13 +14,16 @@ interface AuthStore {
   clearError: () => void;
 }
 
-export const useAuthStore = create<AuthStore>((set) => ({
+export const useAuthStore = create<AuthStore>((set, get) => ({
   user: authService.getStoredUser(),
   isAuthenticated: authService.isAuthenticated(),
   isLoading: false,
   error: null,
 
   initialize: async () => {
+    // Already initialized with a valid user — skip API call
+    if (get().user && get().isAuthenticated) return;
+
     if (!authService.isAuthenticated()) {
       set({ isAuthenticated: false, user: null, isLoading: false });
       return;

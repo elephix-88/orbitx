@@ -25,6 +25,7 @@ const DashboardPage = lazy(() => import('./pages/DashboardPage'));
 const WorkflowsPage = lazy(() => import('./pages/WorkflowsPage'));
 const WorkflowBuilderPage = lazy(() => import('./pages/WorkflowBuilderPage'));
 const ConnectionsPage = lazy(() => import('./pages/ConnectionsPage'));
+const SettingsPage = lazy(() => import('./pages/SettingsPage'));
 
 // =============================================================================
 // App Component
@@ -94,6 +95,13 @@ function App() {
               <ProtectedRoute>
                 <ErrorBoundary>
                   <ConnectionsPage />
+                </ErrorBoundary>
+              </ProtectedRoute>
+            } />
+            <Route path="/settings" element={
+              <ProtectedRoute>
+                <ErrorBoundary>
+                  <SettingsPage />
                 </ErrorBoundary>
               </ProtectedRoute>
             } />

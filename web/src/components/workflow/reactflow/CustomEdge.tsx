@@ -5,10 +5,12 @@ import {
   getBezierPath,
 } from '@xyflow/react';
 
-// Check if dark mode is active
-const isDarkMode = () => {
-  if (typeof window === 'undefined') return false;
-  return document.documentElement.classList.contains('dark');
+// Resolve CSS variable-based design token to a usable color string
+const resolveTokenColor = (varName: string): string => {
+  if (typeof window === 'undefined') return '#3F3F46';
+  const raw = getComputedStyle(document.documentElement).getPropertyValue(varName).trim();
+  if (!raw) return '#3F3F46';
+  return `rgb(${raw})`;
 };
 
 const CustomEdge: React.FC<EdgeProps> = ({
@@ -32,16 +34,10 @@ const CustomEdge: React.FC<EdgeProps> = ({
     targetPosition,
   });
 
-  const dark = isDarkMode();
-
-  // Dark mode aware colors
+  // Use design tokens for edge colors — primary-400 (yellow) when selected, neutral-600 otherwise
   const strokeColor = selected
-    ? dark
-      ? '#60a5fa'
-      : '#2563eb' // blue-400 / blue-600
-    : dark
-    ? '#94a3b8'
-    : '#64748b'; // slate-400 / slate-500
+    ? resolveTokenColor('--brand-400')
+    : resolveTokenColor('--border-default');
 
   const strokeWidth = selected ? 2.2 : 1.8;
 

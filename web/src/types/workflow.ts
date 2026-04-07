@@ -1,14 +1,4 @@
 // src/types/workflow.ts
-import { z } from 'zod';
-
-// Base Types
-export interface BaseEntity {
-  id: string;
-  createdAt: string;
-  updatedAt: string;
-  createdBy: string;
-  updatedBy: string;
-}
 
 // Workflow Status
 // eslint-disable-next-line no-unused-vars
@@ -19,7 +9,7 @@ export enum WorkflowStatus {
   PAUSED = 'PAUSED',
 }
 
-// Workflow Execution Status
+// Workflow Execution Status — must match backend common.model.execution.Status
 // eslint-disable-next-line no-unused-vars
 export enum ExecutionStatus {
   // eslint-disable-next-line no-unused-vars
@@ -27,11 +17,9 @@ export enum ExecutionStatus {
   // eslint-disable-next-line no-unused-vars
   RUNNING = 'RUNNING',
   // eslint-disable-next-line no-unused-vars
-  COMPLETED = 'COMPLETED',
+  SUCCESS = 'SUCCESS',
   // eslint-disable-next-line no-unused-vars
   FAILED = 'FAILED',
-  // eslint-disable-next-line no-unused-vars
-  CANCELLED = 'CANCELLED',
 }
 
 // Schedule Types
@@ -51,24 +39,6 @@ export interface Schedule {
   timezone: string;
   startDate?: string;
   endDate?: string;
-}
-
-// Resource Configuration
-export interface ResourceConfig {
-  memoryAllocation: number; // in MB
-  cpuCores: number;
-  timeoutMinutes: number;
-  maxRetries: number;
-}
-
-// Version Control
-export interface Version {
-  id: string;
-  workflowId: string;
-  versionNumber: number;
-  changes: string;
-  createdAt: string;
-  createdBy: string;
 }
 
 export interface WorkflowNode {
@@ -128,38 +98,6 @@ export interface Workflow {
   updatedAt: string;
 }
 
-export interface NodeType {
-  type: 'source' | 'transform' | 'destination';
-  name: string;
-  description: string;
-  category: string;
-  icon: string;
-  color: string;
-  inputs: NodePort[];
-  outputs: NodePort[];
-  defaultData: Record<string, any>;
-}
-
-// Workflow Execution
-export interface WorkflowExecution extends BaseEntity {
-  workflowId: string;
-  versionId: string;
-  status: ExecutionStatus;
-  startTime?: string;
-  endTime?: string;
-  duration?: number;
-  error?: string;
-  logs: string[];
-  metrics: {
-    resourceUsage: {
-      memoryUsage: number;
-      cpuUsage: number;
-    };
-    processedRecords: number;
-    failedRecords: number;
-  };
-}
-
 // Workflow Node Types
 // eslint-disable-next-line no-unused-vars
 export enum NodeCategory {
@@ -171,43 +109,18 @@ export enum NodeCategory {
   DESTINATION = 'DESTINATION',
 }
 
-// Remove duplicate WorkflowNode interface - using the one defined above
-
-// Validation Schemas
-export const scheduleSchema = z.object({
-  type: z.nativeEnum(ScheduleType),
-  expression: z.string(),
-  timezone: z.string(),
-  startDate: z.string().optional(),
-  endDate: z.string().optional(),
-});
-
-export const resourceConfigSchema = z.object({
-  memoryAllocation: z.number().min(128),
-  cpuCores: z.number().min(0.1),
-  timeoutMinutes: z.number().min(1),
-  maxRetries: z.number().min(0),
-});
-
-export const workflowSchema = z.object({
-  name: z.string().min(1),
-  description: z.string().optional(),
-  status: z.nativeEnum(WorkflowStatus),
-  schedule: scheduleSchema,
-  resources: resourceConfigSchema,
-  environmentTag: z.string(),
-  projectId: z.string(),
-  version: z.number(),
-  tags: z.array(z.string()),
-});
-
 export type NodeTypeId =
   | 'facebook.ads'
   | 'google.ads'
   | 'tiktok.ads'
+  | 'source.error-trigger'
   | 'transform.sql'
   | 'transform.rename'
   | 'transform.join'
+  | 'transform.column-editor'
+  | 'transform.unify'
+  | 'logic.if'
+  | 'logic.switch'
   | 'dest.bigquery'
   | 'dest.googlesheets'
   | 'dest.mysql';
@@ -218,44 +131,3 @@ export type NodeKind = 'source' | 'transform' | 'destination';
 
 export type NodeStatus = 'pending' | 'running' | 'success' | 'error';
 
-export interface BuilderNode {
-  id: string;
-  type: NodeKind;
-  name: string;
-  /** Custom alias for the node (e.g., "Facebook Ads - Age, Gender") */
-  display_name?: string;
-  definitionId: NodeTypeId;
-  componentType?: string;
-  position: { x: number; y: number };
-  data: Record<string, unknown>;
-  inputs: NodePort[];
-  outputs: NodePort[];
-  status: NodeStatus;
-}
-
-export interface BuilderConnection {
-  id: string;
-  source: string;
-  target: string;
-  sourceHandle?: string | null;
-  targetHandle?: string | null;
-}
-
-export interface BuilderWorkflowMeta {
-  id?: string;
-  workflowId?: string;
-  jobId?: string;
-  jobName?: string;
-  status?: string;
-  scheduleExpression?: string;
-  description?: string;
-  createdAt?: string;
-  updatedAt?: string;
-  applicationName?: string;
-}
-
-export interface BuilderState {
-  workflow: BuilderWorkflowMeta | null;
-  nodes: BuilderNode[];
-  connections: BuilderConnection[];
-}

@@ -60,7 +60,9 @@ def clear_auth_cookies(response: Response) -> None:
 
 @router.post("/google", response_model=TokenResponse)
 @limiter.limit(settings.rate_limit_auth)
-async def google_auth(request: Request, response: Response, auth_request: GoogleAuthRequest):
+async def google_auth(
+    request: Request, response: Response, auth_request: GoogleAuthRequest
+):
     """Authenticate with Google OAuth credential."""
     user = await authenticate_google_user(auth_request.credential)
 

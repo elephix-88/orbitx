@@ -1,13 +1,13 @@
 from dataclasses import dataclass
 
+from common.model.common import DateTimeConfig
+from common.model.google.ads import GoogleAdsBase
+from common.model.google.ads import GoogleAdsField as FieldConfig
 from engine.node.extractors.google_ads.field_manager import (
     ATTRIBUTED_RESOURCES,
     SPECIALIZED_VIEWS,
 )
 from engine.utils.datetime import get_time_range
-from common.model.common import DateTimeConfig
-from common.model.google.ads import GoogleAdsBase
-from common.model.google.ads import GoogleAdsFields as FieldConfig
 
 SelectedPair = tuple[str, str]
 
@@ -69,7 +69,8 @@ def _validate_fields_for_base(active_fields: list[FieldConfig], base: str) -> No
 
         if is_specialized_view and select_path.startswith(non_attributed_prefixes):
             raise ValueError(
-                f"Field '{field_config.field}' (select: {select_path}) is not compatible "
+                f"Field '{field_config.field}' "
+                f"(select: {select_path}) is not compatible "
             )
 
         if field_base == GoogleAdsBase.ANY:
@@ -84,8 +85,10 @@ def _validate_fields_for_base(active_fields: list[FieldConfig], base: str) -> No
         allowed_bases = field_config.source.allowed_bases or []
         if base_enum not in allowed_bases:
             raise ValueError(
-                f"Field '{field_config.field}' is not compatible with base '{base}'. "
-                f"Field requires base '{field_base.value}' or one of {[b.value for b in allowed_bases]}"
+                f"Field '{field_config.field}' is not compatible "
+                f"with base '{base}'. "
+                f"Field requires base '{field_base.value}' "
+                f"or one of {[b.value for b in allowed_bases]}"
             )
 
 

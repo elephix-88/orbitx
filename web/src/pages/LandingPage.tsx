@@ -98,7 +98,7 @@ const AnimatedCounter = ({ value, suffix = '' }: { value: number; suffix?: strin
   return <span ref={ref as any}>{count.toLocaleString()}{suffix}</span>;
 };
 
-// Feature Card - Bauhaus style
+// Feature Card
 const FeatureCard = ({
   icon: Icon,
   title,
@@ -116,29 +116,24 @@ const FeatureCard = ({
     <div
       ref={ref as any}
       className={cn(
-        "group relative p-8 transition-all duration-700",
+        "group relative p-8 transition-all duration-700 bg-surface-secondary border border-neutral-800 rounded-xl hover:shadow-md hover:border-neutral-700",
         inView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
       )}
-      style={{
-        transitionDelay: `${delay}ms`,
-        backgroundColor: 'white',
-        border: '1px solid #A8DADC',
-        borderRadius: '2px',
-      }}
+      style={{ transitionDelay: `${delay}ms` }}
     >
-      {/* Red accent bar */}
-      <div style={{ width: '48px', height: '4px', backgroundColor: '#E63946', marginBottom: '24px' }} />
+      {/* Accent bar */}
+      <div className="w-12 h-1 bg-primary-400 rounded-full mb-6" />
 
       <div className="relative">
-        <div className="w-12 h-12 flex items-center justify-center mb-6 transition-colors" style={{ backgroundColor: '#F1FAEE', borderRadius: '2px' }}>
-          <Icon className="w-6 h-6" style={{ color: '#E63946' }} />
+        <div className="w-12 h-12 flex items-center justify-center mb-6 bg-primary-400/10 rounded-lg">
+          <Icon className="w-6 h-6 text-primary-400" />
         </div>
 
-        <h3 className="text-xl font-bold mb-3 uppercase tracking-wider transition-colors" style={{ color: '#1D3557' }}>
+        <h3 className="text-xl font-semibold mb-3 text-text-primary">
           {title}
         </h3>
 
-        <p style={{ color: '#457B9D' }} className="leading-relaxed">
+        <p className="text-text-secondary leading-relaxed">
           {description}
         </p>
       </div>
@@ -150,15 +145,12 @@ const FeatureCard = ({
 const FlowNode = ({ icon: Icon, color, label, isCustomIcon }: { icon: any; color: string; label: string; isCustomIcon?: boolean }) => (
   <div className="flex flex-col items-center gap-1">
     <div
-      className="w-11 h-11 flex items-center justify-center"
-      style={{
-        backgroundColor: color,
-        borderRadius: '2px',
-      }}
+      className="w-11 h-11 flex items-center justify-center rounded-lg"
+      style={{ backgroundColor: color }}
     >
       {isCustomIcon ? <Icon size={20} className="text-white" /> : <Icon className="w-5 h-5 text-white" />}
     </div>
-    <span className="text-[9px] font-medium uppercase tracking-wider" style={{ color: '#457B9D' }}>{label}</span>
+    <span className="text-[9px] font-medium text-text-secondary">{label}</span>
   </div>
 );
 
@@ -178,12 +170,11 @@ const OrbitAnimation = () => {
 
   return (
     <div className="relative w-full h-full flex items-center justify-center py-4">
-      {/* Main container with fixed positions */}
-      <div className="relative" style={{ width: '480px', height: '200px' }}>
+      <div className="relative w-[480px] h-[200px]">
 
-        {/* Sources - Left side, vertically stacked */}
+        {/* Sources - Left side */}
         <div className="absolute left-0 top-0 bottom-0 flex flex-col justify-between py-2">
-          <span className="text-[10px] font-semibold uppercase tracking-wider text-center" style={{ color: '#457B9D' }}>
+          <span className="text-[10px] font-medium text-text-tertiary text-center">
             Sources
           </span>
           {sources.map((source, i) => (
@@ -191,9 +182,9 @@ const OrbitAnimation = () => {
           ))}
         </div>
 
-        {/* Destinations - Right side, vertically stacked */}
+        {/* Destinations - Right side */}
         <div className="absolute right-0 top-0 bottom-0 flex flex-col justify-between py-2">
-          <span className="text-[10px] font-semibold uppercase tracking-wider text-center" style={{ color: '#457B9D' }}>
+          <span className="text-[10px] font-medium text-text-tertiary text-center">
             Destinations
           </span>
           {destinations.map((dest, i) => (
@@ -201,24 +192,21 @@ const OrbitAnimation = () => {
           ))}
         </div>
 
-        {/* SVG for flow lines - positioned between nodes */}
+        {/* SVG for flow lines */}
         <svg
-          className="absolute"
-          style={{ left: '70px', top: '0', width: '340px', height: '200px' }}
+          className="absolute left-[70px] top-0 w-[340px] h-[200px]"
           viewBox="0 0 340 200"
         >
           <defs>
-            {/* Gradients for incoming lines */}
             {sources.map((s, i) => (
               <linearGradient key={`in-grad-${i}`} id={`in-grad-${i}`} x1="0%" y1="0%" x2="100%" y2="0%">
                 <stop offset="0%" stopColor={s.color} stopOpacity="0.6" />
-                <stop offset="100%" stopColor="#E63946" stopOpacity="0.8" />
+                <stop offset="100%" stopColor="#FACC15" stopOpacity="0.8" />
               </linearGradient>
             ))}
-            {/* Gradients for outgoing lines */}
             {destinations.map((d, i) => (
               <linearGradient key={`out-grad-${i}`} id={`out-grad-${i}`} x1="0%" y1="0%" x2="100%" y2="0%">
-                <stop offset="0%" stopColor="#E63946" stopOpacity="0.8" />
+                <stop offset="0%" stopColor="#FACC15" stopOpacity="0.8" />
                 <stop offset="100%" stopColor={d.color} stopOpacity="0.6" />
               </linearGradient>
             ))}
@@ -250,14 +238,14 @@ const OrbitAnimation = () => {
           })}
 
           {/* Animated dots - outgoing */}
-          {destinations.map((d, i) => {
+          {destinations.map((_d, i) => {
             const paths = [
               "M 170 100 Q 255 45 340 45",
               "M 170 100 Q 255 110 340 100",
               "M 170 100 Q 255 155 340 155"
             ];
             return (
-              <circle key={`out-${i}`} r="4" fill="#E63946">
+              <circle key={`out-${i}`} r="4" fill="#FACC15">
                 <animateMotion dur="2.5s" repeatCount="indefinite" begin={`${i * 0.4 + 1.25}s`} path={paths[i]} />
                 <animate attributeName="opacity" values="0;1;1;0" keyTimes="0;0.1;0.9;1" dur="2.5s" repeatCount="indefinite" begin={`${i * 0.4 + 1.25}s`} />
               </circle>
@@ -268,16 +256,15 @@ const OrbitAnimation = () => {
         {/* Center: OrbitX Transform */}
         <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-10">
           <div className="flex flex-col items-center">
-            <span className="text-[9px] font-semibold uppercase tracking-wider mb-1" style={{ color: '#457B9D' }}>
+            <span className="text-[9px] font-medium text-text-tertiary mb-1">
               Transform
             </span>
             <div className="relative">
-              {/* Core - Square, Bauhaus */}
-              <div className="relative w-12 h-12 flex items-center justify-center" style={{ backgroundColor: '#E63946', borderRadius: '2px' }}>
-                <Zap className="w-6 h-6 text-white" />
+              <div className="relative w-12 h-12 flex items-center justify-center bg-primary-400 rounded-lg">
+                <Zap className="w-6 h-6 text-neutral-950" />
               </div>
             </div>
-            <span className="mt-1 text-[10px] font-bold uppercase tracking-widest" style={{ color: '#E63946' }}>OrbitX</span>
+            <span className="mt-1 text-[10px] font-semibold text-primary-400">OrbitX</span>
           </div>
         </div>
       </div>
@@ -309,48 +296,43 @@ const PricingCard = ({
     <div
       ref={ref as any}
       className={cn(
-        "relative p-8 transition-all duration-700",
+        "relative p-8 transition-all duration-700 bg-surface-secondary rounded-xl",
+        popular ? "border-2 border-primary-400 shadow-glow" : "border border-neutral-800",
         inView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"
       )}
-      style={{
-        transitionDelay: `${delay}ms`,
-        backgroundColor: 'white',
-        border: popular ? '2px solid #E63946' : '1px solid #A8DADC',
-        borderRadius: '2px',
-      }}
+      style={{ transitionDelay: `${delay}ms` }}
     >
       {popular && (
-        <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 text-white text-xs font-bold uppercase tracking-widest" style={{ backgroundColor: '#E63946', borderRadius: '2px' }}>
+        <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 bg-primary-400 text-neutral-950 text-xs font-semibold rounded-full">
           Most Popular
         </div>
       )}
 
       <div className="text-center mb-8">
-        <h3 className="text-xl font-bold mb-2 uppercase tracking-wider" style={{ color: '#1D3557' }}>{name}</h3>
-        <div className="text-4xl font-bold mb-2" style={{ color: '#E63946' }}>
+        <h3 className="text-xl font-semibold mb-2 text-text-primary">{name}</h3>
+        <div className="text-4xl font-semibold mb-2 text-primary-400">
           {price}
         </div>
-        <p className="text-sm" style={{ color: '#457B9D' }}>{description}</p>
+        <p className="text-sm text-text-secondary">{description}</p>
       </div>
 
       <ul className="space-y-4 mb-8">
         {features.map((feature, i) => (
           <li key={i} className="flex items-start gap-3">
-            <Check className="w-5 h-5 flex-shrink-0 mt-0.5" style={{ color: '#E63946' }} />
-            <span style={{ color: '#457B9D' }}>{feature}</span>
+            <Check className="w-5 h-5 flex-shrink-0 mt-0.5 text-primary-400" />
+            <span className="text-text-secondary">{feature}</span>
           </li>
         ))}
       </ul>
 
       <button
         onClick={onGetStarted}
-        className="w-full py-3 font-semibold transition-all uppercase tracking-wider"
-        style={{
-          backgroundColor: popular ? '#E63946' : 'transparent',
-          color: popular ? 'white' : '#1D3557',
-          border: popular ? 'none' : '2px solid #1D3557',
-          borderRadius: '2px',
-        }}
+        className={cn(
+          "w-full py-3 font-medium transition-all rounded-lg text-sm",
+          popular
+            ? "bg-primary-400 text-neutral-950 hover:bg-primary-500"
+            : "bg-transparent text-text-primary border-2 border-neutral-700 hover:border-primary-400 hover:text-primary-400"
+        )}
       >
         Get Started
       </button>
@@ -375,17 +357,17 @@ const LandingPage = () => {
   ];
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#F1FAEE' }}>
-      {/* Navigation - Solid top bar */}
-      <nav className="fixed top-0 left-0 right-0 z-50" style={{ backgroundColor: '#1D3557' }}>
+    <div className="min-h-screen bg-surface-primary">
+      {/* Navigation */}
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-neutral-900">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
             <Link to="/" className="flex items-center gap-3 group">
-              <div className="w-9 h-9 flex items-center justify-center" style={{ backgroundColor: '#E63946', borderRadius: '2px' }}>
-                <span className="text-white font-bold text-lg">O</span>
+              <div className="w-9 h-9 flex items-center justify-center bg-primary-400 rounded-md">
+                <span className="text-neutral-950 font-semibold text-lg">O</span>
               </div>
-              <span className="text-xl font-bold text-white uppercase tracking-widest">
+              <span className="text-xl font-semibold text-white tracking-tight">
                 OrbitX
               </span>
             </Link>
@@ -397,7 +379,7 @@ const LandingPage = () => {
                   <Link
                     key={link.href}
                     to={link.href}
-                    className="text-white/70 hover:text-white transition-colors font-medium uppercase tracking-wider text-sm"
+                    className="text-white/70 hover:text-white transition-colors font-medium text-sm"
                   >
                     {link.label}
                   </Link>
@@ -405,7 +387,7 @@ const LandingPage = () => {
                   <a
                     key={link.href}
                     href={link.href}
-                    className="text-white/70 hover:text-white transition-colors font-medium uppercase tracking-wider text-sm"
+                    className="text-white/70 hover:text-white transition-colors font-medium text-sm"
                   >
                     {link.label}
                   </a>
@@ -418,8 +400,7 @@ const LandingPage = () => {
               {/* Theme Toggle */}
               <button
                 onClick={toggleTheme}
-                className="p-2 text-white/70 hover:text-white transition-all"
-                style={{ borderRadius: '2px' }}
+                className="p-2 text-white/70 hover:text-white transition-all rounded-md"
                 title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
               >
                 {isDark ? <Sun className="w-5 h-5" /> : <Moon className="w-5 h-5" />}
@@ -428,8 +409,7 @@ const LandingPage = () => {
               {/* Sign In Button - Desktop */}
               <button
                 onClick={handleGoogleSignIn}
-                className="hidden sm:flex items-center gap-2 px-4 py-2 text-white font-medium transition-all uppercase tracking-wider text-sm"
-                style={{ backgroundColor: '#E63946', borderRadius: '2px' }}
+                className="hidden sm:flex items-center gap-2 px-4 py-2 bg-primary-400 hover:bg-primary-500 text-neutral-950 font-medium transition-all text-sm rounded-md"
               >
                 <GoogleIcon />
                 Sign in
@@ -438,8 +418,7 @@ const LandingPage = () => {
               {/* Mobile Menu Button */}
               <button
                 onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className="md:hidden p-2 text-white/70 hover:text-white transition-all"
-                style={{ borderRadius: '2px' }}
+                className="md:hidden p-2 text-white/70 hover:text-white transition-all rounded-md"
               >
                 {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
               </button>
@@ -449,14 +428,14 @@ const LandingPage = () => {
 
         {/* Mobile Menu */}
         {mobileMenuOpen && (
-          <div style={{ backgroundColor: '#1D3557', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+          <div className="bg-neutral-900 border-t border-white/10">
             <div className="px-4 py-4 space-y-3">
               {navLinks.map((link) => (
                 link.isRoute ? (
                   <Link
                     key={link.href}
                     to={link.href}
-                    className="block py-2 text-white/70 hover:text-white transition-colors font-medium uppercase tracking-wider"
+                    className="block py-2 text-white/70 hover:text-white transition-colors font-medium"
                     onClick={() => setMobileMenuOpen(false)}
                   >
                     {link.label}
@@ -465,7 +444,7 @@ const LandingPage = () => {
                   <a
                     key={link.href}
                     href={link.href}
-                    className="block py-2 text-white/70 hover:text-white transition-colors font-medium uppercase tracking-wider"
+                    className="block py-2 text-white/70 hover:text-white transition-colors font-medium"
                     onClick={() => setMobileMenuOpen(false)}
                   >
                     {link.label}
@@ -477,8 +456,7 @@ const LandingPage = () => {
                   handleGoogleSignIn();
                   setMobileMenuOpen(false);
                 }}
-                className="w-full flex items-center justify-center gap-2 px-4 py-3 text-white font-medium uppercase tracking-wider"
-                style={{ backgroundColor: '#E63946', borderRadius: '2px' }}
+                className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-primary-400 hover:bg-primary-500 text-neutral-950 font-medium rounded-md"
               >
                 <GoogleIcon />
                 Sign in with Google
@@ -491,13 +469,12 @@ const LandingPage = () => {
       {/* Hero Section */}
       <section
         ref={heroRef as any}
-        className="relative min-h-screen flex items-center pt-16"
-        style={{ backgroundColor: '#1D3557' }}
+        className="relative min-h-screen flex items-center pt-16 bg-neutral-900"
       >
         {/* Geometric decorations */}
-        <div className="absolute top-32 right-16 w-24 h-24 rounded-full hidden lg:block" style={{ backgroundColor: '#E63946', opacity: 0.15 }} />
-        <div className="absolute bottom-24 left-24 w-16 h-16 hidden lg:block" style={{ backgroundColor: '#F4A261', opacity: 0.2 }} />
-        <div className="absolute top-1/2 right-1/3 w-8 h-8 hidden lg:block" style={{ backgroundColor: '#A8DADC', opacity: 0.15, transform: 'rotate(45deg)' }} />
+        <div className="absolute top-32 right-16 w-24 h-24 rounded-full bg-primary-400/15 hidden lg:block" />
+        <div className="absolute bottom-24 left-24 w-16 h-16 bg-primary-400/20 rounded-lg hidden lg:block" />
+        <div className="absolute top-1/2 right-1/3 w-8 h-8 bg-primary-400/15 rotate-45 hidden lg:block" />
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
           <div className="grid lg:grid-cols-2 gap-16 items-center">
@@ -507,23 +484,23 @@ const LandingPage = () => {
               heroInView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-10"
             )}>
               {/* Badge */}
-              <div className="inline-flex items-center gap-2 px-4 py-2" style={{ backgroundColor: 'rgba(230,57,70,0.2)', borderRadius: '2px' }}>
-                <Sparkles className="w-4 h-4" style={{ color: '#F4A261' }} />
-                <span className="text-sm font-medium uppercase tracking-wider" style={{ color: '#F4A261' }}>
+              <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary-400/20 rounded-full">
+                <Sparkles className="w-4 h-4 text-primary-400" />
+                <span className="text-sm font-medium text-primary-400">
                   Now in Public Beta
                 </span>
               </div>
 
               {/* Headline */}
-              <h1 className="text-5xl md:text-7xl font-bold text-white leading-[1.1] uppercase tracking-wider">
+              <h1 className="text-5xl md:text-7xl font-semibold text-white leading-[1.1] tracking-tight">
                 Data pipelines,{' '}
-                <span style={{ color: '#E63946' }}>
+                <span className="text-primary-400">
                   simplified.
                 </span>
               </h1>
 
               {/* Subheadline */}
-              <p className="text-xl max-w-lg leading-relaxed" style={{ color: '#A8DADC' }}>
+              <p className="text-xl max-w-lg leading-relaxed text-neutral-400">
                 Build, automate, and monitor your data workflows with a beautiful visual interface. No code required.
               </p>
 
@@ -531,8 +508,7 @@ const LandingPage = () => {
               <div className="flex flex-wrap gap-4">
                 <button
                   onClick={handleGoogleSignIn}
-                  className="flex items-center gap-3 px-6 py-4 text-white font-semibold transition-all group uppercase tracking-wider"
-                  style={{ backgroundColor: '#E63946', borderRadius: '2px' }}
+                  className="flex items-center gap-3 px-6 py-4 bg-primary-400 hover:bg-primary-500 text-neutral-950 font-medium transition-all group rounded-lg"
                 >
                   <GoogleIcon />
                   Continue with Google
@@ -541,8 +517,7 @@ const LandingPage = () => {
 
                 <button
                   onClick={() => navigate('/workflows/builder')}
-                  className="flex items-center gap-2 px-6 py-4 font-semibold group uppercase tracking-wider"
-                  style={{ color: 'white', border: '2px solid #A8DADC', borderRadius: '2px', backgroundColor: 'transparent' }}
+                  className="flex items-center gap-2 px-6 py-4 font-medium group text-white border-2 border-neutral-700 hover:border-primary-400 hover:text-primary-400 bg-transparent transition-all rounded-lg"
                 >
                   <Play className="w-5 h-5" />
                   Try Demo
@@ -555,13 +530,9 @@ const LandingPage = () => {
                   {[...Array(4)].map((_, i) => (
                     <div
                       key={i}
-                      className="w-10 h-10 flex items-center justify-center text-white text-xs font-bold"
+                      className="w-10 h-10 flex items-center justify-center text-white text-xs font-semibold rounded-full border-2 border-neutral-900 relative"
                       style={{
-                        backgroundColor: ['#E63946', '#F4A261', '#457B9D', '#1D3557'][i],
-                        borderRadius: '2px',
-                        border: '2px solid #1D3557',
-                        marginLeft: i > 0 ? '-8px' : '0',
-                        position: 'relative',
+                        backgroundColor: ['#FACC15', '#EAB308', '#3F3F46', '#18181B'][i],
                         zIndex: 4 - i,
                       }}
                     >
@@ -570,8 +541,8 @@ const LandingPage = () => {
                   ))}
                 </div>
                 <div className="text-sm">
-                  <span className="text-white font-semibold">500+</span>
-                  <span style={{ color: '#A8DADC' }}> teams already building</span>
+                  <span className="text-white font-medium">500+</span>
+                  <span className="text-neutral-400"> teams already building</span>
                 </div>
               </div>
             </div>
@@ -582,7 +553,6 @@ const LandingPage = () => {
               heroInView ? "opacity-100 scale-100" : "opacity-0 scale-90"
             )}>
               <div className="relative w-[500px] h-[500px]">
-                {/* Orbit Animation */}
                 <OrbitAnimation />
               </div>
             </div>
@@ -591,50 +561,50 @@ const LandingPage = () => {
       </section>
 
       {/* Stats Section */}
-      <section className="relative py-20" style={{ backgroundColor: 'white', borderTop: '4px solid #E63946', borderBottom: '1px solid #A8DADC' }}>
+      <section className="relative py-20 bg-surface-secondary border-t-4 border-t-primary-400 border-b border-b-neutral-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
             <div className="text-center">
-              <div className="text-4xl md:text-5xl font-bold mb-2" style={{ color: '#E63946' }}>
+              <div className="text-4xl md:text-5xl font-semibold mb-2 text-primary-400">
                 <AnimatedCounter value={10} suffix="M+" />
               </div>
-              <p className="uppercase tracking-wider text-sm" style={{ color: '#457B9D' }}>Events processed</p>
+              <p className="text-sm text-text-secondary">Events processed</p>
             </div>
             <div className="text-center">
-              <div className="text-4xl md:text-5xl font-bold mb-2" style={{ color: '#E63946' }}>
+              <div className="text-4xl md:text-5xl font-semibold mb-2 text-primary-400">
                 <AnimatedCounter value={99} suffix="%" />
               </div>
-              <p className="uppercase tracking-wider text-sm" style={{ color: '#457B9D' }}>Uptime SLA</p>
+              <p className="text-sm text-text-secondary">Uptime SLA</p>
             </div>
             <div className="text-center">
-              <div className="text-4xl md:text-5xl font-bold mb-2" style={{ color: '#E63946' }}>
+              <div className="text-4xl md:text-5xl font-semibold mb-2 text-primary-400">
                 <AnimatedCounter value={50} suffix="+" />
               </div>
-              <p className="uppercase tracking-wider text-sm" style={{ color: '#457B9D' }}>Integrations</p>
+              <p className="text-sm text-text-secondary">Integrations</p>
             </div>
             <div className="text-center">
-              <div className="text-4xl md:text-5xl font-bold mb-2" style={{ color: '#E63946' }}>
+              <div className="text-4xl md:text-5xl font-semibold mb-2 text-primary-400">
                 <AnimatedCounter value={500} suffix="+" />
               </div>
-              <p className="uppercase tracking-wider text-sm" style={{ color: '#457B9D' }}>Active teams</p>
+              <p className="text-sm text-text-secondary">Active teams</p>
             </div>
           </div>
         </div>
       </section>
 
       {/* Features Section */}
-      <section id="features" className="relative py-32" style={{ backgroundColor: '#F1FAEE' }}>
+      <section id="features" className="relative py-32 bg-surface-primary">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Section Header */}
           <div className="text-center max-w-3xl mx-auto mb-20">
             <div className="flex justify-center mb-6">
-              <div style={{ width: '48px', height: '4px', backgroundColor: '#E63946' }} />
+              <div className="w-12 h-1 bg-primary-400 rounded-full" />
             </div>
-            <h2 className="text-4xl md:text-5xl font-bold mb-6 uppercase tracking-wider" style={{ color: '#1D3557' }}>
+            <h2 className="text-4xl md:text-5xl font-semibold mb-6 text-text-primary tracking-tight">
               Everything you need to{' '}
-              <span style={{ color: '#E63946' }}>automate</span>
+              <span className="text-primary-400">automate</span>
             </h2>
-            <p className="text-xl" style={{ color: '#457B9D' }}>
+            <p className="text-xl text-text-secondary">
               From data extraction to transformation and loading, OrbitX handles your entire pipeline.
             </p>
           </div>
@@ -682,17 +652,17 @@ const LandingPage = () => {
       </section>
 
       {/* Pricing Section */}
-      <section id="pricing" className="relative py-32" style={{ backgroundColor: 'white' }}>
+      <section id="pricing" className="relative py-32 bg-surface-secondary">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Section Header */}
           <div className="text-center max-w-3xl mx-auto mb-20">
             <div className="flex justify-center mb-6">
-              <div style={{ width: '48px', height: '4px', backgroundColor: '#E63946' }} />
+              <div className="w-12 h-1 bg-primary-400 rounded-full" />
             </div>
-            <h2 className="text-4xl md:text-5xl font-bold mb-6 uppercase tracking-wider" style={{ color: '#1D3557' }}>
+            <h2 className="text-4xl md:text-5xl font-semibold mb-6 text-text-primary tracking-tight">
               Simple, transparent pricing
             </h2>
-            <p className="text-xl" style={{ color: '#457B9D' }}>
+            <p className="text-xl text-text-secondary">
               Start free, scale as you grow. No hidden fees.
             </p>
           </div>
@@ -746,27 +716,26 @@ const LandingPage = () => {
       </section>
 
       {/* CTA Section */}
-      <section className="relative py-32" style={{ backgroundColor: '#F1FAEE' }}>
+      <section className="relative py-32 bg-surface-primary">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           {/* Geometric decoration */}
           <div className="flex justify-center mb-8">
             <div className="flex items-center gap-3">
-              <div className="w-4 h-4 rounded-full" style={{ backgroundColor: '#E63946' }} />
-              <div className="w-4 h-4" style={{ backgroundColor: '#F4A261' }} />
-              <div className="w-4 h-4" style={{ backgroundColor: '#1D3557', transform: 'rotate(45deg)' }} />
+              <div className="w-4 h-4 rounded-full bg-primary-400" />
+              <div className="w-4 h-4 rounded-md bg-primary-500" />
+              <div className="w-4 h-4 rotate-45 bg-neutral-700 rounded-sm" />
             </div>
           </div>
-          <h2 className="text-4xl md:text-5xl font-bold mb-6 uppercase tracking-wider" style={{ color: '#1D3557' }}>
+          <h2 className="text-4xl md:text-5xl font-semibold mb-6 text-text-primary tracking-tight">
             Ready to get started?
           </h2>
-          <p className="text-xl mb-10" style={{ color: '#457B9D' }}>
+          <p className="text-xl mb-10 text-text-secondary">
             Join hundreds of teams automating their data pipelines with OrbitX.
           </p>
 
           <button
             onClick={handleGoogleSignIn}
-            className="inline-flex items-center gap-3 px-8 py-5 text-white font-semibold text-lg transition-all group uppercase tracking-wider"
-            style={{ backgroundColor: '#E63946', borderRadius: '2px' }}
+            className="inline-flex items-center gap-3 px-8 py-5 bg-primary-400 hover:bg-primary-500 text-neutral-950 font-medium text-lg transition-all group rounded-lg"
           >
             <GoogleIcon />
             Sign up with Google
@@ -776,67 +745,67 @@ const LandingPage = () => {
       </section>
 
       {/* Footer */}
-      <footer className="relative py-12" style={{ backgroundColor: '#1D3557' }}>
+      <footer className="relative py-12 bg-neutral-900">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid md:grid-cols-4 gap-8 mb-8">
             {/* Brand */}
             <div className="md:col-span-1">
               <Link to="/" className="flex items-center gap-3 mb-4">
-                <div className="w-8 h-8 flex items-center justify-center" style={{ backgroundColor: '#E63946', borderRadius: '2px' }}>
-                  <span className="text-white font-bold text-sm">O</span>
+                <div className="w-8 h-8 flex items-center justify-center bg-primary-400 rounded-md">
+                  <span className="text-neutral-950 font-semibold text-sm">O</span>
                 </div>
-                <span className="text-lg font-bold text-white uppercase tracking-widest">
+                <span className="text-lg font-semibold text-white tracking-tight">
                   OrbitX
                 </span>
               </Link>
-              <p className="text-sm" style={{ color: '#A8DADC' }}>
+              <p className="text-sm text-neutral-400">
                 The modern data automation platform for teams of all sizes.
               </p>
             </div>
 
             {/* Product */}
             <div>
-              <h4 className="font-semibold text-white mb-4 uppercase tracking-wider text-sm">Product</h4>
+              <h4 className="font-medium text-white mb-4 text-sm">Product</h4>
               <ul className="space-y-2 text-sm">
-                <li><a href="#features" className="transition-colors hover:text-white" style={{ color: '#A8DADC' }}>Features</a></li>
-                <li><a href="#pricing" className="transition-colors hover:text-white" style={{ color: '#A8DADC' }}>Pricing</a></li>
-                <li><Link to="/dashboard" className="transition-colors hover:text-white" style={{ color: '#A8DADC' }}>Dashboard</Link></li>
-                <li><Link to="/workflows" className="transition-colors hover:text-white" style={{ color: '#A8DADC' }}>Workflows</Link></li>
+                <li><a href="#features" className="text-neutral-400 transition-colors hover:text-white">Features</a></li>
+                <li><a href="#pricing" className="text-neutral-400 transition-colors hover:text-white">Pricing</a></li>
+                <li><Link to="/dashboard" className="text-neutral-400 transition-colors hover:text-white">Dashboard</Link></li>
+                <li><Link to="/workflows" className="text-neutral-400 transition-colors hover:text-white">Workflows</Link></li>
               </ul>
             </div>
 
             {/* Resources */}
             <div>
-              <h4 className="font-semibold text-white mb-4 uppercase tracking-wider text-sm">Resources</h4>
+              <h4 className="font-medium text-white mb-4 text-sm">Resources</h4>
               <ul className="space-y-2 text-sm">
-                <li><a href="#" className="transition-colors hover:text-white" style={{ color: '#A8DADC' }}>Documentation</a></li>
-                <li><a href="#" className="transition-colors hover:text-white" style={{ color: '#A8DADC' }}>API Reference</a></li>
-                <li><a href="#" className="transition-colors hover:text-white" style={{ color: '#A8DADC' }}>Changelog</a></li>
-                <li><a href="#" className="transition-colors hover:text-white" style={{ color: '#A8DADC' }}>Status</a></li>
+                <li><a href="#" className="text-neutral-400 transition-colors hover:text-white">Documentation</a></li>
+                <li><a href="#" className="text-neutral-400 transition-colors hover:text-white">API Reference</a></li>
+                <li><a href="#" className="text-neutral-400 transition-colors hover:text-white">Changelog</a></li>
+                <li><a href="#" className="text-neutral-400 transition-colors hover:text-white">Status</a></li>
               </ul>
             </div>
 
             {/* Company */}
             <div>
-              <h4 className="font-semibold text-white mb-4 uppercase tracking-wider text-sm">Company</h4>
+              <h4 className="font-medium text-white mb-4 text-sm">Company</h4>
               <ul className="space-y-2 text-sm">
-                <li><a href="#" className="transition-colors hover:text-white" style={{ color: '#A8DADC' }}>About</a></li>
-                <li><a href="#" className="transition-colors hover:text-white" style={{ color: '#A8DADC' }}>Blog</a></li>
-                <li><a href="#" className="transition-colors hover:text-white" style={{ color: '#A8DADC' }}>Careers</a></li>
-                <li><a href="#" className="transition-colors hover:text-white" style={{ color: '#A8DADC' }}>Contact</a></li>
+                <li><a href="#" className="text-neutral-400 transition-colors hover:text-white">About</a></li>
+                <li><a href="#" className="text-neutral-400 transition-colors hover:text-white">Blog</a></li>
+                <li><a href="#" className="text-neutral-400 transition-colors hover:text-white">Careers</a></li>
+                <li><a href="#" className="text-neutral-400 transition-colors hover:text-white">Contact</a></li>
               </ul>
             </div>
           </div>
 
           {/* Bottom Bar */}
-          <div className="pt-8 flex flex-col md:flex-row items-center justify-between gap-4" style={{ borderTop: '1px solid rgba(168,218,220,0.2)' }}>
-            <p className="text-sm" style={{ color: '#A8DADC' }}>
+          <div className="pt-8 flex flex-col md:flex-row items-center justify-between gap-4 border-t border-neutral-700">
+            <p className="text-sm text-neutral-400">
               &copy; {new Date().getFullYear()} OrbitX. All rights reserved.
             </p>
             <div className="flex items-center gap-6 text-sm">
-              <a href="#" className="transition-colors hover:text-white" style={{ color: '#A8DADC' }}>Privacy Policy</a>
-              <a href="#" className="transition-colors hover:text-white" style={{ color: '#A8DADC' }}>Terms of Service</a>
-              <a href="#" className="transition-colors hover:text-white" style={{ color: '#A8DADC' }}>Cookie Policy</a>
+              <a href="#" className="text-neutral-400 transition-colors hover:text-white">Privacy Policy</a>
+              <a href="#" className="text-neutral-400 transition-colors hover:text-white">Terms of Service</a>
+              <a href="#" className="text-neutral-400 transition-colors hover:text-white">Cookie Policy</a>
             </div>
           </div>
         </div>

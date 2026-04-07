@@ -209,7 +209,7 @@ export const AccountSelector: React.FC<AccountSelectorProps> = ({
             {label}
           </label>
         )}
-        <div className="flex items-center gap-2 p-3 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-text-tertiary">
+        <div className="flex items-center gap-2 p-3 bg-surface-secondary border border-border rounded-xl text-sm text-text-tertiary">
           <Building2 className="w-4 h-4" />
           {emptyMessage}
         </div>
@@ -244,7 +244,7 @@ export const AccountSelector: React.FC<AccountSelectorProps> = ({
         {accounts.map((account) => (
           <div
             key={account.id}
-            className="flex items-center gap-2 p-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors"
+            className="flex items-center gap-2 p-2 rounded-lg hover:bg-surface-tertiary transition-colors"
           >
             <Checkbox
               checked={value.includes(account.id)}

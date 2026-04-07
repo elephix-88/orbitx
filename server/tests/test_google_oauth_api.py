@@ -94,7 +94,7 @@ class TestGoogleOAuthEndpoints:
         user_id: str = "test_user_id_123",
     ) -> str:
         """Helper to create valid state for testing."""
-        secret = "test_oauth_state_secret_12345".encode()
+        secret = b"test_oauth_state_secret_12345"
         payload = {
             "t": connection_type,
             "cid": connection_id,
@@ -199,11 +199,15 @@ class TestGoogleOAuthEndpoints:
 
         from unittest.mock import AsyncMock
 
-        with patch("server.api.google.oauth.httpx.AsyncClient") as mock_client_class:
+        with patch(
+            "server.api.google.oauth.httpx.AsyncClient"
+        ) as mock_client_class:
             mock_response = Mock()
             mock_response.status_code = 400
             mock_response.text = "Invalid grant"
-            mock_response.raise_for_status.side_effect = Exception("Token exchange failed")
+            mock_response.raise_for_status.side_effect = Exception(
+                "Token exchange failed"
+            )
             mock_client = AsyncMock()
             mock_client.post.return_value = mock_response
             mock_client_class.return_value.__aenter__.return_value = mock_client
@@ -218,7 +222,7 @@ class TestGoogleOAuthEndpoints:
     @pytest.mark.unit
     def test_google_ads_fields_success(self, client: TestClient):
         """Test successful Google Ads fields retrieval."""
-        # Arrange - Mock the service function to return proper GoogleAdsFields data
+        # Arrange - Mock the service function to return proper GoogleAdsField data
         mock_fields = [
             {
                 "field": "impressions",
@@ -251,10 +255,10 @@ class TestGoogleOAuthEndpoints:
         ]
 
         with patch("server.api.google.ads.get_google_ads_fields") as mock_get_fields:
-            from common.model.google.ads import GoogleAdsFields
+            from common.model.google.ads import GoogleAdsField
 
             mock_get_fields.return_value = [
-                GoogleAdsFields(**field) for field in mock_fields
+                GoogleAdsField(**field) for field in mock_fields
             ]
 
             # Act
@@ -299,7 +303,9 @@ class TestGoogleOAuthEndpoints:
             },
         ]
 
-        with patch("server.api.google.ads.get_google_ads_accounts") as mock_get_accounts:
+        with patch(
+            "server.api.google.ads.get_google_ads_accounts"
+        ) as mock_get_accounts:
             from common.model.google.ads import GoogleAdsAccount
 
             mock_get_accounts.return_value = [
@@ -331,11 +337,11 @@ class TestGoogleOAuthEndpoints:
         self, client: TestClient, mock_mongodb, mock_google_oauth
     ):
         """Test complete OAuth flow integration."""
-        with patch("server.services.oauth_utils.settings") as mock_utils_settings, patch(
-            "server.api.google.oauth.settings"
-        ) as mock_api_settings, patch(
-            "server.api.google.sheets.settings"
-        ) as mock_sheets_settings:
+        with (
+            patch("server.services.oauth_utils.settings") as mock_utils_settings,
+            patch("server.api.google.oauth.settings") as mock_api_settings,
+            patch("server.api.google.sheets.settings") as mock_sheets_settings,
+        ):
             # Configure settings for all mocks
             for mock_settings in [
                 mock_utils_settings,
@@ -435,7 +441,7 @@ class TestGoogleSheetsEndpoints:
     @pytest.mark.unit
     def test_google_sheets_spreadsheet_details_success(self, client: TestClient):
         """Test successful Google Sheets spreadsheet details retrieval."""
-        # Arrange - Mock the service function to return proper GoogleSheetsSpreadsheet data
+        # Arrange - Mock the service function to return GoogleSheetsSpreadsheet
         mock_spreadsheet = {
             "spreadsheet_id": "1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgvE2upms",
             "name": "Example Spreadsheet",

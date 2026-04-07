@@ -4,12 +4,14 @@ from typing import TypeVar
 
 from pydantic import BaseModel
 
-from common.database import get_mongodb
+from common.database.mongodb import find_many
 
 T = TypeVar("T", bound=BaseModel)
 
 
-async def get_fields(collection_name: str, model_class: type[T]) -> list[T]:
+async def get_fields[T: BaseModel](
+    collection_name: str, model_class: type[T]
+) -> list[T]:
     """Retrieve fields from a MongoDB collection and return as typed models.
 
     Args:
@@ -19,7 +21,4 @@ async def get_fields(collection_name: str, model_class: type[T]) -> list[T]:
     Returns:
         List of model instances from the collection.
     """
-    result = await get_mongodb().get_all_documents(
-        collection_name=collection_name,
-    )
-    return [model_class(**item) for item in result]
+    return await find_many(collection_name, {}, model_class)

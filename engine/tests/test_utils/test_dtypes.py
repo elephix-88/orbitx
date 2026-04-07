@@ -1,7 +1,7 @@
 import pandas as pd
+
 from common.model.facebook.fields import Endpoints
 from common.model.facebook.fields import FacebookField as FieldConfig
-
 from engine.utils.dtypes import (
     apply_dtypes,
     create_dtype_mapping,

@@ -3,11 +3,11 @@ import asyncio
 import pandas as pd
 from loguru import logger
 
+from common.model.result import ExtractorResult
+from common.model.s3.config import S3SourceConfig
 from engine.configs.config import settings
 from engine.exceptions import ExtractorException
 from engine.interfaces.node import Extractor
-from common.model.result import ExtractorResult
-from common.model.s3.config import S3SourceConfig
 
 
 class S3Extractor(Extractor):

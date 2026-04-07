@@ -1,7 +1,6 @@
 from common.model.facebook.common import Group
 from common.model.facebook.fields import Endpoints
 from common.model.facebook.fields import FacebookField as FieldConfig
-
 from engine.node.extractors.facebook_ads.api.request.field_mapper import (
     analyze_primary_keys,
     build_processing_fields,

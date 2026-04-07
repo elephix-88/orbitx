@@ -101,12 +101,13 @@ class AuthService {
       const response = await fetch(`${this.baseUrl}/api/auth/refresh`, {
         method: 'POST',
         headers,
-        credentials: 'include', // Include cookies
+        credentials: 'include',
       });
 
       if (!response.ok) {
-        // Refresh failed, clear everything
-        this.logout();
+        // Refresh failed — only clear local state.
+        // The caller (fetchClient) handles redirect to /login.
+        this.clearLocalAuth();
         return null;
       }
 
@@ -115,7 +116,7 @@ class AuthService {
       this.setStoredUser(result.user);
       return result;
     } catch {
-      this.logout();
+      this.clearLocalAuth();
       return null;
     }
   }
@@ -162,7 +163,14 @@ class AuthService {
     return user;
   }
 
-  // Logout
+  // Clear only local auth state (no server call).
+  // Used when refresh fails — avoids triggering another network request.
+  clearLocalAuth(): void {
+    this.removeToken();
+    this.removeStoredUser();
+  }
+
+  // Logout — clears server-side cookies + local state
   async logout(): Promise<void> {
     try {
       const csrfToken = this.getCsrfToken();

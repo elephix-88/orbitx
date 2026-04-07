@@ -55,7 +55,7 @@ def test_build_credentials_with_access_token(mock_request, mock_settings):
 
 @patch("requests.Session.request")
 def test_build_credentials_without_access_token(mock_request, mock_settings):
-    # This test verifies that a token is correctly refreshed if no access token is provided.
+    # Verifies that a token is correctly refreshed when no access token is provided.
     mock_response = MagicMock()
     mock_response.status_code = 200
     response_data = {

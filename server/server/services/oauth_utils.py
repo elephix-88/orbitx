@@ -43,8 +43,8 @@ def verify_state(state: str, max_age: int = 600) -> dict[str, str]:
             raise ValueError("Invalid state format")
         raw = blob[:-33]  # Everything except last 33 bytes (1 dot + 32 sig)
         sig = blob[-32:]  # Last 32 bytes is the signature
-    except (ValueError, TypeError):
-        raise ValueError("Invalid state format")
+    except (ValueError, TypeError) as e:
+        raise ValueError("Invalid state format") from e
 
     expected_sig = hmac.new(secret, raw, hashlib.sha256).digest()
     if not hmac.compare_digest(sig, expected_sig):

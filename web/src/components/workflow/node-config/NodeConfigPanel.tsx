@@ -16,7 +16,8 @@ import {
   Sparkles,
   Code2,
   Info,
-  ChevronRight
+  ChevronRight,
+  Eye,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { WorkflowNode } from '@/types/workflow';
@@ -46,6 +47,7 @@ interface NodeConfigPanelProps {
   onExecuteNode?: () => void;
   isExecuting?: boolean;
   executionStatus?: 'idle' | 'running' | 'success' | 'error';
+  onPreview?: (nodeId: string) => void;
 }
 
 // Panel Header with Node Info
@@ -55,7 +57,8 @@ const PanelHeader: React.FC<{
   onExecute?: () => void;
   isExecuting?: boolean;
   executionStatus?: 'idle' | 'running' | 'success' | 'error';
-}> = ({ node, onClose, onExecute, isExecuting, executionStatus }) => {
+  onPreview?: () => void;
+}> = ({ node, onClose, onExecute, isExecuting, executionStatus, onPreview }) => {
   const spec = getNodeSpecByDisplayName(node.name) || (node.definitionId ? getNodeSpec(node.definitionId) : undefined);
 
   const statusIcon = useMemo(() => {
@@ -106,13 +109,13 @@ const PanelHeader: React.FC<{
   const getNodeTypeBadge = () => {
     switch (node.type) {
       case 'source':
-        return { label: 'Source', color: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' };
+        return { label: 'Source', color: 'bg-emerald-500/10 text-emerald-400' };
       case 'transform':
-        return { label: 'Transform', color: 'bg-purple-500/10 text-purple-600 dark:text-purple-400' };
+        return { label: 'Transform', color: 'bg-purple-500/10 text-purple-400' };
       case 'destination':
-        return { label: 'Destination', color: 'bg-orange-500/10 text-orange-600 dark:text-orange-400' };
+        return { label: 'Destination', color: 'bg-orange-500/10 text-orange-400' };
       default:
-        return { label: 'Node', color: 'bg-slate-500/10 text-slate-600 dark:text-slate-400' };
+        return { label: 'Node', color: 'bg-neutral-500/10 text-text-secondary' };
     }
   };
 
@@ -122,13 +125,13 @@ const PanelHeader: React.FC<{
   const hasPlatformIcon = spec?.typeId && getNodeIcon(spec.typeId, 28) !== null;
 
   return (
-    <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-slate-700/50">
+    <div className="flex items-center justify-between px-6 py-4 border-b border-border">
       <div className="flex items-center gap-4">
         <div
           className={cn(
             "w-12 h-12 rounded-xl flex items-center justify-center shadow-lg",
             hasPlatformIcon
-              ? "bg-slate-100 dark:bg-slate-700" // Neutral background for platform logos
+              ? "bg-surface-secondary" // Neutral background for platform logos
               : cn("text-white bg-gradient-to-br", spec?.color ? '' : getNodeTypeColor())
           )}
           style={!hasPlatformIcon && spec?.color ? { background: `linear-gradient(135deg, ${spec.color}, ${spec.color}dd)` } : undefined}
@@ -138,14 +141,14 @@ const PanelHeader: React.FC<{
 
         <div>
           <div className="flex items-center gap-3">
-            <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-100">
+            <h2 className="text-lg font-semibold text-text-primary">
               {node.name}
             </h2>
             {statusIcon}
           </div>
           {/* Show alias below the main name if set */}
           {node.display_name && (
-            <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">
+            <p className="text-sm text-text-secondary mt-0.5">
               {node.display_name}
             </p>
           )}
@@ -154,7 +157,7 @@ const PanelHeader: React.FC<{
               {badge.label}
             </span>
             {spec?.typeId && (
-              <span className="text-xs text-slate-400 dark:text-slate-500">
+              <span className="text-xs text-text-tertiary">
                 {spec.typeId}
               </span>
             )}
@@ -163,16 +166,30 @@ const PanelHeader: React.FC<{
       </div>
 
       <div className="flex items-center gap-3">
+        {onPreview && (
+          <button
+            onClick={onPreview}
+            className={cn(
+              "flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all",
+              "bg-surface-secondary border border-border text-text-primary",
+              "hover:bg-surface-tertiary"
+            )}
+          >
+            <Eye className="w-4 h-4" />
+            <span>Preview</span>
+          </button>
+        )}
+
         {onExecute && (
           <button
             onClick={onExecute}
             disabled={isExecuting}
             className={cn(
               "flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-medium transition-all",
-              "bg-gradient-to-r from-brand-500 to-brand-600 text-white",
-              "hover:from-brand-600 hover:to-brand-700",
+              "bg-primary-400 text-neutral-950",
+              "hover:bg-primary-500",
               "disabled:opacity-50 disabled:cursor-not-allowed",
-              "shadow-md shadow-brand-500/20 hover:shadow-lg hover:shadow-brand-500/30"
+              "shadow-md shadow-primary-400/20 hover:shadow-lg hover:shadow-primary-400/30"
             )}
           >
             {isExecuting ? (
@@ -186,7 +203,7 @@ const PanelHeader: React.FC<{
 
         <button
           onClick={onClose}
-          className="p-2 text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition-colors"
+          className="p-2 text-text-tertiary hover:text-text-primary hover:bg-surface-secondary rounded-lg transition-colors"
         >
           <X className="w-5 h-5" />
         </button>
@@ -208,8 +225,8 @@ const TabNavigation: React.FC<{
   ];
 
   return (
-    <div className="px-6 py-3 border-b border-slate-200 dark:border-slate-700/50">
-      <div className="flex items-center gap-1 p-1 bg-slate-100 dark:bg-slate-700/50 rounded-xl w-fit">
+    <div className="px-6 py-3 border-b border-border">
+      <div className="flex items-center gap-1 p-1 bg-surface-secondary rounded-xl w-fit">
         {tabs.map((tab) => (
           <button
             key={tab.id}
@@ -217,14 +234,14 @@ const TabNavigation: React.FC<{
             className={cn(
               "relative flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-lg transition-all",
               activeTab === tab.id
-                ? "bg-white dark:bg-slate-600 text-slate-900 dark:text-slate-100 shadow-sm"
-                : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
+                ? "bg-surface-primary text-text-primary shadow-sm"
+                : "text-text-secondary hover:text-text-primary"
             )}
           >
             {tab.icon}
             <span>{tab.label}</span>
             {tab.id === 'parameters' && hasErrors && (
-              <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-white dark:border-slate-800" />
+              <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-error rounded-full border-2 border-surface-primary" />
             )}
           </button>
         ))}
@@ -241,6 +258,7 @@ export const NodeConfigPanel: React.FC<NodeConfigPanelProps> = ({
   onExecuteNode,
   isExecuting = false,
   executionStatus = 'idle',
+  onPreview,
 }) => {
   const [activeTab, setActiveTab] = useState<TabId>('parameters');
   const [validationErrors, setValidationErrors] = useState<string[]>([]);
@@ -321,7 +339,7 @@ export const NodeConfigPanel: React.FC<NodeConfigPanelProps> = ({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="absolute inset-0 bg-black/20 dark:bg-black/50 backdrop-blur-sm"
+        className="absolute inset-0 bg-black/50 backdrop-blur-sm"
         onClick={onClose}
       />
 
@@ -334,8 +352,8 @@ export const NodeConfigPanel: React.FC<NodeConfigPanelProps> = ({
         className={cn(
           "relative z-10 w-full max-w-3xl flex flex-col",
           "h-[85vh] sm:h-[80vh]", // Fixed height
-          "bg-white dark:bg-slate-800 rounded-2xl shadow-2xl",
-          "border border-slate-200 dark:border-slate-700/50",
+          "bg-surface-primary rounded-2xl shadow-2xl",
+          "border border-border",
           "overflow-hidden"
         )}
       >
@@ -345,6 +363,7 @@ export const NodeConfigPanel: React.FC<NodeConfigPanelProps> = ({
           onExecute={onExecuteNode}
           isExecuting={isExecuting}
           executionStatus={executionStatus}
+          onPreview={onPreview ? () => onPreview(node.id) : undefined}
         />
 
         <TabNavigation
@@ -377,10 +396,10 @@ export const NodeConfigPanel: React.FC<NodeConfigPanelProps> = ({
                     />
                   ) : (
                     <div className="flex flex-col items-center justify-center h-64 text-center">
-                      <div className="w-16 h-16 rounded-2xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center mb-4">
-                        <Settings2 className="w-8 h-8 text-slate-400" />
+                      <div className="w-16 h-16 rounded-2xl bg-surface-secondary flex items-center justify-center mb-4">
+                        <Settings2 className="w-8 h-8 text-text-tertiary" />
                       </div>
-                      <p className="text-sm text-slate-500 dark:text-slate-400">
+                      <p className="text-sm text-text-secondary">
                         No configuration available for this node type.
                       </p>
                     </div>
@@ -388,14 +407,14 @@ export const NodeConfigPanel: React.FC<NodeConfigPanelProps> = ({
 
                   {/* Validation Errors */}
                   {validationErrors.length > 0 && (
-                    <div className="mt-6 p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800/50 rounded-xl">
+                    <div className="mt-6 p-4 bg-red-900/20 border border-red-800/50 rounded-xl">
                       <div className="flex items-start gap-3">
                         <AlertTriangle className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5" />
                         <div>
-                          <h4 className="text-sm font-medium text-red-800 dark:text-red-300 mb-2">
+                          <h4 className="text-sm font-medium text-red-300 mb-2">
                             Please fix the following issues:
                           </h4>
-                          <ul className="text-sm text-red-600 dark:text-red-400 space-y-1">
+                          <ul className="text-sm text-red-400 space-y-1">
                             {validationErrors.map((error, index) => (
                               <li key={index} className="flex items-start gap-2">
                                 <ChevronRight className="w-4 h-4 flex-shrink-0 mt-0.5" />
@@ -423,9 +442,9 @@ export const NodeConfigPanel: React.FC<NodeConfigPanelProps> = ({
                 <div className="p-6 space-y-6">
                   {/* Node Alias */}
                   <div className="space-y-2">
-                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+                    <label className="block text-sm font-medium text-text-secondary">
                       Alias
-                      <span className="ml-2 text-xs font-normal text-slate-400">(optional)</span>
+                      <span className="ml-2 text-xs font-normal text-text-tertiary">(optional)</span>
                     </label>
                     <input
                       type="text"
@@ -433,22 +452,22 @@ export const NodeConfigPanel: React.FC<NodeConfigPanelProps> = ({
                       onChange={(e) => setPendingDisplayName(e.target.value)}
                       className={cn(
                         "w-full px-4 py-3 rounded-xl text-sm transition-all",
-                        "bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700",
-                        "focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500",
-                        "placeholder:text-slate-400"
+                        "bg-surface-secondary border border-border",
+                        "focus:outline-none focus:ring-2 focus:ring-primary-400/30 focus:border-primary-400",
+                        "placeholder:text-text-tertiary"
                       )}
                       placeholder={`e.g., "${node.name} - Campaign Data"`}
                     />
-                    <p className="text-xs text-slate-400">
+                    <p className="text-xs text-text-tertiary">
                       Custom name shown on the node. Leave empty to auto-generate from configuration.
                     </p>
                   </div>
 
                   {/* Node Description */}
                   <div className="space-y-2">
-                    <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+                    <label className="block text-sm font-medium text-text-secondary">
                       Description
-                      <span className="ml-2 text-xs font-normal text-slate-400">(optional)</span>
+                      <span className="ml-2 text-xs font-normal text-text-tertiary">(optional)</span>
                     </label>
                     <textarea
                       value={pendingDescription}
@@ -456,51 +475,51 @@ export const NodeConfigPanel: React.FC<NodeConfigPanelProps> = ({
                       rows={3}
                       className={cn(
                         "w-full px-4 py-3 rounded-xl text-sm transition-all resize-none",
-                        "bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700",
-                        "focus:outline-none focus:ring-2 focus:ring-brand-500/50 focus:border-brand-500",
-                        "placeholder:text-slate-400"
+                        "bg-surface-secondary border border-border",
+                        "focus:outline-none focus:ring-2 focus:ring-primary-400/30 focus:border-primary-400",
+                        "placeholder:text-text-tertiary"
                       )}
                       placeholder="Add a description to help you remember what this node does..."
                     />
                   </div>
 
                   {/* Execution Settings */}
-                  <div className="pt-4 border-t border-slate-200 dark:border-slate-700">
-                    <h3 className="text-sm font-semibold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+                  <div className="pt-4 border-t border-border">
+                    <h3 className="text-sm font-semibold text-text-primary mb-4 flex items-center gap-2">
                       <Zap className="w-4 h-4 text-brand-500" />
                       Execution Behavior
                     </h3>
 
                     <div className="space-y-4">
-                      <label className="flex items-start gap-4 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                      <label className="flex items-start gap-4 p-4 bg-surface-secondary rounded-xl cursor-pointer hover:bg-surface-tertiary transition-colors">
                         <input
                           type="checkbox"
                           checked={pendingContinueOnFail}
                           onChange={(e) => setPendingContinueOnFail(e.target.checked)}
-                          className="mt-0.5 w-5 h-5 rounded border-slate-300 dark:border-slate-600 text-brand-500 focus:ring-brand-500/50"
+                          className="mt-0.5 w-5 h-5 rounded border-border text-primary-400 focus:ring-primary-400/30"
                         />
                         <div>
-                          <span className="text-sm font-medium text-slate-700 dark:text-slate-300 block">
+                          <span className="text-sm font-medium text-text-secondary block">
                             Continue on Failure
                           </span>
-                          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                          <p className="text-xs text-text-secondary mt-1">
                             If this node fails, the workflow will continue executing subsequent nodes instead of stopping.
                           </p>
                         </div>
                       </label>
 
-                      <label className="flex items-start gap-4 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                      <label className="flex items-start gap-4 p-4 bg-surface-secondary rounded-xl cursor-pointer hover:bg-surface-tertiary transition-colors">
                         <input
                           type="checkbox"
                           checked={pendingRetryOnFail}
                           onChange={(e) => setPendingRetryOnFail(e.target.checked)}
-                          className="mt-0.5 w-5 h-5 rounded border-slate-300 dark:border-slate-600 text-brand-500 focus:ring-brand-500/50"
+                          className="mt-0.5 w-5 h-5 rounded border-border text-primary-400 focus:ring-primary-400/30"
                         />
                         <div>
-                          <span className="text-sm font-medium text-slate-700 dark:text-slate-300 block">
+                          <span className="text-sm font-medium text-text-secondary block">
                             Retry on Failure
                           </span>
-                          <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                          <p className="text-xs text-text-secondary mt-1">
                             Automatically retry this node up to 3 times if it fails before marking as failed.
                           </p>
                         </div>
@@ -522,15 +541,15 @@ export const NodeConfigPanel: React.FC<NodeConfigPanelProps> = ({
               >
                 <div className="p-6">
                   {/* Node Info Card */}
-                  <div className="flex items-start gap-4 p-5 bg-gradient-to-br from-brand-50 to-purple-50 dark:from-brand-900/20 dark:to-purple-900/20 border border-brand-200/50 dark:border-brand-800/30 rounded-2xl mb-6">
-                    <div className="w-10 h-10 rounded-xl bg-brand-500/10 flex items-center justify-center flex-shrink-0">
-                      <Info className="w-5 h-5 text-brand-500" />
+                  <div className="flex items-start gap-4 p-5 bg-gradient-to-br from-primary-400/10 to-purple-900/20 border border-primary-400/20 rounded-2xl mb-6">
+                    <div className="w-10 h-10 rounded-xl bg-primary-400/10 flex items-center justify-center flex-shrink-0">
+                      <Info className="w-5 h-5 text-primary-400" />
                     </div>
                     <div>
-                      <h4 className="text-sm font-semibold text-brand-900 dark:text-brand-100 mb-1">
+                      <h4 className="text-sm font-semibold text-primary-300 mb-1">
                         About {node.name}
                       </h4>
-                      <p className="text-sm text-brand-700 dark:text-brand-300">
+                      <p className="text-sm text-text-secondary">
                         {spec?.typeId ? `Node Type: ${spec.typeId}` : 'Standard workflow node'}
                       </p>
                     </div>
@@ -540,19 +559,19 @@ export const NodeConfigPanel: React.FC<NodeConfigPanelProps> = ({
                   <div className="prose prose-sm dark:prose-invert max-w-none">
                     {node.type === 'source' && (
                       <div className="space-y-4">
-                        <div className="p-4 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl border border-emerald-200/50 dark:border-emerald-800/30">
-                          <h3 className="text-base font-semibold text-emerald-900 dark:text-emerald-100 mb-2 flex items-center gap-2">
+                        <div className="p-4 bg-emerald-900/20 rounded-xl border border-emerald-800/30">
+                          <h3 className="text-base font-semibold text-emerald-100 mb-2 flex items-center gap-2">
                             <Database className="w-5 h-5" />
                             Source Node
                           </h3>
-                          <p className="text-sm text-emerald-700 dark:text-emerald-300">
+                          <p className="text-sm text-emerald-300">
                             Source nodes extract data from external services, APIs, or databases. The data flows to connected transform or destination nodes in your workflow.
                           </p>
                         </div>
 
                         <div className="space-y-3">
-                          <h4 className="text-sm font-semibold text-slate-900 dark:text-white">Key Features</h4>
-                          <ul className="text-sm text-slate-600 dark:text-slate-400 space-y-2">
+                          <h4 className="text-sm font-semibold text-text-primary">Key Features</h4>
+                          <ul className="text-sm text-text-secondary space-y-2">
                             <li className="flex items-start gap-2">
                               <ChevronRight className="w-4 h-4 text-brand-500 flex-shrink-0 mt-0.5" />
                               Connects to external data sources securely
@@ -572,19 +591,19 @@ export const NodeConfigPanel: React.FC<NodeConfigPanelProps> = ({
 
                     {node.type === 'transform' && (
                       <div className="space-y-4">
-                        <div className="p-4 bg-purple-50 dark:bg-purple-900/20 rounded-xl border border-purple-200/50 dark:border-purple-800/30">
-                          <h3 className="text-base font-semibold text-purple-900 dark:text-purple-100 mb-2 flex items-center gap-2">
+                        <div className="p-4 bg-purple-900/20 rounded-xl border border-purple-800/30">
+                          <h3 className="text-base font-semibold text-purple-100 mb-2 flex items-center gap-2">
                             <Code2 className="w-5 h-5" />
                             Transform Node
                           </h3>
-                          <p className="text-sm text-purple-700 dark:text-purple-300">
+                          <p className="text-sm text-purple-300">
                             Transform nodes modify, filter, aggregate, or reshape data as it flows through your workflow. They receive input from upstream nodes and output processed data.
                           </p>
                         </div>
 
                         <div className="space-y-3">
-                          <h4 className="text-sm font-semibold text-slate-900 dark:text-white">Common Operations</h4>
-                          <ul className="text-sm text-slate-600 dark:text-slate-400 space-y-2">
+                          <h4 className="text-sm font-semibold text-text-primary">Common Operations</h4>
+                          <ul className="text-sm text-text-secondary space-y-2">
                             <li className="flex items-start gap-2">
                               <ChevronRight className="w-4 h-4 text-brand-500 flex-shrink-0 mt-0.5" />
                               Filter records based on conditions
@@ -608,19 +627,19 @@ export const NodeConfigPanel: React.FC<NodeConfigPanelProps> = ({
 
                     {node.type === 'destination' && (
                       <div className="space-y-4">
-                        <div className="p-4 bg-orange-50 dark:bg-orange-900/20 rounded-xl border border-orange-200/50 dark:border-orange-800/30">
-                          <h3 className="text-base font-semibold text-orange-900 dark:text-orange-100 mb-2 flex items-center gap-2">
+                        <div className="p-4 bg-orange-900/20 rounded-xl border border-orange-800/30">
+                          <h3 className="text-base font-semibold text-orange-100 mb-2 flex items-center gap-2">
                             <ArrowRight className="w-5 h-5" />
                             Destination Node
                           </h3>
-                          <p className="text-sm text-orange-700 dark:text-orange-300">
+                          <p className="text-sm text-orange-300">
                             Destination nodes load processed data into external systems like databases, data warehouses, spreadsheets, or cloud services.
                           </p>
                         </div>
 
                         <div className="space-y-3">
-                          <h4 className="text-sm font-semibold text-slate-900 dark:text-white">Supported Destinations</h4>
-                          <ul className="text-sm text-slate-600 dark:text-slate-400 space-y-2">
+                          <h4 className="text-sm font-semibold text-text-primary">Supported Destinations</h4>
+                          <ul className="text-sm text-text-secondary space-y-2">
                             <li className="flex items-start gap-2">
                               <ChevronRight className="w-4 h-4 text-brand-500 flex-shrink-0 mt-0.5" />
                               BigQuery data warehouse
@@ -645,14 +664,14 @@ export const NodeConfigPanel: React.FC<NodeConfigPanelProps> = ({
         </div>
 
         {/* Footer with Save/Cancel buttons */}
-        <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-slate-200 dark:border-slate-700/50 bg-slate-50 dark:bg-slate-800/50">
+        <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-border bg-surface-secondary">
           <button
             onClick={onClose}
             className={cn(
               "px-5 py-2.5 rounded-xl text-sm font-medium transition-all",
-              "text-slate-700 dark:text-slate-300",
-              "hover:bg-slate-200 dark:hover:bg-slate-700",
-              "border border-slate-300 dark:border-slate-600"
+              "text-text-secondary",
+              "hover:bg-surface-tertiary",
+              "border border-border"
             )}
           >
             Cancel
@@ -662,10 +681,10 @@ export const NodeConfigPanel: React.FC<NodeConfigPanelProps> = ({
             disabled={!isValid}
             className={cn(
               "px-5 py-2.5 rounded-xl text-sm font-medium transition-all",
-              "bg-gradient-to-r from-brand-500 to-brand-600 text-white",
-              "hover:from-brand-600 hover:to-brand-700",
+              "bg-primary-400 text-neutral-950",
+              "hover:bg-primary-500",
               "disabled:opacity-50 disabled:cursor-not-allowed",
-              "shadow-md shadow-brand-500/20 hover:shadow-lg hover:shadow-brand-500/30"
+              "shadow-md shadow-primary-400/20 hover:shadow-lg hover:shadow-primary-400/30"
             )}
           >
             Save Changes

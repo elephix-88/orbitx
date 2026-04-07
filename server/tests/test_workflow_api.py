@@ -11,17 +11,15 @@ class TestWorkflowEndpoints:
     """Test workflow API endpoints."""
 
     @pytest.fixture
-    def mock_scheduler(self):
-        with patch("server.services.workflow.scheduler_service") as mock:
-            mock.create_workflow_schedule.return_value = True
-            mock.update_workflow_schedule.return_value = True
-            mock.delete_workflow_schedule.return_value = True
-            mock.run_workflow_schedule.return_value = True
+    def mock_dagster(self):
+        with patch("server.services.workflow.dagster_client") as mock:
+            mock.reload_code_location.return_value = True
+            mock.launch_run.return_value = "run_abc123"
             yield mock
 
     @pytest.mark.unit
     def test_create_workflow_success(
-        self, client: TestClient, mock_mongodb, mock_scheduler, sample_workflow_data
+        self, client: TestClient, mock_mongodb, mock_dagster, sample_workflow_data
     ):
         """Test successful workflow creation."""
         # Arrange
@@ -36,7 +34,7 @@ class TestWorkflowEndpoints:
 
     @pytest.mark.unit
     def test_create_workflow_duplicate(
-        self, client: TestClient, mock_mongodb, mock_scheduler, sample_workflow_data
+        self, client: TestClient, mock_mongodb, mock_dagster, sample_workflow_data
     ):
         """Test workflow creation with duplicate job_id."""
         # Arrange
@@ -113,7 +111,7 @@ class TestWorkflowEndpoints:
 
     @pytest.mark.unit
     def test_execute_workflow_success(
-        self, client: TestClient, mock_mongodb, mock_scheduler
+        self, client: TestClient, mock_mongodb, mock_dagster
     ):
         """Test successful workflow execution trigger."""
         # Arrange
@@ -158,7 +156,7 @@ class TestWorkflowEndpoints:
 
     @pytest.mark.unit
     def test_update_workflow_success(
-        self, client: TestClient, mock_mongodb, mock_scheduler, sample_workflow_data
+        self, client: TestClient, mock_mongodb, mock_dagster, sample_workflow_data
     ):
         """Test successful workflow update."""
         # Arrange
@@ -179,7 +177,7 @@ class TestWorkflowEndpoints:
 
     @pytest.mark.unit
     def test_update_workflow_not_found(
-        self, client: TestClient, mock_mongodb, mock_scheduler, sample_workflow_data
+        self, client: TestClient, mock_mongodb, mock_dagster, sample_workflow_data
     ):
         """Test update for non-existent workflow."""
         # Arrange
@@ -256,7 +254,7 @@ class TestWorkflowEndpoints:
         reason="Mock needs to return Pydantic model for model_cls conversion"
     )
     def test_delete_workflow_success(
-        self, client: TestClient, mock_mongodb, mock_scheduler, sample_workflow_data
+        self, client: TestClient, mock_mongodb, mock_dagster, sample_workflow_data
     ):
         """Test successful workflow deletion."""
         # Arrange - need to return workflow data for get_document (owner check)
@@ -286,7 +284,7 @@ class TestWorkflowEndpoints:
 
     @pytest.mark.unit
     def test_delete_workflow_not_found(
-        self, client: TestClient, mock_mongodb, mock_scheduler
+        self, client: TestClient, mock_mongodb, mock_dagster
     ):
         """Test workflow deletion when workflow not found."""
         # Arrange

@@ -4,9 +4,9 @@ import duckdb
 import pandas as pd
 from loguru import logger
 
+from common.model.transform import RenameTransformConfig
 from engine.exceptions import TransformerException
 from engine.interfaces.node import Transformer
-from common.model.transform import RenameTransformConfig
 
 
 class RenameTransformer(Transformer):
@@ -22,11 +22,9 @@ class RenameTransformer(Transformer):
 
         updated = []
         for schema in schemas:
-            field = getattr(schema, "field", None)
-            if field and field in self.config.column_mapping:
-                new_field = self.config.column_mapping[field]
-                if hasattr(schema, "model_copy"):
-                    schema = schema.model_copy(update={"field": new_field})
+            if schema.field and schema.field in self.config.column_mapping:
+                new_field = self.config.column_mapping[schema.field]
+                schema = schema.model_copy(update={"field": new_field})
             updated.append(schema)
         return updated
 

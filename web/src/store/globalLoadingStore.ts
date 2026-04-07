@@ -6,7 +6,7 @@ type GlobalLoadingState = {
   end: () => void;
 };
 
-export const useGlobalLoadingStore = create<GlobalLoadingState>((set) => ({
+const useGlobalLoadingStore = create<GlobalLoadingState>((set) => ({
   inFlight: 0,
   start: () => set((state) => ({ inFlight: state.inFlight + 1 })),
   end: () => set((state) => ({ inFlight: Math.max(0, state.inFlight - 1) })),

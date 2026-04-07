@@ -98,7 +98,7 @@ export const ScheduleSelector: React.FC<ScheduleSelectorProps> = ({
   return (
     <div className="space-y-5">
       <div>
-        <label className="block text-sm font-semibold text-slate-900 dark:text-slate-200 mb-2.5">
+        <label className="block text-sm font-semibold text-text-primary mb-2.5">
           Schedule Frequency
         </label>
         <Select
@@ -111,14 +111,14 @@ export const ScheduleSelector: React.FC<ScheduleSelectorProps> = ({
       {/* Time picker for non-hourly schedules */}
       {config.frequency !== 'hourly' && config.frequency !== 'custom' && (
         <div>
-          <label className="block text-sm font-semibold text-slate-900 dark:text-slate-200 mb-2.5">
+          <label className="block text-sm font-semibold text-text-primary mb-2.5">
             Time
           </label>
           <TimePicker
             value={config.time || '00:00'}
             onChange={(newTime) => setConfig(prev => ({ ...prev, time: newTime }))}
           />
-          <p className="mt-1.5 text-sm text-slate-500 dark:text-slate-400">
+          <p className="mt-1.5 text-sm text-text-tertiary">
             24-hour format
           </p>
         </div>
@@ -127,7 +127,7 @@ export const ScheduleSelector: React.FC<ScheduleSelectorProps> = ({
       {/* Day of week picker for weekly */}
       {config.frequency === 'weekly' && (
         <div>
-          <label className="block text-sm font-semibold text-slate-900 dark:text-slate-200 mb-2.5">
+          <label className="block text-sm font-semibold text-text-primary mb-2.5">
             Day of Week
           </label>
           <Select
@@ -141,7 +141,7 @@ export const ScheduleSelector: React.FC<ScheduleSelectorProps> = ({
       {/* Day of month picker for monthly */}
       {config.frequency === 'monthly' && (
         <div>
-          <label className="block text-sm font-semibold text-slate-900 dark:text-slate-200 mb-2.5">
+          <label className="block text-sm font-semibold text-text-primary mb-2.5">
             Day of Month
           </label>
           <Input
@@ -160,7 +160,7 @@ export const ScheduleSelector: React.FC<ScheduleSelectorProps> = ({
         <div className="space-y-4">
           {/* Quick presets */}
           <div>
-            <label className="block text-sm font-semibold text-slate-900 dark:text-slate-200 mb-2.5">
+            <label className="block text-sm font-semibold text-text-primary mb-2.5">
               Quick Presets
             </label>
             <Select
@@ -173,7 +173,7 @@ export const ScheduleSelector: React.FC<ScheduleSelectorProps> = ({
 
           {/* Manual input */}
           <div>
-            <label className="block text-sm font-semibold text-slate-900 dark:text-slate-200 mb-2.5">
+            <label className="block text-sm font-semibold text-text-primary mb-2.5">
               Cron Expression
             </label>
             <div className="relative">
@@ -194,7 +194,7 @@ export const ScheduleSelector: React.FC<ScheduleSelectorProps> = ({
                 </div>
               )}
             </div>
-            <p className="mt-1.5 text-xs text-slate-500 dark:text-slate-400 font-mono">
+            <p className="mt-1.5 text-xs text-text-tertiary font-mono">
               Format: minute(0-59) hour(0-23) day(1-31) month(1-12) weekday(0-6)
             </p>
           </div>
@@ -202,18 +202,18 @@ export const ScheduleSelector: React.FC<ScheduleSelectorProps> = ({
       )}
 
       {/* Schedule preview with next run times */}
-      <div className="rounded-xl border border-brand-200 dark:border-brand-500/20 bg-brand-50/50 dark:bg-brand-900/10 overflow-hidden">
+      <div className="rounded-xl border border-primary-400/20 bg-primary-400/5 overflow-hidden">
         {/* Description */}
-        <div className="p-4 border-b border-brand-200/50 dark:border-brand-500/10">
+        <div className="p-4 border-b border-primary-400/10">
           <div className="flex items-start space-x-3">
-            <div className="text-brand-600 dark:text-brand-400 mt-0.5">
+            <div className="text-primary-400 mt-0.5">
               <Clock className="w-5 h-5" />
             </div>
             <div className="flex-1">
-              <p className="text-sm font-bold text-slate-900 dark:text-white mb-1">
+              <p className="text-sm font-bold text-text-primary mb-1">
                 Schedule Description
               </p>
-              <p className="text-sm text-slate-600 dark:text-slate-400">
+              <p className="text-sm text-text-secondary">
                 {scheduleDescription}
               </p>
             </div>
@@ -222,19 +222,19 @@ export const ScheduleSelector: React.FC<ScheduleSelectorProps> = ({
 
         {/* Next run times */}
         {nextRuns.length > 0 && (
-          <div className="p-4 bg-white/50 dark:bg-slate-900/30">
+          <div className="p-4 bg-surface-primary/30">
             <div className="flex items-start space-x-3">
-              <div className="text-emerald-600 dark:text-emerald-400 mt-0.5">
+              <div className="text-emerald-400 mt-0.5">
                 <Calendar className="w-5 h-5" />
               </div>
               <div className="flex-1">
-                <p className="text-sm font-bold text-slate-900 dark:text-white mb-2">
+                <p className="text-sm font-bold text-text-primary mb-2">
                   Next Run Times
                 </p>
                 <ul className="space-y-1.5">
                   {nextRuns.map((run, idx) => (
-                    <li key={idx} className="text-sm text-slate-600 dark:text-slate-400 flex items-center">
-                      <span className="w-5 h-5 flex items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 text-xs font-medium mr-2">
+                    <li key={idx} className="text-sm text-text-secondary flex items-center">
+                      <span className="w-5 h-5 flex items-center justify-center rounded-full bg-emerald-900/30 text-emerald-400 text-xs font-medium mr-2">
                         {idx + 1}
                       </span>
                       {formatNextRun(run)}

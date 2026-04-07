@@ -1,10 +1,10 @@
-from enum import Enum
+from enum import StrEnum
 
 from common.model.facebook.common import Group
 from common.model.facebook.fields import FacebookField as FieldConfig
 
 
-class ReportLevel(str, Enum):
+class ReportLevel(StrEnum):
     AD = "ad"
     CAMPAIGN = "campaign"
     ADSET = "adset"
@@ -37,9 +37,10 @@ def analyze_primary_keys(
     primary_key_set = set(primary_keys)
     for config in field_config:
         insights_field = config.endpoints.insights
-        if config.field in primary_key_set:
-            if insights_field and config.group != Group.BREAKDOWNS.value:
-                api_fields.add(insights_field)
+        is_primary = config.field in primary_key_set
+        is_not_breakdown = config.group != Group.BREAKDOWNS.value
+        if is_primary and insights_field and is_not_breakdown:
+            api_fields.add(insights_field)
 
     return primary_keys, level, api_fields
 

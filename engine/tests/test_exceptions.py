@@ -1,7 +1,6 @@
 """Tests for the custom exception hierarchy."""
 
 from engine.exceptions import (
-    ConfigurationException,
     ConnectionException,
     ExtractorException,
     LoaderException,
@@ -10,7 +9,6 @@ from engine.exceptions import (
     RetryableException,
     TransformerException,
     ValidationException,
-    WorkflowExecutionException,
 )
 
 
@@ -51,21 +49,6 @@ class TestOrbitXException:
         """Test that OrbitXException inherits from Exception."""
         exc = OrbitXException("Test")
         assert isinstance(exc, Exception)
-
-
-class TestConfigurationException:
-    """Tests for ConfigurationException."""
-
-    def test_configuration_exception(self):
-        """Test configuration exception."""
-        exc = ConfigurationException(
-            "Invalid configuration",
-            node_id="google_ads",
-            node_instance_id=1,
-        )
-        assert isinstance(exc, OrbitXException)
-        assert exc.message == "Invalid configuration"
-        assert exc.node_id == "google_ads"
 
 
 class TestConnectionException:
@@ -152,23 +135,6 @@ class TestValidationException:
         assert exc.actual == ["col_a", "col_c"]
 
 
-class TestWorkflowExecutionException:
-    """Tests for WorkflowExecutionException."""
-
-    def test_workflow_execution_exception(self):
-        """Test workflow execution exception with failed nodes."""
-        exc = WorkflowExecutionException(
-            "Workflow failed",
-            workflow_id="wf_123",
-            failed_nodes=["node_1", "node_2"],
-        )
-        assert isinstance(exc, OrbitXException)
-        assert exc.workflow_id == "wf_123"
-        assert exc.failed_nodes == ["node_1", "node_2"]
-        assert exc.details["workflow_id"] == "wf_123"
-        assert exc.details["failed_nodes"] == ["node_1", "node_2"]
-
-
 class TestRetryableException:
     """Tests for RetryableException."""
 
@@ -228,13 +194,11 @@ class TestExceptionChaining:
     def test_exception_can_be_caught_by_base_class(self):
         """Test that all exceptions can be caught by OrbitXException."""
         exceptions = [
-            ConfigurationException("config error"),
             ConnectionException("connection error"),
             ExtractorException("extractor error"),
             TransformerException("transformer error"),
             LoaderException("loader error"),
             ValidationException("validation error"),
-            WorkflowExecutionException("workflow error"),
             RetryableException("retryable error"),
             RateLimitException("rate limit error"),
         ]

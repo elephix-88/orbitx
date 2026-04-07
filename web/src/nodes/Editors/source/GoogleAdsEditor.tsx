@@ -136,6 +136,17 @@ const GoogleAdsEditor: React.FC<GoogleAdsEditorProps> = ({ data, onChange, onClo
     }
   }, [cachedConnections]);
 
+  // Clear stale connection when connections load
+  useEffect(() => {
+    if (connections.length === 0 || !form.accessToken) return;
+    const currentValid = connections.some(c => c.id === form.accessToken);
+    if (!currentValid) {
+      const nextId = connections.length === 1 ? connections[0].id : '';
+      setForm((prev) => ({ ...prev, accessToken: nextId, adAccountIds: [] }));
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [connections]);
+
   // Sync accounts from cache
   useEffect(() => {
     if (form.accessToken) {

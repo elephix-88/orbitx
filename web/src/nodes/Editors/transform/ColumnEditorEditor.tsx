@@ -371,7 +371,7 @@ const ColumnEditorEditor: React.FC<ColumnEditorEditorProps> = ({
                     key={columnName}
                     className={`grid grid-cols-[1fr_1fr_130px_36px] gap-2 px-4 py-3 items-center transition-colors ${
                       isDropped
-                        ? 'bg-red-50 dark:bg-red-950/30'
+                        ? 'bg-red-950/30'
                         : 'hover:bg-surface-secondary/50'
                     }`}
                   >
@@ -380,7 +380,7 @@ const ColumnEditorEditor: React.FC<ColumnEditorEditorProps> = ({
                       <code
                         className={`text-sm font-mono px-2 py-1 rounded truncate ${
                           isDropped
-                            ? 'text-red-500 dark:text-red-400 bg-red-100 dark:bg-red-900/30 line-through'
+                            ? 'text-red-400 bg-red-900/30 line-through'
                             : 'text-text-primary bg-surface-secondary'
                         }`}
                       >
@@ -414,22 +414,22 @@ const ColumnEditorEditor: React.FC<ColumnEditorEditorProps> = ({
                           handleCastChange(columnName, e.target.value as DataType | '')
                         }
                         disabled={isDropped}
-                        className={`w-full h-9 px-2 text-sm rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent ${
+                        className={`w-full h-9 px-2 text-sm rounded-md border border-border bg-surface-primary focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent ${
                           isDropped
                             ? 'opacity-50 cursor-not-allowed'
                             : hasSelectedCast
-                            ? 'text-slate-900 dark:text-slate-100'
-                            : 'text-slate-400 dark:text-slate-500'
+                            ? 'text-text-primary'
+                            : 'text-text-tertiary'
                         }`}
                       >
-                        <option value="" className="text-slate-400 dark:text-slate-500">
+                        <option value="" className="text-text-tertiary">
                           -
                         </option>
                         {DATA_TYPES.map((type) => (
                           <option
                             key={type.value}
                             value={type.value}
-                            className="text-slate-900 dark:text-slate-100"
+                            className="text-text-primary"
                           >
                             {type.label}
                           </option>
@@ -445,7 +445,7 @@ const ColumnEditorEditor: React.FC<ColumnEditorEditorProps> = ({
                         className={`w-7 h-7 rounded-md flex items-center justify-center transition-colors ${
                           isDropped
                             ? 'bg-red-500 text-white hover:bg-red-600'
-                            : 'text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30'
+                            : 'text-text-tertiary hover:text-red-500 hover:bg-red-950/30'
                         }`}
                         title={isDropped ? 'Restore column' : 'Drop column'}
                       >
@@ -469,7 +469,7 @@ const ColumnEditorEditor: React.FC<ColumnEditorEditorProps> = ({
                 </span>
               )}
               {newColumns.filter((nc) => nc.name.trim() && nc.value.trim()).length > 0 && (
-                <span className="text-green-600 dark:text-green-400 ml-1">
+                <span className="text-green-400 ml-1">
                   (+{newColumns.filter((nc) => nc.name.trim() && nc.value.trim()).length} new)
                 </span>
               )}
@@ -483,7 +483,7 @@ const ColumnEditorEditor: React.FC<ColumnEditorEditorProps> = ({
               <button
                 type="button"
                 onClick={handleAddNewColumn}
-                className="flex items-center gap-1 text-sm text-brand-600 hover:text-brand-700 dark:text-brand-400 dark:hover:text-brand-300"
+                className="flex items-center gap-1 text-sm text-primary-400 hover:text-primary-300"
               >
                 <Plus size={14} />
                 Add Column
@@ -508,7 +508,7 @@ const ColumnEditorEditor: React.FC<ColumnEditorEditorProps> = ({
                   return (
                     <div
                       key={nc.id}
-                      className="grid grid-cols-[1fr_1fr_130px_36px] gap-2 px-4 py-3 items-center bg-green-50/50 dark:bg-green-950/20"
+                      className="grid grid-cols-[1fr_1fr_130px_36px] gap-2 px-4 py-3 items-center bg-green-950/20"
                     >
                       {/* Column name */}
                       <div>
@@ -544,7 +544,7 @@ const ColumnEditorEditor: React.FC<ColumnEditorEditorProps> = ({
                           onChange={(e) =>
                             handleNewColumnChange(nc.id, 'data_type', e.target.value)
                           }
-                          className="w-full h-9 px-2 text-sm rounded-md border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
+                          className="w-full h-9 px-2 text-sm rounded-md border border-border bg-surface-primary text-text-primary focus:outline-none focus:ring-2 focus:ring-brand-500 focus:border-transparent"
                         >
                           {DATA_TYPES.map((type) => (
                             <option key={type.value} value={type.value}>
@@ -559,7 +559,7 @@ const ColumnEditorEditor: React.FC<ColumnEditorEditorProps> = ({
                         <button
                           type="button"
                           onClick={() => handleRemoveNewColumn(nc.id)}
-                          className="w-7 h-7 rounded-md flex items-center justify-center text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors"
+                          className="w-7 h-7 rounded-md flex items-center justify-center text-text-tertiary hover:text-red-500 hover:bg-red-950/30 transition-colors"
                           title="Remove column"
                         >
                           <Trash2 size={14} />

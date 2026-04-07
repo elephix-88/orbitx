@@ -2,6 +2,9 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import { WorkflowNode, WorkflowConnection, NodeTypeId } from '../types/workflow';
 import { WorkflowData } from '../types/backend';
+import type { PinnedNodeEntry } from '../services/pinService';
+import type { PreviewResponse } from '../services/previewService';
+import type { ExecutionDetail } from '../services/executionDebugService';
 
 type JsonValue = string | number | boolean | null | JsonValue[] | { [key: string]: JsonValue };
 
@@ -21,21 +24,19 @@ function deepEqual(a: unknown, b: unknown): boolean {
   }
 }
 
-type WorkflowChangeType =
-  | 'addNode'
-  | 'updateNode'
-  | 'moveNode'
-  | 'deleteNode'
-  | 'addConnection'
-  | 'deleteConnection'
-  | 'updateWorkflow';
+/**
+ * Keyed by node_instance_id (string).
+ * Populated on workflow load from GET /api/workflows/{id}/pinned-data.
+ * NOT persisted to sessionStorage — always refetched from server.
+ */
+export type PinnedNodesMap = Record<string, PinnedNodeEntry>;
 
-export interface WorkflowChange {
-  id: string;
-  type: WorkflowChangeType;
-  timestamp: number;
-  payload: Record<string, unknown>;
-}
+/**
+ * Last successful preview result per node, keyed by node React ID (e.g. "node_abc123").
+ * Stored in memory only — gives the Pin button something to send to the server.
+ * NOT persisted.
+ */
+export type PreviewCacheMap = Record<string, PreviewResponse>;
 
 interface WorkflowState {
   nodes: WorkflowNode[];
@@ -44,7 +45,11 @@ interface WorkflowState {
   originalBackendWorkflow: Partial<WorkflowData> | null;
   hasUnsavedChanges: boolean;
   lastSavedAt: Date | null;
-  changes: WorkflowChange[];
+
+  /** Pinned nodes map — keyed by node_instance_id as string. */
+  pinnedNodes: PinnedNodesMap;
+  /** Last preview result per node React ID — used to populate the pin request. */
+  previewCache: PreviewCacheMap;
 
   updateNodes: (nodes: WorkflowNode[] | ((prev: WorkflowNode[]) => WorkflowNode[])) => void;
   updateConnections: (connections: WorkflowConnection[] | ((prev: WorkflowConnection[]) => WorkflowConnection[])) => void;
@@ -54,68 +59,26 @@ interface WorkflowState {
   setOriginalBackendWorkflow: (workflow: Partial<WorkflowData>) => void;
   markAsSaved: () => void;
   resetWorkflow: () => void;
-  clearChanges: () => void;
-}
 
-function diffNodes(prev: WorkflowNode[], next: WorkflowNode[]): WorkflowChange[] {
-  const changes: WorkflowChange[] = [];
-  const prevMap = new Map(prev.map((n) => [n.id, n]));
-  const nextMap = new Map(next.map((n) => [n.id, n]));
+  /** Replace the full pinned-nodes map (called after loading from server). */
+  loadPinnedNodes: (pinned: PinnedNodesMap) => void;
+  /** Mark a node as pinned in local state after a successful PUT. */
+  addPinnedNode: (nodeInstanceId: string, entry: PinnedNodeEntry) => void;
+  /** Remove a node from local pin state after a successful DELETE. */
+  removePinnedNode: (nodeInstanceId: string) => void;
+  /** Store the last successful preview result for a node. */
+  cachePreviewResult: (nodeId: string, result: PreviewResponse) => void;
 
-  // Added nodes
-  for (const [id, node] of nextMap) {
-    if (!prevMap.has(id)) {
-      changes.push({ id: `chg_${id}_add_${Date.now()}`, type: 'addNode', timestamp: Date.now(), payload: { node } });
-    }
-  }
-  // Deleted nodes
-  for (const [id, node] of prevMap) {
-    if (!nextMap.has(id)) {
-      changes.push({ id: `chg_${id}_del_${Date.now()}`, type: 'deleteNode', timestamp: Date.now(), payload: { node } });
-    }
-  }
-  // Updated/moved nodes
-  for (const [id, nextNode] of nextMap) {
-    const prevNode = prevMap.get(id);
-    if (!prevNode) continue;
-    const moved = prevNode.position.x !== nextNode.position.x || prevNode.position.y !== nextNode.position.y;
-    if (moved) {
-      changes.push({
-        id: `chg_${id}_move_${Date.now()}`,
-        type: 'moveNode',
-        timestamp: Date.now(),
-        payload: { from: prevNode.position, to: nextNode.position, nodeId: id }
-      });
-    }
-    // Shallow compare other fields for update
-    const keysToCheck: (keyof WorkflowNode)[] = ['name', 'type', 'data', 'inputs', 'outputs', 'status'];
-    let updated = false;
-    for (const key of keysToCheck) {
-      if (JSON.stringify(prevNode[key]) !== JSON.stringify(nextNode[key])) { updated = true; break; }
-    }
-    if (updated) {
-      changes.push({ id: `chg_${id}_upd_${Date.now()}`, type: 'updateNode', timestamp: Date.now(), payload: { before: prevNode, after: nextNode } });
-    }
-  }
-  return changes;
-}
-
-function diffConnections(prev: WorkflowConnection[], next: WorkflowConnection[]): WorkflowChange[] {
-  const changes: WorkflowChange[] = [];
-  const prevIds = new Set(prev.map((c) => c.id));
-  const nextIds = new Set(next.map((c) => c.id));
-
-  for (const c of next) {
-    if (!prevIds.has(c.id)) {
-      changes.push({ id: `chg_conn_add_${c.id}_${Date.now()}`, type: 'addConnection', timestamp: Date.now(), payload: { connection: c } });
-    }
-  }
-  for (const c of prev) {
-    if (!nextIds.has(c.id)) {
-      changes.push({ id: `chg_conn_del_${c.id}_${Date.now()}`, type: 'deleteConnection', timestamp: Date.now(), payload: { connection: c } });
-    }
-  }
-  return changes;
+  /**
+   * The execution currently loaded in "debug mode".
+   * null = normal edit mode.
+   * NOT persisted — debug mode is always ephemeral.
+   */
+  debugExecution: ExecutionDetail | null;
+  /** Enter debug mode by loading a full execution detail. */
+  enterDebugMode: (execution: ExecutionDetail) => void;
+  /** Exit debug mode and return to normal edit mode. */
+  exitDebugMode: () => void;
 }
 
 interface PersistedState {
@@ -125,7 +88,6 @@ interface PersistedState {
   originalBackendWorkflow: Partial<WorkflowData> | null;
   hasUnsavedChanges: boolean;
   lastSavedAt: Date | null;
-  changes: WorkflowChange[];
 }
 
 // Migration: Fix nodes with incorrect definitionId
@@ -134,6 +96,8 @@ const NODE_DEFINITION_FIXES: Record<string, NodeTypeId> = {
   'Rename Columns': 'transform.rename',
   'Join Tables': 'transform.join',
   'SQL Transform': 'transform.sql',
+  'Column Editor': 'transform.column-editor',
+  'Unify Schema': 'transform.unify',
   'Facebook Ads': 'facebook.ads',
   'Google Ads': 'google.ads',
   'TikTok Ads': 'tiktok.ads',
@@ -152,6 +116,20 @@ function migrateNodes(nodes: WorkflowNode[]): WorkflowNode[] {
   });
 }
 
+function hasNodeDataChanged(prev: WorkflowNode[], next: WorkflowNode[]): boolean {
+  if (prev.length !== next.length) return true;
+  const prevMap = new Map(prev.map((n) => [n.id, n]));
+  for (const node of next) {
+    const prevNode = prevMap.get(node.id);
+    if (!prevNode) return true;
+    const keysToCheck: (keyof WorkflowNode)[] = ['name', 'type', 'data', 'inputs', 'outputs', 'status'];
+    for (const key of keysToCheck) {
+      if (JSON.stringify(prevNode[key]) !== JSON.stringify(node[key])) return true;
+    }
+  }
+  return false;
+}
+
 export const useWorkflowStore = create<WorkflowState>()(
   persist(
     (set) => ({
@@ -161,47 +139,36 @@ export const useWorkflowStore = create<WorkflowState>()(
       originalBackendWorkflow: null,
       hasUnsavedChanges: false,
       lastSavedAt: null,
-      changes: [],
+      pinnedNodes: {},
+      previewCache: {},
+      debugExecution: null,
 
       updateNodes: (nodes) => set((state) => {
         const nextNodes = typeof nodes === 'function' ? nodes(state.nodes) : nodes;
-        // Skip update if same reference (no change)
-        if (nextNodes === state.nodes) {
-          return state;
-        }
-        const nodeChanges = diffNodes(state.nodes, nextNodes);
-        const hasMeaningfulChange = nodeChanges.some((c) => c.type !== 'moveNode');
+        if (nextNodes === state.nodes) return state;
         return {
           nodes: nextNodes,
-          hasUnsavedChanges: hasMeaningfulChange ? true : state.hasUnsavedChanges,
-          changes: nodeChanges.length ? [...state.changes, ...nodeChanges] : state.changes,
+          hasUnsavedChanges: hasNodeDataChanged(state.nodes, nextNodes) ? true : state.hasUnsavedChanges,
         };
       }),
       updateConnections: (connections) => set((state) => {
         const nextConnections = typeof connections === 'function' ? connections(state.connections) : connections;
-        // Skip update if same reference (no change)
-        if (nextConnections === state.connections) {
-          return state;
-        }
-        const connChanges = diffConnections(state.connections, nextConnections);
+        if (nextConnections === state.connections) return state;
+        const changed = nextConnections.length !== state.connections.length ||
+          nextConnections.some((c) => !state.connections.find((p) => p.id === c.id));
         return {
           connections: nextConnections,
-          hasUnsavedChanges: connChanges.length ? true : state.hasUnsavedChanges,
-          changes: connChanges.length ? [...state.changes, ...connChanges] : state.changes,
+          hasUnsavedChanges: changed ? true : state.hasUnsavedChanges,
         };
       }),
       replaceNodes: (nodes) => set({ nodes, hasUnsavedChanges: false }),
       replaceConnections: (connections) => set({ connections, hasUnsavedChanges: false }),
-      updateWorkflow: (workflow) => set((state) => {
-        const changed = !deepEqual(state.workflow, workflow);
-        return {
-          workflow,
-          hasUnsavedChanges: changed ? true : state.hasUnsavedChanges,
-          changes: changed ? [...state.changes, { id: `chg_wf_${Date.now()}`, type: 'updateWorkflow', timestamp: Date.now(), payload: { workflow } }] : state.changes,
-        };
-      }),
+      updateWorkflow: (workflow) => set((state) => ({
+        workflow,
+        hasUnsavedChanges: !deepEqual(state.workflow, workflow) ? true : state.hasUnsavedChanges,
+      })),
       setOriginalBackendWorkflow: (workflow) => set({ originalBackendWorkflow: workflow }),
-      markAsSaved: () => set({ hasUnsavedChanges: false, lastSavedAt: new Date(), changes: [] }),
+      markAsSaved: () => set({ hasUnsavedChanges: false, lastSavedAt: new Date() }),
       resetWorkflow: () => set({
         nodes: [],
         connections: [],
@@ -209,9 +176,29 @@ export const useWorkflowStore = create<WorkflowState>()(
         originalBackendWorkflow: null,
         hasUnsavedChanges: false,
         lastSavedAt: null,
-        changes: [],
+        pinnedNodes: {},
+        previewCache: {},
+        debugExecution: null,
       }),
-      clearChanges: () => set({ changes: [] }),
+
+      loadPinnedNodes: (pinned) => set({ pinnedNodes: pinned }),
+      addPinnedNode: (nodeInstanceId, entry) =>
+        set((state) => ({
+          pinnedNodes: { ...state.pinnedNodes, [nodeInstanceId]: entry },
+        })),
+      removePinnedNode: (nodeInstanceId) =>
+        set((state) => {
+          const next = { ...state.pinnedNodes };
+          delete next[nodeInstanceId];
+          return { pinnedNodes: next };
+        }),
+      cachePreviewResult: (nodeId, result) =>
+        set((state) => ({
+          previewCache: { ...state.previewCache, [nodeId]: result },
+        })),
+
+      enterDebugMode: (execution) => set({ debugExecution: execution }),
+      exitDebugMode: () => set({ debugExecution: null }),
     }),
     {
       name: 'workflow-session',
@@ -223,13 +210,10 @@ export const useWorkflowStore = create<WorkflowState>()(
         originalBackendWorkflow: state.originalBackendWorkflow,
         hasUnsavedChanges: state.hasUnsavedChanges,
         lastSavedAt: state.lastSavedAt,
-        changes: state.changes,
       }),
       onRehydrateStorage: () => (state) => {
-        // Apply node migrations after rehydrating from storage
         if (state && state.nodes.length > 0) {
           const migratedNodes = migrateNodes(state.nodes);
-          // Only update if there were actual changes
           const hasChanges = migratedNodes.some((node, i) => node !== state.nodes[i]);
           if (hasChanges) {
             useWorkflowStore.setState({ nodes: migratedNodes });

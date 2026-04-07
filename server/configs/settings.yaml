@@ -14,6 +14,9 @@ default:
   google_fields: google_fields
   tiktok_fields: tiktok_fields
   execution_history_collection: execution_history
+  pinned_data_collection: pinned_node_data
+  alert_history_collection: alert_history
+  share_tokens_collection: share_tokens
   users_collection: users
 
   # JWT Auth (MUST be set via environment variable in production)
@@ -42,6 +45,7 @@ default:
   google_oauth_redirect_uri: http://localhost:8080/oauth2callback
   google_oauth_scope:
   google_oauth_ads_scope: https://www.googleapis.com/auth/adwords
+  google_oauth_analytics_scope: https://www.googleapis.com/auth/analytics.readonly
   google_oauth_sheets_scope: https://www.googleapis.com/auth/spreadsheets
   google_oauth_drive_scope: https://www.googleapis.com/auth/drive.readonly
   google_oauth_bigquery_scope: https://www.googleapis.com/auth/bigquery
@@ -53,14 +57,7 @@ default:
   google_cloud_project_number: 169852204510
   google_cloud_location: asia-southeast1
   google_cloud_job_name: orbitx-workflow-job
-  google_cloud_scheduler_enabled: true
-  google_cloud_scheduler_timezone: Asia/Bangkok
   google_cloud_service_account_email: cron5-workflow-engine@cron5-dev.iam.gserviceaccount.com
-
-  # Pub/Sub Tracking
-  enable_tracking: true
-  pubsub_topic_id: workflow-status-events
-  pubsub_subscription_id: workflow-status-sub
 
   # CORS
   cors_origins:
@@ -77,3 +74,15 @@ default:
 
   # CSRF Protection
   csrf_enabled: true
+
+  # Internal service auth (engine → server calls)
+  internal_service_key:
+
+  # Prefect Integration
+  prefect_work_pool: orbitx-worker-pool
+
+  # Slack OAuth (MUST be set via environment variable in production)
+  slack_client_id:
+  slack_client_secret:
+  slack_redirect_uri: http://localhost:8080/api/slack/callback
+

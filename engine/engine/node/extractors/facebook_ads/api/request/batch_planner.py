@@ -4,11 +4,6 @@ from urllib.parse import quote
 
 from loguru import logger
 
-from engine.node.extractors.facebook_ads.api.request.field_mapper import (
-    build_processing_fields,
-)
-from engine.node.extractors.facebook_ads.utils import generate_batch_tag
-from engine.utils.datetime import chunk_date_range, get_time_range
 from common.model.common import DateTimeConfig
 from common.model.facebook.common import TimeRange
 from common.model.facebook.request import (
@@ -16,6 +11,11 @@ from common.model.facebook.request import (
     BatchPlannerConfig,
     InsightsUrlParams,
 )
+from engine.node.extractors.facebook_ads.api.request.field_mapper import (
+    build_processing_fields,
+)
+from engine.node.extractors.facebook_ads.utils import generate_batch_tag
+from engine.utils.datetime import chunk_date_range, get_time_range
 
 
 class FacebookBatchPlanner:
@@ -51,7 +51,8 @@ class FacebookBatchPlanner:
             for chunk_start, chunk_end in chunks
         ]
         logger.info(
-            f"Split timeframe into {len(periods)} period(s), {days_per_chunk} day(s) per chunk"
+            f"Split timeframe into {len(periods)} period(s), "
+            f"{days_per_chunk} day(s) per chunk"
         )
         return periods
 

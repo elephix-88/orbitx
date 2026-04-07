@@ -7,8 +7,13 @@ from typing import Any
 import pandas as pd
 from loguru import logger
 
+from common.database.mongodb import find_many
+from common.model.result import ExtractorResult
+from common.model.tiktok.config import TikTokAdsConfig
+from common.model.tiktok.fields import TikTokField
+from common.model.token import TikTokToken
 from engine.configs.config import settings
-from engine.exceptions import ExtractorException, ValidationException
+from engine.exceptions import ValidationException
 from engine.interfaces.node import Extractor
 from engine.node.extractors.tiktok_ads.api.client import TikTokAdsClient
 from engine.node.extractors.tiktok_ads.api.request import (
@@ -18,15 +23,7 @@ from engine.node.extractors.tiktok_ads.api.request import (
 from engine.node.extractors.tiktok_ads.api.response import TikTokDataMerger
 from engine.services.connection import get_connection_token
 from engine.utils.datetime import chunk_date_range, get_time_range
-from engine.utils.logger import ExecutionTimer
-from common.database.mongodb import get_mongodb
-from common.model.execution import Status
-from common.model.result import ExtractorResult
-from common.model.tiktok.config import TikTokAdsConfig
-from common.model.tiktok.fields import TikTokField
-from common.model.token import TikTokToken
-
-MAX_PARALLEL_ACCOUNTS = 10
+from engine.utils.extraction import extraction_lifecycle
 
 
 class TikTokAdsExtractor(Extractor):
@@ -134,10 +131,11 @@ class TikTokAdsExtractor(Extractor):
 
     async def extract(self) -> ExtractorResult:
         """Extract data from TikTok Ads API."""
-        execution_timer = ExecutionTimer("TikTok Ads Extraction")
-        await execution_timer.start()
-
-        try:
+        async with extraction_lifecycle(
+            "TikTok Ads Extraction",
+            settings.services.tiktok_ads,
+            self.config.connection_id,
+        ):
             token = await get_connection_token(
                 self.config.connection_id,
                 settings.services.tiktok_ads,
@@ -145,9 +143,10 @@ class TikTokAdsExtractor(Extractor):
             )
             access_token = token.access_token
 
-            mongodb = get_mongodb()
-            field_configs = await mongodb.find_many(
-                settings.tiktok_fields, "field", self.config.fields, TikTokField
+            field_configs = await find_many(
+                settings.tiktok_fields,
+                {"field": {"$in": self.config.fields}},
+                TikTokField,
             )
 
             if not field_configs:
@@ -177,7 +176,8 @@ class TikTokAdsExtractor(Extractor):
 
             if len(date_chunks) > 1:
                 logger.info(
-                    f"Date range {start_dt} to {end_dt} split into {len(date_chunks)} chunks"
+                    f"Date range {start_dt} to {end_dt} "
+                    f"split into {len(date_chunks)} chunks"
                 )
 
             client = TikTokAdsClient(access_token=access_token)
@@ -193,17 +193,13 @@ class TikTokAdsExtractor(Extractor):
 
             all_dfs = [df for df in results if not df.empty]
 
-            if all_dfs:
-                df = pd.concat(all_dfs, ignore_index=True)
-            else:
-                df = pd.DataFrame()
+            df = pd.concat(all_dfs, ignore_index=True) if all_dfs else pd.DataFrame()
 
             primary_keys = plan.primary_keys.copy()
             if "advertiser_id" not in primary_keys:
                 primary_keys = ["advertiser_id", *primary_keys]
 
             logger.success(f"TikTok extraction complete: {len(df)} total rows")
-            await execution_timer.stop(Status.SUCCESS)
 
             return ExtractorResult(
                 data=df,
@@ -211,11 +207,3 @@ class TikTokAdsExtractor(Extractor):
                 report_level=plan.report_level,
                 field_schemas=field_configs,
             )
-
-        except Exception as ex:
-            await execution_timer.stop(Status.FAILED)
-            raise ExtractorException(
-                f"TikTok Ads extraction failed: {ex}",
-                source_type=settings.services.tiktok_ads,
-                details={"connection_id": self.config.connection_id},
-            ) from ex

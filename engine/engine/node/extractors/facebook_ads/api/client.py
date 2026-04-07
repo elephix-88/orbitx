@@ -4,7 +4,6 @@ from typing import Any, cast
 import httpx
 from loguru import logger
 
-from engine.configs.config import settings
 from common.model.facebook.common import ExecutionMode
 from common.model.facebook.request import BatchPlan, RawBatchItem
 from common.model.facebook.response import (
@@ -13,6 +12,7 @@ from common.model.facebook.response import (
     InsightsAsyncResponse,
     SyncResponse,
 )
+from engine.configs.config import settings
 
 API_ROOT = f"{settings.facebook_api_base_url}{settings.facebook_api_version}/"
 
@@ -117,7 +117,9 @@ async def get_report_status(report_run_id: str, access_token: str) -> str:
     return str(resp.json().get("async_status", "unknown"))
 
 
-async def fetch_insights_paged(report_run_id: str, access_token: str) -> list[dict[str, Any]]:
+async def fetch_insights_paged(
+    report_run_id: str, access_token: str
+) -> list[dict[str, Any]]:
     """Fetch insights data for a report_run_id, following pagination."""
     url: str | None = f"{API_ROOT}{report_run_id}/insights"
     params: dict[str, Any] = {"access_token": access_token, "limit": 1000}
@@ -128,7 +130,11 @@ async def fetch_insights_paged(report_run_id: str, access_token: str) -> list[di
         while url:
             resp = await client.get(url, params=params)
             if resp.status_code != 200:
-                logger.error(f"Failed to fetch insights: {resp.status_code}")
+                body = resp.text[:500]
+                logger.error(
+                    f"Failed to fetch insights for report {report_run_id}: "
+                    f"status={resp.status_code}, body={body}"
+                )
                 raise Exception(f"Error fetching report data: {resp.status_code}")
             result = resp.json()
             current_page_data = result.get("data", [])

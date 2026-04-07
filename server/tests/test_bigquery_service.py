@@ -3,10 +3,10 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 from google.auth.exceptions import RefreshError
+
 from common.model.connection import ConnectionItem
 from common.model.google.bigquery import BigQueryDataset, BigQueryProject
 from common.model.user import UserInDB
-
 from server.services.google.bigquery import (
     get_bigquery_datasets,
     get_bigquery_projects,

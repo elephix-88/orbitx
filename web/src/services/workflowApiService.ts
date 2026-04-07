@@ -3,15 +3,16 @@
 import { API_CONFIG } from '../config/env';
 import { fetchClient } from '@/lib/fetchClient';
 import { authService } from './authService';
-import { 
-  BackendWorkflow, 
-  BackendWorkflowDetailed, 
+import {
+  BackendWorkflow,
+  BackendWorkflowDetailed,
   WorkflowExecution,
   WorkflowData,
   WorkflowNodeData,
   WorkflowConnectionData,
-  MongoId
+  MongoId,
 } from '../types/backend';
+import { extractMongoId } from '../utils/mongoUtils';
 import { WorkflowStatus } from '../types/workflow';
 
 interface ApiResponse<T> {
@@ -178,16 +179,6 @@ class WorkflowApiService {
   }
 
   /**
-   * Extract MongoDB ID from a MongoId type
-   */
-  private extractMongoId(id: MongoId | undefined): string {
-    if (!id) return '';
-    if (typeof id === 'string') return id;
-    if (typeof id === 'object' && '$oid' in id) return id.$oid;
-    return '';
-  }
-
-  /**
    * Resolve BigQuery connection_id to Mongo _id before sending to backend.
    */
   private async resolveConnectionIds(workflowData: Partial<WorkflowData>): Promise<Partial<WorkflowData>> {
@@ -208,7 +199,7 @@ class WorkflowApiService {
       const legacyToMongo = new Map<string, string>();
       for (const c of arr) {
         const legacy = c?.params?.connection_id;
-        const mongo = this.extractMongoId(c?._id);
+        const mongo = extractMongoId(c?._id);
         if (legacy && mongo) legacyToMongo.set(String(legacy), String(mongo));
       }
 
@@ -268,13 +259,6 @@ class WorkflowApiService {
   }
 
   /**
-   * Legacy method for backward compatibility
-   */
-  private async makeRequest<T>(endpoint: string, options: RequestInit = {}): Promise<ApiResponse<T>> {
-    return this.makeRequestWithRetry<T>(endpoint, options);
-  }
-
-  /**
    * Get all workflows from backend
    */
   async getWorkflows(params?: {
@@ -293,9 +277,9 @@ class WorkflowApiService {
     if (params?.user_id) queryParams.append('user_id', params.user_id);
 
     const queryString = queryParams.toString();
-    const endpoint = `/workflows${queryString ? `?${queryString}` : ''}`;
+    const endpoint = `/api/workflows${queryString ? `?${queryString}` : ''}`;
     
-    return this.makeRequest<BackendWorkflow[]>(endpoint);
+    return this.makeRequestWithRetry<BackendWorkflow[]>(endpoint);
   }
 
   /**
@@ -304,13 +288,17 @@ class WorkflowApiService {
   async getWorkflow(idOrJobId: string): Promise<ApiResponse<BackendWorkflowDetailed>> {
     try {
       const result = await this.makeRequestWithRetry<BackendWorkflowDetailed | BackendWorkflowDetailed[]>(
-        `/get_workflow_builder/${encodeURIComponent(idOrJobId)}`
+        `/api/workflows/${encodeURIComponent(idOrJobId)}`
       );
       
-      const workflowData: BackendWorkflowDetailed = Array.isArray(result.data) 
-        ? result.data[0] 
+      const workflowData = Array.isArray(result.data)
+        ? result.data[0]
         : result.data;
-      
+
+      if (!workflowData) {
+        throw new Error(`Workflow not found: ${idOrJobId}`);
+      }
+
       return {
         data: workflowData,
         message: result.message,
@@ -328,7 +316,7 @@ class WorkflowApiService {
    * Create a new workflow
    */
   async createWorkflow(workflow: Omit<BackendWorkflow, '_id' | 'created_at' | 'updated_at'>): Promise<ApiResponse<BackendWorkflow>> {
-    return this.makeRequest<BackendWorkflow>('/workflows', {
+    return this.makeRequestWithRetry<BackendWorkflow>('/api/workflows', {
       method: 'POST',
       body: JSON.stringify(workflow),
     });
@@ -338,8 +326,8 @@ class WorkflowApiService {
    * Update an existing workflow
    */
   async updateWorkflow(_workflowId: string, updates: Partial<BackendWorkflow>): Promise<ApiResponse<BackendWorkflow>> {
-    return this.makeRequest<BackendWorkflow>(`/update_workflow`, {
-      method: 'POST',
+    return this.makeRequestWithRetry<BackendWorkflow>(`/api/workflows`, {
+      method: 'PUT',
       body: JSON.stringify(updates),
     });
   }
@@ -348,7 +336,7 @@ class WorkflowApiService {
    * Delete a workflow
    */
   async deleteWorkflow(workflowId: string): Promise<ApiResponse<{ success: boolean }>> {
-    return this.makeRequest<{ success: boolean }>(`/delete_workflow/${encodeURIComponent(workflowId)}`, {
+    return this.makeRequestWithRetry<{ success: boolean }>(`/api/workflows/${encodeURIComponent(workflowId)}`, {
       method: 'DELETE',
     });
   }
@@ -374,11 +362,11 @@ class WorkflowApiService {
   /**
    * Start workflow execution
    */
-  async executeWorkflow(identifier: string): Promise<ApiResponse<{ success: boolean }>> {
+  async executeWorkflow(identifier: string): Promise<ApiResponse<{ success: boolean; run_id?: string }>> {
     try {
       const payload = { _id: identifier };
-      const raw = await this.makeRequestWithRetry<{ success?: boolean } | boolean>(
-        `/workflows/execute`,
+      const raw = await this.makeRequestWithRetry<{ run_id?: string; success?: boolean } | boolean>(
+        `/api/workflows/execute`,
         {
           method: 'POST',
           body: JSON.stringify(payload),
@@ -390,11 +378,16 @@ class WorkflowApiService {
           maxDelay: API_CONFIG.MAX_RETRY_DELAY,
         }
       );
-      
-      const isBool = typeof raw?.data === 'boolean';
-      const isObjWithSuccess = raw?.data && typeof raw.data === 'object' && 'success' in raw.data;
-      const success: boolean = isBool ? (raw.data as boolean) : (isObjWithSuccess ? !!(raw.data as { success: boolean }).success : true);
-      return { data: { success }, message: raw?.message };
+
+      const data = raw?.data;
+      const isObject = data && typeof data === 'object';
+      const runId = isObject ? (data as { run_id?: string }).run_id : undefined;
+      // Backend now returns { run_id: "..." }; treat presence of run_id as success
+      const success = isObject
+        ? ('success' in data ? !!(data as { success?: boolean }).success : !!runId)
+        : typeof data === 'boolean' ? data : true;
+
+      return { data: { success, run_id: runId }, message: raw?.message };
     } catch (error) {
       console.error(`Failed to execute workflow ${identifier}:`, error);
       throw error;
@@ -448,7 +441,7 @@ class WorkflowApiService {
           if (identifierForLookup) {
             const fetched = await this.getWorkflow(String(identifierForLookup));
             const fetchedId = fetched?.data?._id;
-            const extractedId = this.extractMongoId(fetchedId);
+            const extractedId = extractMongoId(fetchedId);
             if (this.looksLikeMongoId(extractedId)) {
               mongoId = extractedId;
             }
@@ -471,9 +464,9 @@ class WorkflowApiService {
         sanitized.user_id = user.id;
       }
 
-      const endpoint = workflowId ? `/update_workflow/${workflowId}` : '/update_workflow';
+      const endpoint = workflowId ? `/api/workflows/${workflowId}` : '/api/workflows';
       const result = await this.makeRequestWithRetry<{ success: boolean; message?: string }>(endpoint, {
-        method: 'POST',
+        method: 'PUT',
         body: JSON.stringify(sanitized),
       });
       return result;
@@ -491,7 +484,7 @@ class WorkflowApiService {
       const resolved = await this.resolveConnectionIds(workflowData);
       const minimal = this.buildNewWorkflowPayload(resolved);
       
-      const result = await this.makeRequestWithRetry<BackendWorkflow>(`/create_workflow`, {
+      const result = await this.makeRequestWithRetry<BackendWorkflow>(`/api/workflows`, {
         method: 'POST',
         body: JSON.stringify(minimal),
       });
@@ -556,13 +549,13 @@ class WorkflowApiService {
     successful_executions: number;
     failed_executions: number;
   }>> {
-    return this.makeRequest<{
+    return this.makeRequestWithRetry<{
       total_workflows: number;
       active_workflows: number;
       total_executions: number;
       successful_executions: number;
       failed_executions: number;
-    }>('/workflows/stats');
+    }>('/api/workflows/stats');
   }
 }
 

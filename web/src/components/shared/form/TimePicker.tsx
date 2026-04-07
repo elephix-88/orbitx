@@ -52,7 +52,7 @@ export const TimePicker: React.FC<TimePickerProps> = ({
           className="w-full"
         />
       </div>
-      <span className="text-slate-400 font-bold text-lg">:</span>
+      <span className="text-text-tertiary font-bold text-lg">:</span>
       <div className="flex-1">
         <Select
           options={minuteOptions}

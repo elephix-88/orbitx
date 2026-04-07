@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, lazy, Suspense, useRef } from "react";
+import React, { useState, useEffect, useCallback, useMemo, lazy, Suspense } from "react";
 import { useLocation, useSearchParams, useNavigate } from "react-router-dom";
 // React Flow canvas (migrated from custom canvas)
 import { ReactFlowCanvas } from "../components/workflow/reactflow";
@@ -15,14 +15,26 @@ import { normalizeWorkflowPayload } from "../utils/normalizeWorkflow";
 import { getNodeSpec } from "../workflow/registry";
 import { AlertTriangle, Loader2 } from "lucide-react";
 import { Button } from "@/components/shared/Button";
-import { useWorkflowEvents } from "../hooks/useWorkflowEvents";
-import { WorkflowData, MongoId, BackendWorkflow } from "../types/backend";
-import { prefetchWorkflowNodeData } from "../services/nodeDataPrefetch";
+import { useWorkflowExecution } from "../hooks/useWorkflowExecution";
+import { WorkflowData, BackendWorkflow, ExecutionHistory } from "../types/backend";
+import { DeliveryConfig, DEFAULT_DELIVERY_CONFIG } from "../types/delivery";
+import { extractMongoId } from "../utils/mongoUtils";
+import { useResponsiveLayout } from "../hooks/useResponsiveLayout";
+import { useElementSize } from "../hooks/useElementSize";
+import { autoLayoutDynamic } from "../utils/workflowLayout";
+import { pinService } from "../services/pinService";
+import { stepRunService, type StepRunResponse } from "../services/stepRunService";
+import { executionDebugService, type ExecutionDetail } from "../services/executionDebugService";
+import { executionHistoryService } from "../services/executionHistoryService";
+import type { NodeStatus } from "../types/workflow";
 
 // Lazy load heavy components (modals and panels)
 const ExecutionLogPanel = lazy(() => import("../components/workflow/ExecutionLogPanel").then(m => ({ default: m.ExecutionLogPanel })));
 const WorkflowMetaForm = lazy(() => import("../components/forms/WorkflowMetaForm").then(m => ({ default: m.WorkflowMetaForm })));
 const NodeConfigPanel = lazy(() => import("../components/workflow/node-config/NodeConfigPanel").then(m => ({ default: m.NodeConfigPanel })));
+const PreviewPanel = lazy(() => import("../components/workflow/PreviewPanel").then(m => ({ default: m.PreviewPanel })));
+const ScheduleDeliverySheet = lazy(() => import("../components/workflow/ScheduleDeliverySheet").then(m => ({ default: m.ScheduleDeliverySheet })));
+const ExecutionHistoryPanel = lazy(() => import("../components/workflow/ExecutionHistoryPanel").then(m => ({ default: m.ExecutionHistoryPanel })));
 
 // Location state type
 interface LocationState {
@@ -35,132 +47,32 @@ interface LocationState {
   };
 }
 
-// Helper to extract MongoDB ID from MongoId type
-const extractMongoId = (id: MongoId | undefined): string | undefined => {
-  if (!id) return undefined;
-  if (typeof id === 'string') return id;
-  if (typeof id === 'object' && '$oid' in id) return id.$oid;
-  return undefined;
-};
+/**
+ * Apply execution statuses from the latest execution to workflow nodes.
+ * Called during bootstrap so nodes have correct status from the start.
+ */
+function applyExecutionStatuses(
+  nodes: WorkflowNode[],
+  executions: ExecutionHistory[]
+): WorkflowNode[] {
+  if (executions.length === 0) return nodes;
 
-const useResponsiveLayout = () => {
-  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
-  const [isTablet, setIsTablet] = useState(window.innerWidth < 1024);
+  const sorted = [...executions].sort((a, b) => b.start_time - a.start_time);
+  const target = sorted.find((e) => e.status === "RUNNING") || sorted[0];
+  if (!target?.steps) return nodes;
 
-  useEffect(() => {
-    const handleResize = () => {
-      setIsMobile(window.innerWidth < 768);
-      setIsTablet(window.innerWidth < 1024);
-    };
+  const stepStatuses = new Map<string, NodeStatus>();
+  for (const [key, step] of Object.entries(target.steps)) {
+    const normalized = step.status === "FAILED" ? "error" : step.status.toLowerCase();
+    stepStatuses.set(key, normalized as NodeStatus);
+  }
 
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
-
-  return { isMobile, isTablet };
-};
-
-// -------- Auto-layout helper (grouped flow layout) --------
-// Groups sources with their destinations, creating a compact flow-based layout
-type NodeType = "source" | "transform" | "destination" | string;
-
-interface LayoutOpts {
-  canvasWidth: number;
-  canvasHeight: number;
-  nodeWidth?: number;
-  nodeHeight?: number;
-  minGapX?: number;
-  minGapY?: number;
-  groupGapY?: number;
-  margin?: number;
-  order?: NodeType[];
+  return nodes.map((node) => {
+    const instanceId = String(node.data?.node_instance_id);
+    const status = stepStatuses.get(instanceId);
+    return status ? { ...node, status } : node;
+  });
 }
-
-const autoLayoutDynamic = (
-  list: WorkflowNode[],
-  opts: LayoutOpts
-): WorkflowNode[] => {
-  if (!Array.isArray(list) || list.length === 0) return list;
-
-  const {
-    nodeWidth = 200,
-    nodeHeight = 80,
-    minGapX = 120,
-    minGapY = 30,
-    groupGapY = 60,
-    margin = 60,
-  } = opts;
-
-  // Separate nodes by type
-  const sources = list.filter(n => n.type === 'source');
-  const transforms = list.filter(n => n.type === 'transform');
-  const destinations = list.filter(n => n.type === 'destination');
-
-  const result: WorkflowNode[] = [];
-  let currentY = margin;
-
-  // For each source, create a group with its connected destinations
-  sources.forEach((source, sourceIdx) => {
-    // Find transforms and destinations (for now, distribute evenly)
-    // Each source gets its share of destinations
-    const destsPerSource = Math.ceil(destinations.length / Math.max(sources.length, 1));
-    const startDestIdx = sourceIdx * destsPerSource;
-    const sourceDestinations = destinations.slice(startDestIdx, startDestIdx + destsPerSource);
-
-    // Calculate group height based on max of source side vs destination side
-    const destCount = sourceDestinations.length || 1;
-    const groupHeight = Math.max(nodeHeight, destCount * nodeHeight + (destCount - 1) * minGapY);
-
-    // Position source - vertically centered in the group
-    const sourceY = currentY + (groupHeight - nodeHeight) / 2;
-    result.push({ ...source, position: { x: margin, y: sourceY } });
-
-    // Position destinations - stacked vertically, aligned to the right
-    const destX = margin + nodeWidth + minGapX;
-    const destStartY = currentY + (groupHeight - (destCount * nodeHeight + (destCount - 1) * minGapY)) / 2;
-
-    sourceDestinations.forEach((dest, destIdx) => {
-      const destY = destStartY + destIdx * (nodeHeight + minGapY);
-      result.push({ ...dest, position: { x: destX, y: destY } });
-    });
-
-    // Move to next group
-    currentY += groupHeight + groupGapY;
-  });
-
-  // Handle any remaining destinations not assigned to sources
-  const assignedDestCount = sources.length * Math.ceil(destinations.length / Math.max(sources.length, 1));
-  const remainingDests = destinations.slice(assignedDestCount);
-  remainingDests.forEach((dest, idx) => {
-    result.push({
-      ...dest,
-      position: { x: margin + nodeWidth + minGapX, y: currentY + idx * (nodeHeight + minGapY) }
-    });
-  });
-
-  // Handle transforms (place between sources and destinations if present)
-  if (transforms.length > 0) {
-    const transformX = margin + (nodeWidth + minGapX) / 2;
-    transforms.forEach((transform, idx) => {
-      result.push({
-        ...transform,
-        position: { x: transformX, y: margin + idx * (nodeHeight + minGapY) }
-      });
-    });
-  }
-
-  // Handle orphan sources (sources without any destinations to pair with)
-  if (sources.length === 0 && destinations.length > 0) {
-    destinations.forEach((dest, idx) => {
-      result.push({
-        ...dest,
-        position: { x: margin, y: margin + idx * (nodeHeight + minGapY) }
-      });
-    });
-  }
-
-  return result;
-};
 
 const WorkflowBuilderPage: React.FC = () => {
   const { isMobile, isTablet } = useResponsiveLayout();
@@ -185,23 +97,290 @@ const WorkflowBuilderPage: React.FC = () => {
     (state) => state.setOriginalBackendWorkflow
   );
   const markAsSaved = useWorkflowStore((state) => state.markAsSaved);
+  const pinnedNodes = useWorkflowStore((state) => state.pinnedNodes);
+  const previewCache = useWorkflowStore((state) => state.previewCache);
+  const loadPinnedNodes = useWorkflowStore((state) => state.loadPinnedNodes);
+  const addPinnedNode = useWorkflowStore((state) => state.addPinnedNode);
+  const removePinnedNode = useWorkflowStore((state) => state.removePinnedNode);
+  const debugExecution = useWorkflowStore((state) => state.debugExecution);
+  const enterDebugMode = useWorkflowStore((state) => state.enterDebugMode);
+  const exitDebugMode = useWorkflowStore((state) => state.exitDebugMode);
 
-  // Real-time status updates
   const workflowId = originalBackendWorkflow?.job_id || docId;
-  useWorkflowEvents(workflowId);
 
-  // Separate selection from editor modal
-  const [, setSelectedNodeId] = useState<string | null>(null);
+  // Execution ID: prefer Mongo ObjectId, fall back to job_id
+  const executionId = extractMongoId(originalBackendWorkflow?._id) || originalBackendWorkflow?.job_id;
+  const { executing, handleExecute, stopExecuting } = useWorkflowExecution({
+    workflowId: executionId,
+    nodes,
+    setNodes,
+  });
+
   const [editorNode, setEditorNode] = useState<WorkflowNode | null>(null);
   const [saving, setSaving] = useState(false);
-  const [executing, setExecuting] = useState(false);
-  const [triggering, setTriggering] = useState(false);
+  const [previewNodeId, setPreviewNodeId] = useState<string | null>(null);
 
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(!!docId); // Only show loading if we have a docId to fetch
   const [bootstrapped, setBootstrapped] = useState(false); // Track if bootstrap has run
   const { notify } = useNotification();
   const [metaOpen, setMetaOpen] = useState(false);
+  const [scheduleDeliveryOpen, setScheduleDeliveryOpen] = useState(false);
+
+  // Schedule & delivery local state (saved via onSave)
+  const [scheduleEnabled, setScheduleEnabled] = useState(true);
+  const [deliveryConfig, setDeliveryConfig] = useState<DeliveryConfig>(DEFAULT_DELIVERY_CONFIG);
+  const [errorWorkflowId, setErrorWorkflowId] = useState<string | null>(
+    () => originalBackendWorkflow?.error_workflow_id ?? null
+  );
+
+  // Derived sets for the canvas — recomputed only when maps change
+  const pinnedNodeInstanceIds = useMemo(
+    () => new Set(Object.keys(pinnedNodes)),
+    [pinnedNodes]
+  );
+  const previewedNodeIds = useMemo(
+    () => new Set(Object.keys(previewCache)),
+    [previewCache]
+  );
+
+  // Pin / unpin handlers wired to the pin service
+  const handlePinNode = useCallback(
+    async (node: WorkflowNode) => {
+      const instanceId = node.data?.node_instance_id;
+      const preview = previewCache[node.id];
+      if (!workflowId || instanceId === undefined || !preview) return;
+      try {
+        await pinService.pinNode(workflowId, Number(instanceId), preview);
+        addPinnedNode(String(instanceId), {
+          data: preview.data,
+          columns: preview.columns,
+          pinned_at: Date.now() / 1000,
+        });
+        notify.success("Pinned", `${node.display_name || node.name} data is now pinned.`);
+      } catch {
+        notify.error("Pin failed", "Could not pin node data. Please try again.");
+      }
+    },
+    [workflowId, previewCache, addPinnedNode, notify]
+  );
+
+  const handleUnpinNode = useCallback(
+    async (node: WorkflowNode) => {
+      const instanceId = node.data?.node_instance_id;
+      if (!workflowId || instanceId === undefined) return;
+      try {
+        await pinService.unpinNode(workflowId, Number(instanceId));
+        removePinnedNode(String(instanceId));
+        notify.success("Unpinned", `${node.display_name || node.name} pin cleared.`);
+      } catch {
+        notify.error("Unpin failed", "Could not remove pin. Please try again.");
+      }
+    },
+    [workflowId, removePinnedNode, notify]
+  );
+
+  // ---------------------------------------------------------------------------
+  // F2-FE-1 / F2-FE-2 — Step-run state
+  // ---------------------------------------------------------------------------
+
+  /**
+   * Per-node step-run status map. Key = node React ID.
+   * Lives in page state — not Zustand (it's ephemeral per session interaction).
+   */
+  const [stepRunStatusMap, setStepRunStatusMap] = useState<
+    Map<string, 'idle' | 'running' | 'done' | 'error'>
+  >(new Map());
+
+  /** The node ID whose step-run result is currently shown in PreviewPanel. */
+  const [stepRunNodeId, setStepRunNodeId] = useState<string | null>(null);
+
+  /** The last step-run response for the active step-run panel node. */
+  const [stepRunResult, setStepRunResult] = useState<StepRunResponse | null>(null);
+
+  /** Whether the auto-pin checkbox is checked for the current step-run result. */
+  const [autoPinChecked, setAutoPinChecked] = useState(false);
+
+  const setNodeStepRunStatus = useCallback(
+    (nodeId: string, status: 'idle' | 'running' | 'done' | 'error') => {
+      setStepRunStatusMap((prev) => {
+        const next = new Map(prev);
+        next.set(nodeId, status);
+        return next;
+      });
+    },
+    []
+  );
+
+  const handleStepRunNode = useCallback(
+    async (node: WorkflowNode) => {
+      const instanceId = node.data?.node_instance_id;
+      if (!workflowId || instanceId === undefined) return;
+
+      setNodeStepRunStatus(node.id, 'running');
+      setStepRunNodeId(node.id);
+      setStepRunResult(null);
+      setAutoPinChecked(false);
+
+      try {
+        const result = await stepRunService.stepRunNode(
+          workflowId,
+          Number(instanceId),
+          false // auto_pin controlled by checkbox, not sent as true here
+        );
+        setStepRunResult(result);
+
+        if (result.error_message) {
+          setNodeStepRunStatus(node.id, 'error');
+        } else {
+          setNodeStepRunStatus(node.id, 'done');
+          // Cache the result so the Pin button becomes active
+          const preview = {
+            data: result.data,
+            columns: result.columns,
+            row_count: result.row_count,
+          };
+          useWorkflowStore.getState().cachePreviewResult(node.id, preview);
+        }
+      } catch {
+        setNodeStepRunStatus(node.id, 'error');
+        setStepRunResult({
+          data: [],
+          columns: [],
+          row_count: 0,
+          node_output: {},
+          error_message: 'Step run request failed. Check your network connection.',
+          traceback: null,
+        });
+      }
+    },
+    [workflowId, setNodeStepRunStatus]
+  );
+
+  /**
+   * When the auto-pin checkbox is toggled ON after a successful step-run,
+   * immediately pin the cached result.
+   */
+  const handleAutoPinChange = useCallback(
+    async (checked: boolean) => {
+      setAutoPinChecked(checked);
+      if (!checked || !stepRunNodeId || !stepRunResult || stepRunResult.error_message) return;
+
+      const node = nodes.find((n) => n.id === stepRunNodeId);
+      if (!node) return;
+
+      const instanceId = node.data?.node_instance_id;
+      if (!workflowId || instanceId === undefined) return;
+
+      const preview = {
+        data: stepRunResult.data,
+        columns: stepRunResult.columns,
+        row_count: stepRunResult.row_count,
+      };
+
+      try {
+        await pinService.pinNode(workflowId, Number(instanceId), preview);
+        addPinnedNode(String(instanceId), {
+          data: preview.data,
+          columns: preview.columns,
+          pinned_at: Date.now() / 1000,
+        });
+        notify.success("Pinned", `${node.display_name || node.name} result pinned.`);
+      } catch {
+        setAutoPinChecked(false);
+        notify.error("Pin failed", "Could not auto-pin result. Please try again.");
+      }
+    },
+    [stepRunNodeId, stepRunResult, nodes, workflowId, addPinnedNode, notify]
+  );
+
+  // ---------------------------------------------------------------------------
+  // F4-FE-1 / F4-FE-2 — Execution history + debug mode
+  // ---------------------------------------------------------------------------
+
+  const [historyPanelOpen, setHistoryPanelOpen] = useState(false);
+
+  /**
+   * Build a map from node_instance_id (string) → debug overlay data so the
+   * canvas can highlight each node without reading the store directly.
+   */
+  const debugNodeMap = useMemo<ReadonlyMap<string, {
+    failed: boolean;
+    succeeded: boolean;
+    rowCount: number;
+    errorMessage: string | null;
+  }> | undefined>(() => {
+    if (!debugExecution) return undefined;
+    const map = new Map<string, {
+      failed: boolean;
+      succeeded: boolean;
+      rowCount: number;
+      errorMessage: string | null;
+    }>();
+    for (const [instanceId, step] of Object.entries(debugExecution.steps)) {
+      map.set(instanceId, {
+        failed: step.status === 'FAILED',
+        succeeded: step.status === 'SUCCESS',
+        rowCount: step.row_count ?? 0,
+        errorMessage: step.error ?? null,
+      });
+    }
+    return map;
+  }, [debugExecution]);
+
+  /**
+   * The node the user has selected to inspect in debug mode.
+   * Drives the debug-mode PreviewPanel.
+   */
+  const [debugInspectNode, setDebugInspectNode] = useState<WorkflowNode | null>(null);
+
+  const debugPreviewResult = useMemo(() => {
+    if (!debugInspectNode || !debugExecution) return null;
+    const instanceId = debugInspectNode.data?.node_instance_id;
+    if (instanceId === undefined) return null;
+    const step = debugExecution.steps[String(instanceId)];
+    if (!step) return null;
+    return {
+      data: [],
+      columns: [],
+      row_count: step.row_count ?? 0,
+    };
+  }, [debugInspectNode, debugExecution]);
+
+  const handleDebugInspectNode = useCallback((node: WorkflowNode) => {
+    setDebugInspectNode(node);
+    // Close any open step-run panel so the two panels don't stack
+    setStepRunNodeId(null);
+    setStepRunResult(null);
+  }, []);
+
+  const handleExitDebugMode = useCallback(() => {
+    exitDebugMode();
+    setDebugInspectNode(null);
+  }, [exitDebugMode]);
+
+  const [isRetrying, setIsRetrying] = useState(false);
+
+  const handleRetryExecution = useCallback(
+    async (executionId: string) => {
+      if (!workflowId) return;
+      setIsRetrying(true);
+      try {
+        const result = await executionDebugService.retryExecution(workflowId, executionId);
+        notify.success(
+          "Retry started",
+          `New execution launched (ID: ${result.execution_id}).`
+        );
+        handleExitDebugMode();
+        setHistoryPanelOpen(false);
+      } catch {
+        notify.error("Retry failed", "Could not start retry. Please try again.");
+      } finally {
+        setIsRetrying(false);
+      }
+    },
+    [workflowId, notify, handleExitDebugMode]
+  );
 
   // Left Sidebar State
   const [leftSidebarCollapsed, setLeftSidebarCollapsed] = useState(() => {
@@ -214,24 +393,6 @@ const WorkflowBuilderPage: React.FC = () => {
     const saved = localStorage.getItem("workflow-right-sidebar-collapsed");
     return saved ? JSON.parse(saved) : isMobile || isTablet;
   });
-
-  function useElementSize<T extends HTMLElement>() {
-    const ref = React.useRef<T | null>(null);
-    const [rect, setRect] = React.useState({ width: 0, height: 0 });
-
-    React.useLayoutEffect(() => {
-      if (!ref.current) return;
-      const el = ref.current;
-      const ro = new ResizeObserver(([entry]) => {
-        const cr = entry.contentRect;
-        setRect({ width: cr.width, height: cr.height });
-      });
-      ro.observe(el);
-      return () => ro.disconnect();
-    }, []);
-
-    return { ref, ...rect } as const;
-  }
 
   const makeLayoutWithSize = useCallback(
     (cw: number, ch: number) => (list: WorkflowNode[]) =>
@@ -332,8 +493,13 @@ const WorkflowBuilderPage: React.FC = () => {
 
           // Apply layout to template nodes if provided
           if (templateNodes.length > 0) {
-            const layoutedTemplateNodes = layoutNodes(templateNodes);
-            setNodes(layoutedTemplateNodes);
+            // Use template positions if all nodes already have valid positions,
+            // otherwise fall back to auto-layout
+            const allHavePositions = templateNodes.every(
+              (n: WorkflowNode) => n.position && !Number.isNaN(n.position.x) && !Number.isNaN(n.position.y)
+            );
+            const finalNodes = allHavePositions ? templateNodes : layoutNodes(templateNodes);
+            setNodes(finalNodes);
             setConnections(templateConnections);
           } else {
             setNodes([]);
@@ -360,12 +526,23 @@ const WorkflowBuilderPage: React.FC = () => {
           }
           setOriginalBackendWorkflow(backendData);
 
-          // Use positions from transformer (dagre layout based on connections)
-          // Don't re-layout - dagre already calculated optimal positions
+          // Fetch execution history to set initial node statuses.
+          // Done here (not in ExecutionLogPanel) to avoid race conditions.
+          const workflowDocId = extractMongoId(backendData?._id) || docId;
+          let nodesWithStatus = workflowNodes;
+          if (workflowDocId) {
+            try {
+              const executions = await executionHistoryService.getExecutionHistory(workflowDocId);
+              nodesWithStatus = applyExecutionStatuses(workflowNodes, executions);
+            } catch {
+              // Non-critical — nodes will just show validation status instead
+            }
+          }
+
           updateWorkflow({
             ...workflow,
           });
-          setNodes(workflowNodes);
+          setNodes(nodesWithStatus);
           setConnections(workflowConnections);
           markAsSaved();
         }
@@ -391,24 +568,24 @@ const WorkflowBuilderPage: React.FC = () => {
     location,
   ]);
 
-  // Prefetch all node data when workflow is loaded
-  const prefetchedRef = useRef(false);
-
+  // Sync error_workflow_id from backend when workflow loads
   useEffect(() => {
-    // Prefetch node data when nodes are available and not already prefetched
-    if (!isLoading && nodes.length > 0 && !prefetchedRef.current) {
-      prefetchedRef.current = true;
-      // Fire and forget - don't block UI
-      prefetchWorkflowNodeData(nodes).catch(console.error);
+    if (originalBackendWorkflow?.error_workflow_id !== undefined) {
+      setErrorWorkflowId(originalBackendWorkflow.error_workflow_id ?? null);
     }
-  }, [isLoading, nodes]);
+  }, [originalBackendWorkflow?.error_workflow_id]);
 
-  // Reset prefetch flag when component unmounts
+  // F1-FE-2: Load pinned node data from server when a workflow is opened.
+  // Pin state is server-authoritative — never stored in sessionStorage or localStorage.
   useEffect(() => {
-    return () => {
-      prefetchedRef.current = false;
-    };
-  }, []);
+    if (!workflowId) return;
+    pinService
+      .getPinnedData(workflowId)
+      .then(loadPinnedNodes)
+      .catch(() => {
+        // Non-fatal: pin state is a UI enhancement; silently ignore if unavailable
+      });
+  }, [workflowId, loadPinnedNodes]);
 
   useEffect(() => {
     if (isMobile || isTablet) {
@@ -489,102 +666,6 @@ const WorkflowBuilderPage: React.FC = () => {
     );
   };
 
-  const handleExecute = async () => {
-    try {
-      const id = extractMongoId(originalBackendWorkflow?._id) || originalBackendWorkflow?.job_id;
-      if (!id) {
-        notify.error(
-          "Execute failed",
-          "Workflow has no job_id. Please save first."
-        );
-        return;
-      }
-
-      // Show blocking modal during API call and until first status update
-      setTriggering(true);
-
-      // Reset all node statuses to 'pending' before execution
-      setNodes((prevNodes) =>
-        prevNodes.map((node) => ({
-          ...node,
-          status: "pending" as const,
-        }))
-      );
-
-      // Execute workflow - wait for trigger API to complete
-      await workflowApiService.executeWorkflow(id);
-
-      // Start tracking execution status (modal will close when first node status changes)
-      setExecuting(true);
-
-      // Note: setTriggering(false) will be called by useEffect when first node starts running
-      // Note: setExecuting(false) will be called by the useEffect monitoring node completion
-    } catch (err) {
-      console.error("Failed to execute workflow:", err);
-      notify.error(
-        "Execute failed",
-        err instanceof Error ? err.message : "Unknown error"
-      );
-      setTriggering(false);
-      setExecuting(false);
-    }
-  };
-
-  // Close triggering modal when first node starts running
-  useEffect(() => {
-    if (!triggering) return;
-
-    // Check if any node has started (status changed from pending to running/success/error)
-    const hasStartedNode = nodes.some(
-      (node) => node.status === "running" || node.status === "success" || node.status === "error"
-    );
-
-    if (hasStartedNode) {
-      setTriggering(false);
-    }
-  }, [nodes, triggering]);
-
-  // Timeout for triggering - fail if no response within 1 minute
-  useEffect(() => {
-    if (!triggering) return;
-
-    const timeoutId = setTimeout(() => {
-      // Still triggering after 1 minute = failed
-      setTriggering(false);
-      setExecuting(false);
-      notify.error(
-        "Triggered failed",
-        "Workflow did not start within 1 minute. Please try again."
-      );
-    }, 60000); // 1 minute timeout
-
-    return () => clearTimeout(timeoutId);
-  }, [triggering, notify]);
-
-  // Monitor node status changes and stop spinning when all destinations complete
-  useEffect(() => {
-    if (!executing) return;
-
-    const destinationNodes = nodes.filter(
-      (node) => node.type === "destination"
-    );
-
-    // If no destination nodes, stop executing immediately
-    if (destinationNodes.length === 0) {
-      setExecuting(false);
-      return;
-    }
-
-    // Check if all destination nodes have completed (success or error)
-    const allDestinationsComplete = destinationNodes.every(
-      (node) => node.status === "success" || node.status === "error"
-    );
-
-    if (allDestinationsComplete) {
-      setExecuting(false);
-    }
-  }, [nodes, executing]);
-
   const handleSave = async () => {
     if (!originalBackendWorkflow) {
       notify.error("Save failed", "Workflow not initialized");
@@ -630,6 +711,7 @@ const WorkflowBuilderPage: React.FC = () => {
           schedule_expression: wf.schedule_expression,
           nodes: nodesWithDisplayName,
           ...(wf.connections ? { connections: wf.connections } : {}),
+          error_workflow_id: errorWorkflowId ?? undefined,
         };
         if (objectId) base._id = objectId;
         return base;
@@ -646,7 +728,16 @@ const WorkflowBuilderPage: React.FC = () => {
 
         setOriginalBackendWorkflow(newWorkflowData);
         updateWorkflow(wf);
-        setNodes(() => applyLayoutIfMissing(wfNodes, layoutNodes));
+        setNodes((prev) => {
+          const statusByInstanceId = new Map(
+            prev.map((n) => [String(n.data?.node_instance_id), n.status])
+          );
+          const laid = applyLayoutIfMissing(wfNodes, layoutNodes);
+          return laid.map((n) => {
+            const prevStatus = statusByInstanceId.get(String(n.data?.node_instance_id));
+            return prevStatus && prevStatus !== 'pending' ? { ...n, status: prevStatus } : n;
+          });
+        });
         setConnections(() => wfConnections);
         markAsSaved();
 
@@ -687,7 +778,16 @@ const WorkflowBuilderPage: React.FC = () => {
           );
         }
         updateWorkflow(wf);
-        setNodes(() => applyLayoutIfMissing(wfNodes, layoutNodes));
+        setNodes((prev) => {
+          const statusByInstanceId = new Map(
+            prev.map((n) => [String(n.data?.node_instance_id), n.status])
+          );
+          const laid = applyLayoutIfMissing(wfNodes, layoutNodes);
+          return laid.map((n) => {
+            const prevStatus = statusByInstanceId.get(String(n.data?.node_instance_id));
+            return prevStatus && prevStatus !== 'pending' ? { ...n, status: prevStatus } : n;
+          });
+        });
         setConnections(() => wfConnections);
       } catch (refetchErr) {
         console.warn("Refetch after save failed:", refetchErr);
@@ -826,6 +926,13 @@ const WorkflowBuilderPage: React.FC = () => {
     }
   };
 
+  const handleScheduleDeliverySave = () => {
+    // Real persistence happens when the user clicks Save on the main toolbar.
+    // Here we just close the sheet and remind the user.
+    setScheduleDeliveryOpen(false);
+    notify.success("Schedule updated", "Save the workflow to persist these changes.");
+  };
+
   const handleLoad = () => {
     document
       .querySelector<HTMLInputElement>(
@@ -951,10 +1058,10 @@ const WorkflowBuilderPage: React.FC = () => {
   // Loading state - show minimal spinner without re-rendering entire page
   if (isLoading) {
     return (
-      <div className="flex flex-col h-screen w-full items-center justify-center" style={{ backgroundColor: '#F1FAEE' }}>
+      <div className="flex flex-col h-screen w-full items-center justify-center bg-surface-secondary">
         <div className="text-center">
-          <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4" style={{ color: '#E63946' }} />
-          <p className="text-sm uppercase tracking-wider" style={{ color: '#457B9D' }}>Loading workflow...</p>
+          <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-primary-600" />
+          <p className="text-sm text-text-secondary">Loading workflow...</p>
         </div>
       </div>
     );
@@ -962,15 +1069,15 @@ const WorkflowBuilderPage: React.FC = () => {
 
   if (error) {
     return (
-      <div className="flex flex-col h-screen w-full items-center justify-center" style={{ backgroundColor: '#F1FAEE' }}>
+      <div className="flex flex-col h-screen w-full items-center justify-center bg-surface-secondary">
         <div className="text-center max-w-md p-8">
-          <div className="w-16 h-16 mx-auto mb-6 flex items-center justify-center" style={{ backgroundColor: '#E63946', borderRadius: '2px' }}>
-            <AlertTriangle className="text-white w-8 h-8" />
+          <div className="w-16 h-16 mx-auto mb-6 flex items-center justify-center bg-error rounded-sm">
+            <AlertTriangle className="text-text-inverse w-8 h-8" />
           </div>
-          <h2 className="text-xl font-bold mb-2 uppercase tracking-wider" style={{ color: '#1D3557' }}>
+          <h2 className="text-xl font-semibold mb-2 text-text-primary">
             Failed to Load Workflow
           </h2>
-          <p className="mb-6" style={{ color: '#457B9D' }}>{error}</p>
+          <p className="mb-6 text-text-secondary">{error}</p>
           <div className="flex justify-center gap-3">
             <Button onClick={() => window.location.reload()} variant="primary">
               Try Again
@@ -985,9 +1092,9 @@ const WorkflowBuilderPage: React.FC = () => {
   }
 
   return (
-    <div className="flex flex-col h-screen overflow-hidden" style={{ backgroundColor: '#F1FAEE' }}>
-      {/* Solid Bauhaus Background */}
-      <div className="absolute inset-0 z-0 pointer-events-none" style={{ backgroundColor: '#F1FAEE' }} />
+    <div className="flex flex-col h-screen overflow-hidden bg-surface-secondary">
+      {/* Background layer */}
+      <div className="absolute inset-0 z-0 pointer-events-none bg-surface-secondary" />
 
       <div className="relative z-10 flex flex-col h-full">
         <Toolbar
@@ -1009,6 +1116,7 @@ const WorkflowBuilderPage: React.FC = () => {
           onExecute={handleExecute}
           onSave={handleSave}
           onSettings={() => setMetaOpen(true)}
+          onScheduleDelivery={() => setScheduleDeliveryOpen(true)}
           executing={executing}
           saving={saving}
           hasUnsavedChanges={hasUnsavedChanges}
@@ -1020,6 +1128,16 @@ const WorkflowBuilderPage: React.FC = () => {
           onToggleLeftSidebar={handleToggleLeftSidebar}
           rightSidebarCollapsed={rightSidebarCollapsed}
           onToggleRightSidebar={handleToggleRightSidebar}
+          onToggleHistory={() => setHistoryPanelOpen((prev) => !prev)}
+          historyOpen={historyPanelOpen}
+          isDebugMode={!!debugExecution}
+          isRetrying={isRetrying}
+          onRetryExecution={
+            debugExecution
+              ? () => handleRetryExecution(debugExecution.execution_id)
+              : undefined
+          }
+          onExitDebugMode={handleExitDebugMode}
         />
 
         <div
@@ -1037,8 +1155,7 @@ const WorkflowBuilderPage: React.FC = () => {
             )}
           >
             <div
-              className="h-full w-full overflow-hidden"
-              style={{ backgroundColor: 'white', border: '1px solid #A8DADC', borderRadius: '2px' }}
+              className="h-full w-full overflow-hidden bg-surface-primary border border-border rounded-sm"
             >
               <Sidebar
                 onNodeDragStart={() => {}}
@@ -1052,47 +1169,70 @@ const WorkflowBuilderPage: React.FC = () => {
           {/* Main Canvas */}
           <div
             ref={canvasRef}
-            className="flex-1 overflow-hidden relative"
-            style={{
-              backgroundColor: '#F1FAEE',
-              border: '1px solid #A8DADC',
-              borderRadius: '2px',
-              backgroundImage: 'radial-gradient(circle, #A8DADC 1px, transparent 1px)',
-              backgroundSize: '24px 24px',
-            }}
+            className="flex-1 overflow-hidden relative bg-surface-secondary border border-border rounded-sm"
           >
             <ReactFlowCanvas
               nodes={Array.isArray(nodes) ? nodes : []}
               connections={Array.isArray(connections) ? connections : []}
               onNodesChange={handleNodesChange}
               onConnectionsChange={handleConnectionsChange}
-              onNodeSelect={(n) => setSelectedNodeId(n ? n.id : null)}
-              onNodeOpenEditor={(n) => setEditorNode(n)}
+              onNodeSelect={() => {}}
+              onNodeOpenEditor={debugExecution ? undefined : (n) => setEditorNode(n)}
               isMobile={isMobile}
+              pinnedNodeInstanceIds={pinnedNodeInstanceIds}
+              previewedNodeIds={previewedNodeIds}
+              onPinNode={debugExecution ? undefined : handlePinNode}
+              onUnpinNode={debugExecution ? undefined : handleUnpinNode}
+              stepRunStatusMap={debugExecution ? undefined : stepRunStatusMap}
+              onStepRunNode={debugExecution ? undefined : handleStepRunNode}
+              debugNodeMap={debugNodeMap}
+              onDebugInspectNode={debugExecution ? handleDebugInspectNode : undefined}
             />
             {/* Execution Log Panel */}
             <Suspense fallback={null}>
               <ExecutionLogPanel
                 workflowId={extractMongoId(originalBackendWorkflow?._id) || docId}
+                executing={executing}
+                onExecutionComplete={stopExecuting}
+              />
+            </Suspense>
+
+            {/* Execution History Panel — absolute overlay inside canvas area */}
+            <Suspense fallback={null}>
+              <ExecutionHistoryPanel
+                workflowId={workflowId}
+                isOpen={historyPanelOpen}
+                onClose={() => setHistoryPanelOpen(false)}
+                onLoadExecution={(detail: ExecutionDetail) => {
+                  enterDebugMode(detail);
+                  setDebugInspectNode(null);
+                }}
+                activeExecutionId={debugExecution?.execution_id ?? null}
+                onRetry={handleRetryExecution}
+                isRetrying={isRetrying}
               />
             </Suspense>
           </div>
 
           {/* Node Configuration Panel - n8n-inspired full-screen panel */}
           {editorNode && (
-            <Suspense fallback={<div className="fixed inset-0 z-50 flex items-center justify-center" style={{ backgroundColor: 'rgba(29,53,87,0.5)' }}><Loader2 className="w-8 h-8 animate-spin" style={{ color: '#E63946' }} /></div>}>
+            <Suspense fallback={<div className="fixed inset-0 z-50 flex items-center justify-center bg-neutral-900/50"><Loader2 className="w-8 h-8 animate-spin text-primary-600" /></div>}>
               <NodeConfigPanel
                 node={editorNode}
                 onUpdate={handleNodeUpdate}
                 onClose={() => setEditorNode(null)}
                 executionStatus={editorNode.status === 'running' ? 'running' : editorNode.status === 'success' ? 'success' : editorNode.status === 'error' ? 'error' : 'idle'}
+                onPreview={(nodeId) => {
+                  setPreviewNodeId(nodeId);
+                  setEditorNode(null);
+                }}
               />
             </Suspense>
           )}
 
           {/* Workflow Settings Modal */}
           {metaOpen && (
-            <Suspense fallback={<div className="fixed inset-0 z-50 flex items-center justify-center" style={{ backgroundColor: 'rgba(29,53,87,0.5)' }}><Loader2 className="w-6 h-6 animate-spin text-white" /></div>}>
+            <Suspense fallback={<div className="fixed inset-0 z-50 flex items-center justify-center bg-neutral-900/50"><Loader2 className="w-6 h-6 animate-spin text-text-inverse" /></div>}>
               <WorkflowMetaForm
                 initial={{
                   _id: extractMongoId(originalBackendWorkflow?._id),
@@ -1108,16 +1248,79 @@ const WorkflowBuilderPage: React.FC = () => {
             </Suspense>
           )}
 
-          {/* Triggering Modal - Blocks user interaction during Cloud Run head-up */}
-          {triggering && (
-            <div className="fixed inset-0 z-[100] flex items-center justify-center" style={{ backgroundColor: 'rgba(29,53,87,0.6)' }}>
-              <div className="p-8 flex flex-col items-center gap-4" style={{ backgroundColor: 'white', border: '2px solid #E63946', borderRadius: '2px' }}>
-                <Loader2 className="w-10 h-10 animate-spin" style={{ color: '#E63946' }} />
-                <p className="text-lg font-medium uppercase tracking-wider" style={{ color: '#1D3557' }}>Triggering...</p>
-                <p className="text-sm" style={{ color: '#457B9D' }}>Starting workflow execution</p>
-              </div>
-            </div>
+          {/* Schedule & Delivery Sheet */}
+          <Suspense fallback={null}>
+            <ScheduleDeliverySheet
+              isOpen={scheduleDeliveryOpen}
+              onClose={() => setScheduleDeliveryOpen(false)}
+              workflowId={extractMongoId(originalBackendWorkflow?._id) || docId}
+              scheduleExpression={originalBackendWorkflow?.schedule_expression || "0 0 * * *"}
+              scheduleEnabled={scheduleEnabled}
+              deliveryConfig={deliveryConfig}
+              onScheduleChange={(cron) => {
+                updateWorkflow({ schedule_expression: cron });
+              }}
+              onScheduleEnabledChange={setScheduleEnabled}
+              onDeliveryConfigChange={setDeliveryConfig}
+              onSave={handleScheduleDeliverySave}
+              isSaving={saving}
+              errorWorkflowId={errorWorkflowId}
+              onErrorWorkflowChange={(id) => {
+                setErrorWorkflowId(id);
+                updateWorkflow({ error_workflow_id: id ?? undefined });
+              }}
+            />
+          </Suspense>
+
+          {/* Data Preview Panel — preview mode (opened from NodeConfigPanel) */}
+          {previewNodeId && (
+            <Suspense fallback={null}>
+              <PreviewPanel
+                nodeId={previewNodeId}
+                isOpen={!!previewNodeId}
+                onClose={() => setPreviewNodeId(null)}
+                source="preview"
+                onPreviewSuccess={useWorkflowStore.getState().cachePreviewResult}
+              />
+            </Suspense>
           )}
+
+          {/* Data Preview Panel — step-run mode (opened by Play button on node) */}
+          {stepRunNodeId && !previewNodeId && (
+            <Suspense fallback={null}>
+              <PreviewPanel
+                nodeId={stepRunNodeId}
+                isOpen={!!stepRunNodeId}
+                onClose={() => {
+                  setStepRunNodeId(null);
+                  setStepRunResult(null);
+                  setAutoPinChecked(false);
+                }}
+                source="step-run"
+                stepRunResult={stepRunResult}
+                canAutoPin={
+                  !!stepRunResult && !stepRunResult.error_message
+                }
+                autoPinChecked={autoPinChecked}
+                onAutoPinChange={handleAutoPinChange}
+              />
+            </Suspense>
+          )}
+
+          {/* Data Preview Panel — debug mode (opened by double-clicking a node in debug view) */}
+          {debugInspectNode && !previewNodeId && !stepRunNodeId && (
+            <Suspense fallback={null}>
+              <PreviewPanel
+                nodeId={debugInspectNode.id}
+                isOpen={!!debugInspectNode}
+                onClose={() => setDebugInspectNode(null)}
+                source="debug"
+                debugResult={debugPreviewResult}
+              />
+            </Suspense>
+          )}
+
+
         </div>
       </div>
     </div>

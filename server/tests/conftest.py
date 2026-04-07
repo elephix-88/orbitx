@@ -3,9 +3,10 @@ from __future__ import annotations
 
 import os
 import sys
-from datetime import datetime, timedelta, timezone
-from typing import TYPE_CHECKING, Any, Generator
-from unittest.mock import MagicMock, Mock, patch
+from collections.abc import Generator
+from datetime import UTC, datetime, timedelta
+from typing import TYPE_CHECKING, Any
+from unittest.mock import AsyncMock, MagicMock, Mock, patch
 
 import jwt
 import pytest
@@ -17,10 +18,6 @@ if TYPE_CHECKING:
 # =============================================================================
 # Module-Level Mocks (must be set before any application imports)
 # =============================================================================
-
-# Mock the entire database.mongodb module before any imports
-mock_mongodb_module = MagicMock()
-mock_mongodb_client = Mock()
 
 # Mock return values with proper data structures
 mock_user_data: dict[str, Any] = {
@@ -68,52 +65,47 @@ mock_workflow_data: dict[str, Any] = {
     "connections": [],
 }
 
-mock_mongodb_client.insert_document.return_value = "mock_id_12345"
+
+def _make_mock_collection(find_one_result: Any = None) -> MagicMock:
+    """Build a Motor-style mock collection with sensible defaults."""
+    collection = MagicMock()
+
+    # find_one
+    collection.find_one = AsyncMock(return_value=find_one_result)
+
+    # insert_one — return an object whose inserted_id mimics Motor
+    insert_result = MagicMock()
+    insert_result.inserted_id = "mock_id_12345"
+    collection.insert_one = AsyncMock(return_value=insert_result)
+
+    # update_one
+    update_result = MagicMock()
+    update_result.matched_count = 1
+    update_result.modified_count = 1
+    collection.update_one = AsyncMock(return_value=update_result)
+
+    # delete_one
+    delete_result = MagicMock()
+    delete_result.deleted_count = 1
+    collection.delete_one = AsyncMock(return_value=delete_result)
+
+    # find → cursor → to_list
+    cursor = MagicMock()
+    cursor.to_list = AsyncMock(return_value=[])
+    cursor.sort = MagicMock(return_value=cursor)
+    cursor.limit = MagicMock(return_value=cursor)
+    collection.find = MagicMock(return_value=cursor)
+
+    # create_index (used during app startup)
+    collection.create_index = AsyncMock(return_value=None)
+
+    return collection
 
 
-# Smart mock for get_document that returns appropriate data based on collection
-def mock_get_document(
-    collection_name: str | None = None,
-    query: dict[str, Any] | None = None,
-    *args: Any,
-    **kwargs: Any,
-) -> dict[str, Any] | None:
-    """Return appropriate mock data based on collection name."""
-    # Handle both positional and keyword arguments
-    collection = collection_name or (args[0] if args else "")
-    if not collection:
-        return mock_connection_data
-
-    collection_lower = collection.lower()
-    if "user" in collection_lower:
-        return mock_user_data
-    elif "connection" in collection_lower:
-        return mock_connection_data
-    elif "workflow" in collection_lower:
-        return mock_workflow_data
-    return mock_connection_data  # default fallback
-
-
-mock_mongodb_client.get_document.side_effect = mock_get_document
-mock_mongodb_client.get_all_documents.return_value = [
-    mock_connection_data,
-    mock_workflow_data,
-]
-mock_update_result = Mock()
-mock_update_result.matched_count = 1
-mock_update_result.modified_count = 1
-mock_mongodb_client.update_document.return_value = mock_update_result
-mock_mongodb_client.delete_document.return_value = True
-
-# Set the mongodb attribute to our mock client
-mock_mongodb_module.mongodb = mock_mongodb_client
-mock_mongodb_module.mongodb_client = mock_mongodb_client
-mock_mongodb_module.MongoDBClient = Mock(return_value=mock_mongodb_client)
-mock_mongodb_module.get_mongodb = Mock(return_value=mock_mongodb_client)
-
-sys.modules["database.mongodb"] = mock_mongodb_module
-sys.modules["common.database"] = mock_mongodb_module
-sys.modules["common.database.mongodb"] = mock_mongodb_module
+# Global Motor-style database mock — production code calls database[collection_name]
+mock_database = MagicMock()
+mock_collection = _make_mock_collection(find_one_result=mock_user_data)
+mock_database.__getitem__ = Mock(return_value=mock_collection)
 
 # Mock settings module FIRST before any imports
 mock_settings = Mock()
@@ -145,11 +137,21 @@ mock_settings.rate_limit_auth = "100/minute"
 mock_settings.rate_limit_expensive = "100/minute"
 mock_settings.csrf_enabled = False
 mock_settings.env = "DEV"
+mock_settings.mongo_username = "test_user"
+mock_settings.mongo_password = "test_pass"
+mock_settings.mongo_uri = "test.mongodb.net"
+mock_settings.mongo_database = "test_db"
 
 # Mock configs module
 mock_config_module = Mock()
 mock_config_module.settings = mock_settings
 sys.modules["server.configs.config"] = mock_config_module
+
+# Prevent app startup from connecting to Prefect server at module level.
+# server.main calls await prefect_client.register_flow() in its lifespan,
+# which tries to reach the Prefect server. Patch this before server.main
+# is imported to ensure endpoint tests using the app TestClient don't fail.
+patch("server.services.prefect_client.register_flow", new_callable=AsyncMock).start()
 
 
 # =============================================================================
@@ -160,7 +162,6 @@ sys.modules["server.configs.config"] = mock_config_module
 @pytest.fixture(scope="session", autouse=True)
 def setup_test_environment() -> None:
     """Set up test environment variables and mocks."""
-    # Set test environment variables
     os.environ.update(
         {
             "MONGO_USERNAME": "test_user",
@@ -174,10 +175,13 @@ def setup_test_environment() -> None:
         }
     )
 
-    # Configure orbitx-common database settings
-    from common.config.settings import configure_database
-
-    configure_database(mock_settings)
+    # Patch the Motor database variable that all production modules import
+    patch("common.database.mongodb.database", mock_database).start()
+    # Patch close_mongodb if it exists (optional cleanup hook)
+    if hasattr(__import__("common.database.mongodb", fromlist=["close_mongodb"]), "close_mongodb"):
+        patch("common.database.mongodb.close_mongodb", return_value=None).start()
+    # Prevent app startup from connecting to Prefect server
+    patch("server.services.prefect_client.register_flow", new_callable=AsyncMock).start()
 
 
 # =============================================================================
@@ -219,8 +223,8 @@ def auth_headers(test_user: dict[str, Any]) -> dict[str, str]:
     payload = {
         "sub": test_user["_id"],
         "email": test_user["email"],
-        "exp": datetime.now(timezone.utc) + timedelta(minutes=30),
-        "iat": datetime.now(timezone.utc),
+        "exp": datetime.now(UTC) + timedelta(minutes=30),
+        "iat": datetime.now(UTC),
     }
     token = jwt.encode(
         payload, "test_jwt_secret_key_for_testing_12345", algorithm="HS256"
@@ -238,21 +242,19 @@ _TEST_JWT_SECRET = "test_jwt_secret_key_for_testing_12345"
 _TEST_TOKEN_PAYLOAD = {
     "sub": "test_user_id_123",
     "email": "test@example.com",
-    "exp": datetime.now(timezone.utc) + timedelta(days=1),
-    "iat": datetime.now(timezone.utc),
+    "exp": datetime.now(UTC) + timedelta(days=1),
+    "iat": datetime.now(UTC),
 }
 _TEST_TOKEN = jwt.encode(_TEST_TOKEN_PAYLOAD, _TEST_JWT_SECRET, algorithm="HS256")
 
 
 @pytest.fixture
-def client() -> Generator[TestClient, None, None]:
+def client() -> Generator[TestClient]:
     """Create a test client for the FastAPI app with auth dependency override."""
     from common.model.user import UserInDB
-
     from server.main import app
     from server.services.auth.dependencies import get_current_user
 
-    # Create mock user inline to avoid fixture dependency issues
     mock_user = UserInDB(
         id="test_user_id_123",
         email="test@example.com",
@@ -262,28 +264,24 @@ def client() -> Generator[TestClient, None, None]:
         is_active=True,
     )
 
-    # Override the auth dependency to return our mock user
     async def override_get_current_user() -> UserInDB:
         return mock_user
 
     app.dependency_overrides[get_current_user] = override_get_current_user
 
-    # Create client with default auth headers using pre-generated token
     with TestClient(
         app, headers={"Authorization": f"Bearer {_TEST_TOKEN}"}
     ) as test_client:
         yield test_client
 
-    # Clean up dependency overrides
     app.dependency_overrides.clear()
 
 
 @pytest.fixture
-def unauthenticated_client() -> Generator[TestClient, None, None]:
+def unauthenticated_client() -> Generator[TestClient]:
     """Create a test client without auth override (for testing auth failures)."""
     from server.main import app
 
-    # Clear any existing overrides
     app.dependency_overrides.clear()
 
     with TestClient(app) as test_client:
@@ -296,33 +294,32 @@ def unauthenticated_client() -> Generator[TestClient, None, None]:
 
 
 @pytest.fixture
-def mock_mongodb() -> Mock:
-    """Mock MongoDB client - returns the global mock that can be modified in tests."""
-    # Reset mock behavior for each test
-    mock_mongodb_client.reset_mock()
+def mock_mongodb() -> MagicMock:
+    """Return the global Motor-style database mock.
 
-    # Set default behaviors
-    mock_mongodb_client.insert_document.return_value = "mock_id_12345"
-    mock_mongodb_client.insert_document.side_effect = None
-
-    # Keep the smart get_document that returns appropriate data based on collection
-    mock_mongodb_client.get_document.side_effect = mock_get_document
-
-    mock_mongodb_client.get_all_documents.return_value = [
-        mock_connection_data,
-        mock_workflow_data,
-    ]
-    mock_mongodb_client.get_all_documents.side_effect = None
-
-    result = Mock()
-    result.matched_count = 1
-    result.modified_count = 1
-    mock_mongodb_client.update_document.return_value = result
-    mock_mongodb_client.update_document.side_effect = None
-    mock_mongodb_client.delete_document.return_value = True
-    mock_mongodb_client.delete_document.side_effect = None
-
-    return mock_mongodb_client
+    Tests that need to control what Motor returns should configure
+    mock_database[collection].find_one.return_value etc. directly,
+    or use patch("common.database.mongodb.database", ...) for isolation.
+    """
+    mock_collection.reset_mock()
+    mock_collection.find_one = AsyncMock(return_value=mock_user_data)
+    insert_result = MagicMock()
+    insert_result.inserted_id = "mock_id_12345"
+    mock_collection.insert_one = AsyncMock(return_value=insert_result)
+    update_result = MagicMock()
+    update_result.matched_count = 1
+    update_result.modified_count = 1
+    mock_collection.update_one = AsyncMock(return_value=update_result)
+    delete_result = MagicMock()
+    delete_result.deleted_count = 1
+    mock_collection.delete_one = AsyncMock(return_value=delete_result)
+    cursor = MagicMock()
+    cursor.to_list = AsyncMock(return_value=[])
+    cursor.sort = MagicMock(return_value=cursor)
+    cursor.limit = MagicMock(return_value=cursor)
+    mock_collection.find = MagicMock(return_value=cursor)
+    mock_database.__getitem__ = Mock(return_value=mock_collection)
+    return mock_database
 
 
 # =============================================================================
@@ -383,8 +380,6 @@ def sample_connection_data() -> dict[str, Any]:
 @pytest.fixture
 def mock_google_oauth() -> Iterator[Mock]:
     """Mock Google OAuth httpx responses."""
-    from unittest.mock import AsyncMock
-
     with patch("server.api.google.oauth.httpx.AsyncClient") as mock_client_class:
         mock_response = Mock()
         mock_response.status_code = 200
@@ -402,20 +397,6 @@ def mock_google_oauth() -> Iterator[Mock]:
         yield mock_client
 
 
-@pytest.fixture
-def mock_google_cloud_run() -> Iterator[Mock]:
-    """Mock Google Cloud Run client."""
-    with patch("server.services.workflow.run_v2.JobsClient") as mock_client_class:
-        mock_client = Mock()
-        mock_operation = Mock()
-        mock_response = Mock()
-        mock_response.name = "test_execution_name"
-        mock_operation.result.return_value = mock_response
-        mock_client.run_job.return_value = mock_operation
-        mock_client_class.return_value = mock_client
-        yield mock_client
-
-
 # =============================================================================
 # Settings Mock (autouse for all tests)
 # =============================================================================
@@ -424,12 +405,8 @@ def mock_google_cloud_run() -> Iterator[Mock]:
 @pytest.fixture(autouse=True)
 def mock_settings_fixture() -> Iterator[Mock]:
     """Mock settings for all tests - ensures consistent configuration."""
-    # Update the module-level mock with additional settings
     mock_settings.connection_collection = "test_connections"
     mock_settings.workflow_collection = "test_workflows"
     mock_settings.google_fields = "google_fields"
-    mock_settings.google_cloud_project_id = "test_project"
-    mock_settings.google_cloud_location = "test_location"
-    mock_settings.google_cloud_job_name = "test_job"
-    mock_settings.google_cloud_scheduler_timezone = "UTC"
+    mock_settings.prefect_work_pool = "orbitx-worker-pool"
     yield mock_settings

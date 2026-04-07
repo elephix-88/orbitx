@@ -2,14 +2,13 @@ import asyncio
 
 import gspread
 import pandas as pd
-from gspread_dataframe import set_with_dataframe
 from loguru import logger
 
+from common.model.google.sheets import GoogleSheetsDestinationConfig
 from engine.configs.config import settings
 from engine.exceptions import LoaderException
 from engine.interfaces.node import Loader
 from engine.services.google.auth import build_connection_credentials
-from common.model.google.sheets import GoogleSheetsDestinationConfig
 
 
 class GoogleSheetLoader(Loader):
@@ -24,7 +23,12 @@ class GoogleSheetLoader(Loader):
                 gc = gspread.authorize(creds)
                 sh = gc.open_by_key(self.config.spreadsheet_id)
                 ws = sh.worksheet(self.config.worksheet_name)
-                set_with_dataframe(ws, data)
+                ws.clear()
+                if data.empty:
+                    return
+                headers = list(data.columns)
+                rows = data.astype(object).fillna("").astype(str).values.tolist()
+                ws.update([headers] + rows, value_input_option="RAW")
 
             await asyncio.to_thread(_sync_load)
             logger.success(

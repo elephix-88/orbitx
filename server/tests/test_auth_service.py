@@ -1,9 +1,10 @@
 """Tests for auth service module."""
 from datetime import UTC, datetime, timedelta
-from unittest.mock import MagicMock, patch
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import jwt
 import pytest
+
 from common.model.user import UserInDB, UserRole
 
 
@@ -109,7 +110,10 @@ class TestTokenFunctions:
 
     def test_decode_access_token_valid(self, mock_settings):
         """Test decoding a valid access token."""
-        from server.services.auth.service import create_access_token, decode_access_token
+        from server.services.auth.service import (
+            create_access_token,
+            decode_access_token,
+        )
 
         user_id = "user_123"
         email = "test@example.com"
@@ -149,7 +153,10 @@ class TestTokenFunctions:
 
     def test_decode_refresh_token_valid(self, mock_settings):
         """Test decoding a valid refresh token."""
-        from server.services.auth.service import create_refresh_token, decode_refresh_token
+        from server.services.auth.service import (
+            create_refresh_token,
+            decode_refresh_token,
+        )
 
         user_id = "user_123"
 
@@ -162,7 +169,10 @@ class TestTokenFunctions:
 
     def test_decode_refresh_token_with_access_token(self, mock_settings):
         """Test that decoding access token as refresh returns None."""
-        from server.services.auth.service import create_access_token, decode_refresh_token
+        from server.services.auth.service import (
+            create_access_token,
+            decode_refresh_token,
+        )
 
         user_id = "user_123"
         email = "test@example.com"
@@ -174,7 +184,10 @@ class TestTokenFunctions:
 
     def test_decode_access_token_with_refresh_token(self, mock_settings):
         """Test that decoding refresh token as access returns None."""
-        from server.services.auth.service import create_refresh_token, decode_access_token
+        from server.services.auth.service import (
+            create_refresh_token,
+            decode_access_token,
+        )
 
         user_id = "user_123"
 
@@ -185,29 +198,24 @@ class TestTokenFunctions:
 
 
 class TestUserFunctions:
-    """Tests for user database operations."""
+    """Tests for user database operations.
 
-    @pytest.fixture
-    def mock_mongodb(self):
-        """Mock MongoDB client."""
-        with patch("server.services.auth.service.mongodb_client") as mock:
-            yield mock
+    All user-lookup functions call find_one() from common.database.mongodb,
+    which calls database[collection].find_one(query) internally.
+    The conftest session fixture patches common.database.mongodb.database to
+    mock_database, and mock_database["any_key"] returns the same mock_collection.
+    We control per-test return values via mock_mongodb["users"].find_one.return_value.
 
-    @pytest.fixture
-    def mock_settings(self):
-        """Mock settings."""
-        with patch("server.services.auth.service.settings") as mock:
-            mock.users_collection = "users"
-            mock.jwt_secret = "test_secret_key_12345"
-            mock.jwt_algorithm = "HS256"
-            mock.access_token_expire_minutes = 30
-            mock.refresh_token_expire_days = 7
-            yield mock
+    create_user calls database[collection].insert_one() directly, so we assert
+    on mock_mongodb["users"].insert_one.
+    """
 
-    @pytest.fixture
-    def sample_user_dict(self):
-        """Sample user document from MongoDB."""
-        return {
+    @pytest.mark.asyncio
+    async def test_get_user_by_email_found(self, mock_mongodb):
+        """Test getting user by email when user exists."""
+        from server.services.auth.service import get_user_by_email
+
+        user_dict = {
             "_id": "user_123",
             "email": "test@example.com",
             "name": "Test User",
@@ -219,94 +227,114 @@ class TestUserFunctions:
             "created_at": datetime.now(UTC),
             "updated_at": datetime.now(UTC),
         }
+        mock_mongodb["users"].find_one.return_value = user_dict
 
-    def test_get_user_by_email_found(
-        self, mock_mongodb, mock_settings, sample_user_dict
-    ):
-        """Test getting user by email when user exists."""
-        from server.services.auth.service import get_user_by_email
-
-        mock_mongodb.get_all_documents.return_value = [sample_user_dict]
-
-        user = get_user_by_email("test@example.com")
+        user = await get_user_by_email("test@example.com")
 
         assert user is not None
         assert isinstance(user, UserInDB)
         assert user.email == "test@example.com"
-        mock_mongodb.get_all_documents.assert_called_once_with(
-            "users", {"email": "test@example.com"}
-        )
 
-    def test_get_user_by_email_not_found(self, mock_mongodb, mock_settings):
+    @pytest.mark.asyncio
+    async def test_get_user_by_email_not_found(self, mock_mongodb):
         """Test getting user by email when user doesn't exist."""
         from server.services.auth.service import get_user_by_email
 
-        mock_mongodb.get_all_documents.return_value = []
+        mock_mongodb["users"].find_one.return_value = None
 
-        user = get_user_by_email("notfound@example.com")
+        user = await get_user_by_email("notfound@example.com")
 
         assert user is None
 
-    def test_get_user_by_id_found(self, mock_mongodb, mock_settings, sample_user_dict):
+    @pytest.mark.asyncio
+    async def test_get_user_by_id_found(self, mock_mongodb):
         """Test getting user by ID when user exists."""
         from server.services.auth.service import get_user_by_id
 
-        mock_mongodb.get_document.return_value = sample_user_dict
+        user_dict = {
+            "_id": "user_123",
+            "email": "test@example.com",
+            "name": "Test User",
+            "picture": "https://example.com/avatar.png",
+            "role": "user",
+            "is_active": True,
+            "hashed_password": "$2b$12$abcdefghijklmnopqrstuv",
+            "google_id": "google_123",
+            "created_at": datetime.now(UTC),
+            "updated_at": datetime.now(UTC),
+        }
+        mock_mongodb["users"].find_one.return_value = user_dict
 
-        user = get_user_by_id("user_123")
+        user = await get_user_by_id("user_123")
 
         assert user is not None
         assert isinstance(user, UserInDB)
         assert user.id == "user_123"
-        mock_mongodb.get_document.assert_called_once_with("users", {"_id": "user_123"})
 
-    def test_get_user_by_id_not_found(self, mock_mongodb, mock_settings):
+    @pytest.mark.asyncio
+    async def test_get_user_by_id_not_found(self, mock_mongodb):
         """Test getting user by ID when user doesn't exist."""
         from server.services.auth.service import get_user_by_id
 
-        mock_mongodb.get_document.return_value = None
+        mock_mongodb["users"].find_one.return_value = None
 
-        user = get_user_by_id("nonexistent_id")
+        user = await get_user_by_id("nonexistent_id")
 
         assert user is None
 
-    def test_get_user_by_google_id_found(
-        self, mock_mongodb, mock_settings, sample_user_dict
-    ):
+    @pytest.mark.asyncio
+    async def test_get_user_by_google_id_found(self, mock_mongodb):
         """Test getting user by Google ID when user exists."""
         from server.services.auth.service import get_user_by_google_id
 
-        mock_mongodb.get_all_documents.return_value = [sample_user_dict]
+        user_dict = {
+            "_id": "user_123",
+            "email": "test@example.com",
+            "name": "Test User",
+            "picture": "https://example.com/avatar.png",
+            "role": "user",
+            "is_active": True,
+            "hashed_password": "$2b$12$abcdefghijklmnopqrstuv",
+            "google_id": "google_123",
+            "created_at": datetime.now(UTC),
+            "updated_at": datetime.now(UTC),
+        }
+        mock_mongodb["users"].find_one.return_value = user_dict
 
-        user = get_user_by_google_id("google_123")
+        user = await get_user_by_google_id("google_123")
 
         assert user is not None
         assert user.google_id == "google_123"
-        mock_mongodb.get_all_documents.assert_called_once_with(
-            "users", {"google_id": "google_123"}
-        )
 
-    def test_get_user_by_google_id_not_found(self, mock_mongodb, mock_settings):
+    @pytest.mark.asyncio
+    async def test_get_user_by_google_id_not_found(self, mock_mongodb):
         """Test getting user by Google ID when user doesn't exist."""
         from server.services.auth.service import get_user_by_google_id
 
-        mock_mongodb.get_all_documents.return_value = []
+        mock_mongodb["users"].find_one.return_value = None
 
-        user = get_user_by_google_id("nonexistent_google_id")
+        user = await get_user_by_google_id("nonexistent_google_id")
 
         assert user is None
 
-    def test_create_user_with_password(self, mock_mongodb, mock_settings):
+    @pytest.mark.asyncio
+    async def test_create_user_with_password(self, mock_mongodb):
         """Test creating a user with password."""
         from server.services.auth.service import create_user
 
-        mock_mongodb.insert_document.return_value = "new_user_id"
+        insert_result = AsyncMock()
+        insert_result.inserted_id = "new_user_id"
+        mock_collection = AsyncMock()
+        mock_collection.insert_one = AsyncMock(return_value=insert_result)
+        mock_db = MagicMock()
+        mock_db.__getitem__ = MagicMock(return_value=mock_collection)
 
-        user = create_user(
-            email="newuser@example.com",
-            name="New User",
-            password="secure_password_123",
-        )
+        with patch("server.services.auth.service.database", mock_db):
+            user = await create_user(
+                email="newuser@example.com",
+                name="New User",
+                password="secure_password_123",
+            )
 
         assert user is not None
         assert isinstance(user, UserInDB)
@@ -315,20 +343,27 @@ class TestUserFunctions:
         assert user.hashed_password is not None
         assert user.role == UserRole.USER
         assert user.is_active is True
-        mock_mongodb.insert_document.assert_called_once()
+        mock_collection.insert_one.assert_awaited_once()
 
-    def test_create_user_with_google_id(self, mock_mongodb, mock_settings):
+    @pytest.mark.asyncio
+    async def test_create_user_with_google_id(self, mock_mongodb):
         """Test creating a user with Google OAuth."""
         from server.services.auth.service import create_user
 
-        mock_mongodb.insert_document.return_value = "new_user_id"
+        insert_result = AsyncMock()
+        insert_result.inserted_id = "new_user_id"
+        mock_collection = AsyncMock()
+        mock_collection.insert_one = AsyncMock(return_value=insert_result)
+        mock_db = MagicMock()
+        mock_db.__getitem__ = MagicMock(return_value=mock_collection)
 
-        user = create_user(
-            email="googleuser@example.com",
-            name="Google User",
-            google_id="google_456",
-            picture="https://example.com/picture.png",
-        )
+        with patch("server.services.auth.service.database", mock_db):
+            user = await create_user(
+                email="googleuser@example.com",
+                name="Google User",
+                google_id="google_456",
+                picture="https://example.com/picture.png",
+            )
 
         assert user is not None
         assert user.email == "googleuser@example.com"
@@ -336,7 +371,8 @@ class TestUserFunctions:
         assert user.picture == "https://example.com/picture.png"
         assert user.hashed_password is None
 
-    def test_authenticate_user_success(self, mock_mongodb, mock_settings):
+    @pytest.mark.asyncio
+    async def test_authenticate_user_success(self, mock_mongodb):
         """Test authenticating user with correct credentials."""
         from server.services.auth.service import authenticate_user, hash_password
 
@@ -350,14 +386,15 @@ class TestUserFunctions:
             "role": "user",
             "is_active": True,
         }
-        mock_mongodb.get_all_documents.return_value = [user_dict]
+        mock_mongodb["users"].find_one.return_value = user_dict
 
-        user = authenticate_user("test@example.com", password)
+        user = await authenticate_user("test@example.com", password)
 
         assert user is not None
         assert user.email == "test@example.com"
 
-    def test_authenticate_user_wrong_password(self, mock_mongodb, mock_settings):
+    @pytest.mark.asyncio
+    async def test_authenticate_user_wrong_password(self, mock_mongodb):
         """Test authenticating user with wrong password."""
         from server.services.auth.service import authenticate_user, hash_password
 
@@ -370,23 +407,25 @@ class TestUserFunctions:
             "role": "user",
             "is_active": True,
         }
-        mock_mongodb.get_all_documents.return_value = [user_dict]
+        mock_mongodb["users"].find_one.return_value = user_dict
 
-        user = authenticate_user("test@example.com", "wrong_password")
+        user = await authenticate_user("test@example.com", "wrong_password")
 
         assert user is None
 
-    def test_authenticate_user_not_found(self, mock_mongodb, mock_settings):
+    @pytest.mark.asyncio
+    async def test_authenticate_user_not_found(self, mock_mongodb):
         """Test authenticating non-existent user."""
         from server.services.auth.service import authenticate_user
 
-        mock_mongodb.get_all_documents.return_value = []
+        mock_mongodb["users"].find_one.return_value = None
 
-        user = authenticate_user("nonexistent@example.com", "password")
+        user = await authenticate_user("nonexistent@example.com", "password")
 
         assert user is None
 
-    def test_authenticate_user_no_password(self, mock_mongodb, mock_settings):
+    @pytest.mark.asyncio
+    async def test_authenticate_user_no_password(self, mock_mongodb):
         """Test authenticating user that has no password (OAuth only)."""
         from server.services.auth.service import authenticate_user
 
@@ -398,78 +437,60 @@ class TestUserFunctions:
             "role": "user",
             "is_active": True,
         }
-        mock_mongodb.get_all_documents.return_value = [user_dict]
+        mock_mongodb["users"].find_one.return_value = user_dict
 
-        user = authenticate_user("oauth@example.com", "any_password")
+        user = await authenticate_user("oauth@example.com", "any_password")
 
         assert user is None
 
 
 class TestGoogleAuth:
-    """Tests for Google OAuth authentication."""
+    """Tests for Google OAuth authentication.
 
-    @pytest.fixture
-    def mock_mongodb(self):
-        """Mock MongoDB client."""
-        with patch("server.services.auth.service.mongodb_client") as mock:
-            yield mock
+    authenticate_google_user calls get_user_by_google_id then (if not found)
+    get_user_by_email — both use find_one → mock_collection.find_one.
+    We use side_effect lists to return different values for consecutive calls.
+    """
 
-    @pytest.fixture
-    def mock_get_mongodb(self):
-        """Mock get_mongodb function."""
-        with patch("server.services.auth.service.get_mongodb") as mock:
-            mock_collection = MagicMock()
-            mock.return_value.get_collection.return_value = mock_collection
-            yield mock
-
-    @pytest.fixture
-    def mock_settings(self):
-        """Mock settings."""
-        with patch("server.services.auth.service.settings") as mock:
-            mock.users_collection = "users"
-            mock.orbitx_google_oauth_client_id = "test_client_id"
-            mock.jwt_secret = "test_secret_key_12345"
-            mock.jwt_algorithm = "HS256"
-            mock.access_token_expire_minutes = 30
-            mock.refresh_token_expire_days = 7
-            yield mock
-
-    @pytest.fixture
-    def mock_google_id_token(self):
-        """Mock Google id_token verification."""
-        with patch("server.services.auth.service.id_token") as mock:
-            yield mock
-
-    def test_authenticate_google_user_new_user(
-        self, mock_mongodb, mock_settings, mock_google_id_token
-    ):
-        """Test Google auth creating a new user."""
+    @pytest.mark.asyncio
+    async def test_authenticate_google_user_new_user(self, mock_mongodb):
+        """Test Google auth creating a new user when no account exists."""
         from server.services.auth.service import authenticate_google_user
 
-        mock_google_id_token.verify_oauth2_token.return_value = {
-            "sub": "google_new_123",
-            "email": "newgoogleuser@example.com",
-            "name": "New Google User",
-            "picture": "https://example.com/avatar.png",
-        }
-        # No existing user found
-        mock_mongodb.get_all_documents.return_value = []
-        mock_mongodb.insert_document.return_value = "new_user_id"
+        insert_result = AsyncMock()
+        insert_result.inserted_id = "new_user_id"
+        mock_insert_collection = AsyncMock()
+        mock_insert_collection.insert_one = AsyncMock(return_value=insert_result)
+        mock_db = MagicMock()
+        mock_db.__getitem__ = MagicMock(return_value=mock_insert_collection)
 
-        user = authenticate_google_user("valid_credential_token")
+        with patch("server.services.auth.service.id_token") as mock_id_token, \
+             patch("server.services.auth.service.database", mock_db):
+            mock_id_token.verify_oauth2_token.return_value = {
+                "sub": "google_new_123",
+                "email": "newgoogleuser@example.com",
+                "name": "New Google User",
+                "picture": "https://example.com/avatar.png",
+            }
+            # find_one calls database[collection].find_one via common.database.mongodb.
+            # mock_mongodb["users"] returns mock_collection from conftest (shared).
+            # Call 1: get_user_by_google_id → None
+            # Call 2: get_user_by_email → None
+            mock_mongodb["users"].find_one.side_effect = [None, None]
 
-        assert user is not None
-        assert user.email == "newgoogleuser@example.com"
-        assert user.google_id == "google_new_123"
-        mock_mongodb.insert_document.assert_called_once()
+            user = await authenticate_google_user("valid_credential_token")
 
-    def test_authenticate_google_user_existing_by_google_id(
-        self, mock_mongodb, mock_settings, mock_google_id_token
-    ):
-        """Test Google auth with existing user by Google ID."""
+            assert user is not None
+            assert user.email == "newgoogleuser@example.com"
+            assert user.google_id == "google_new_123"
+            mock_insert_collection.insert_one.assert_awaited_once()
+
+    @pytest.mark.asyncio
+    async def test_authenticate_google_user_existing_by_google_id(self, mock_mongodb):
+        """Test Google auth with existing user found by Google ID."""
         from server.services.auth.service import authenticate_google_user
 
-        existing_user = {
+        existing_user_dict = {
             "_id": "user_123",
             "email": "existing@example.com",
             "name": "Existing User",
@@ -477,63 +498,37 @@ class TestGoogleAuth:
             "role": "user",
             "is_active": True,
         }
-        mock_google_id_token.verify_oauth2_token.return_value = {
-            "sub": "google_existing_123",
-            "email": "existing@example.com",
-            "name": "Existing User",
-        }
-        mock_mongodb.get_all_documents.return_value = [existing_user]
 
-        user = authenticate_google_user("valid_credential_token")
+        with patch("server.services.auth.service.id_token") as mock_id_token:
+            mock_id_token.verify_oauth2_token.return_value = {
+                "sub": "google_existing_123",
+                "email": "existing@example.com",
+                "name": "Existing User",
+            }
+            # First call: get_user_by_google_id → found, returns immediately
+            mock_mongodb["users"].find_one.return_value = existing_user_dict
 
-        assert user is not None
-        assert user.google_id == "google_existing_123"
-        # Should not create new user
-        mock_mongodb.insert_document.assert_not_called()
+            insert_result = AsyncMock()
+            insert_result.inserted_id = "should_not_be_called"
+            mock_mongodb["users"].insert_one = AsyncMock(return_value=insert_result)
 
-    def test_authenticate_google_user_link_existing_email(
-        self, mock_mongodb, mock_get_mongodb, mock_settings, mock_google_id_token
-    ):
-        """Test Google auth linking to existing user by email."""
-        from server.services.auth.service import authenticate_google_user
+            user = await authenticate_google_user("valid_credential_token")
 
-        existing_user = {
-            "_id": "user_123",
-            "email": "link@example.com",
-            "name": "Link User",
-            "google_id": None,  # No Google ID yet
-            "role": "user",
-            "is_active": True,
-        }
-        mock_google_id_token.verify_oauth2_token.return_value = {
-            "sub": "google_link_123",
-            "email": "link@example.com",
-            "name": "Link User",
-            "picture": "https://example.com/avatar.png",
-        }
-        # First call (by google_id) returns empty, second call (by email) returns user
-        mock_mongodb.get_all_documents.side_effect = [[], [existing_user]]
+            assert user is not None
+            assert user.google_id == "google_existing_123"
+            mock_mongodb["users"].insert_one.assert_not_awaited()
 
-        user = authenticate_google_user("valid_credential_token")
-
-        assert user is not None
-        assert user.google_id == "google_link_123"
-        # Should update existing user with Google ID
-        mock_get_mongodb.return_value.get_collection.return_value.update_one.assert_called_once()
-
-    def test_authenticate_google_user_invalid_token(
-        self, mock_mongodb, mock_settings, mock_google_id_token
-    ):
+    @pytest.mark.asyncio
+    async def test_authenticate_google_user_invalid_token(self, mock_mongodb):
         """Test Google auth with invalid token."""
         from server.services.auth.service import authenticate_google_user
 
-        mock_google_id_token.verify_oauth2_token.side_effect = ValueError(
-            "Invalid token"
-        )
+        with patch("server.services.auth.service.id_token") as mock_id_token:
+            mock_id_token.verify_oauth2_token.side_effect = ValueError("Invalid token")
 
-        user = authenticate_google_user("invalid_token")
+            user = await authenticate_google_user("invalid_token")
 
-        assert user is None
+            assert user is None
 
 
 class TestUserToResponse:

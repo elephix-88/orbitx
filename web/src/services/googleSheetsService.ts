@@ -1,5 +1,5 @@
 import { BaseApiService } from './baseApiService';
-import { openOAuthPopupWithData } from '../utils/oauthPopup';
+import { openOAuthPopupWithCallbacks } from '../utils/oauthPopup';
 
 export interface GoogleSheetsFile {
   id: string;
@@ -37,7 +37,7 @@ export interface OAuthLoginResponse {
 }
 
 class GoogleSheetsService extends BaseApiService {
-  async connectWithPopup(connectionName: string = 'Google Sheets Connection'): Promise<{ connection_id: string }> {
+  async connectWithPopup(connectionName: string = 'Google Sheets Connection'): Promise<void> {
     const response = await this.post<OAuthLoginResponse>('/api/google/sheets/login', {
       connection_name: connectionName,
     });
@@ -46,9 +46,10 @@ class GoogleSheetsService extends BaseApiService {
       throw new Error('No oauth_url received from server');
     }
 
-    return openOAuthPopupWithData(
+    await openOAuthPopupWithCallbacks(
       response.data.oauth_url,
-      { connection_id: response.data.connection_id },
+      () => {},
+      undefined,
       {
         title: 'GoogleOAuthPopup',
         width: 500,

@@ -58,15 +58,17 @@ class Loader(ABC):
 
     Attributes:
         config: Loader-specific configuration (set by concrete implementations)
-        merge_keys: Optional list of column names used as merge keys for UPSERT operations.
-                   This is set by the workflow runner when propagating primary keys from extractors.
-        field_schemas: Optional list of field schemas for type conversion.
-                      This is set by the workflow runner when propagating from extractors.
+        merge_keys: Optional list of column names used as merge keys
+                   for UPSERT operations. Set by the workflow runner
+                   when propagating primary keys from extractors.
+        field_schemas: Optional list of field schemas for type
+                      conversion. Set by the workflow runner when
+                      propagating from extractors.
     """
 
     config: Any  # Concrete loaders set this in __init__
-    merge_keys: list[str] | None = None  # Set by workflow runner for UPSERT operations
-    field_schemas: list[BaseFieldSchema] | None = None  # Set by workflow runner for type conversion
+    merge_keys: list[str] | None = None
+    field_schemas: list[BaseFieldSchema] | None = None
 
     @abstractmethod
     def __init__(self, config: Any) -> None:

@@ -3,6 +3,16 @@ name = "orbitx"
 version = "0.1.0"
 description = "OrbitX marketing data integration platform"
 requires-python = ">=3.13"
+dependencies = [
+    "common",
+    "engine",
+    "server",
+]
+
+[tool.uv.sources]
+common = { workspace = true }
+engine = { workspace = true }
+server = { workspace = true }
 
 [tool.uv.workspace]
 members = ["common", "server", "engine"]
@@ -13,7 +23,7 @@ target-version = "py313"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "W", "UP", "B", "SIM"]
-ignore = ["E713", "E221"]
+ignore = ["E713", "E221", "B008"]
 
 [tool.ruff.lint.isort]
 known-first-party = ["common", "server", "engine"]
@@ -29,4 +39,5 @@ show_error_codes = true
 [dependency-groups]
 dev = [
     "ruff>=0.15.6",
+    "pytest>=9.0.2",
 ]

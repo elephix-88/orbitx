@@ -2,9 +2,9 @@ import duckdb
 import pandas as pd
 from loguru import logger
 
+from common.model.transform import SQLTransformConfig
 from engine.exceptions import TransformerException
 from engine.interfaces.node import Transformer
-from common.model.transform import SQLTransformConfig
 
 
 class SQLTransformer(Transformer):
@@ -19,8 +19,11 @@ class SQLTransformer(Transformer):
         logger.info(f"Running SQL Transformation: {self.config.sql_query}")
 
         try:
-            duckdb.register("temp_table", df)
-            return duckdb.query(self.config.sql_query).to_df()
+            conn = duckdb.connect()
+            conn.register("temp_table", df)
+            result = conn.execute(self.config.sql_query).df()
+            conn.close()
+            return result
         except duckdb.Error as ex:
             raise TransformerException(
                 f"SQL transformation failed: {ex}",

@@ -23,7 +23,7 @@ export const joinTransformSpec: NodeSpec = {
   displayName: 'Join Tables',
   category: 'TRANSFORM',
   icon: 'Merge',
-  color: '#10B981', // Green for join
+  color: '#F59E0B',
   ports: [
     { id: 'in', name: 'Input', io: 'input', dataType: 'records', multiple: true },
     { id: 'out', name: 'Output', io: 'output', dataType: 'records' },

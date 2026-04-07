@@ -187,7 +187,7 @@ export const FieldSelector: React.FC<FieldSelectorProps> = ({
             {label}
           </label>
         )}
-        <div className="flex items-center gap-2 p-4 bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl text-sm text-text-tertiary">
+        <div className="flex items-center gap-2 p-4 bg-surface-secondary border border-border rounded-xl text-sm text-text-tertiary">
           <Database className="w-4 h-4" />
           {emptyMessage}
         </div>

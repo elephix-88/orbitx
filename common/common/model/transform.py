@@ -1,4 +1,4 @@
-from enum import Enum
+from enum import Enum, StrEnum
 
 from pydantic import BaseModel, Field, model_validator
 
@@ -8,9 +8,10 @@ class TransformType(Enum):
     RENAME = "rename"
     JOIN = "join"
     COLUMN_EDITOR = "column_editor"
+    UNIFY = "unify"
 
 
-class DataType(str, Enum):
+class DataType(StrEnum):
     """Supported data types for column conversion."""
 
     STRING = "string"
@@ -39,7 +40,7 @@ class ColumnEditorConfig(BaseModel):
     new_columns: list[NewColumn] = Field(default_factory=list)
 
 
-class JoinType(str, Enum):
+class JoinType(StrEnum):
     INNER = "inner"
     LEFT = "left"
     RIGHT = "right"
@@ -74,12 +75,12 @@ class JoinSource(BaseModel):
 
     def get_left_keys(self, base_keys: list[str]) -> list[str]:
         if self.keys:
-            return [kp.left for kp in self.keys]
+            return [key_pair.left for key_pair in self.keys]
         return base_keys
 
     def get_right_keys(self) -> list[str]:
         if self.keys:
-            return [kp.right for kp in self.keys]
+            return [key_pair.right for key_pair in self.keys]
         return [self.key] if self.key else []
 
 
@@ -100,3 +101,8 @@ class JoinTransformConfig(BaseModel):
         if self.base_keys:
             return self.base_keys
         return [self.base_key] if self.base_key else []
+
+
+class UnifyTransformConfig(BaseModel):
+    platform: str
+    include_calculated_metrics: bool = True

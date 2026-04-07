@@ -108,3 +108,17 @@ class TokenError(OrbitXError):
             message="Token error",
             details=reason,
         )
+
+
+class WorkflowStructureError(OrbitXError):
+    """Raised when workflow node connections violate structural rules."""
+
+    status_code = 422
+
+    def __init__(self, errors: list) -> None:
+        messages = [error.message for error in errors]
+        super().__init__(
+            message="Workflow structure is invalid",
+            details="; ".join(messages),
+        )
+        self.validation_errors = errors

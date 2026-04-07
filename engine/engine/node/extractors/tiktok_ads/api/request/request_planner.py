@@ -2,12 +2,12 @@
 
 from dataclasses import dataclass, field
 
+from common.model.tiktok.fields import TikTokField, TikTokReportLevel
 from engine.configs.config import settings
 from engine.node.extractors.tiktok_ads.api.request.field_classifier import (
     ClassifiedFields,
     classify_fields,
 )
-from common.model.tiktok.fields import TikTokField, TikTokReportLevel
 
 
 @dataclass
@@ -108,9 +108,9 @@ class TikTokRequestPlanner:
     def _plan_basic_request(self, classified: ClassifiedFields) -> ReportRequest:
         dimensions = self._get_level_dimensions(classified.report_level)
 
-        if "stat_time_day" in classified.basic_dimensions:
-            if "stat_time_day" not in dimensions:
-                dimensions.insert(0, "stat_time_day")
+        has_stat_time = "stat_time_day" in classified.basic_dimensions
+        if has_stat_time and "stat_time_day" not in dimensions:
+            dimensions.insert(0, "stat_time_day")
 
         dimensions = dimensions[: self.max_dimensions]
 

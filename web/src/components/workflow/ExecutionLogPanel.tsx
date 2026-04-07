@@ -17,16 +17,35 @@ import {
   Filter,
   Calendar,
   DollarSign,
+  Bell,
+  BellOff,
 } from 'lucide-react';
-import { ExecutionHistory, ExecutionStep, ExecutionStatus, NodeOutput } from '@/types/backend';
+import { ExecutionHistory, ExecutionStep, ExecutionStatus, ExecutionDeliveryResult } from '@/types/backend';
 import { executionHistoryService } from '@/services/executionHistoryService';
 import { DateRangePicker } from '@/components/ui/DateRangePicker';
 import { cn } from '@/lib/utils';
 import { useWorkflowStore } from '@/store/workflowStore';
 import { NodeStatus } from '@/types/workflow';
+import {
+  type TimeRange,
+  type StatusFilter,
+  timeRangeOptions as sharedTimeRangeOptions,
+  statusFilterOptions as sharedStatusFilterOptions,
+  MAX_CUSTOM_RANGE_DAYS,
+  getTimeRangeStart,
+  getDefaultCustomDates,
+  formatDuration,
+  formatTimestamp,
+  formatRelativeTime,
+  formatNumber,
+  formatCost,
+  getRecordsCount,
+} from '@/utils/executionFormatters';
 
 interface ExecutionLogPanelProps {
   workflowId: string | null;
+  executing?: boolean;
+  onExecutionComplete?: () => void;
 }
 
 /**
@@ -42,32 +61,29 @@ const syncNodeStatusesFromExecution = (execution: ExecutionHistory | null) => {
   // Build a map of node_instance_id to status from execution steps
   const stepStatuses = new Map<string, string>();
   for (const [nodeInstanceId, step] of Object.entries(execution.steps)) {
-    // Normalize status: FAILED -> error, others lowercase
     let status = step.status.toLowerCase();
     if (status === 'failed') status = 'error';
     stepStatuses.set(nodeInstanceId, status);
   }
 
-  // Always update nodes - reset status to 'pending' if no matching step found
-  // This ensures nodes don't stay stuck in 'running' state from a previous execution
-  useWorkflowStore.getState().updateNodes((nodes) =>
-    nodes.map((node) => {
+  useWorkflowStore.getState().updateNodes((nodes) => {
+    let changed = false;
+    const next = nodes.map((node) => {
       const nodeInstanceId = String(node.data?.node_instance_id);
       const stepStatus = stepStatuses.get(nodeInstanceId);
 
-      if (stepStatus) {
-        // Found matching step - update to its status
-        if (node.status !== stepStatus) {
-          return { ...node, status: stepStatus as NodeStatus };
-        }
-      } else if (node.status === 'running') {
-        // No matching step but node shows running - reset to pending
-        // This handles edge cases where execution data doesn't include all nodes
+      if (stepStatus && node.status !== stepStatus) {
+        changed = true;
+        return { ...node, status: stepStatus as NodeStatus };
+      }
+      if (!stepStatus && node.status === 'running') {
+        changed = true;
         return { ...node, status: 'pending' as NodeStatus };
       }
       return node;
-    })
-  );
+    });
+    return changed ? next : nodes;
+  });
 };
 
 const MIN_HEIGHT = 150;
@@ -106,111 +122,48 @@ const statusConfig: Record<ExecutionStatus, {
   },
 };
 
-const formatTimestamp = (timestamp: number | null): string => {
-  if (!timestamp) return '-';
-  const date = new Date(timestamp * 1000);
-  return date.toLocaleString('en-US', {
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-  });
-};
 
-const formatDuration = (seconds: number | null): string => {
-  if (seconds === null || seconds === undefined) return '-';
-  if (seconds < 60) return `${seconds.toFixed(1)}s`;
-  if (seconds < 3600) return `${Math.floor(seconds / 60)}m ${Math.floor(seconds % 60)}s`;
-  return `${Math.floor(seconds / 3600)}h ${Math.floor((seconds % 3600) / 60)}m`;
-};
+// Delivery status badge — shown per-execution
+const DeliveryBadge: React.FC<{ result: ExecutionDeliveryResult }> = ({ result }) => {
+  const channelLabel =
+    result.channel_type === 'slack'
+      ? `Slack${result.channel_label ? ` ${result.channel_label}` : ''}`
+      : 'LINE';
 
-const formatRelativeTime = (timestamp: number): string => {
-  const now = Date.now() / 1000;
-  const diff = now - timestamp;
-  
-  if (diff < 60) return 'Just now';
-  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
-  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
-  if (diff < 604800) return `${Math.floor(diff / 86400)}d ago`;
-  return formatTimestamp(timestamp);
-};
-
-// Get records count from NodeOutput
-const getRecordsCount = (output?: NodeOutput): number | null => {
-  if (!output) return null;
-  if (output.extractor_output) return output.extractor_output.records_extracted;
-  if (output.transformer_output) return output.transformer_output.records_output;
-  if (output.loader_output) return output.loader_output.records_total;
-  return null;
-};
-
-const formatNumber = (num: number): string => {
-  if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
-  if (num >= 1000) return `${(num / 1000).toFixed(1)}K`;
-  return num.toString();
-};
-
-const formatCost = (cost: number | null): string => {
-  if (cost === null || cost === undefined) return '-';
-  if (cost < 0.0001) return '<$0.0001';
-  if (cost < 0.01) return `$${cost.toFixed(4)}`;
-  return `$${cost.toFixed(2)}`;
-};
-
-// Time range filter options
-type TimeRange = 'all' | '1h' | '24h' | '7d' | '30d' | 'custom';
-const timeRangeOptions: { value: TimeRange; label: string }[] = [
-  { value: 'all', label: 'All' },
-  { value: '1h', label: '1h' },
-  { value: '24h', label: '24h' },
-  { value: '7d', label: '7d' },
-  { value: '30d', label: '30d' },
-  { value: 'custom', label: 'Custom' },
-];
-
-// Status filter options
-type StatusFilter = 'all' | ExecutionStatus;
-const statusFilterOptions: { value: StatusFilter; label: string }[] = [
-  { value: 'all', label: 'All' },
-  { value: 'SUCCESS', label: 'Success' },
-  { value: 'FAILED', label: 'Failed' },
-  { value: 'RUNNING', label: 'Running' },
-];
-
-// Max custom range: 2 months
-const MAX_CUSTOM_RANGE_DAYS = 60;
-
-// Get timestamp for time range filter
-const getTimeRangeStart = (range: TimeRange): number | null => {
-  if (range === 'all' || range === 'custom') return null;
-  const now = Date.now() / 1000;
-  switch (range) {
-    case '1h': return now - 3600;
-    case '24h': return now - 86400;
-    case '7d': return now - 604800;
-    case '30d': return now - 2592000;
-    default: return null;
+  if (result.status === 'delivered') {
+    return (
+      <span
+        className="inline-flex items-center gap-1 px-1.5 py-0.5 text-[10px] font-medium rounded bg-success/10 text-success border border-success/20"
+        title={`Delivered to ${channelLabel}`}
+      >
+        <Bell className="w-2.5 h-2.5" />
+        {channelLabel}
+      </span>
+    );
   }
+  return (
+    <span
+      className="inline-flex items-center gap-1 px-1.5 py-0.5 text-[10px] font-medium rounded bg-error/10 text-error border border-error/20"
+      title={result.error || `Delivery to ${channelLabel} failed`}
+    >
+      <BellOff className="w-2.5 h-2.5" />
+      {channelLabel}
+    </span>
+  );
 };
 
-// Format date for input
-const formatDateForInput = (date: Date): string => {
-  return date.toISOString().split('T')[0];
-};
+// ExecutionLogPanel uses shorter labels for the compact sidebar layout
+const timeRangeOptions = sharedTimeRangeOptions.map((opt) =>
+  opt.value === 'all' ? { ...opt, label: 'All' }
+    : opt.value === '1h' ? { ...opt, label: '1h' }
+    : opt.value === '24h' ? { ...opt, label: '24h' }
+    : opt.value === '7d' ? { ...opt, label: '7d' }
+    : opt.value === '30d' ? { ...opt, label: '30d' }
+    : opt
+);
+const statusFilterOptions = sharedStatusFilterOptions;
 
-// Get default dates for custom range
-const getDefaultCustomDates = () => {
-  const end = new Date();
-  const start = new Date();
-  start.setDate(start.getDate() - 7);
-  return {
-    start: formatDateForInput(start),
-    end: formatDateForInput(end),
-  };
-};
-
-export const ExecutionLogPanel = ({ workflowId }: ExecutionLogPanelProps) => {
+export const ExecutionLogPanel = ({ workflowId, executing: externalExecuting, onExecutionComplete }: ExecutionLogPanelProps) => {
   const [expanded, setExpanded] = useState(false);
   const [panelHeight, setPanelHeight] = useState(DEFAULT_HEIGHT);
   const [executions, setExecutions] = useState<ExecutionHistory[]>([]);
@@ -240,11 +193,9 @@ export const ExecutionLogPanel = ({ workflowId }: ExecutionLogPanelProps) => {
         setLoading(false);
 
         // Sync canvas node statuses from the most recent execution
-        // Priority: RUNNING execution > most recent execution
-        const runningExecution = sorted.find(e => e.status === 'RUNNING');
-        const targetExecution = runningExecution || sorted[0];
-        if (targetExecution) {
-          syncNodeStatusesFromExecution(targetExecution);
+        const target = sorted.find(e => e.status === 'RUNNING') || sorted[0];
+        if (target) {
+          syncNodeStatusesFromExecution(target);
         }
       })
       .catch((err) => {
@@ -253,7 +204,7 @@ export const ExecutionLogPanel = ({ workflowId }: ExecutionLogPanelProps) => {
       });
   }, [workflowId]);
 
-  // Fetch on initial mount to sync node statuses (even when collapsed)
+  // Fetch on initial mount
   const initialFetchDone = useRef(false);
   useEffect(() => {
     if (workflowId && !initialFetchDone.current) {
@@ -269,37 +220,38 @@ export const ExecutionLogPanel = ({ workflowId }: ExecutionLogPanelProps) => {
     }
   }, [expanded, workflowId, fetchData]);
 
-  // Track if any execution is running (ref to avoid re-triggering effect)
-  const hasRunningRef = useRef(false);
-  hasRunningRef.current = executions.some(e => e.status === 'RUNNING');
+  // Re-fetch when parent signals a new execution was triggered
+  useEffect(() => {
+    if (externalExecuting && workflowId) {
+      fetchData();
+    }
+  }, [externalExecuting, workflowId, fetchData]);
 
-  // Auto-refresh: faster when running (to sync node statuses), slower otherwise
-  // Runs even when collapsed to keep canvas node statuses in sync
+  // Derived: is any execution currently running?
+  const isRunning = executions.some(e => e.status === 'RUNNING') || !!externalExecuting;
+
+  // Detect transition from running → done and notify parent
+  const wasRunningRef = useRef(false);
+  useEffect(() => {
+    if (wasRunningRef.current && !isRunning) {
+      onExecutionComplete?.();
+    }
+    wasRunningRef.current = isRunning;
+  }, [isRunning, onExecutionComplete]);
+
+  // Poll for execution status updates.
+  // Polls every 5s while an execution is running, 30s otherwise (only when expanded).
   useEffect(() => {
     if (!workflowId) return;
+    if (!isRunning && !expanded) return;
 
-    // Use dynamic interval based on running status
-    // Fast polling (2s) when running to keep node statuses in sync
-    // Slow polling (30s) when not running (only if panel is expanded)
-    const getInterval = () => {
-      if (hasRunningRef.current) return 2000; // Fast when running
-      return expanded ? 30000 : 0; // Only poll when expanded and not running
-    };
+    const interval = isRunning ? 5000 : 30000;
+    const timeoutId = setTimeout(() => {
+      fetchData();
+    }, interval);
 
-    let timeoutId: ReturnType<typeof setTimeout>;
-    const scheduleNext = () => {
-      const interval = getInterval();
-      if (interval === 0) return; // Stop polling
-
-      timeoutId = setTimeout(() => {
-        fetchData();
-        scheduleNext();
-      }, interval);
-    };
-
-    scheduleNext();
     return () => clearTimeout(timeoutId);
-  }, [expanded, workflowId, fetchData]);
+  }, [expanded, workflowId, isRunning, fetchData]);
 
   // Resize handlers
   const handleResizeStart = useCallback((e: React.MouseEvent) => {
@@ -381,7 +333,7 @@ export const ExecutionLogPanel = ({ workflowId }: ExecutionLogPanelProps) => {
             animate={{ height: panelHeight }}
             exit={{ height: 0 }}
             transition={{ type: 'spring', damping: 30, stiffness: 400 }}
-            className="bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-700 relative"
+            className="bg-surface-primary border-t border-border relative"
             style={{ height: panelHeight }}
           >
             {/* Resize Handle */}
@@ -394,7 +346,7 @@ export const ExecutionLogPanel = ({ workflowId }: ExecutionLogPanelProps) => {
               )}
             >
               <GripHorizontal className={cn(
-                'w-8 h-3 text-slate-300 dark:text-slate-600 transition-colors',
+                'w-8 h-3 text-text-tertiary transition-colors',
                 'group-hover:text-blue-500',
                 isResizing && 'text-blue-500'
               )} />
@@ -402,9 +354,9 @@ export const ExecutionLogPanel = ({ workflowId }: ExecutionLogPanelProps) => {
 
             <div className="h-full flex pt-2 overflow-hidden">
               {/* Execution List */}
-              <div className="w-72 border-r border-slate-200 dark:border-slate-700 flex flex-col h-full overflow-hidden">
-                <div className="flex items-center justify-between px-3 py-2 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50">
-                  <span className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+              <div className="w-72 border-r border-border flex flex-col h-full overflow-hidden">
+                <div className="flex items-center justify-between px-3 py-2 border-b border-border-subtle bg-surface-secondary">
+                  <span className="text-xs font-semibold text-text-secondary uppercase tracking-wider">
                     Runs {hasActiveFilters && `(${filteredExecutions.length}/${executions.length})`}
                   </span>
                   <div className="flex items-center gap-1">
@@ -413,8 +365,8 @@ export const ExecutionLogPanel = ({ workflowId }: ExecutionLogPanelProps) => {
                       className={cn(
                         'p-1 rounded transition-colors',
                         showFilters || hasActiveFilters
-                          ? 'bg-blue-100 dark:bg-blue-900/30 text-blue-500'
-                          : 'hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-400'
+                          ? 'bg-info-light text-info'
+                          : 'hover:bg-surface-tertiary text-text-tertiary'
                       )}
                       title="Filter"
                     >
@@ -423,9 +375,9 @@ export const ExecutionLogPanel = ({ workflowId }: ExecutionLogPanelProps) => {
                     <button
                       onClick={fetchData}
                       disabled={loading}
-                      className="p-1 hover:bg-slate-200 dark:hover:bg-slate-700 rounded transition-colors"
+                      className="p-1 hover:bg-surface-tertiary rounded transition-colors"
                     >
-                      <RotateCcw className={cn('w-3.5 h-3.5 text-slate-400', loading && 'animate-spin')} />
+                      <RotateCcw className={cn('w-3.5 h-3.5 text-text-tertiary', loading && 'animate-spin')} />
                     </button>
                   </div>
                 </div>
@@ -438,12 +390,12 @@ export const ExecutionLogPanel = ({ workflowId }: ExecutionLogPanelProps) => {
                       animate={{ height: 'auto', opacity: 1 }}
                       exit={{ height: 0, opacity: 0 }}
                       transition={{ duration: 0.15 }}
-                      className="overflow-hidden border-b border-slate-100 dark:border-slate-800"
+                      className="overflow-hidden border-b border-border-subtle"
                     >
-                      <div className="p-2.5 space-y-2 bg-slate-50/50 dark:bg-slate-800/30">
+                      <div className="p-2.5 space-y-2 bg-surface-secondary/50">
                         {/* Time Range - Button Pills */}
                         <div>
-                          <label className="flex items-center gap-1 text-[10px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
+                          <label className="flex items-center gap-1 text-[10px] font-medium text-text-secondary uppercase tracking-wider mb-1">
                             <Calendar className="w-3 h-3" />
                             Time
                           </label>
@@ -455,8 +407,8 @@ export const ExecutionLogPanel = ({ workflowId }: ExecutionLogPanelProps) => {
                                 className={cn(
                                   'px-2 py-0.5 text-[11px] font-medium rounded transition-all',
                                   timeRange === opt.value
-                                    ? 'bg-blue-500 text-white shadow-sm'
-                                    : 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'
+                                    ? 'bg-primary-400 text-neutral-950 shadow-sm'
+                                    : 'bg-surface-primary border border-border text-text-secondary hover:bg-surface-secondary'
                                 )}
                               >
                                 {opt.label}
@@ -492,7 +444,7 @@ export const ExecutionLogPanel = ({ workflowId }: ExecutionLogPanelProps) => {
 
                         {/* Status Filter */}
                         <div>
-                          <label className="flex items-center gap-1 text-[10px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
+                          <label className="flex items-center gap-1 text-[10px] font-medium text-text-secondary uppercase tracking-wider mb-1">
                             <CheckCircle2 className="w-3 h-3" />
                             Status
                           </label>
@@ -504,8 +456,8 @@ export const ExecutionLogPanel = ({ workflowId }: ExecutionLogPanelProps) => {
                                 className={cn(
                                   'px-2 py-0.5 text-[11px] font-medium rounded transition-all',
                                   statusFilter === opt.value
-                                    ? 'bg-blue-500 text-white shadow-sm'
-                                    : 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'
+                                    ? 'bg-primary-400 text-neutral-950 shadow-sm'
+                                    : 'bg-surface-primary border border-border text-text-secondary hover:bg-surface-secondary'
                                 )}
                               >
                                 {opt.label}
@@ -522,7 +474,7 @@ export const ExecutionLogPanel = ({ workflowId }: ExecutionLogPanelProps) => {
                               setStatusFilter('all');
                               setCustomDateError(null);
                             }}
-                            className="w-full py-1 text-[11px] font-medium text-blue-500 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20 rounded transition-colors"
+                            className="w-full py-1 text-[11px] font-medium text-primary-400 hover:text-primary-300 hover:bg-primary-400/10 rounded transition-colors"
                           >
                             Reset filters
                           </button>
@@ -533,7 +485,7 @@ export const ExecutionLogPanel = ({ workflowId }: ExecutionLogPanelProps) => {
                 </AnimatePresence>
                 <div className="flex-1 overflow-y-auto">
                   {!workflowId ? (
-                    <div className="flex flex-col items-center justify-center h-full text-slate-400 text-sm p-4 text-center">
+                    <div className="flex flex-col items-center justify-center h-full text-text-tertiary text-sm p-4 text-center">
                       <List className="w-8 h-8 mb-2 opacity-50" />
                       Save workflow to see logs
                     </div>
@@ -547,7 +499,7 @@ export const ExecutionLogPanel = ({ workflowId }: ExecutionLogPanelProps) => {
                       {error}
                     </div>
                   ) : filteredExecutions.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center h-full text-slate-400 text-sm p-4 text-center">
+                    <div className="flex flex-col items-center justify-center h-full text-text-tertiary text-sm p-4 text-center">
                       <Clock className="w-8 h-8 mb-2 opacity-50" />
                       {hasActiveFilters ? 'No matching executions' : 'No executions yet'}
                     </div>
@@ -564,10 +516,10 @@ export const ExecutionLogPanel = ({ workflowId }: ExecutionLogPanelProps) => {
                             isSelected ? null : exec.execution_id
                           )}
                           className={cn(
-                            'w-full px-3 py-2.5 flex items-center gap-3 text-left transition-colors border-b border-slate-100 dark:border-slate-800',
-                            isSelected 
-                              ? 'bg-blue-50 dark:bg-blue-900/20' 
-                              : 'hover:bg-slate-50 dark:hover:bg-slate-800/50'
+                            'w-full px-3 py-2.5 flex items-center gap-3 text-left transition-colors border-b border-border-subtle',
+                            isSelected
+                              ? 'bg-primary-400/10'
+                              : 'hover:bg-surface-secondary'
                           )}
                         >
                           <div className={cn('p-1.5 rounded-lg', config.bg)}>
@@ -582,13 +534,20 @@ export const ExecutionLogPanel = ({ workflowId }: ExecutionLogPanelProps) => {
                               <span className={cn('text-sm font-medium', config.color)}>
                                 {config.text}
                               </span>
-                              <span className="text-xs text-slate-400">
+                              <span className="text-xs text-text-tertiary">
                                 {formatDuration(exec.duration)}
                               </span>
                             </div>
-                            <span className="text-xs text-slate-500">
+                            <span className="text-xs text-text-secondary">
                               {formatRelativeTime(exec.start_time)}
                             </span>
+                            {exec.delivery_results && exec.delivery_results.length > 0 && (
+                              <div className="flex flex-wrap gap-1 mt-1">
+                                {exec.delivery_results.map((result, idx) => (
+                                  <DeliveryBadge key={idx} result={result} />
+                                ))}
+                              </div>
+                            )}
                           </div>
                         </button>
                       );
@@ -600,7 +559,7 @@ export const ExecutionLogPanel = ({ workflowId }: ExecutionLogPanelProps) => {
               {/* Detail View */}
               <div className="flex-1 overflow-y-auto overflow-x-hidden p-4">
                 {!selectedData ? (
-                  <div className="h-full flex flex-col items-center justify-center text-slate-400">
+                  <div className="h-full flex flex-col items-center justify-center text-text-tertiary">
                     <Zap className="w-10 h-10 mb-3 opacity-30" />
                     <p className="text-sm">Select an execution to view details</p>
                   </div>
@@ -609,34 +568,34 @@ export const ExecutionLogPanel = ({ workflowId }: ExecutionLogPanelProps) => {
                     {/* Summary */}
                     <div className="flex items-center gap-6 text-sm flex-wrap">
                       <div className="flex items-center gap-2">
-                        <Play className="w-4 h-4 text-slate-400" />
-                        <span className="text-slate-600 dark:text-slate-300">
+                        <Play className="w-4 h-4 text-text-tertiary" />
+                        <span className="text-text-secondary">
                           {selectedData.triggered_by}
                         </span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Clock className="w-4 h-4 text-slate-400" />
-                        <span className="text-slate-600 dark:text-slate-300">
+                        <Clock className="w-4 h-4 text-text-tertiary" />
+                        <span className="text-text-secondary">
                           {formatTimestamp(selectedData.start_time)}
                         </span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Timer className="w-4 h-4 text-slate-400" />
-                        <span className="text-slate-600 dark:text-slate-300">
+                        <Timer className="w-4 h-4 text-text-tertiary" />
+                        <span className="text-text-secondary">
                           {formatDuration(selectedData.duration)}
                         </span>
                       </div>
                       {selectedData.cost_usd !== null && (
-                        <div className="flex items-center gap-2 px-2 py-1 rounded-md bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
+                        <div className="flex items-center gap-2 px-2 py-1 rounded-md bg-amber-900/20 border border-amber-800">
                           <DollarSign className="w-4 h-4 text-amber-500" />
-                          <span className="text-amber-600 dark:text-amber-400 font-medium">
+                          <span className="text-amber-400 font-medium">
                             {formatCost(selectedData.cost_usd)}
                           </span>
                         </div>
                       )}
                       <div className="flex items-center gap-2">
                         <CheckCircle2 className="w-4 h-4 text-emerald-500" />
-                        <span className="text-slate-600 dark:text-slate-300">
+                        <span className="text-text-secondary">
                           {selectedData.successful_nodes}/{selectedData.total_nodes}
                         </span>
                         {selectedData.failed_nodes > 0 && (
@@ -648,11 +607,26 @@ export const ExecutionLogPanel = ({ workflowId }: ExecutionLogPanelProps) => {
                       </div>
                     </div>
 
+                    {/* Delivery Status */}
+                    {selectedData.delivery_results && selectedData.delivery_results.length > 0 ? (
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-xs font-medium text-text-tertiary">Delivered to:</span>
+                        {selectedData.delivery_results.map((result, idx) => (
+                          <DeliveryBadge key={idx} result={result} />
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-1.5 text-xs text-text-tertiary">
+                        <BellOff className="w-3.5 h-3.5" />
+                        No delivery configured
+                      </div>
+                    )}
+
                     {/* Error */}
                     {selectedData.error && (
-                      <div className="p-3 rounded-lg bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 flex items-start gap-2">
+                      <div className="p-3 rounded-lg bg-red-900/20 border border-red-800 flex items-start gap-2">
                         <AlertTriangle className="w-4 h-4 text-red-500 flex-shrink-0 mt-0.5" />
-                        <p className="text-sm text-red-700 dark:text-red-400">{selectedData.error}</p>
+                        <p className="text-sm text-red-400">{selectedData.error}</p>
                       </div>
                     )}
 
@@ -661,12 +635,12 @@ export const ExecutionLogPanel = ({ workflowId }: ExecutionLogPanelProps) => {
                       <div className="overflow-x-auto">
                         <table className="w-full text-sm">
                           <thead>
-                            <tr className="border-b border-slate-200 dark:border-slate-700">
-                              <th className="text-left py-2 px-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Status</th>
-                              <th className="text-left py-2 px-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Node</th>
-                              <th className="text-left py-2 px-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Type</th>
-                              <th className="text-right py-2 px-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Records</th>
-                              <th className="text-right py-2 px-3 text-xs font-semibold text-slate-500 uppercase tracking-wider">Duration</th>
+                            <tr className="border-b border-border">
+                              <th className="text-left py-2 px-3 text-xs font-semibold text-text-secondary uppercase tracking-wider">Status</th>
+                              <th className="text-left py-2 px-3 text-xs font-semibold text-text-secondary uppercase tracking-wider">Node</th>
+                              <th className="text-left py-2 px-3 text-xs font-semibold text-text-secondary uppercase tracking-wider">Type</th>
+                              <th className="text-right py-2 px-3 text-xs font-semibold text-text-secondary uppercase tracking-wider">Records</th>
+                              <th className="text-right py-2 px-3 text-xs font-semibold text-text-secondary uppercase tracking-wider">Duration</th>
                             </tr>
                           </thead>
                           <tbody>
@@ -679,7 +653,7 @@ export const ExecutionLogPanel = ({ workflowId }: ExecutionLogPanelProps) => {
                               const recordsCount = getRecordsCount(step.output);
 
                               return (
-                                <tr key={step.node_instance_id} className="border-b border-slate-100 dark:border-slate-800">
+                                <tr key={step.node_instance_id} className="border-b border-border-subtle">
                                   <td className="py-2 px-3">
                                     <div className="flex items-center gap-2">
                                       <StepIcon className={cn(
@@ -692,18 +666,18 @@ export const ExecutionLogPanel = ({ workflowId }: ExecutionLogPanelProps) => {
                                       </span>
                                     </div>
                                   </td>
-                                  <td className="py-2 px-3 font-medium text-slate-900 dark:text-slate-100">
+                                  <td className="py-2 px-3 font-medium text-text-primary">
                                     {step.node_id}
                                   </td>
                                   <td className="py-2 px-3">
-                                    <span className="px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-700 text-xs text-slate-600 dark:text-slate-300">
+                                    <span className="px-2 py-0.5 rounded bg-surface-secondary text-xs text-text-secondary">
                                       {step.node_type}
                                     </span>
                                   </td>
-                                  <td className="py-2 px-3 text-right text-slate-600 dark:text-slate-300 font-medium">
+                                  <td className="py-2 px-3 text-right text-text-secondary font-medium">
                                     {recordsCount !== null ? formatNumber(recordsCount) : '-'}
                                   </td>
-                                  <td className="py-2 px-3 text-right text-slate-500">
+                                  <td className="py-2 px-3 text-right text-text-secondary">
                                     {formatDuration(stepDuration)}
                                   </td>
                                 </tr>
@@ -726,16 +700,16 @@ export const ExecutionLogPanel = ({ workflowId }: ExecutionLogPanelProps) => {
         onClick={() => setExpanded(!expanded)}
         className={cn(
           'w-full h-8 flex items-center justify-center gap-2 transition-colors',
-          'bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700',
-          'border-t border-slate-200 dark:border-slate-700'
+          'bg-surface-secondary hover:bg-surface-tertiary',
+          'border-t border-border'
         )}
       >
         {expanded ? (
-          <ChevronDown className="w-4 h-4 text-slate-500" />
+          <ChevronDown className="w-4 h-4 text-text-secondary" />
         ) : (
-          <ChevronUp className="w-4 h-4 text-slate-500" />
+          <ChevronUp className="w-4 h-4 text-text-secondary" />
         )}
-        <span className="text-xs font-medium text-slate-500 dark:text-slate-400">
+        <span className="text-xs font-medium text-text-secondary">
           Execution Logs
         </span>
         {!expanded && stats.total > 0 && (
@@ -747,8 +721,8 @@ export const ExecutionLogPanel = ({ workflowId }: ExecutionLogPanelProps) => {
               </span>
             )}
             <span className="text-xs text-emerald-500">{stats.success}</span>
-            <span className="text-xs text-slate-400">/</span>
-            <span className="text-xs text-slate-500">{stats.total}</span>
+            <span className="text-xs text-text-tertiary">/</span>
+            <span className="text-xs text-text-secondary">{stats.total}</span>
             {stats.failed > 0 && (
               <span className="text-xs text-red-500">({stats.failed} failed)</span>
             )}

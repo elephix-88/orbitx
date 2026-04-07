@@ -1,39 +1,24 @@
 import asyncio
 
 from google.auth.exceptions import RefreshError
-from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 from loguru import logger
 
-from common.database import get_mongodb
+from common.database.mongodb import find_one
 from common.model.connection import ConnectionItem
 from common.model.google.sheets import (
     GoogleSheetsFile,
     GoogleSheetsSpreadsheet,
     GoogleSheetsWorksheet,
 )
-from common.model.token import GoogleConnectionParams
 from server.configs.config import settings
 from server.services.exceptions import (
     ConnectionAuthError,
     ConnectionNotFoundError,
     ExternalAPIError,
 )
-
-
-def _build_credentials(connection: ConnectionItem) -> Credentials:
-    """Build Google OAuth credentials from a connection item."""
-    params = GoogleConnectionParams(**connection.params)
-    scopes = [settings.google_oauth_sheets_scope, settings.google_oauth_drive_scope]
-    return Credentials(
-        token=params.access_token,
-        refresh_token=params.refresh_token,
-        token_uri=settings.google_oauth_token_url,
-        client_id=settings.google_oauth_client_id,
-        client_secret=settings.google_oauth_client_secret,
-        scopes=scopes,
-    )
+from server.services.google.credentials import build_google_credentials
 
 
 def _get_google_sheets_spreadsheets_sync(
@@ -43,7 +28,8 @@ def _get_google_sheets_spreadsheets_sync(
     Synchronous implementation - fetches Google Sheets spreadsheets.
     Uses Google Drive API to list spreadsheets.
     """
-    credentials = _build_credentials(connection)
+    scopes = [settings.google_oauth_sheets_scope, settings.google_oauth_drive_scope]
+    credentials = build_google_credentials(connection, scopes=scopes)
     drive_service = build("drive", "v3", credentials=credentials)
 
     query = "mimeType='application/vnd.google-apps.spreadsheet' and trashed=false"
@@ -82,14 +68,13 @@ async def get_google_sheets_spreadsheets(
     connection_id: str, user_id: str
 ) -> list[GoogleSheetsFile]:
     """
-    Returns a list of Google Sheets spreadsheets accessible with the given connection_id.
-    Verifies user ownership of the connection.
-    Runs blocking Google API calls in a thread pool.
+    Returns Google Sheets spreadsheets for the given connection_id.
+    Verifies user ownership. Runs blocking API calls in a thread pool.
     """
-    connection = await get_mongodb().get_document(
-        collection_name=settings.connection_collection,
-        query={"_id": connection_id, "user_id": user_id},
-        model_cls=ConnectionItem,
+    connection = await find_one(
+        settings.connection_collection,
+        {"_id": connection_id, "user_id": user_id},
+        ConnectionItem,
     )
     if not connection:
         logger.error(f"Connection not found for id={connection_id}")
@@ -103,12 +88,12 @@ async def get_google_sheets_spreadsheets(
         raise
     except RefreshError as e:
         logger.error(f"Token refresh failed for connection {connection_id}: {e}")
-        raise ConnectionAuthError(connection_id, "Token expired or revoked")
+        raise ConnectionAuthError(connection_id, "Token expired or revoked") from e
     except HttpError as e:
         logger.error(f"Google Sheets API error: {e}")
         raise ExternalAPIError(
             "Google Sheets", str(e), e.resp.status if e.resp else None
-        )
+        ) from e
 
 
 def _get_google_sheets_worksheets_sync(
@@ -117,7 +102,8 @@ def _get_google_sheets_worksheets_sync(
     """
     Synchronous implementation - fetches spreadsheet details including worksheets.
     """
-    credentials = _build_credentials(connection)
+    scopes = [settings.google_oauth_sheets_scope, settings.google_oauth_drive_scope]
+    credentials = build_google_credentials(connection, scopes=scopes)
     sheets_service = build("sheets", "v4", credentials=credentials)
 
     spreadsheet = (
@@ -167,10 +153,10 @@ async def get_google_sheets_worksheets(
     Verifies user ownership of the connection.
     Runs blocking Google API calls in a thread pool.
     """
-    connection = await get_mongodb().get_document(
-        collection_name=settings.connection_collection,
-        query={"_id": connection_id, "user_id": user_id},
-        model_cls=ConnectionItem,
+    connection = await find_one(
+        settings.connection_collection,
+        {"_id": connection_id, "user_id": user_id},
+        ConnectionItem,
     )
     if not connection:
         logger.error(f"Connection not found for id={connection_id}")
@@ -184,12 +170,12 @@ async def get_google_sheets_worksheets(
         raise
     except RefreshError as e:
         logger.error(f"Token refresh failed for connection {connection_id}: {e}")
-        raise ConnectionAuthError(connection_id, "Token expired or revoked")
+        raise ConnectionAuthError(connection_id, "Token expired or revoked") from e
     except HttpError as e:
         logger.error(f"Google Sheets API error: {e}")
         raise ExternalAPIError(
             "Google Sheets", str(e), e.resp.status if e.resp else None
-        )
+        ) from e
 
 
 async def validate_google_sheets_connection(connection_id: str, user_id: str) -> bool:

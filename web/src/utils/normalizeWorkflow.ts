@@ -39,7 +39,7 @@ export interface StrictWorkflowData {
     cpu_cores: number;
   };
   nodes: StrictWorkflowNode[];
-  connections?: Array<{ from_node: number; to_node: number }>;
+  connections?: Array<{ from_node: number; to_node: number; from_port?: string; to_port?: string }>;
 }
 
 interface OriginalWorkflow {
@@ -235,13 +235,27 @@ export function normalizeWorkflowPayload(
     };
   });
 
-  let connectionList: Array<{ from_node: number; to_node: number }> | undefined = undefined;
+  let connectionList: Array<{ from_node: number; to_node: number; from_port?: string; to_port?: string }> | undefined = undefined;
   if (uiConnections && uiConnections.length) {
     connectionList = [];
     for (const c of uiConnections) {
       const fromId = uiIdToInstanceId.get(c.sourceNodeId);
       const toId = uiIdToInstanceId.get(c.targetNodeId);
-      if (fromId && toId) connectionList.push({ from_node: fromId, to_node: toId });
+      if (fromId && toId) {
+        const entry: { from_node: number; to_node: number; from_port?: string; to_port?: string } = {
+          from_node: fromId,
+          to_node: toId,
+        };
+        // Preserve output port for multi-output nodes (IF true/false, Switch cases)
+        if (c.sourceOutputId && c.sourceOutputId !== 'out') {
+          entry.from_port = c.sourceOutputId;
+        }
+        // Preserve input port (always "in" for current node types, but future-proof)
+        if (c.targetInputId && c.targetInputId !== 'in') {
+          entry.to_port = c.targetInputId;
+        }
+        connectionList.push(entry);
+      }
     }
   }
 

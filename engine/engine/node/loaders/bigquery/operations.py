@@ -3,17 +3,17 @@
 import uuid
 from datetime import datetime, timedelta
 from decimal import Decimal
-from enum import Enum
+from enum import StrEnum
 
 import pandas as pd
 from google.cloud import bigquery
 from loguru import logger
 
-from engine.node.loaders.bigquery.merge import build_merge_statement
 from common.model.common import BaseFieldSchema
+from engine.node.loaders.bigquery.merge import build_merge_statement
 
 
-class BQType(str, Enum):
+class BQType(StrEnum):
     """BigQuery data types."""
 
     STRING = "STRING"

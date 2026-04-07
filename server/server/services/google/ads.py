@@ -5,9 +5,9 @@ from google.ads.googleads.errors import GoogleAdsException
 from google.auth.exceptions import RefreshError
 from loguru import logger
 
-from common.database import get_mongodb
+from common.database.mongodb import find_one
 from common.model.connection import ConnectionItem
-from common.model.google.ads import GoogleAdsAccount, GoogleAdsFields
+from common.model.google.ads import GoogleAdsAccount, GoogleAdsField
 from common.model.token import GoogleConnectionParams
 from server.configs.config import settings
 from server.services.exceptions import (
@@ -18,8 +18,8 @@ from server.services.exceptions import (
 from server.services.field_service import get_fields
 
 
-async def get_google_ads_fields() -> list[GoogleAdsFields]:
-    return await get_fields(settings.google_fields, GoogleAdsFields)
+async def get_google_ads_fields() -> list[GoogleAdsField]:
+    return await get_fields(settings.google_fields, GoogleAdsField)
 
 
 def _get_google_ads_accounts_sync(
@@ -45,10 +45,10 @@ def _get_google_ads_accounts_sync(
         response = customer_service.list_accessible_customers()
     except RefreshError as e:
         logger.error(f"Token refresh failed for connection {connection.id}: {e}")
-        raise ConnectionAuthError(connection.id, "Token expired or revoked")
+        raise ConnectionAuthError(connection.id, "Token expired or revoked") from e
     except GoogleAdsException as e:
         logger.error(f"Google Ads API error: {e}")
-        raise ExternalAPIError("Google Ads", str(e))
+        raise ExternalAPIError("Google Ads", str(e)) from e
 
     ga_service = client.get_service("GoogleAdsService")
     accounts: list[GoogleAdsAccount] = []
@@ -86,10 +86,10 @@ async def get_google_ads_accounts(
     Verifies user ownership of the connection.
     Runs blocking Google Ads API calls in a thread pool.
     """
-    google_ads_connection = await get_mongodb().get_document(
-        collection_name=settings.connection_collection,
-        query={"_id": connection_id, "user_id": user_id},
-        model_cls=ConnectionItem,
+    google_ads_connection = await find_one(
+        settings.connection_collection,
+        {"_id": connection_id, "user_id": user_id},
+        ConnectionItem,
     )
     if not google_ads_connection:
         logger.error("Connection not found for id=%s", connection_id)

@@ -3,12 +3,12 @@ import asyncio
 from google.cloud import bigquery
 from loguru import logger
 
+from common.model.google.bigquery import BigQuerySourceConfig
+from common.model.result import ExtractorResult
 from engine.configs.config import settings
 from engine.exceptions import ExtractorException
 from engine.interfaces.node import Extractor
 from engine.services.google.auth import build_connection_credentials
-from common.model.google.bigquery import BigQuerySourceConfig
-from common.model.result import ExtractorResult
 
 
 class BigQueryExtractor(Extractor):
@@ -23,7 +23,7 @@ class BigQueryExtractor(Extractor):
             logger.info(
                 f"Extracting data from BigQuery - Project: {self.config.project_id}"
             )
-            logger.debug(f"Query: {self.config.query[:100]}...")
+            logger.info(f"Query: {self.config.query[:100]}...")
 
             credentials = await build_connection_credentials(self.config.connection_id)
             client = bigquery.Client(
@@ -36,7 +36,8 @@ class BigQueryExtractor(Extractor):
             df = await asyncio.to_thread(query_job.to_dataframe)
 
             logger.success(
-                f"Extracted {len(df)} rows from BigQuery - Project: {self.config.project_id}"
+                f"Extracted {len(df)} rows from BigQuery "
+                f"- Project: {self.config.project_id}"
             )
 
             return ExtractorResult(

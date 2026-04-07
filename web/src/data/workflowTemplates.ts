@@ -2,7 +2,8 @@
 // Workflow Templates
 // =============================================================================
 // Pre-configured workflow templates for common marketing data pipelines.
-// These help new users get started quickly with proven patterns.
+// Each template defines complete nodes, connections, and layout positions
+// so users can start with a working workflow and just configure credentials.
 
 import { WorkflowNode, WorkflowConnection } from '@/types/workflow';
 
@@ -27,34 +28,81 @@ export interface WorkflowTemplate {
 }
 
 // =============================================================================
-// Helper Functions
+// Layout Constants
 // =============================================================================
 
-const createNodeId = () => `node_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+const COLUMN_X = {
+  source: 60,
+  transform: 360,
+  joinOrSecondTransform: 660,
+  destination: 960,
+} as const;
+
+const ROW_Y = {
+  first: 60,
+  second: 200,
+  third: 340,
+} as const;
+
+const SINGLE_ROW_Y = 140;
+
+// =============================================================================
+// Port Helpers
+// =============================================================================
+
+const sourceOutputPort = [{ id: 'out', name: 'Output', type: 'records' }];
+const transformInputPort = [{ id: 'in', name: 'Input', type: 'records', required: true }];
+const transformOutputPort = [{ id: 'out', name: 'Output', type: 'records' }];
+const destInputPort = [{ id: 'in', name: 'Input', type: 'records', required: true }];
+
+// =============================================================================
+// Connection Helper
+// =============================================================================
+
+function connection(
+  id: string,
+  sourceNodeId: string,
+  targetNodeId: string,
+): WorkflowConnection {
+  return {
+    id,
+    sourceNodeId,
+    targetNodeId,
+    sourceOutputId: 'out',
+    targetInputId: 'in',
+    source: sourceNodeId,
+    target: targetNodeId,
+    sourceHandle: 'out',
+    targetHandle: 'in',
+  };
+}
 
 // =============================================================================
 // Templates
 // =============================================================================
 
 export const workflowTemplates: WorkflowTemplate[] = [
-  // Template 1: Facebook Ads → BigQuery (Marketing Analytics)
+  // -------------------------------------------------------------------------
+  // Template 1: Facebook Ads -> Google Sheets (Daily)
+  // -------------------------------------------------------------------------
   {
-    id: 'facebook-ads-to-bigquery',
-    name: 'Facebook Ads to BigQuery',
-    description: 'Export Facebook Ads campaign data to BigQuery for advanced analytics and reporting dashboards.',
-    category: 'marketing',
+    id: 'facebook-ads-sheets-daily',
+    name: 'Facebook Ads → Google Sheets (Daily)',
+    description:
+      'Pull Facebook Ads data, normalize it with Unify Schema, and export to Google Sheets. Perfect for daily performance reports shared with your team.',
+    category: 'reporting',
     icon: 'Facebook',
     difficulty: 'beginner',
-    estimatedSetupTime: '5-10 min',
+    estimatedSetupTime: '5 min',
     sources: ['Facebook Ads'],
-    destinations: ['BigQuery'],
+    destinations: ['Google Sheets'],
     nodes: [
       {
-        id: 'fb_source_1',
+        id: 'fb_source',
         type: 'source',
         name: 'Facebook Ads',
         definitionId: 'facebook.ads',
-        position: { x: 60, y: 100 },
+        position: { x: COLUMN_X.source, y: SINGLE_ROW_Y },
         data: {
           connection_id: '',
           ad_account_id: [],
@@ -62,286 +110,54 @@ export const workflowTemplates: WorkflowTemplate[] = [
           time_config: { time_preset: 'last_7_days', time_increment: 1 },
         },
         inputs: [],
-        outputs: [{ id: 'out', name: 'Output', type: 'records' }],
+        outputs: sourceOutputPort,
       },
       {
-        id: 'bq_dest_1',
-        type: 'destination',
-        name: 'BigQuery',
-        definitionId: 'dest.bigquery',
-        position: { x: 380, y: 100 },
-        data: {
-          connection_id: '',
-          project_id: '',
-          dataset: '',
-          table: 'facebook_ads_data',
-          write_mode: 'append',
-        },
-        inputs: [{ id: 'in', name: 'Input', type: 'records', required: true }],
-        outputs: [],
-      },
-    ],
-    connections: [
-      {
-        id: 'conn_fb_bq_1',
-        sourceNodeId: 'fb_source_1',
-        targetNodeId: 'bq_dest_1',
-        sourceOutputId: 'out',
-        targetInputId: 'in',
-        source: 'fb_source_1',
-        target: 'bq_dest_1',
-        sourceHandle: 'out',
-        targetHandle: 'in',
-      },
-    ],
-    setupTips: [
-      'Connect your Facebook Ads account first',
-      'Select the ad accounts you want to pull data from',
-      'Choose the metrics that matter for your reporting',
-      'Make sure you have a BigQuery project and dataset ready',
-    ],
-  },
-
-  // Template 2: Google Ads → Google Sheets (Simple Reporting)
-  {
-    id: 'google-ads-to-sheets',
-    name: 'Google Ads to Sheets',
-    description: 'Export Google Ads performance data directly to Google Sheets for easy sharing and collaboration.',
-    category: 'reporting',
-    icon: 'BarChart3',
-    difficulty: 'beginner',
-    estimatedSetupTime: '5 min',
-    sources: ['Google Ads'],
-    destinations: ['Google Sheets'],
-    nodes: [
-      {
-        id: 'gads_source_1',
-        type: 'source',
-        name: 'Google Ads',
-        definitionId: 'google.ads',
-        position: { x: 60, y: 100 },
-        data: {
-          connection_id: '',
-          customer_id: '',
-          fields: ['campaign_name', 'ad_group_name', 'cost_micros', 'impressions', 'clicks', 'conversions'],
-          time_config: { time_preset: 'last_7_days' },
-        },
-        inputs: [],
-        outputs: [{ id: 'out', name: 'Output', type: 'records' }],
+        id: 'unify_fb',
+        type: 'transform',
+        name: 'Unify Schema',
+        definitionId: 'transform.unify',
+        position: { x: COLUMN_X.transform, y: SINGLE_ROW_Y },
+        data: { platform: 'facebook_ads', include_calculated_metrics: true },
+        inputs: transformInputPort,
+        outputs: transformOutputPort,
       },
       {
-        id: 'sheets_dest_1',
+        id: 'sheets_dest',
         type: 'destination',
         name: 'Google Sheets',
         definitionId: 'dest.googlesheets',
-        position: { x: 380, y: 100 },
+        position: { x: COLUMN_X.joinOrSecondTransform, y: SINGLE_ROW_Y },
         data: {
           connection_id: '',
           spreadsheet_id: '',
-          sheet_name: 'Google Ads Data',
+          sheet_name: 'Facebook Ads Data',
           write_mode: 'replace',
         },
-        inputs: [{ id: 'in', name: 'Input', type: 'records', required: true }],
+        inputs: destInputPort,
         outputs: [],
       },
     ],
     connections: [
-      {
-        id: 'conn_gads_sheets_1',
-        sourceNodeId: 'gads_source_1',
-        targetNodeId: 'sheets_dest_1',
-        sourceOutputId: 'out',
-        targetInputId: 'in',
-        source: 'gads_source_1',
-        target: 'sheets_dest_1',
-        sourceHandle: 'out',
-        targetHandle: 'in',
-      },
+      connection('conn_fb_unify', 'fb_source', 'unify_fb'),
+      connection('conn_unify_sheets', 'unify_fb', 'sheets_dest'),
     ],
     setupTips: [
-      'Connect your Google account for both Google Ads and Sheets',
-      'Select your Google Ads customer ID',
-      'Create a new spreadsheet or use an existing one',
-      'The sheet will be updated each time the workflow runs',
+      'Connect your Facebook Ads account in Connections first',
+      'Select the ad accounts and metrics you want to track',
+      'Create or select a Google Sheets spreadsheet for the output',
+      'Schedule daily for up-to-date reporting',
     ],
   },
 
-  // Template 3: Multi-Source Marketing Data to BigQuery
+  // -------------------------------------------------------------------------
+  // Template 2: Google Ads -> BigQuery (Daily)
+  // -------------------------------------------------------------------------
   {
-    id: 'multi-source-to-bigquery',
-    name: 'Multi-Source Marketing',
-    description: 'Combine data from Facebook Ads and Google Ads into BigQuery for unified marketing analytics.',
-    category: 'analytics',
-    icon: 'Merge',
-    difficulty: 'intermediate',
-    estimatedSetupTime: '15-20 min',
-    sources: ['Facebook Ads', 'Google Ads'],
-    destinations: ['BigQuery'],
-    nodes: [
-      {
-        id: 'fb_source_multi',
-        type: 'source',
-        name: 'Facebook Ads',
-        definitionId: 'facebook.ads',
-        position: { x: 60, y: 60 },
-        data: {
-          connection_id: '',
-          ad_account_id: [],
-          fields: ['campaign_name', 'spend', 'impressions', 'clicks', 'conversions'],
-          time_config: { time_preset: 'last_7_days', time_increment: 1 },
-        },
-        inputs: [],
-        outputs: [{ id: 'out', name: 'Output', type: 'records' }],
-      },
-      {
-        id: 'gads_source_multi',
-        type: 'source',
-        name: 'Google Ads',
-        definitionId: 'google.ads',
-        position: { x: 60, y: 200 },
-        data: {
-          connection_id: '',
-          customer_id: '',
-          fields: ['campaign_name', 'cost_micros', 'impressions', 'clicks', 'conversions'],
-          time_config: { time_preset: 'last_7_days' },
-        },
-        inputs: [],
-        outputs: [{ id: 'out', name: 'Output', type: 'records' }],
-      },
-      {
-        id: 'bq_dest_fb',
-        type: 'destination',
-        name: 'BigQuery',
-        definitionId: 'dest.bigquery',
-        position: { x: 380, y: 60 },
-        data: {
-          connection_id: '',
-          project_id: '',
-          dataset: '',
-          table: 'facebook_ads_data',
-          write_mode: 'append',
-        },
-        inputs: [{ id: 'in', name: 'Input', type: 'records', required: true }],
-        outputs: [],
-      },
-      {
-        id: 'bq_dest_gads',
-        type: 'destination',
-        name: 'BigQuery',
-        definitionId: 'dest.bigquery',
-        position: { x: 380, y: 200 },
-        data: {
-          connection_id: '',
-          project_id: '',
-          dataset: '',
-          table: 'google_ads_data',
-          write_mode: 'append',
-        },
-        inputs: [{ id: 'in', name: 'Input', type: 'records', required: true }],
-        outputs: [],
-      },
-    ],
-    connections: [
-      {
-        id: 'conn_fb_bq_multi',
-        sourceNodeId: 'fb_source_multi',
-        targetNodeId: 'bq_dest_fb',
-        sourceOutputId: 'out',
-        targetInputId: 'in',
-        source: 'fb_source_multi',
-        target: 'bq_dest_fb',
-        sourceHandle: 'out',
-        targetHandle: 'in',
-      },
-      {
-        id: 'conn_gads_bq_multi',
-        sourceNodeId: 'gads_source_multi',
-        targetNodeId: 'bq_dest_gads',
-        sourceOutputId: 'out',
-        targetInputId: 'in',
-        source: 'gads_source_multi',
-        target: 'bq_dest_gads',
-        sourceHandle: 'out',
-        targetHandle: 'in',
-      },
-    ],
-    setupTips: [
-      'Connect both Facebook Ads and Google accounts',
-      'Configure each source with the accounts you want to track',
-      'Data will be stored in separate BigQuery tables',
-      'Use BigQuery to join and analyze data across platforms',
-    ],
-  },
-
-  // Template 4: Facebook Ads → MySQL (Database Storage)
-  {
-    id: 'facebook-ads-to-mysql',
-    name: 'Facebook Ads to MySQL',
-    description: 'Store Facebook Ads data in your MySQL database for integration with existing systems.',
-    category: 'analytics',
-    icon: 'Database',
-    difficulty: 'intermediate',
-    estimatedSetupTime: '10 min',
-    sources: ['Facebook Ads'],
-    destinations: ['MySQL'],
-    nodes: [
-      {
-        id: 'fb_source_mysql',
-        type: 'source',
-        name: 'Facebook Ads',
-        definitionId: 'facebook.ads',
-        position: { x: 60, y: 100 },
-        data: {
-          connection_id: '',
-          ad_account_id: [],
-          fields: ['campaign_name', 'adset_name', 'ad_name', 'spend', 'impressions', 'clicks', 'conversions', 'date_start', 'date_stop'],
-          time_config: { time_preset: 'last_7_days', time_increment: 1 },
-        },
-        inputs: [],
-        outputs: [{ id: 'out', name: 'Output', type: 'records' }],
-      },
-      {
-        id: 'mysql_dest_1',
-        type: 'destination',
-        name: 'MySQL',
-        definitionId: 'dest.mysql',
-        position: { x: 380, y: 100 },
-        data: {
-          connection_id: '',
-          database: '',
-          table: 'facebook_ads',
-          write_mode: 'append',
-        },
-        inputs: [{ id: 'in', name: 'Input', type: 'records', required: true }],
-        outputs: [],
-      },
-    ],
-    connections: [
-      {
-        id: 'conn_fb_mysql_1',
-        sourceNodeId: 'fb_source_mysql',
-        targetNodeId: 'mysql_dest_1',
-        sourceOutputId: 'out',
-        targetInputId: 'in',
-        source: 'fb_source_mysql',
-        target: 'mysql_dest_1',
-        sourceHandle: 'out',
-        targetHandle: 'in',
-      },
-    ],
-    setupTips: [
-      'Make sure your MySQL server is accessible',
-      'Create the target database before running',
-      'The table will be created automatically if it doesn\'t exist',
-      'Use append mode for historical data tracking',
-    ],
-  },
-
-  // Template 5: Google Ads → BigQuery (Enterprise Analytics)
-  {
-    id: 'google-ads-to-bigquery',
-    name: 'Google Ads to BigQuery',
-    description: 'Sync Google Ads campaign performance data to BigQuery for large-scale analytics.',
+    id: 'google-ads-bigquery-daily',
+    name: 'Google Ads → BigQuery (Daily)',
+    description:
+      'Extract Google Ads campaign data, normalize with Unify Schema, and load into BigQuery for advanced analytics and BI dashboards.',
     category: 'analytics',
     icon: 'TrendingUp',
     difficulty: 'beginner',
@@ -350,55 +166,524 @@ export const workflowTemplates: WorkflowTemplate[] = [
     destinations: ['BigQuery'],
     nodes: [
       {
-        id: 'gads_source_bq',
+        id: 'gads_source',
         type: 'source',
         name: 'Google Ads',
         definitionId: 'google.ads',
-        position: { x: 60, y: 100 },
+        position: { x: COLUMN_X.source, y: SINGLE_ROW_Y },
         data: {
           connection_id: '',
           customer_id: '',
-          fields: ['campaign_name', 'ad_group_name', 'cost_micros', 'impressions', 'clicks', 'conversions', 'ctr', 'average_cpc'],
-          time_config: { time_preset: 'last_30_days' },
+          fields: ['campaign_name', 'ad_group_name', 'cost_micros', 'impressions', 'clicks', 'conversions'],
+          time_config: { time_preset: 'last_7_days' },
         },
         inputs: [],
-        outputs: [{ id: 'out', name: 'Output', type: 'records' }],
+        outputs: sourceOutputPort,
       },
       {
-        id: 'bq_dest_gads',
+        id: 'unify_gads',
+        type: 'transform',
+        name: 'Unify Schema',
+        definitionId: 'transform.unify',
+        position: { x: COLUMN_X.transform, y: SINGLE_ROW_Y },
+        data: { platform: 'google_ads', include_calculated_metrics: true },
+        inputs: transformInputPort,
+        outputs: transformOutputPort,
+      },
+      {
+        id: 'bq_dest',
         type: 'destination',
         name: 'BigQuery',
         definitionId: 'dest.bigquery',
-        position: { x: 380, y: 100 },
+        position: { x: COLUMN_X.joinOrSecondTransform, y: SINGLE_ROW_Y },
         data: {
           connection_id: '',
           project_id: '',
           dataset: '',
-          table: 'google_ads_performance',
+          table: 'google_ads_unified',
           write_mode: 'append',
         },
-        inputs: [{ id: 'in', name: 'Input', type: 'records', required: true }],
+        inputs: destInputPort,
         outputs: [],
       },
     ],
     connections: [
-      {
-        id: 'conn_gads_bq_1',
-        sourceNodeId: 'gads_source_bq',
-        targetNodeId: 'bq_dest_gads',
-        sourceOutputId: 'out',
-        targetInputId: 'in',
-        source: 'gads_source_bq',
-        target: 'bq_dest_gads',
-        sourceHandle: 'out',
-        targetHandle: 'in',
-      },
+      connection('conn_gads_unify', 'gads_source', 'unify_gads'),
+      connection('conn_unify_bq', 'unify_gads', 'bq_dest'),
     ],
     setupTips: [
-      'Connect your Google account with Ads access',
-      'Find your Google Ads customer ID in the Ads dashboard',
-      'BigQuery is ideal for large-scale analytics',
-      'Schedule daily runs for up-to-date reporting',
+      'Connect your Google account with Ads and BigQuery access',
+      'Enter your Google Ads customer ID from the Ads dashboard',
+      'Create a BigQuery dataset for marketing data',
+      'Schedule daily runs for continuous analytics',
+    ],
+  },
+
+  // -------------------------------------------------------------------------
+  // Template 3: TikTok Ads -> Google Sheets (Weekly)
+  // -------------------------------------------------------------------------
+  {
+    id: 'tiktok-ads-sheets-weekly',
+    name: 'TikTok Ads → Google Sheets (Weekly)',
+    description:
+      'Export TikTok Ads performance data through Unify Schema into Google Sheets. Great for weekly reporting and cross-team sharing.',
+    category: 'reporting',
+    icon: 'BarChart3',
+    difficulty: 'beginner',
+    estimatedSetupTime: '5 min',
+    sources: ['TikTok Ads'],
+    destinations: ['Google Sheets'],
+    nodes: [
+      {
+        id: 'tiktok_source',
+        type: 'source',
+        name: 'TikTok Ads',
+        definitionId: 'tiktok.ads',
+        position: { x: COLUMN_X.source, y: SINGLE_ROW_Y },
+        data: {
+          connection_id: '',
+          advertiser_id: '',
+          fields: ['campaign_name', 'adgroup_name', 'ad_name', 'spend', 'impressions', 'clicks', 'conversions'],
+          time_config: { time_preset: 'last_7_days' },
+        },
+        inputs: [],
+        outputs: sourceOutputPort,
+      },
+      {
+        id: 'unify_tiktok',
+        type: 'transform',
+        name: 'Unify Schema',
+        definitionId: 'transform.unify',
+        position: { x: COLUMN_X.transform, y: SINGLE_ROW_Y },
+        data: { platform: 'tiktok_ads', include_calculated_metrics: true },
+        inputs: transformInputPort,
+        outputs: transformOutputPort,
+      },
+      {
+        id: 'sheets_dest',
+        type: 'destination',
+        name: 'Google Sheets',
+        definitionId: 'dest.googlesheets',
+        position: { x: COLUMN_X.joinOrSecondTransform, y: SINGLE_ROW_Y },
+        data: {
+          connection_id: '',
+          spreadsheet_id: '',
+          sheet_name: 'TikTok Ads Data',
+          write_mode: 'replace',
+        },
+        inputs: destInputPort,
+        outputs: [],
+      },
+    ],
+    connections: [
+      connection('conn_tiktok_unify', 'tiktok_source', 'unify_tiktok'),
+      connection('conn_unify_sheets', 'unify_tiktok', 'sheets_dest'),
+    ],
+    setupTips: [
+      'Connect your TikTok Ads account in Connections first',
+      'Select your advertiser ID and the metrics you need',
+      'Create a Google Sheets spreadsheet for the report',
+      'Set schedule to weekly (0 0 * * 0) for weekly reporting',
+    ],
+  },
+
+  // -------------------------------------------------------------------------
+  // Template 4: Cross-Channel Report (All Ads -> BigQuery)
+  // Fan-in pattern: 3 sources -> 3 unify -> join -> destination
+  // -------------------------------------------------------------------------
+  {
+    id: 'cross-channel-bigquery',
+    name: 'Cross-Channel Report (All Ads → BigQuery)',
+    description:
+      'Combine Facebook, Google, and TikTok Ads into one unified dataset. Each source is normalized via Unify Schema, then merged with Join into BigQuery for cross-channel analytics.',
+    category: 'analytics',
+    icon: 'Merge',
+    difficulty: 'advanced',
+    estimatedSetupTime: '20-30 min',
+    sources: ['Facebook Ads', 'Google Ads', 'TikTok Ads'],
+    destinations: ['BigQuery'],
+    nodes: [
+      // Sources (column 1)
+      {
+        id: 'fb_source',
+        type: 'source',
+        name: 'Facebook Ads',
+        definitionId: 'facebook.ads',
+        position: { x: COLUMN_X.source, y: ROW_Y.first },
+        data: {
+          connection_id: '',
+          ad_account_id: [],
+          fields: ['campaign_name', 'spend', 'impressions', 'clicks', 'conversions'],
+          time_config: { time_preset: 'last_7_days', time_increment: 1 },
+        },
+        inputs: [],
+        outputs: sourceOutputPort,
+      },
+      {
+        id: 'gads_source',
+        type: 'source',
+        name: 'Google Ads',
+        definitionId: 'google.ads',
+        position: { x: COLUMN_X.source, y: ROW_Y.second },
+        data: {
+          connection_id: '',
+          customer_id: '',
+          fields: ['campaign_name', 'cost_micros', 'impressions', 'clicks', 'conversions'],
+          time_config: { time_preset: 'last_7_days' },
+        },
+        inputs: [],
+        outputs: sourceOutputPort,
+      },
+      {
+        id: 'tiktok_source',
+        type: 'source',
+        name: 'TikTok Ads',
+        definitionId: 'tiktok.ads',
+        position: { x: COLUMN_X.source, y: ROW_Y.third },
+        data: {
+          connection_id: '',
+          advertiser_id: '',
+          fields: ['campaign_name', 'spend', 'impressions', 'clicks', 'conversions'],
+          time_config: { time_preset: 'last_7_days' },
+        },
+        inputs: [],
+        outputs: sourceOutputPort,
+      },
+      // Unify transforms (column 2)
+      {
+        id: 'unify_fb',
+        type: 'transform',
+        name: 'Unify Schema',
+        display_name: 'Unify Facebook',
+        definitionId: 'transform.unify',
+        position: { x: COLUMN_X.transform, y: ROW_Y.first },
+        data: { platform: 'facebook_ads', include_calculated_metrics: true },
+        inputs: transformInputPort,
+        outputs: transformOutputPort,
+      },
+      {
+        id: 'unify_gads',
+        type: 'transform',
+        name: 'Unify Schema',
+        display_name: 'Unify Google',
+        definitionId: 'transform.unify',
+        position: { x: COLUMN_X.transform, y: ROW_Y.second },
+        data: { platform: 'google_ads', include_calculated_metrics: true },
+        inputs: transformInputPort,
+        outputs: transformOutputPort,
+      },
+      {
+        id: 'unify_tiktok',
+        type: 'transform',
+        name: 'Unify Schema',
+        display_name: 'Unify TikTok',
+        definitionId: 'transform.unify',
+        position: { x: COLUMN_X.transform, y: ROW_Y.third },
+        data: { platform: 'tiktok_ads', include_calculated_metrics: true },
+        inputs: transformInputPort,
+        outputs: transformOutputPort,
+      },
+      // Join (column 3)
+      {
+        id: 'join_all',
+        type: 'transform',
+        name: 'Join Tables',
+        display_name: 'Merge All Channels',
+        definitionId: 'transform.join',
+        position: { x: COLUMN_X.joinOrSecondTransform, y: ROW_Y.second },
+        data: {
+          base_node_id: 0,
+          base_key: '',
+          base_keys: [],
+          sources: [],
+          suffixes: ['_x', '_y'],
+        },
+        inputs: [{ id: 'in', name: 'Input', type: 'records', required: true }],
+        outputs: transformOutputPort,
+      },
+      // Destination (column 4)
+      {
+        id: 'bq_dest',
+        type: 'destination',
+        name: 'BigQuery',
+        definitionId: 'dest.bigquery',
+        position: { x: COLUMN_X.destination, y: ROW_Y.second },
+        data: {
+          connection_id: '',
+          project_id: '',
+          dataset: '',
+          table: 'cross_channel_ads',
+          write_mode: 'append',
+        },
+        inputs: destInputPort,
+        outputs: [],
+      },
+    ],
+    connections: [
+      // Sources -> Unify
+      connection('conn_fb_unify', 'fb_source', 'unify_fb'),
+      connection('conn_gads_unify', 'gads_source', 'unify_gads'),
+      connection('conn_tiktok_unify', 'tiktok_source', 'unify_tiktok'),
+      // Unify -> Join
+      connection('conn_unify_fb_join', 'unify_fb', 'join_all'),
+      connection('conn_unify_gads_join', 'unify_gads', 'join_all'),
+      connection('conn_unify_tiktok_join', 'unify_tiktok', 'join_all'),
+      // Join -> BigQuery
+      connection('conn_join_bq', 'join_all', 'bq_dest'),
+    ],
+    setupTips: [
+      'Connect all three ad platform accounts in Connections',
+      'Configure each source with the accounts and fields you want',
+      'The Unify Schema nodes normalize each platform to a common format',
+      'Join merges all unified data into one table for cross-channel analysis',
+      'Set up BigQuery with a dataset for your marketing warehouse',
+    ],
+  },
+
+  // -------------------------------------------------------------------------
+  // Template 5: Facebook + Google -> Unified Sheets Report
+  // Fan-in: 2 sources -> 2 unify -> join -> Google Sheets
+  // -------------------------------------------------------------------------
+  {
+    id: 'fb-google-unified-sheets',
+    name: 'Facebook + Google → Unified Sheets Report',
+    description:
+      'Combine Facebook Ads and Google Ads data into one unified report in Google Sheets. Each source is normalized and merged for easy comparison.',
+    category: 'reporting',
+    icon: 'Merge',
+    difficulty: 'intermediate',
+    estimatedSetupTime: '10-15 min',
+    sources: ['Facebook Ads', 'Google Ads'],
+    destinations: ['Google Sheets'],
+    nodes: [
+      // Sources (column 1)
+      {
+        id: 'fb_source',
+        type: 'source',
+        name: 'Facebook Ads',
+        definitionId: 'facebook.ads',
+        position: { x: COLUMN_X.source, y: ROW_Y.first },
+        data: {
+          connection_id: '',
+          ad_account_id: [],
+          fields: ['campaign_name', 'spend', 'impressions', 'clicks', 'conversions'],
+          time_config: { time_preset: 'last_7_days', time_increment: 1 },
+        },
+        inputs: [],
+        outputs: sourceOutputPort,
+      },
+      {
+        id: 'gads_source',
+        type: 'source',
+        name: 'Google Ads',
+        definitionId: 'google.ads',
+        position: { x: COLUMN_X.source, y: ROW_Y.second },
+        data: {
+          connection_id: '',
+          customer_id: '',
+          fields: ['campaign_name', 'cost_micros', 'impressions', 'clicks', 'conversions'],
+          time_config: { time_preset: 'last_7_days' },
+        },
+        inputs: [],
+        outputs: sourceOutputPort,
+      },
+      // Unify transforms (column 2)
+      {
+        id: 'unify_fb',
+        type: 'transform',
+        name: 'Unify Schema',
+        display_name: 'Unify Facebook',
+        definitionId: 'transform.unify',
+        position: { x: COLUMN_X.transform, y: ROW_Y.first },
+        data: { platform: 'facebook_ads', include_calculated_metrics: true },
+        inputs: transformInputPort,
+        outputs: transformOutputPort,
+      },
+      {
+        id: 'unify_gads',
+        type: 'transform',
+        name: 'Unify Schema',
+        display_name: 'Unify Google',
+        definitionId: 'transform.unify',
+        position: { x: COLUMN_X.transform, y: ROW_Y.second },
+        data: { platform: 'google_ads', include_calculated_metrics: true },
+        inputs: transformInputPort,
+        outputs: transformOutputPort,
+      },
+      // Join (column 3)
+      {
+        id: 'join_fb_gads',
+        type: 'transform',
+        name: 'Join Tables',
+        display_name: 'Merge Channels',
+        definitionId: 'transform.join',
+        position: { x: COLUMN_X.joinOrSecondTransform, y: SINGLE_ROW_Y },
+        data: {
+          base_node_id: 0,
+          base_key: '',
+          base_keys: [],
+          sources: [],
+          suffixes: ['_x', '_y'],
+        },
+        inputs: [{ id: 'in', name: 'Input', type: 'records', required: true }],
+        outputs: transformOutputPort,
+      },
+      // Destination (column 4)
+      {
+        id: 'sheets_dest',
+        type: 'destination',
+        name: 'Google Sheets',
+        definitionId: 'dest.googlesheets',
+        position: { x: COLUMN_X.destination, y: SINGLE_ROW_Y },
+        data: {
+          connection_id: '',
+          spreadsheet_id: '',
+          sheet_name: 'Unified Ads Report',
+          write_mode: 'replace',
+        },
+        inputs: destInputPort,
+        outputs: [],
+      },
+    ],
+    connections: [
+      // Sources -> Unify
+      connection('conn_fb_unify', 'fb_source', 'unify_fb'),
+      connection('conn_gads_unify', 'gads_source', 'unify_gads'),
+      // Unify -> Join
+      connection('conn_unify_fb_join', 'unify_fb', 'join_fb_gads'),
+      connection('conn_unify_gads_join', 'unify_gads', 'join_fb_gads'),
+      // Join -> Google Sheets
+      connection('conn_join_sheets', 'join_fb_gads', 'sheets_dest'),
+    ],
+    setupTips: [
+      'Connect both Facebook Ads and Google accounts',
+      'The Unify Schema nodes normalize each platform to the same columns',
+      'Join merges both normalized datasets for side-by-side comparison',
+      'Create a Google Sheets spreadsheet for the unified report',
+      'Schedule daily or weekly depending on your reporting needs',
+    ],
+  },
+
+  // -------------------------------------------------------------------------
+  // Template 6: Web + Ads Cross-Channel Report
+  // Fan-in: Google Ads + Facebook Ads -> 2 unify -> join -> Google Sheets
+  // -------------------------------------------------------------------------
+  {
+    id: 'web-ads-cross-channel-sheets',
+    name: 'Cross-Channel Ads Report',
+    description:
+      'Combine Google Ads and Facebook Ads into one unified report in Google Sheets. Normalize ad data via Unify Schema, then join for a cross-platform comparison view.',
+    category: 'reporting',
+    icon: 'BarChart3',
+    difficulty: 'advanced',
+    estimatedSetupTime: '20-30 min',
+    sources: ['Google Ads', 'Facebook Ads', 'Google Analytics'],
+    destinations: ['Google Sheets'],
+    nodes: [
+      // Sources (column 1)
+      {
+        id: 'gads_source',
+        type: 'source',
+        name: 'Google Ads',
+        definitionId: 'google.ads',
+        position: { x: COLUMN_X.source, y: ROW_Y.first },
+        data: {
+          connection_id: '',
+          ad_account_id: [],
+          fields: ['campaign_name', 'cost_micros', 'impressions', 'clicks', 'conversions'],
+          time_config: { time_preset: 'last_7_days', time_increment: 1 },
+        },
+        inputs: [],
+        outputs: sourceOutputPort,
+      },
+      {
+        id: 'fb_source',
+        type: 'source',
+        name: 'Facebook Ads',
+        definitionId: 'facebook.ads',
+        position: { x: COLUMN_X.source, y: ROW_Y.second },
+        data: {
+          connection_id: '',
+          ad_account_id: [],
+          fields: ['campaign_name', 'spend', 'impressions', 'clicks', 'conversions'],
+          time_config: { time_preset: 'last_7_days', time_increment: 1 },
+        },
+        inputs: [],
+        outputs: sourceOutputPort,
+      },
+      // Unify transforms for paid channels (column 2)
+      {
+        id: 'unify_gads',
+        type: 'transform',
+        name: 'Unify Schema',
+        display_name: 'Unify Google Ads',
+        definitionId: 'transform.unify',
+        position: { x: COLUMN_X.transform, y: ROW_Y.first },
+        data: { platform: 'google_ads', include_calculated_metrics: true },
+        inputs: transformInputPort,
+        outputs: transformOutputPort,
+      },
+      {
+        id: 'unify_fb',
+        type: 'transform',
+        name: 'Unify Schema',
+        display_name: 'Unify Facebook Ads',
+        definitionId: 'transform.unify',
+        position: { x: COLUMN_X.transform, y: ROW_Y.second },
+        data: { platform: 'facebook_ads', include_calculated_metrics: true },
+        inputs: transformInputPort,
+        outputs: transformOutputPort,
+      },
+      // Join (column 3) — fan-in from 2 unified ad sources + GA4
+      {
+        id: 'join_all',
+        type: 'transform',
+        name: 'Join Tables',
+        display_name: 'Merge All Channels',
+        definitionId: 'transform.join',
+        position: { x: COLUMN_X.joinOrSecondTransform, y: ROW_Y.second },
+        data: {
+          base_node_id: 0,
+          base_key: '',
+          base_keys: [],
+          sources: [],
+          suffixes: ['_ads', '_web'],
+        },
+        inputs: [{ id: 'in', name: 'Input', type: 'records', required: true }],
+        outputs: transformOutputPort,
+      },
+      // Destination (column 4)
+      {
+        id: 'sheets_dest',
+        type: 'destination',
+        name: 'Google Sheets',
+        definitionId: 'dest.googlesheets',
+        position: { x: COLUMN_X.destination, y: ROW_Y.second },
+        data: {
+          connection_id: '',
+          spreadsheet_id: '',
+          sheet_name: 'Cross-Channel Report',
+          write_mode: 'replace',
+        },
+        inputs: destInputPort,
+        outputs: [],
+      },
+    ],
+    connections: [
+      // Sources -> Unify / direct to join
+      connection('conn_gads_unify', 'gads_source', 'unify_gads'),
+      connection('conn_fb_unify', 'fb_source', 'unify_fb'),
+      // Unified ads -> Join
+      connection('conn_unify_gads_join', 'unify_gads', 'join_all'),
+      connection('conn_unify_fb_join', 'unify_fb', 'join_all'),
+      // Join -> Google Sheets
+      connection('conn_join_sheets', 'join_all', 'sheets_dest'),
+    ],
+    setupTips: [
+      'Connect Google Ads and Facebook Ads accounts in Connections',
+      'The Unify Schema nodes normalize ad platform data to a common schema',
+      'Join merges both normalized datasets for a cross-platform comparison',
+      'Schedule daily to keep the report fresh',
     ],
   },
 ];
@@ -406,6 +691,8 @@ export const workflowTemplates: WorkflowTemplate[] = [
 // =============================================================================
 // Helper Functions
 // =============================================================================
+
+const createNodeId = () => `node_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
 /**
  * Get a workflow template by ID
@@ -429,7 +716,8 @@ export function getTemplatesByDifficulty(difficulty: WorkflowTemplate['difficult
 }
 
 /**
- * Convert a template to a new workflow with unique node IDs
+ * Convert a template to a new workflow with unique node IDs.
+ * Creates fresh IDs so each template instantiation is independent.
  */
 export function templateToWorkflow(template: WorkflowTemplate): {
   nodes: WorkflowNode[];

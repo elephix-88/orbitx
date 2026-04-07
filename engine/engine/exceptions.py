@@ -45,12 +45,6 @@ class OrbitXException(Exception):
         return " | ".join(parts)
 
 
-class ConfigurationException(OrbitXException):
-    """Raised when there's an error in workflow or node configuration."""
-
-    pass
-
-
 class ConnectionException(OrbitXException):
     """Raised when there's an error with external service connections.
 
@@ -149,6 +143,28 @@ class LoaderException(OrbitXException):
         super().__init__(message, node_id, node_instance_id, details)
 
 
+class DelivererException(OrbitXException):
+    """Raised when delivery to an external channel fails.
+
+    Attributes:
+        delivery_channel: The channel type that failed (e.g. slack, line).
+    """
+
+    def __init__(
+        self,
+        message: str,
+        delivery_channel: str | None = None,
+        node_id: str | None = None,
+        node_instance_id: int | None = None,
+        details: dict[str, Any] | None = None,
+    ):
+        self.delivery_channel = delivery_channel
+        details = details or {}
+        if delivery_channel:
+            details["delivery_channel"] = delivery_channel
+        super().__init__(message, node_id, node_instance_id, details)
+
+
 class ValidationException(OrbitXException):
     """Raised when data or schema validation fails.
 
@@ -178,33 +194,6 @@ class ValidationException(OrbitXException):
             details["expected"] = expected
         if actual is not None:
             details["actual"] = actual
-        super().__init__(message, node_id, node_instance_id, details)
-
-
-class WorkflowExecutionException(OrbitXException):
-    """Raised when workflow-level execution fails.
-
-    Attributes:
-        workflow_id: The ID of the workflow that failed.
-        failed_nodes: List of node IDs that failed during execution.
-    """
-
-    def __init__(
-        self,
-        message: str,
-        workflow_id: str | None = None,
-        failed_nodes: list | None = None,
-        node_id: str | None = None,
-        node_instance_id: int | None = None,
-        details: dict[str, Any] | None = None,
-    ):
-        self.workflow_id = workflow_id
-        self.failed_nodes = failed_nodes or []
-        details = details or {}
-        if workflow_id:
-            details["workflow_id"] = workflow_id
-        if failed_nodes:
-            details["failed_nodes"] = failed_nodes
         super().__init__(message, node_id, node_instance_id, details)
 
 

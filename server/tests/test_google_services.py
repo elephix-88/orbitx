@@ -2,10 +2,13 @@ from datetime import datetime
 from unittest.mock import MagicMock, patch
 
 import pytest
-from common.model.connection import ConnectionItem
 
+from common.model.connection import ConnectionItem
 from server.services.exceptions import ConnectionNotFoundError
-from server.services.google.ads import _get_google_ads_accounts_sync, get_google_ads_fields
+from server.services.google.ads import (
+    _get_google_ads_accounts_sync,
+    get_google_ads_fields,
+)
 from server.services.google.sheets import (
     _get_google_sheets_spreadsheets_sync,
     _get_google_sheets_worksheets_sync,
@@ -106,7 +109,7 @@ class TestGoogleSheetsService:
 
     def test_get_spreadsheets_error(self, mock_mongodb, mock_settings):
         mock_mongodb.get_document.side_effect = Exception("DB Error")
-        with pytest.raises(Exception):
+        with pytest.raises(Exception, match="DB Error"):
             _get_google_sheets_spreadsheets_sync("conn1", "test_user_id_123")
 
     def test_get_worksheets_success(
@@ -133,7 +136,8 @@ class TestGoogleSheetsService:
         # Note: get_google_sheets_worksheets uses 'sheets' service, not 'drive'
         # But we mocked 'build' globally in fixture, so it returns same mock_service
         # We need to adjust mock for sheets().get().execute()
-        mock_drive_service.spreadsheets.return_value.get.return_value.execute.return_value = (
+        sheets_mock = mock_drive_service.spreadsheets.return_value
+        sheets_mock.get.return_value.execute.return_value = (
             mock_spreadsheet
         )
 

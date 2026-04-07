@@ -74,7 +74,7 @@ export const RouteChangeLoader: React.FC<RouteChangeLoaderProps> = ({ durationMs
   return (
     <div className="fixed top-0 left-0 right-0 z-[9999] h-0.5">
       <div
-        className="h-full bg-gradient-to-r from-brand-500 via-brand-400 to-brand-500 transition-all duration-150 ease-out shadow-sm shadow-brand-500/50"
+        className="h-full bg-gradient-to-r from-primary-600 via-primary-500 to-primary-600 transition-all duration-150 ease-out shadow-sm shadow-primary-500/50"
         style={{ width: `${progress}%` }}
       />
     </div>

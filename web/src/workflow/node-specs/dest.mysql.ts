@@ -9,7 +9,7 @@ export const mysqlDestSpec: NodeSpec = {
   displayName: 'MySQL',
   category: 'DESTINATION',
   icon: 'MySQL',
-  color: '#00758F',
+  color: '#10B981',
   ports: [{ id: 'in', name: 'Input', io: 'input', dataType: 'records' }],
   defaults: { host: '', port: '', database: '', username: '', password: '', table: '' },
   paramsSchema: z.object({ host: z.string().default(''), database: z.string().default('') }),

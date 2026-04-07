@@ -10,7 +10,7 @@ export const facebookAdsSpec: NodeSpec = {
   displayName: 'Facebook Ads',
   category: 'SOURCE',
   icon: 'Facebook',
-  color: '#1877F2',
+  color: '#3B82F6',
   ports: [{ id: 'out', name: 'Output', io: 'output', dataType: 'records' }],
   defaults: { connection_id: '', ad_account_id: [], fields: [], time_config: { time_preset: 'last_7_days', time_increment: 1 } },
   paramsSchema: z.object({

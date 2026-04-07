@@ -5,15 +5,12 @@ from pydantic import BaseModel, ConfigDict
 from common.model.facebook.common import ExecutionMode
 
 
-class FacebookResponse(BaseModel):
+class BatchResponseBase(BaseModel):
     model_config = ConfigDict(extra="allow")
 
     tag: str
     status: int | None = None
     body: str | None = None
-
-
-class BatchResponseBase(FacebookResponse):
     type: Literal["insights_async", "sync", "error"]
     report_run_id: str | None = None
     data: Any | None = None

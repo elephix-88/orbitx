@@ -1,18 +1,18 @@
 import time
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 
-class Status(str, Enum):
+class Status(StrEnum):
     PENDING = "PENDING"
     RUNNING = "RUNNING"
     SUCCESS = "SUCCESS"
     FAILED = "FAILED"
 
 
-class NodeOutputType(str, Enum):
+class NodeOutputType(StrEnum):
     """Type of node output for frontend display categorization."""
 
     EXTRACTOR = "extractor"
@@ -20,7 +20,11 @@ class NodeOutputType(str, Enum):
     LOADER = "loader"
 
 
-class DataSummary(BaseModel):
+class ExecutionBase(BaseModel):
+    model_config = ConfigDict(use_enum_values=True)
+
+
+class DataSummary(ExecutionBase):
     """Summary of data processed by a node."""
 
     row_count: int = 0
@@ -28,10 +32,8 @@ class DataSummary(BaseModel):
     columns: list[str] = Field(default_factory=list)
     sample_data: list[dict[str, Any]] | None = None
 
-    model_config = {"use_enum_values": True}
 
-
-class ExtractorOutput(BaseModel):
+class ExtractorOutput(ExecutionBase):
     """Output details specific to extractor nodes."""
 
     source_type: str
@@ -44,10 +46,8 @@ class ExtractorOutput(BaseModel):
     primary_keys: list[str] = Field(default_factory=list)
     report_level: str | None = None
 
-    model_config = {"use_enum_values": True}
 
-
-class TransformerOutput(BaseModel):
+class TransformerOutput(ExecutionBase):
     """Output details specific to transformer nodes."""
 
     transform_type: str
@@ -59,10 +59,8 @@ class TransformerOutput(BaseModel):
     columns_before: int = 0
     columns_after: int = 0
 
-    model_config = {"use_enum_values": True}
 
-
-class LoaderOutput(BaseModel):
+class LoaderOutput(ExecutionBase):
     """Output details specific to loader nodes."""
 
     destination_type: str
@@ -76,10 +74,8 @@ class LoaderOutput(BaseModel):
     connection_id: str | None = None
     merge_keys: list[str] | None = None
 
-    model_config = {"use_enum_values": True}
 
-
-class NodeOutput(BaseModel):
+class NodeOutput(ExecutionBase):
     """Structured output from node execution for frontend display."""
 
     title: str
@@ -95,8 +91,6 @@ class NodeOutput(BaseModel):
     error_details: dict[str, Any] | None = None
     metadata: dict[str, Any] = Field(default_factory=dict)
 
-    model_config = {"use_enum_values": True}
-
 
 class NodeStatusEvent(BaseModel):
     workflow_id: str
@@ -107,7 +101,7 @@ class NodeStatusEvent(BaseModel):
     metadata: dict[str, Any] | None = None
 
 
-class ExecutionStep(BaseModel):
+class ExecutionStep(ExecutionBase):
     """Represents a single node's execution within a workflow run."""
 
     node_instance_id: str
@@ -120,8 +114,7 @@ class ExecutionStep(BaseModel):
     error_trace: str | None = None
     message: str | None = None
     output: NodeOutput | None = None
-
-    model_config = {"use_enum_values": True}
+    row_count: int = 0
 
 
 class ExecutionHistory(BaseModel):
@@ -140,8 +133,12 @@ class ExecutionHistory(BaseModel):
     total_nodes: int = 0
     successful_nodes: int = 0
     failed_nodes: int = 0
+    ttl_expires_at: float | None = None
+    # Unix timestamp after which this document should be deleted.
+    # Set by the Prefect hook at write time.
+    # MongoDB TTL index on ttl_expires_at enforces deletion (30-day default).
 
-    model_config = {
-        "populate_by_name": True,
-        "use_enum_values": True,
-    }
+    model_config = ConfigDict(
+        populate_by_name=True,
+        use_enum_values=True,
+    )

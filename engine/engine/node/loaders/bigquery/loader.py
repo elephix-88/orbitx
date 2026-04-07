@@ -4,13 +4,13 @@ import pandas as pd
 from google.cloud import bigquery
 from loguru import logger
 
+from common.model.common import InsertMode
+from common.model.google.bigquery import BigQueryDestinationConfig
 from engine.configs.config import settings
 from engine.exceptions import LoaderException
 from engine.interfaces.node import Loader
 from engine.node.loaders.bigquery.operations import load_data
 from engine.services.google.auth import build_connection_credentials
-from common.model.common import InsertMode
-from common.model.google.bigquery import BigQueryDestinationConfig
 
 INSERT_MODE_MAP = {
     InsertMode.APPEND: bigquery.WriteDisposition.WRITE_APPEND,
@@ -25,12 +25,18 @@ class BigQueryLoader(Loader):
 
     @property
     def destination_table(self) -> str:
-        return f"{self.config.project_id}.{self.config.dataset}.{self.config.destination_table}"
+        return (
+            f"{self.config.project_id}"
+            f".{self.config.dataset}"
+            f".{self.config.destination_table}"
+        )
 
     async def load(self, data: pd.DataFrame) -> None:
         try:
             logger.info(
-                f"Loading {len(data)} rows to {self.destination_table} ({self.config.insert_mode.value})"
+                f"Loading {len(data)} rows to "
+                f"{self.destination_table} "
+                f"({self.config.insert_mode.value})"
             )
 
             credentials = await build_connection_credentials(self.config.connection_id)

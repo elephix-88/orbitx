@@ -1,5 +1,5 @@
-import { fetchClient } from '@/lib/fetchClient';
-import { ExecutionHistory } from '@/types/backend';
+import type { ExecutionHistory } from '@/types/backend';
+import { BaseApiService } from './baseApiService';
 
 export interface DashboardStats {
   totalExecutions: number;
@@ -13,106 +13,52 @@ export interface DashboardStats {
   executionsByWorkflow: Record<string, { name: string; count: number; successRate: number }>;
 }
 
-interface BackendDashboardStats {
-  total_executions: number;
-  successful_executions: number;
-  failed_executions: number;
-  running_executions: number;
-  success_rate: number;
-  avg_duration: number;
-  recent_executions: ExecutionHistory[];
-  executions_by_workflow: Record<string, { name: string; count: number; success_rate: number }>;
-}
+const EMPTY_DASHBOARD_STATS: DashboardStats = {
+  totalExecutions: 0,
+  successfulExecutions: 0,
+  failedExecutions: 0,
+  runningExecutions: 0,
+  successRate: 0,
+  avgDuration: 0,
+  totalCost: 0,
+  recentExecutions: [],
+  executionsByWorkflow: {},
+};
 
-class ExecutionHistoryService {
-  /**
-   * Get all execution history for a workflow
-   * Auth headers and 401 handling are managed by fetchClient
-   */
+class ExecutionHistoryService extends BaseApiService {
   async getExecutionHistory(workflowId: string): Promise<ExecutionHistory[]> {
-    const response = await fetchClient(
-      `/execution-history/workflow/${encodeURIComponent(workflowId)}`,
-      { method: 'GET' }
+    const response = await this.get<ExecutionHistory[]>(
+      `/api/execution-history/workflow/${workflowId}`
     );
-
-    if (!response.ok) {
-      throw new Error(`Failed to fetch execution history: ${response.status}`);
-    }
-
-    return await response.json();
+    return response.data;
   }
 
-  /**
-   * Get dashboard stats from the backend (single API call)
-   * This replaces the N+1 query pattern with a single aggregated endpoint
-   *
-   * @param workflowIds Optional array of workflow IDs
-   * @param workflowNames Optional array of workflow names (same order as IDs)
-   *                      If both provided, backend skips workflow DB query entirely
-   */
-  async getDashboardStats(workflowIds?: string[], workflowNames?: string[]): Promise<DashboardStats> {
+  async getDashboardStats(workflows?: Record<string, string>): Promise<DashboardStats> {
     try {
       const params = new URLSearchParams();
-      if (workflowIds?.length) {
-        params.set('workflow_ids', workflowIds.join(','));
-        if (workflowNames?.length === workflowIds.length) {
-          params.set('workflow_names', workflowNames.join(','));
-        }
+      if (workflows && Object.keys(workflows).length > 0) {
+        params.set('workflows', JSON.stringify(workflows));
       }
-      const queryString = params.toString() ? `?${params.toString()}` : '';
-      const response = await fetchClient(`/execution-history/dashboard-stats${queryString}`, {
-        method: 'GET',
-      });
-
-      if (!response.ok) {
-        throw new Error(`Failed to fetch dashboard stats: ${response.status}`);
-      }
-
-      const data: BackendDashboardStats = await response.json();
-
-      // Transform snake_case response to camelCase
-      const executionsByWorkflow: Record<string, { name: string; count: number; successRate: number }> = {};
-      for (const [key, value] of Object.entries(data.executions_by_workflow)) {
-        executionsByWorkflow[key] = {
-          name: value.name,
-          count: value.count,
-          successRate: value.success_rate,
-        };
-      }
-
-      // Calculate total cost from recent executions
-      const totalCost = data.recent_executions.reduce(
-        (sum, exec) => sum + (exec.cost_usd || 0),
-        0
+      const query = params.toString();
+      const response = await this.get<Record<string, unknown>>(
+        `/api/execution-history/dashboard-stats${query ? `?${query}` : ''}`
       );
-
+      const data = response.data;
       return {
-        totalExecutions: data.total_executions,
-        successfulExecutions: data.successful_executions,
-        failedExecutions: data.failed_executions,
-        runningExecutions: data.running_executions,
-        successRate: data.success_rate,
-        avgDuration: data.avg_duration,
-        totalCost,
-        recentExecutions: data.recent_executions,
-        executionsByWorkflow,
-      };
-    } catch (error) {
-      console.error('Failed to get dashboard stats:', error);
-      return {
-        totalExecutions: 0,
-        successfulExecutions: 0,
-        failedExecutions: 0,
-        runningExecutions: 0,
-        successRate: 0,
-        avgDuration: 0,
+        totalExecutions: (data.total_executions as number) ?? 0,
+        successfulExecutions: (data.successful_executions as number) ?? 0,
+        failedExecutions: (data.failed_executions as number) ?? 0,
+        runningExecutions: (data.running_executions as number) ?? 0,
+        successRate: (data.success_rate as number) ?? 0,
+        avgDuration: (data.avg_duration as number) ?? 0,
         totalCost: 0,
-        recentExecutions: [],
-        executionsByWorkflow: {},
+        recentExecutions: (data.recent_executions as ExecutionHistory[]) ?? [],
+        executionsByWorkflow: (data.executions_by_workflow as DashboardStats['executionsByWorkflow']) ?? {},
       };
+    } catch {
+      return EMPTY_DASHBOARD_STATS;
     }
   }
 }
 
 export const executionHistoryService = new ExecutionHistoryService();
-

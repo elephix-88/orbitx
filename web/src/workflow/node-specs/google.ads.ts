@@ -10,7 +10,7 @@ export const googleAdsSourceSpec: NodeSpec = {
   displayName: 'Google Ads',
   category: 'SOURCE',
   icon: 'GoogleAds',
-  color: '#4285F4',
+  color: '#3B82F6',
   ports: [{ id: 'out', name: 'Output', io: 'output', dataType: 'records' }],
   // Align with workflow.json structure: connection_id, ad_account_id[], fields[], time_config
   defaults: {

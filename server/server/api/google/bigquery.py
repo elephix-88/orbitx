@@ -1,7 +1,6 @@
 import asyncio
 
-from fastapi import APIRouter, Depends, HTTPException
-from loguru import logger
+from fastapi import APIRouter, Depends
 
 from common.model.connection import (
     ConnectionNamePayload,
@@ -13,7 +12,6 @@ from common.model.google.bigquery import BigQueryDataset, BigQueryProject
 from common.model.user import UserInDB
 from server.configs.config import settings
 from server.services.auth.dependencies import get_current_user
-from server.services.exceptions import OrbitXError
 from server.services.google.bigquery import (
     get_bigquery_credentials,
     get_bigquery_datasets,
@@ -53,12 +51,8 @@ async def get_projects_endpoint(
     _current_user: UserInDB = Depends(get_current_user),
 ):
     """Retrieves a list of BigQuery projects accessible with a given connection_id."""
-    try:
-        credentials = await get_bigquery_credentials(connection_id)
-        return await asyncio.to_thread(get_bigquery_projects, connection_id, credentials)
-    except OrbitXError as e:
-        logger.error(f"Error fetching BigQuery projects: {e.message}")
-        raise HTTPException(status_code=e.status_code, detail=e.message)
+    credentials = await get_bigquery_credentials(connection_id)
+    return await asyncio.to_thread(get_bigquery_projects, connection_id, credentials)
 
 
 @router.get("/projects/{project_id}/datasets", response_model=list[BigQueryDataset])
@@ -67,13 +61,11 @@ async def get_datasets_endpoint(
     project_id: str,
     _current_user: UserInDB = Depends(get_current_user),
 ):
-    """Retrieves a list of BigQuery datasets accessible with a given connection_id and project_id."""
-    try:
-        credentials = await get_bigquery_credentials(connection_id)
-        return await asyncio.to_thread(get_bigquery_datasets, connection_id, project_id, credentials)
-    except OrbitXError as e:
-        logger.error(f"Error fetching BigQuery datasets: {e.message}")
-        raise HTTPException(status_code=e.status_code, detail=e.message)
+    """Retrieves BigQuery datasets for a connection_id and project_id."""
+    credentials = await get_bigquery_credentials(connection_id)
+    return await asyncio.to_thread(
+        get_bigquery_datasets, connection_id, project_id, credentials
+    )
 
 
 @router.get("/validate", response_model=dict)
@@ -83,7 +75,9 @@ async def validate_connection_endpoint(
 ):
     """Validates that a BigQuery connection is working."""
     credentials = await get_bigquery_credentials(connection_id)
-    is_valid = await asyncio.to_thread(validate_bigquery_connection, connection_id, credentials)
+    is_valid = await asyncio.to_thread(
+        validate_bigquery_connection, connection_id, credentials
+    )
     return {
         "connection_id": connection_id,
         "is_valid": is_valid,

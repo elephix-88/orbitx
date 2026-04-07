@@ -23,16 +23,6 @@ def validate_dataframe(
             node_instance_id=node_instance_id,
         )
 
-    if not isinstance(df, pd.DataFrame):
-        raise ValidationException(
-            f"Expected pandas DataFrame, got {type(df).__name__}",
-            validation_type="dataframe_type",
-            expected="pandas.DataFrame",
-            actual=type(df).__name__,
-            node_id=node_id,
-            node_instance_id=node_instance_id,
-        )
-
     if df.empty and not allow_empty:
         raise ValidationException(
             "DataFrame is empty - no rows to process",
@@ -66,25 +56,3 @@ def validate_dataframe(
             )
 
     return df
-
-
-def validate_dataframe_for_load(
-    df: pd.DataFrame | None,
-    destination_type: str,
-    destination_table: str,
-    node_id: str | None = None,
-    node_instance_id: int | None = None,
-    allow_empty: bool = True,
-) -> pd.DataFrame:
-    """Validate a DataFrame before loading to a destination."""
-    try:
-        return validate_dataframe(
-            df,
-            node_id=node_id,
-            node_instance_id=node_instance_id,
-            allow_empty=allow_empty,
-        )
-    except ValidationException as e:
-        e.details["destination_type"] = destination_type
-        e.details["destination_table"] = destination_table
-        raise

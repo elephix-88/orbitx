@@ -27,101 +27,27 @@ import { DateRangePicker } from '@/components/ui/DateRangePicker';
 import { cn } from '@/lib/utils';
 import { useDeferredLoading } from '@/hooks/useDeferredLoading';
 import { useFetchOnce } from '@/hooks/useStableRequest';
-import { useFirstTimeUser } from '@/hooks/useFirstTimeUser';
 import { executionHistoryService, DashboardStats } from '@/services/executionHistoryService';
 import { workflowApiService } from '@/services/workflowApiService';
-import { WelcomeModal, OnboardingChecklist } from '@/components/onboarding/WelcomeModal';
 import { fetchClient } from '@/lib/fetchClient';
 import {
   ExecutionHistory,
   ExecutionStep,
-  ExecutionStatus,
-  NodeOutput,
 } from '@/types/backend';
-
-// Time range filter options
-type TimeRange = 'all' | '1h' | '24h' | '7d' | '30d' | 'custom';
-const timeRangeOptions: { value: TimeRange; label: string }[] = [
-  { value: 'all', label: 'All time' },
-  { value: '1h', label: 'Last hour' },
-  { value: '24h', label: 'Last 24h' },
-  { value: '7d', label: 'Last 7 days' },
-  { value: '30d', label: 'Last 30 days' },
-  { value: 'custom', label: 'Custom' },
-];
-
-// Status filter options
-type StatusFilter = 'all' | ExecutionStatus;
-const statusFilterOptions: { value: StatusFilter; label: string }[] = [
-  { value: 'all', label: 'All' },
-  { value: 'SUCCESS', label: 'Success' },
-  { value: 'FAILED', label: 'Failed' },
-  { value: 'RUNNING', label: 'Running' },
-];
-
-// Max custom range: 2 months in milliseconds
-const MAX_CUSTOM_RANGE_DAYS = 60;
-
-// Get timestamp for time range filter
-const getTimeRangeStart = (range: TimeRange): number | null => {
-  if (range === 'all' || range === 'custom') return null;
-  const now = Date.now() / 1000;
-  switch (range) {
-    case '1h': return now - 3600;
-    case '24h': return now - 86400;
-    case '7d': return now - 604800;
-    case '30d': return now - 2592000;
-    default: return null;
-  }
-};
-
-// Format date for input
-const formatDateForInput = (date: Date): string => {
-  return date.toISOString().split('T')[0];
-};
-
-// Get default dates for custom range
-const getDefaultCustomDates = () => {
-  const end = new Date();
-  const start = new Date();
-  start.setDate(start.getDate() - 7);
-  return {
-    start: formatDateForInput(start),
-    end: formatDateForInput(end),
-  };
-};
-
-// Format helpers
-const formatDuration = (seconds: number | null): string => {
-  if (seconds === null || seconds === undefined) return '-';
-  if (seconds < 60) return `${seconds.toFixed(1)}s`;
-  if (seconds < 3600) return `${Math.floor(seconds / 60)}m ${Math.floor(seconds % 60)}s`;
-  return `${Math.floor(seconds / 3600)}h ${Math.floor((seconds % 3600) / 60)}m`;
-};
-
-const formatRelativeTime = (timestamp: number): string => {
-  const now = Date.now() / 1000;
-  const diff = now - timestamp;
-
-  if (diff < 60) return 'Just now';
-  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
-  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
-  if (diff < 604800) return `${Math.floor(diff / 86400)}d ago`;
-  return new Date(timestamp * 1000).toLocaleDateString();
-};
-
-const formatNumber = (num: number): string => {
-  if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
-  if (num >= 1000) return `${(num / 1000).toFixed(1)}K`;
-  return num.toString();
-};
-
-const formatCost = (cost: number | null): string => {
-  if (cost === null || cost === undefined) return '-';
-  if (cost < 0.01) return `$${cost.toFixed(4)}`;
-  if (cost < 1) return `$${cost.toFixed(3)}`;
-  return `$${cost.toFixed(2)}`;
-};
+import {
+  type TimeRange,
+  type StatusFilter,
+  timeRangeOptions,
+  statusFilterOptions,
+  MAX_CUSTOM_RANGE_DAYS,
+  getTimeRangeStart,
+  getDefaultCustomDates,
+  formatDuration,
+  formatRelativeTime,
+  formatNumber,
+  formatCost,
+  getRecordsCount,
+} from '@/utils/executionFormatters';
 
 const getStepDuration = (step: ExecutionStep): number | null => {
   if (step.start_time && step.end_time) {
@@ -146,27 +72,18 @@ const sortStepsByType = (steps: ExecutionStep[]): ExecutionStep[] => {
 
 const getNodeTypeColor = (nodeType: string): string => {
   const type = nodeType?.toLowerCase();
-  if (type === 'source') return 'text-blue-500';
-  if (type === 'transform') return 'text-purple-500';
-  if (type === 'destinations' || type === 'destination') return 'text-emerald-500';
+  if (type === 'source') return 'text-info';
+  if (type === 'transform') return 'text-primary-400';
+  if (type === 'destinations' || type === 'destination') return 'text-success';
   return 'text-text-tertiary';
-};
-
-// Get records count from node output
-const getRecordsCount = (output?: NodeOutput): number | null => {
-  if (!output) return null;
-  if (output.extractor_output) return output.extractor_output.records_extracted;
-  if (output.transformer_output) return output.transformer_output.records_output;
-  if (output.loader_output) return output.loader_output.records_total;
-  return null;
 };
 
 // Status configuration
 const statusConfig = {
-  SUCCESS: { bg: 'bg-emerald-500/10', text: 'text-emerald-500', icon: CheckCircle2 },
-  FAILED: { bg: 'bg-red-500/10', text: 'text-red-500', icon: XCircle },
-  RUNNING: { bg: 'bg-blue-500/10', text: 'text-blue-500', icon: Loader2 },
-  PENDING: { bg: 'bg-amber-500/10', text: 'text-amber-500', icon: Clock },
+  SUCCESS: { bg: 'bg-success-light', text: 'text-success', icon: CheckCircle2 },
+  FAILED: { bg: 'bg-error-light', text: 'text-error', icon: XCircle },
+  RUNNING: { bg: 'bg-info-light', text: 'text-info', icon: Loader2 },
+  PENDING: { bg: 'bg-warning-light', text: 'text-warning', icon: Clock },
 };
 
 // Execution Tree Row Component
@@ -191,57 +108,55 @@ const ExecutionTreeRow = ({
   }, 0);
 
   // Status dot color
-  const statusDotColor = exec.status === 'SUCCESS' ? '#34d399' : exec.status === 'FAILED' ? '#E63946' : exec.status === 'RUNNING' ? '#3b82f6' : '#F4A261';
+  const statusDotClass = exec.status === 'SUCCESS' ? 'bg-success' : exec.status === 'FAILED' ? 'bg-error' : exec.status === 'RUNNING' ? 'bg-info' : 'bg-warning';
 
   return (
     <>
       <div
-        className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 transition-colors cursor-pointer group"
-        style={{ borderBottom: '1px solid #A8DADC' }}
+        className="flex items-center gap-3 px-4 py-3 hover:bg-neutral-800/50 transition-colors cursor-pointer group border-b border-neutral-800"
         onClick={() => setIsExpanded(!isExpanded)}
       >
         <button
-          className="p-0.5 hover:bg-gray-100 transition-colors flex-shrink-0"
-          style={{ borderRadius: '2px' }}
+          className="p-0.5 hover:bg-surface-tertiary transition-colors flex-shrink-0 rounded-md"
           onClick={(e) => {
             e.stopPropagation();
             setIsExpanded(!isExpanded);
           }}
         >
           {isExpanded ? (
-            <ChevronDown className="w-4 h-4" style={{ color: '#457B9D' }} />
+            <ChevronDown className="w-4 h-4 text-text-secondary" />
           ) : (
-            <ChevronRight className="w-4 h-4" style={{ color: '#457B9D' }} />
+            <ChevronRight className="w-4 h-4 text-text-secondary" />
           )}
         </button>
 
         {/* Status circle */}
         <div className="flex-shrink-0">
-          <span className="inline-block w-3 h-3 rounded-full" style={{ backgroundColor: statusDotColor }} />
+          <span className={cn("inline-block w-3 h-3 rounded-full", statusDotClass)} />
         </div>
 
         <div className="flex-1 min-w-0">
-          <p className="font-medium truncate text-sm" style={{ color: '#1D3557' }}>
+          <p className="font-semibold truncate text-sm text-text-primary">
             {exec.workflow_name || 'Unknown Workflow'}
           </p>
-          <p className="text-xs" style={{ color: '#457B9D' }}>
+          <p className="text-xs text-text-secondary">
             {formatRelativeTime(exec.start_time)}
           </p>
         </div>
 
         <div className="flex items-center gap-4 flex-shrink-0">
           {totalRecords > 0 && (
-            <span className="text-xs hidden sm:inline" style={{ color: '#457B9D' }}>
+            <span className="text-xs hidden sm:inline text-text-secondary">
               {formatNumber(totalRecords)} records
             </span>
           )}
-          <span className="px-2 py-0.5 text-xs font-medium uppercase tracking-wider" style={{ color: '#1D3557', backgroundColor: '#F1FAEE', border: '1px solid #A8DADC', borderRadius: '2px' }}>
+          <span className="px-2 py-0.5 text-xs font-semibold text-text-primary bg-surface-tertiary border border-neutral-800 rounded-md">
             {exec.status}
           </span>
-          <span className="text-xs w-16 text-right" style={{ color: '#457B9D' }}>
+          <span className="text-xs w-16 text-right text-text-secondary">
             {formatDuration(exec.duration)}
           </span>
-          <span className="text-xs" style={{ color: '#457B9D' }}>
+          <span className="text-xs text-text-secondary">
             {exec.successful_nodes}/{exec.total_nodes}
           </span>
           <button
@@ -249,8 +164,7 @@ const ExecutionTreeRow = ({
               e.stopPropagation();
               onNavigate(exec.workflow_id);
             }}
-            className="p-1.5 transition-colors opacity-0 group-hover:opacity-100"
-            style={{ borderRadius: '2px', color: '#457B9D' }}
+            className="p-1.5 transition-colors opacity-0 group-hover:opacity-100 rounded-md text-text-secondary"
             title="Go to workflow"
           >
             <ArrowRight className="w-4 h-4" />
@@ -265,11 +179,10 @@ const ExecutionTreeRow = ({
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="overflow-hidden"
-            style={{ backgroundColor: '#F1FAEE' }}
+            className="overflow-hidden bg-surface-tertiary"
           >
             {/* Table Header */}
-            <div className="flex items-center gap-3 px-4 py-2 ml-8 text-[10px] font-semibold uppercase tracking-wider" style={{ borderBottom: '1px solid #A8DADC', borderLeft: '2px solid #A8DADC', color: '#457B9D' }}>
+            <div className="flex items-center gap-3 px-4 py-2 ml-8 text-[10px] font-semibold border-b border-neutral-800 border-l-2 border-l-neutral-700 text-text-secondary">
               <div className="w-4" />
               <div className="flex-1">Node</div>
               <div className="w-24">Type</div>
@@ -285,18 +198,17 @@ const ExecutionTreeRow = ({
               return (
                 <div
                   key={idx}
-                  className="flex items-center gap-3 px-4 py-2 ml-8"
-                  style={{ borderLeft: '2px solid #A8DADC' }}
+                  className="flex items-center gap-3 px-4 py-2 ml-8 border-l-2 border-l-neutral-700"
                 >
                   <StepIcon className={cn("w-4 h-4 flex-shrink-0", stepConfig.text, step.status === 'RUNNING' && "animate-spin")} />
-                  <span className={cn("flex-1 text-sm font-medium truncate", getNodeTypeColor(step.node_type))}>
+                  <span className={cn("flex-1 text-sm font-semibold truncate", getNodeTypeColor(step.node_type))}>
                     {step.node_id}
                   </span>
-                  <span className="w-24 text-xs" style={{ color: '#457B9D' }}>{step.node_type}</span>
-                  <span className="w-20 text-xs text-right font-medium" style={{ color: '#1D3557' }}>
+                  <span className="w-24 text-xs text-text-secondary">{step.node_type}</span>
+                  <span className="w-20 text-xs text-right font-semibold text-text-primary">
                     {recordsCount !== null ? formatNumber(recordsCount) : '-'}
                   </span>
-                  <span className="w-14 text-xs text-right" style={{ color: '#457B9D' }}>
+                  <span className="w-14 text-xs text-right text-text-secondary">
                     {stepDuration !== null ? `${stepDuration.toFixed(1)}s` : '-'}
                   </span>
                 </div>
@@ -314,13 +226,6 @@ const DashboardPage = () => {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
-  // First-time user detection for onboarding
-  const {
-    isFirstTimeUser,
-    hasCompletedOnboarding,
-    markOnboardingComplete,
-    dismissOnboarding,
-  } = useFirstTimeUser();
 
   // Filter state - show filters by default
   const [timeRange, setTimeRange] = useState<TimeRange>('all');
@@ -366,16 +271,14 @@ const DashboardPage = () => {
         : [];
       setConnectionCount(connections.length);
 
-      // Extract workflow IDs and names to pass to dashboard stats (avoids duplicate DB query)
-      const workflowData = workflows.map((w: { _id?: { $oid?: string } | string; job_id?: string; job_name?: string }) => ({
-        id: ((typeof w._id === 'object' ? w._id?.$oid : w._id) || w.job_id) as string,
-        name: w.job_name || '',
-      })).filter((w: { id: string }) => w.id);
+      // Build workflow id→name map to pass to dashboard stats (avoids duplicate DB query)
+      const workflowMap: Record<string, string> = {};
+      for (const w of workflows) {
+        const id = (typeof w._id === 'object' ? w._id?.$oid : w._id) || w.job_id;
+        if (id) workflowMap[id] = w.job_name || '';
+      }
 
-      const workflowIds = workflowData.map((w: { id: string }) => w.id);
-      const workflowNames = workflowData.map((w: { name: string }) => w.name);
-
-      const dashboardStats = await executionHistoryService.getDashboardStats(workflowIds, workflowNames);
+      const dashboardStats = await executionHistoryService.getDashboardStats(workflowMap);
       setStats(dashboardStats);
     } catch (error) {
       console.error('Failed to fetch dashboard data:', error);
@@ -427,21 +330,21 @@ const DashboardPage = () => {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
           <div className="flex items-center justify-between">
             <div>
-              <div className="h-7 w-32 animate-pulse" style={{ backgroundColor: '#A8DADC', borderRadius: '2px' }} />
-              <div className="h-4 w-48 mt-2 animate-pulse" style={{ backgroundColor: '#A8DADC', borderRadius: '2px' }} />
+              <div className="h-7 w-32 animate-pulse bg-neutral-800 rounded-md" />
+              <div className="h-4 w-48 mt-2 animate-pulse bg-neutral-800 rounded-md" />
             </div>
-            <div className="h-9 w-24 animate-pulse" style={{ backgroundColor: '#A8DADC', borderRadius: '2px' }} />
+            <div className="h-9 w-24 animate-pulse bg-neutral-800 rounded-md" />
           </div>
 
           <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
             {[1, 2, 3, 4, 5].map((i) => (
-              <div key={i} className="p-4 h-24 animate-pulse" style={{ backgroundColor: 'white', border: '1px solid #A8DADC', borderRadius: '2px' }} />
+              <div key={i} className="p-4 h-24 animate-pulse bg-surface-secondary border border-neutral-800 rounded-xl" />
             ))}
           </div>
 
           <div className="grid lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2 h-96 animate-pulse" style={{ backgroundColor: 'white', border: '1px solid #A8DADC', borderRadius: '2px' }} />
-            <div className="h-96 animate-pulse" style={{ backgroundColor: 'white', border: '1px solid #A8DADC', borderRadius: '2px' }} />
+            <div className="lg:col-span-2 h-96 animate-pulse bg-surface-secondary border border-neutral-800 rounded-xl" />
+            <div className="h-96 animate-pulse bg-surface-secondary border border-neutral-800 rounded-xl" />
           </div>
         </div>
       </Layout>
@@ -450,24 +353,16 @@ const DashboardPage = () => {
 
   return (
     <Layout>
-      {/* Welcome Modal for first-time users */}
-      {isFirstTimeUser && (
-        <WelcomeModal
-          onComplete={markOnboardingComplete}
-          onDismiss={dismissOnboarding}
-        />
-      )}
-
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             {/* Section accent bar */}
             <div className="flex items-center gap-3 mb-2">
-              <div style={{ width: '48px', height: '4px', backgroundColor: '#E63946' }} />
+              <div className="w-12 h-1 bg-primary-400 rounded-md" />
             </div>
-            <h1 className="text-2xl font-bold uppercase tracking-wider" style={{ color: '#1D3557' }}>Dashboard</h1>
-            <p className="text-sm mt-0.5" style={{ color: '#457B9D' }}>
+            <h1 className="text-2xl font-semibold text-text-primary">Dashboard</h1>
+            <p className="text-sm mt-0.5 text-text-secondary">
               {workflowCount} workflows &#9632; {stats.totalExecutions} executions
             </p>
           </div>
@@ -475,72 +370,71 @@ const DashboardPage = () => {
           <button
             onClick={() => fetchData(true)}
             disabled={refreshing}
-            className="h-9 px-3 flex items-center gap-2 text-sm transition-colors"
-            style={{ color: '#457B9D', backgroundColor: 'white', border: '1px solid #A8DADC', borderRadius: '2px' }}
+            className="h-9 px-3 flex items-center gap-2 text-sm transition-colors text-text-secondary bg-surface-secondary border border-neutral-800 rounded-lg hover:bg-surface-tertiary"
           >
             <RefreshCw className={cn("w-4 h-4", refreshing && "animate-spin")} />
-            <span className="hidden sm:inline uppercase tracking-wider text-xs">Refresh</span>
+            <span className="hidden sm:inline text-xs">Refresh</span>
           </button>
         </div>
 
         {/* Stats Grid */}
         <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
-          <div className="p-4" style={{ backgroundColor: 'white', border: '1px solid #A8DADC', borderRadius: '2px' }}>
+          <div className="p-4 bg-surface-secondary border border-neutral-800 rounded-xl">
             <div className="flex items-center gap-3">
-              <div className="p-2" style={{ backgroundColor: '#F1FAEE', borderRadius: '2px' }}>
-                <Activity className="w-5 h-5" style={{ color: '#1D3557' }} />
+              <div className="p-2 bg-surface-tertiary rounded-lg">
+                <Activity className="w-5 h-5 text-primary-400" />
               </div>
               <div>
-                <p className="text-2xl font-bold" style={{ color: '#1D3557' }}>{stats.totalExecutions}</p>
-                <p className="text-xs uppercase tracking-wider" style={{ color: '#457B9D' }}>Total Executions</p>
+                <p className="text-2xl font-semibold text-text-primary">{stats.totalExecutions}</p>
+                <p className="text-xs text-text-secondary">Total Executions</p>
               </div>
             </div>
           </div>
 
-          <div className="p-4" style={{ backgroundColor: 'white', border: '1px solid #A8DADC', borderRadius: '2px' }}>
+          <div className="p-4 bg-surface-secondary border border-neutral-800 rounded-xl">
             <div className="flex items-center gap-3">
-              <div className="p-2" style={{ backgroundColor: '#F1FAEE', borderRadius: '2px' }}>
-                <TrendingUp className="w-5 h-5" style={{ color: '#34d399' }} />
+              <div className="p-2 bg-surface-tertiary rounded-lg">
+                <TrendingUp className="w-5 h-5 text-success" />
               </div>
               <div>
-                <p className="text-2xl font-bold" style={{ color: '#1D3557' }}>{stats.successRate}%</p>
-                <p className="text-xs uppercase tracking-wider" style={{ color: '#457B9D' }}>Success Rate</p>
+                <p className="text-2xl font-semibold text-text-primary">{stats.successRate}%</p>
+                <p className="text-xs text-text-secondary">Success Rate</p>
               </div>
             </div>
           </div>
 
-          <div className="p-4" style={{ backgroundColor: 'white', border: '1px solid #A8DADC', borderRadius: '2px' }}>
+          <div className="p-4 bg-surface-secondary border border-neutral-800 rounded-xl">
             <div className="flex items-center gap-3">
-              <div className="p-2" style={{ backgroundColor: '#F1FAEE', borderRadius: '2px' }}>
-                <XCircle className="w-5 h-5" style={{ color: '#E63946' }} />
+              <div className="p-2 bg-surface-tertiary rounded-lg">
+                <XCircle className="w-5 h-5 text-error" />
               </div>
               <div>
-                <p className="text-2xl font-bold" style={{ color: '#1D3557' }}>{stats.failedExecutions}</p>
-                <p className="text-xs uppercase tracking-wider" style={{ color: '#457B9D' }}>Failed</p>
+                <p className="text-2xl font-semibold text-text-primary">{stats.failedExecutions}</p>
+                <p className="text-xs text-text-secondary">Failed</p>
               </div>
             </div>
           </div>
 
-          <div className="p-4" style={{ backgroundColor: 'white', border: '1px solid #A8DADC', borderRadius: '2px' }}>
+          <div className="p-4 bg-surface-secondary border border-neutral-800 rounded-xl">
             <div className="flex items-center gap-3">
-              <div className="p-2" style={{ backgroundColor: '#F1FAEE', borderRadius: '2px' }}>
-                <Timer className="w-5 h-5" style={{ color: '#457B9D' }} />
+              <div className="p-2 bg-surface-tertiary rounded-lg">
+                <Timer className="w-5 h-5 text-text-secondary" />
               </div>
               <div>
-                <p className="text-2xl font-bold" style={{ color: '#1D3557' }}>{formatDuration(stats.avgDuration)}</p>
-                <p className="text-xs uppercase tracking-wider" style={{ color: '#457B9D' }}>Avg Duration</p>
+                <p className="text-2xl font-semibold text-text-primary">{formatDuration(stats.avgDuration)}</p>
+                <p className="text-xs text-text-secondary">Avg Duration</p>
               </div>
             </div>
           </div>
 
-          <div className="p-4" style={{ backgroundColor: 'white', border: '1px solid #A8DADC', borderRadius: '2px' }}>
+          <div className="p-4 bg-surface-secondary border border-neutral-800 rounded-xl">
             <div className="flex items-center gap-3">
-              <div className="p-2" style={{ backgroundColor: '#F1FAEE', borderRadius: '2px' }}>
-                <DollarSign className="w-5 h-5" style={{ color: '#F4A261' }} />
+              <div className="p-2 bg-surface-tertiary rounded-lg">
+                <DollarSign className="w-5 h-5 text-warning" />
               </div>
               <div>
-                <p className="text-2xl font-bold" style={{ color: '#F4A261' }}>{formatCost(stats.totalCost)}</p>
-                <p className="text-xs uppercase tracking-wider" style={{ color: '#457B9D' }}>Total Cost</p>
+                <p className="text-2xl font-semibold text-warning">{formatCost(stats.totalCost)}</p>
+                <p className="text-xs text-text-secondary">Total Cost</p>
               </div>
             </div>
           </div>
@@ -549,14 +443,14 @@ const DashboardPage = () => {
         {/* Main Content */}
         <div className="grid lg:grid-cols-3 gap-6">
           {/* Recent Executions */}
-          <div className="lg:col-span-2 overflow-hidden" style={{ backgroundColor: 'white', border: '1px solid #A8DADC', borderRadius: '2px' }}>
-            <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: '1px solid #A8DADC' }}>
+          <div className="lg:col-span-2 overflow-hidden bg-surface-secondary border border-neutral-800 rounded-xl">
+            <div className="flex items-center justify-between px-4 py-3 border-b border-neutral-800">
               <div className="flex items-center gap-2">
-                <Clock className="w-4 h-4" style={{ color: '#E63946' }} />
-                <h2 className="text-sm font-medium uppercase tracking-wider" style={{ color: '#1D3557' }}>
+                <Clock className="w-4 h-4 text-primary-400" />
+                <h2 className="text-sm font-semibold text-text-primary">
                   Recent Executions
                   {hasActiveFilters && (
-                    <span className="ml-2 text-xs font-normal" style={{ color: '#457B9D' }}>
+                    <span className="ml-2 text-xs font-normal text-text-secondary">
                       ({filteredExecutions.length}/{stats.recentExecutions.length})
                     </span>
                   )}
@@ -564,7 +458,7 @@ const DashboardPage = () => {
               </div>
               <div className="flex items-center gap-2">
                 {filteredStats.running > 0 && (
-                  <span className="flex items-center gap-1.5 text-xs text-blue-500">
+                  <span className="flex items-center gap-1.5 text-xs text-info">
                     <Loader2 className="w-3 h-3 animate-spin" />
                     {filteredStats.running} running
                   </span>
@@ -572,16 +466,11 @@ const DashboardPage = () => {
                 <button
                   onClick={() => setShowFilters(!showFilters)}
                   className={cn(
-                    'p-1.5 transition-colors',
+                    'p-1.5 transition-colors rounded-md',
                     showFilters || hasActiveFilters
-                      ? 'text-white'
-                      : 'hover:bg-gray-100'
+                      ? 'bg-primary-400 text-neutral-950'
+                      : 'text-text-secondary hover:bg-surface-tertiary'
                   )}
-                  style={{
-                    borderRadius: '2px',
-                    backgroundColor: showFilters || hasActiveFilters ? '#E63946' : 'transparent',
-                    color: showFilters || hasActiveFilters ? 'white' : '#457B9D',
-                  }}
                   title="Filter executions"
                 >
                   <Filter className="w-4 h-4" />
@@ -597,24 +486,23 @@ const DashboardPage = () => {
                   animate={{ height: 'auto', opacity: 1 }}
                   exit={{ height: 0, opacity: 0 }}
                   transition={{ duration: 0.15 }}
-                  className="overflow-hidden"
-                  style={{ borderBottom: '1px solid #A8DADC' }}
+                  className="overflow-hidden border-b border-neutral-800"
                 >
-                  <div className="p-3 flex flex-wrap items-center gap-3" style={{ backgroundColor: '#F1FAEE' }}>
+                  <div className="p-3 flex flex-wrap items-center gap-3 bg-surface-tertiary">
                     {/* Time Range - Button Pills */}
                     <div className="flex items-center gap-1.5">
-                      <Calendar className="w-3.5 h-3.5" style={{ color: '#457B9D' }} />
-                      <div className="flex items-center p-0.5" style={{ backgroundColor: 'white', border: '1px solid #A8DADC', borderRadius: '2px' }}>
+                      <Calendar className="w-3.5 h-3.5 text-text-secondary" />
+                      <div className="flex items-center p-0.5 bg-surface-secondary border border-neutral-800 rounded-md">
                         {timeRangeOptions.map(opt => (
                           <button
                             key={opt.value}
                             onClick={() => setTimeRange(opt.value)}
-                            className="px-2.5 py-1 text-xs font-medium transition-all"
-                            style={{
-                              borderRadius: '2px',
-                              backgroundColor: timeRange === opt.value ? '#1D3557' : 'transparent',
-                              color: timeRange === opt.value ? 'white' : '#457B9D',
-                            }}
+                            className={cn(
+                              "px-2.5 py-1 text-xs font-semibold transition-all rounded-md",
+                              timeRange === opt.value
+                                ? 'bg-neutral-800 text-primary-400'
+                                : 'text-text-secondary'
+                            )}
                           >
                             {opt.label}
                           </button>
@@ -645,20 +533,20 @@ const DashboardPage = () => {
                       )}
                     </AnimatePresence>
 
-                    <div className="w-px h-5" style={{ backgroundColor: '#A8DADC' }} />
+                    <div className="w-px h-5 bg-border" />
 
                     {/* Status Filter */}
-                    <div className="flex items-center p-0.5" style={{ backgroundColor: 'white', border: '1px solid #A8DADC', borderRadius: '2px' }}>
+                    <div className="flex items-center p-0.5 bg-surface-secondary border border-neutral-800 rounded-md">
                       {statusFilterOptions.map(opt => (
                         <button
                           key={opt.value}
                           onClick={() => setStatusFilter(opt.value)}
-                          className="px-2.5 py-1 text-xs font-medium transition-all"
-                          style={{
-                            borderRadius: '2px',
-                            backgroundColor: statusFilter === opt.value ? '#1D3557' : 'transparent',
-                            color: statusFilter === opt.value ? 'white' : '#457B9D',
-                          }}
+                          className={cn(
+                            "px-2.5 py-1 text-xs font-semibold transition-all rounded-md",
+                            statusFilter === opt.value
+                              ? 'bg-neutral-800 text-primary-400'
+                              : 'text-text-secondary'
+                          )}
                         >
                           {opt.label}
                         </button>
@@ -668,15 +556,14 @@ const DashboardPage = () => {
                     {/* Clear Filters */}
                     {hasActiveFilters && (
                       <>
-                        <div className="w-px h-5" style={{ backgroundColor: '#A8DADC' }} />
+                        <div className="w-px h-5 bg-border" />
                         <button
                           onClick={() => {
                             setTimeRange('all');
                             setStatusFilter('all');
                             setCustomDateError(null);
                           }}
-                          className="px-2.5 py-1 text-xs font-medium transition-colors"
-                          style={{ color: '#E63946', borderRadius: '2px' }}
+                          className="px-2.5 py-1 text-xs font-semibold transition-colors text-error rounded-md"
                         >
                           Reset
                         </button>
@@ -688,9 +575,9 @@ const DashboardPage = () => {
             </AnimatePresence>
 
             {filteredExecutions.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-12" style={{ color: '#457B9D' }}>
+              <div className="flex flex-col items-center justify-center py-12 text-text-secondary">
                 <Activity className="w-10 h-10 mb-3 opacity-30" />
-                <p className="text-sm font-medium">
+                <p className="text-sm font-semibold">
                   {hasActiveFilters ? 'No matching executions' : 'No executions yet'}
                 </p>
                 <p className="text-xs mt-1">
@@ -699,8 +586,7 @@ const DashboardPage = () => {
                 {!hasActiveFilters && (
                   <button
                     onClick={() => navigate('/workflows')}
-                    className="mt-4 h-8 px-4 text-xs font-medium text-white transition-colors uppercase tracking-wider"
-                    style={{ backgroundColor: '#E63946', borderRadius: '2px' }}
+                    className="mt-4 h-8 px-4 text-xs font-semibold text-neutral-950 transition-colors bg-primary-400 hover:bg-primary-500 rounded-md"
                   >
                     Go to Workflows
                   </button>
@@ -711,8 +597,7 @@ const DashboardPage = () => {
                       setTimeRange('all');
                       setStatusFilter('all');
                     }}
-                    className="mt-4 h-8 px-4 text-xs font-medium transition-colors"
-                    style={{ color: '#E63946', borderRadius: '2px' }}
+                    className="mt-4 h-8 px-4 text-xs font-semibold transition-colors text-error rounded-lg"
                   >
                     Clear filters
                   </button>
@@ -737,28 +622,18 @@ const DashboardPage = () => {
 
           {/* Right Column: Onboarding Checklist + Workflows Panel */}
           <div className="space-y-6">
-            {/* Onboarding Checklist - shown until user completes onboarding */}
-            {!hasCompletedOnboarding && (
-              <OnboardingChecklist
-                hasConnections={connectionCount > 0}
-                hasWorkflows={workflowCount > 0}
-                hasExecutions={stats.totalExecutions > 0}
-                onDismiss={markOnboardingComplete}
-              />
-            )}
-
             {/* Workflows Panel */}
-            <div className="overflow-hidden" style={{ backgroundColor: 'white', border: '1px solid #A8DADC', borderRadius: '2px' }}>
-              <div className="flex items-center justify-between px-4 py-3" style={{ borderBottom: '1px solid #A8DADC' }}>
+            <div className="overflow-hidden bg-surface-secondary border border-neutral-800 rounded-xl">
+              <div className="flex items-center justify-between px-4 py-3 border-b border-neutral-800">
                 <div className="flex items-center gap-2">
-                  <BarChart3 className="w-4 h-4" style={{ color: '#E63946' }} />
-                  <h2 className="text-sm font-medium uppercase tracking-wider" style={{ color: '#1D3557' }}>Workflows</h2>
+                  <BarChart3 className="w-4 h-4 text-primary-400" />
+                  <h2 className="text-sm font-semibold text-text-primary">Workflows</h2>
                 </div>
-                <span className="text-xs" style={{ color: '#457B9D' }}>{workflowCount} total</span>
+                <span className="text-xs text-text-secondary">{workflowCount} total</span>
               </div>
 
             {Object.keys(stats.executionsByWorkflow).length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-12" style={{ color: '#457B9D' }}>
+              <div className="flex flex-col items-center justify-center py-12 text-text-secondary">
                 <Zap className="w-10 h-10 mb-3 opacity-30" />
                 <p className="text-sm">No workflow data</p>
               </div>
@@ -770,28 +645,26 @@ const DashboardPage = () => {
                   .map(([workflowId, data]) => (
                     <div
                       key={workflowId}
-                      className="px-4 py-3 hover:bg-gray-50 transition-colors cursor-pointer"
-                      style={{ borderBottom: '1px solid #A8DADC' }}
+                      className="px-4 py-3 hover:bg-neutral-800/50 transition-colors cursor-pointer border-b border-neutral-800"
                       onClick={() => navigate(`/workflows/builder?id=${workflowId}`)}
                     >
                       <div className="flex items-center justify-between mb-2">
-                        <p className="text-sm font-medium truncate flex-1 mr-3" style={{ color: '#1D3557' }}>
+                        <p className="text-sm font-semibold truncate flex-1 mr-3 text-text-primary">
                           {data.name}
                         </p>
-                        <span className="text-xs" style={{ color: '#457B9D' }}>{data.count} runs</span>
+                        <span className="text-xs text-text-secondary">{data.count} runs</span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <div className="flex-1 h-1.5 overflow-hidden" style={{ backgroundColor: '#A8DADC', borderRadius: '2px' }}>
+                        <div className="flex-1 h-1.5 overflow-hidden bg-border rounded-md">
                           <div
-                            className="h-full transition-all"
-                            style={{
-                              width: `${data.successRate}%`,
-                              backgroundColor: data.successRate >= 80 ? '#34d399' : data.successRate >= 50 ? '#F4A261' : '#E63946',
-                              borderRadius: '2px',
-                            }}
+                            className={cn(
+                              "h-full transition-all rounded-md",
+                              data.successRate >= 80 ? 'bg-success' : data.successRate >= 50 ? 'bg-warning' : 'bg-error'
+                            )}
+                            style={{ width: `${data.successRate}%` }}
                           />
                         </div>
-                        <span className="text-xs font-medium w-10 text-right" style={{ color: '#1D3557' }}>
+                        <span className="text-xs font-semibold w-10 text-right text-text-primary">
                           {data.successRate}%
                         </span>
                       </div>
@@ -800,11 +673,10 @@ const DashboardPage = () => {
               </div>
             )}
 
-            <div className="px-4 py-3" style={{ borderTop: '1px solid #A8DADC' }}>
+            <div className="px-4 py-3 border-t border-neutral-800">
               <button
                 onClick={() => navigate('/workflows')}
-                className="w-full flex items-center justify-center gap-2 py-2 text-xs font-medium transition-colors uppercase tracking-wider"
-                style={{ color: '#E63946' }}
+                className="w-full flex items-center justify-center gap-2 py-2 text-xs font-semibold transition-colors text-primary-400 hover:text-primary-300"
               >
                 View all workflows
                 <ArrowRight className="w-3 h-3" />
@@ -818,48 +690,45 @@ const DashboardPage = () => {
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <button
             onClick={() => navigate('/workflows/builder')}
-            className="p-4 transition-all group text-left"
-            style={{ backgroundColor: 'white', border: '1px solid #A8DADC', borderRadius: '2px' }}
+            className="p-4 transition-all group text-left bg-surface-secondary border border-neutral-800 rounded-xl hover:border-primary-400/50"
           >
             <div className="flex items-center gap-3">
-              <div className="p-2 transition-colors" style={{ backgroundColor: '#E63946', borderRadius: '2px' }}>
-                <Plus className="w-5 h-5 text-white" />
+              <div className="p-2 transition-colors bg-primary-400 rounded-lg">
+                <Plus className="w-5 h-5 text-neutral-950" />
               </div>
               <div>
-                <h3 className="font-medium text-sm uppercase tracking-wider" style={{ color: '#1D3557' }}>Create Workflow</h3>
-                <p className="text-xs" style={{ color: '#457B9D' }}>Build a new pipeline</p>
+                <h3 className="font-semibold text-sm text-text-primary">Create Workflow</h3>
+                <p className="text-xs text-text-secondary">Build a new pipeline</p>
               </div>
             </div>
           </button>
 
           <button
             onClick={() => navigate('/workflows')}
-            className="p-4 transition-all group text-left"
-            style={{ backgroundColor: 'white', border: '1px solid #A8DADC', borderRadius: '2px' }}
+            className="p-4 transition-all group text-left bg-surface-secondary border border-neutral-800 rounded-xl hover:border-neutral-700"
           >
             <div className="flex items-center gap-3">
-              <div className="p-2 transition-colors" style={{ backgroundColor: '#1D3557', borderRadius: '2px' }}>
-                <PlayCircle className="w-5 h-5 text-white" />
+              <div className="p-2 transition-colors bg-surface-tertiary rounded-lg">
+                <PlayCircle className="w-5 h-5 text-text-primary" />
               </div>
               <div>
-                <h3 className="font-medium text-sm uppercase tracking-wider" style={{ color: '#1D3557' }}>Run Workflow</h3>
-                <p className="text-xs" style={{ color: '#457B9D' }}>Execute pipelines</p>
+                <h3 className="font-semibold text-sm text-text-primary">Run Workflow</h3>
+                <p className="text-xs text-text-secondary">Execute pipelines</p>
               </div>
             </div>
           </button>
 
           <button
             onClick={() => navigate('/connections')}
-            className="p-4 transition-all group text-left"
-            style={{ backgroundColor: 'white', border: '1px solid #A8DADC', borderRadius: '2px' }}
+            className="p-4 transition-all group text-left bg-surface-secondary border border-neutral-800 rounded-xl hover:border-neutral-700"
           >
             <div className="flex items-center gap-3">
-              <div className="p-2 transition-colors" style={{ backgroundColor: '#457B9D', borderRadius: '2px' }}>
-                <Link2 className="w-5 h-5 text-white" />
+              <div className="p-2 transition-colors bg-surface-tertiary rounded-lg">
+                <Link2 className="w-5 h-5 text-primary-400" />
               </div>
               <div>
-                <h3 className="font-medium text-sm uppercase tracking-wider" style={{ color: '#1D3557' }}>Connections</h3>
-                <p className="text-xs" style={{ color: '#457B9D' }}>Manage data sources</p>
+                <h3 className="font-semibold text-sm text-text-primary">Connections</h3>
+                <p className="text-xs text-text-secondary">Manage data sources</p>
               </div>
             </div>
           </button>

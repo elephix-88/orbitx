@@ -1,5 +1,5 @@
 import { BaseApiService } from './baseApiService';
-import { openOAuthPopupWithData } from '../utils/oauthPopup';
+import { openOAuthPopupWithCallbacks } from '../utils/oauthPopup';
 
 interface GoogleOAuthResponse {
   oauth_url: string;
@@ -23,7 +23,7 @@ interface BigQueryDataset {
 }
 
 class BigQueryService extends BaseApiService {
-  async connectWithPopup(connectionName: string = 'BigQuery Connection'): Promise<{ connection_id: string }> {
+  async connectWithPopup(connectionName: string = 'BigQuery Connection'): Promise<void> {
     const response = await this.post<GoogleOAuthResponse>('/api/google/bigquery/login', {
       connection_name: connectionName,
     });
@@ -32,9 +32,10 @@ class BigQueryService extends BaseApiService {
       throw new Error('No oauth_url received from server');
     }
 
-    return openOAuthPopupWithData(
+    await openOAuthPopupWithCallbacks(
       response.data.oauth_url,
-      { connection_id: response.data.connection_id },
+      () => {},
+      undefined,
       {
         title: 'GoogleOAuthPopup',
         width: 500,

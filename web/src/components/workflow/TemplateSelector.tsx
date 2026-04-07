@@ -110,59 +110,59 @@ export const TemplateSelector: React.FC<TemplateSelectorProps> = ({
       />
 
       {/* Modal */}
-      <div className="relative bg-white dark:bg-slate-900 rounded-2xl shadow-2xl max-w-4xl w-full mx-4 max-h-[85vh] overflow-hidden animate-in zoom-in-95 duration-200">
+      <div className="relative bg-surface-primary rounded-2xl shadow-2xl max-w-4xl w-full mx-4 max-h-[85vh] overflow-hidden animate-in zoom-in-95 duration-200">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 dark:border-slate-700">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-border">
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-xl bg-brand-500/10">
               <Sparkles className="w-5 h-5 text-brand-500" />
             </div>
             <div>
-              <h2 className="text-lg font-semibold text-slate-900 dark:text-white">
+              <h2 className="text-lg font-semibold text-text-primary">
                 Start from Template
               </h2>
-              <p className="text-sm text-slate-500 dark:text-slate-400">
+              <p className="text-sm text-text-secondary">
                 Choose a pre-built workflow to get started quickly
               </p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+            className="p-2 rounded-lg hover:bg-surface-secondary transition-colors"
           >
-            <X className="w-5 h-5 text-slate-500" />
+            <X className="w-5 h-5 text-text-secondary" />
           </button>
         </div>
 
         {/* Main content - responsive layout */}
-        <div className="flex flex-col md:flex-row md:divide-x divide-slate-200 dark:divide-slate-700 h-[calc(85vh-80px)]">
+        <div className="flex flex-col md:flex-row md:divide-x divide-border h-[calc(85vh-80px)]">
           {/* Left Panel: Template List */}
-          <div className="w-full md:w-2/5 flex flex-col h-1/2 md:h-full border-b md:border-b-0 border-slate-200 dark:border-slate-700">
+          <div className="w-full md:w-2/5 flex flex-col h-1/2 md:h-full border-b md:border-b-0 border-border">
             {/* Search & Filter */}
-            <div className="p-4 space-y-3 border-b border-slate-200 dark:border-slate-700">
+            <div className="p-4 space-y-3 border-b border-border">
               {/* Search */}
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-tertiary" />
                 <input
                   type="text"
                   placeholder="Search templates..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 text-sm rounded-lg bg-slate-100 dark:bg-slate-800 border-0 focus:ring-2 focus:ring-brand-500/20"
+                  className="w-full pl-10 pr-4 py-2 text-sm rounded-lg bg-surface-secondary border-0 text-text-primary placeholder:text-text-tertiary focus:ring-2 focus:ring-primary-400/30"
                 />
               </div>
 
               {/* Category Filter */}
               <div className="flex items-center gap-2">
-                <Filter className="w-4 h-4 text-slate-400" />
+                <Filter className="w-4 h-4 text-text-tertiary" />
                 <div className="flex gap-1">
                   <button
                     onClick={() => setSelectedCategory('all')}
                     className={cn(
                       'px-2.5 py-1 text-xs font-medium rounded-lg transition-colors',
                       selectedCategory === 'all'
-                        ? 'bg-brand-500 text-white'
-                        : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+                        ? 'bg-primary-400 text-neutral-950'
+                        : 'text-text-secondary hover:bg-surface-secondary'
                     )}
                   >
                     All
@@ -175,8 +175,8 @@ export const TemplateSelector: React.FC<TemplateSelectorProps> = ({
                         className={cn(
                           'px-2.5 py-1 text-xs font-medium rounded-lg transition-colors',
                           selectedCategory === key
-                            ? 'bg-brand-500 text-white'
-                            : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+                            ? 'bg-primary-400 text-neutral-950'
+                            : 'text-text-secondary hover:bg-surface-secondary'
                         )}
                       >
                         {label}
@@ -190,7 +190,7 @@ export const TemplateSelector: React.FC<TemplateSelectorProps> = ({
             {/* Template List - fixed height with scroll */}
             <div className="flex-1 overflow-y-auto p-3 space-y-2 min-h-0">
               {filteredTemplates.length === 0 ? (
-                <div className="text-center py-8 text-slate-500">
+                <div className="text-center py-8 text-text-secondary">
                   <Workflow className="w-10 h-10 mx-auto mb-3 opacity-30" />
                   <p className="text-sm">No templates found</p>
                 </div>
@@ -206,8 +206,8 @@ export const TemplateSelector: React.FC<TemplateSelectorProps> = ({
                       className={cn(
                         'w-full text-left p-3 rounded-xl transition-all',
                         isSelected
-                          ? 'bg-brand-50 dark:bg-brand-900/20 border-2 border-brand-500'
-                          : 'hover:bg-slate-50 dark:hover:bg-slate-800/50 border-2 border-transparent'
+                          ? 'bg-primary-400/10 border-2 border-primary-400'
+                          : 'hover:bg-surface-secondary border-2 border-transparent'
                       )}
                     >
                       <div className="flex items-start gap-3">
@@ -215,22 +215,22 @@ export const TemplateSelector: React.FC<TemplateSelectorProps> = ({
                           className={cn(
                             'p-2 rounded-lg',
                             isSelected
-                              ? 'bg-brand-500 text-white'
-                              : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
+                              ? 'bg-primary-400 text-neutral-950'
+                              : 'bg-surface-secondary text-text-secondary'
                           )}
                         >
                           <Icon className="w-5 h-5" />
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center justify-between gap-2">
-                            <h4 className="font-medium text-slate-900 dark:text-white text-sm truncate">
+                            <h4 className="font-medium text-text-primary text-sm truncate">
                               {template.name}
                             </h4>
                             {isSelected && (
-                              <CheckCircle className="w-4 h-4 text-brand-500 flex-shrink-0" />
+                              <CheckCircle className="w-4 h-4 text-primary-400 flex-shrink-0" />
                             )}
                           </div>
-                          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 line-clamp-2">
+                          <p className="text-xs text-text-secondary mt-0.5 line-clamp-2">
                             {template.description}
                           </p>
                         </div>
@@ -259,7 +259,7 @@ export const TemplateSelector: React.FC<TemplateSelectorProps> = ({
                         );
                       })()}
                       <div>
-                        <h3 className="text-xl font-semibold text-slate-900 dark:text-white">
+                        <h3 className="text-xl font-semibold text-text-primary">
                           {selectedTemplate.name}
                         </h3>
                         <div className="flex items-center gap-2 mt-1">
@@ -271,32 +271,32 @@ export const TemplateSelector: React.FC<TemplateSelectorProps> = ({
                           >
                             {difficultyConfig[selectedTemplate.difficulty].label}
                           </span>
-                          <span className="flex items-center gap-1 text-xs text-slate-500">
+                          <span className="flex items-center gap-1 text-xs text-text-secondary">
                             <Clock className="w-3.5 h-3.5" />
                             {selectedTemplate.estimatedSetupTime}
                           </span>
                         </div>
                       </div>
                     </div>
-                    <p className="text-sm text-slate-600 dark:text-slate-400">
+                    <p className="text-sm text-text-secondary">
                       {selectedTemplate.description}
                     </p>
                   </div>
 
                   {/* Data Flow */}
                   <div className="mb-6">
-                    <h4 className="text-sm font-medium text-slate-900 dark:text-white mb-3">
+                    <h4 className="text-sm font-medium text-text-primary mb-3">
                       Data Flow
                     </h4>
-                    <div className="flex items-center gap-3 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl">
+                    <div className="flex items-center gap-3 p-4 bg-surface-secondary rounded-xl">
                       {/* Sources */}
                       <div className="flex-1">
-                        <div className="text-xs text-slate-500 mb-2">Sources</div>
+                        <div className="text-xs text-text-secondary mb-2">Sources</div>
                         <div className="flex flex-wrap gap-2">
                           {selectedTemplate.sources.map((source) => (
                             <span
                               key={source}
-                              className="px-2.5 py-1 text-xs font-medium bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-400 rounded-lg"
+                              className="px-2.5 py-1 text-xs font-medium bg-blue-900/30 text-blue-400 rounded-lg"
                             >
                               {source}
                             </span>
@@ -304,16 +304,51 @@ export const TemplateSelector: React.FC<TemplateSelectorProps> = ({
                         </div>
                       </div>
 
-                      <ChevronRight className="w-5 h-5 text-slate-400" />
+                      <ChevronRight className="w-5 h-5 text-text-tertiary flex-shrink-0" />
+
+                      {/* Transforms */}
+                      {(() => {
+                        const transformNodes = selectedTemplate.nodes.filter(
+                          (n) => n.type === 'transform'
+                        );
+                        if (transformNodes.length === 0) return null;
+                        const uniqueNames = [
+                          ...new Set(
+                            transformNodes.map(
+                              (n) => n.display_name || n.name
+                            )
+                          ),
+                        ];
+                        return (
+                          <>
+                            <div className="flex-1">
+                              <div className="text-xs text-text-secondary mb-2">
+                                Transforms
+                              </div>
+                              <div className="flex flex-wrap gap-2">
+                                {uniqueNames.map((name) => (
+                                  <span
+                                    key={name}
+                                    className="px-2.5 py-1 text-xs font-medium bg-violet-900/30 text-violet-400 rounded-lg"
+                                  >
+                                    {name}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                            <ChevronRight className="w-5 h-5 text-text-tertiary flex-shrink-0" />
+                          </>
+                        );
+                      })()}
 
                       {/* Destinations */}
                       <div className="flex-1">
-                        <div className="text-xs text-slate-500 mb-2">Destinations</div>
+                        <div className="text-xs text-text-secondary mb-2">Destinations</div>
                         <div className="flex flex-wrap gap-2">
                           {selectedTemplate.destinations.map((dest) => (
                             <span
                               key={dest}
-                              className="px-2.5 py-1 text-xs font-medium bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 rounded-lg"
+                              className="px-2.5 py-1 text-xs font-medium bg-emerald-900/30 text-emerald-400 rounded-lg"
                             >
                               {dest}
                             </span>
@@ -326,16 +361,16 @@ export const TemplateSelector: React.FC<TemplateSelectorProps> = ({
                   {/* Setup Tips */}
                   {selectedTemplate.setupTips && selectedTemplate.setupTips.length > 0 && (
                     <div>
-                      <h4 className="text-sm font-medium text-slate-900 dark:text-white mb-3">
+                      <h4 className="text-sm font-medium text-text-primary mb-3">
                         Setup Tips
                       </h4>
                       <ul className="space-y-2">
                         {selectedTemplate.setupTips.map((tip, index) => (
                           <li
                             key={index}
-                            className="flex items-start gap-2 text-sm text-slate-600 dark:text-slate-400"
+                            className="flex items-start gap-2 text-sm text-text-secondary"
                           >
-                            <span className="flex-shrink-0 w-5 h-5 rounded-full bg-brand-100 dark:bg-brand-900/30 text-brand-600 dark:text-brand-400 text-xs flex items-center justify-center mt-0.5">
+                            <span className="flex-shrink-0 w-5 h-5 rounded-full bg-primary-400/15 text-primary-400 text-xs flex items-center justify-center mt-0.5">
                               {index + 1}
                             </span>
                             {tip}
@@ -347,10 +382,10 @@ export const TemplateSelector: React.FC<TemplateSelectorProps> = ({
                 </div>
 
                 {/* Action Footer */}
-                <div className="p-4 border-t border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50">
+                <div className="p-4 border-t border-border bg-surface-secondary">
                   <button
                     onClick={handleSelectTemplate}
-                    className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-brand-500 hover:bg-brand-600 text-white font-medium rounded-xl transition-colors"
+                    className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-primary-400 hover:bg-primary-500 text-neutral-950 font-medium rounded-xl transition-colors"
                   >
                     Use This Template
                     <ArrowRight className="w-4 h-4" />
@@ -360,13 +395,13 @@ export const TemplateSelector: React.FC<TemplateSelectorProps> = ({
             ) : (
               <div className="flex-1 flex items-center justify-center text-center p-8">
                 <div>
-                  <div className="w-16 h-16 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center mx-auto mb-4">
-                    <Workflow className="w-8 h-8 text-slate-400" />
+                  <div className="w-16 h-16 rounded-full bg-surface-secondary flex items-center justify-center mx-auto mb-4">
+                    <Workflow className="w-8 h-8 text-text-tertiary" />
                   </div>
-                  <h4 className="text-lg font-medium text-slate-900 dark:text-white mb-2">
+                  <h4 className="text-lg font-medium text-text-primary mb-2">
                     Select a Template
                   </h4>
-                  <p className="text-sm text-slate-500">
+                  <p className="text-sm text-text-secondary">
                     Choose a template from the list to see its details and start building your workflow.
                   </p>
                 </div>
