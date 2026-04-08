@@ -11,6 +11,7 @@ default:
   google_fields: google_fields
   tiktok_fields: tiktok_fields
   execution_history_collection: execution_history
+  anomaly_snapshots_collection: anomaly_snapshots
   execution_ttl_days_free: 7
   execution_ttl_days_paid: 30
 

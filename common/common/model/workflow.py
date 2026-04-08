@@ -14,6 +14,7 @@ from common.model.google.sheets import GoogleSheetsDestinationConfig
 from common.model.mysql.config import MySQLDestinationConfig
 from common.model.s3.config import S3SourceConfig
 from common.model.tiktok.config import TikTokAdsConfig
+from common.model.anomaly import AnomalyDetectorConfig
 from common.model.transform import (
     ColumnEditorConfig,
     JoinTransformConfig,
@@ -178,6 +179,14 @@ class ColumnEditorNode(BaseNode):
     parameters: ColumnEditorConfig
 
 
+class AnomalyDetectorNode(BaseNode):
+    minimum_inputs: ClassVar[int] = 1
+    maximum_inputs: ClassVar[int] = 1
+
+    node_id: Literal["anomaly_detector"]
+    parameters: AnomalyDetectorConfig
+
+
 class GenericNode(BaseNode):
     node_id: str
     parameters: dict[str, Any]
@@ -194,6 +203,7 @@ Node = (
     | JoinTransformNode
     | UnifyTransformNode
     | ColumnEditorNode
+    | AnomalyDetectorNode
     | IfNode
     | SwitchNode
     | MySQLDestinationNode

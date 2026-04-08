@@ -7,6 +7,7 @@ import { renameTransformSpec } from './node-specs/transform.rename';
 import { joinTransformSpec } from './node-specs/transform.join';
 import { columnEditorTransformSpec } from './node-specs/transform.column-editor';
 import { unifyTransformSpec } from './node-specs/transform.unify';
+import { anomalyDetectorSpec } from './node-specs/transform.anomaly-detector';
 import { ifNodeSpec } from './node-specs/logic.if';
 import { switchNodeSpec } from './node-specs/logic.switch';
 import { mysqlDestSpec } from './node-specs/dest.mysql';
@@ -26,6 +27,7 @@ export const nodeRegistry: Record<string, NodeSpec> = {
   'transform.join': joinTransformSpec,
   'transform.column-editor': columnEditorTransformSpec,
   'transform.unify': unifyTransformSpec,
+  'transform.anomaly-detector': anomalyDetectorSpec,
   'logic.if': ifNodeSpec,
   'logic.switch': switchNodeSpec,
   'dest.mysql': mysqlDestSpec,

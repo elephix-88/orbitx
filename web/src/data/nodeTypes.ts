@@ -132,6 +132,23 @@ export const nodeTypes: NodeTypeDefinition[] = [
   },
   {
     type: 'transform',
+    name: 'Anomaly Detector',
+    description: 'Compare metrics against rolling average and flag significant deviations',
+    category: NodeCategory.TRANSFORM,
+    icon: 'ShieldAlert',
+    color: '#EF4444',
+    inputs: [{ id: 'in', name: 'Input' }],
+    outputs: [{ id: 'out', name: 'Output' }],
+    defaultData: {
+      metrics: [],
+      group_by: '',
+      window_days: 7,
+      threshold_percent: 30,
+      max_alerts_per_day: 10,
+    },
+  },
+  {
+    type: 'transform',
     name: 'IF',
     description: 'Route rows into two branches based on conditions',
     category: NodeCategory.TRANSFORM,

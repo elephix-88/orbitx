@@ -32,6 +32,7 @@ SCHEMA_UPDATE_TYPES = {
     TransformType.RENAME.value,
     TransformType.COLUMN_EDITOR.value,
     TransformType.UNIFY.value,
+    TransformType.ANOMALY_DETECTOR.value,
 }
 
 
@@ -157,8 +158,14 @@ def make_transformer_task(
     @task(name=task_name)
     def transformer_task(input_result: NodeResult) -> NodeResult:
         def execute():
+            parameters = node.parameters
+            if node.node_id == TransformType.ANOMALY_DETECTOR.value:
+                parameters = dict(parameters) if not isinstance(parameters, dict) else parameters
+                parameters["workflow_id"] = workflow_id
+                parameters["node_instance_id"] = node.node_instance_id
+
             factory = TransformFactory()
-            transformer = factory.create_transformer(node.parameters, node.node_id)
+            transformer = factory.create_transformer(parameters, node.node_id)
 
             transformed = run_async(
                 with_retry(transformer.transform, input_result.data)
