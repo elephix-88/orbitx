@@ -1,29 +1,19 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Zap,
   CheckCircle2,
   XCircle,
   Clock,
   ArrowRight,
   Loader2,
   RefreshCw,
-  PlayCircle,
   ChevronDown,
   ChevronRight,
-  Activity,
-  TrendingUp,
-  Timer,
-  BarChart3,
-  Link2,
   Plus,
-  Filter,
-  Calendar,
-  DollarSign,
+  Zap,
 } from 'lucide-react';
 import Layout from '@/components/Layout';
-import { DateRangePicker } from '@/components/ui/DateRangePicker';
 import { cn } from '@/lib/utils';
 import { useDeferredLoading } from '@/hooks/useDeferredLoading';
 import { useFetchOnce } from '@/hooks/useStableRequest';
@@ -333,24 +323,27 @@ const DashboardPage = () => {
   if (showLoading) {
     return (
       <Layout>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+        <div className="max-w-6xl mx-auto space-y-6">
+          {/* Header skeleton */}
           <div className="flex items-center justify-between">
-            <div>
-              <div className="h-7 w-32 animate-pulse bg-neutral-800 rounded-md" />
-              <div className="h-4 w-48 mt-2 animate-pulse bg-neutral-800 rounded-md" />
+            <div className="flex-1">
+              <div className="h-6 w-40 animate-pulse bg-neutral-800 rounded" />
+              <div className="h-4 w-56 mt-2 animate-pulse bg-neutral-800 rounded" />
             </div>
-            <div className="h-9 w-24 animate-pulse bg-neutral-800 rounded-md" />
+            <div className="h-9 w-20 animate-pulse bg-neutral-800 rounded" />
           </div>
 
-          <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
-            {[1, 2, 3, 4, 5].map((i) => (
-              <div key={i} className="p-4 h-24 animate-pulse bg-surface-secondary border border-neutral-800 rounded-xl" />
+          {/* KPIs skeleton */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="h-20 animate-pulse bg-neutral-800 rounded-lg" />
             ))}
           </div>
 
+          {/* Main content skeleton */}
           <div className="grid lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2 h-96 animate-pulse bg-surface-secondary border border-neutral-800 rounded-xl" />
-            <div className="h-96 animate-pulse bg-surface-secondary border border-neutral-800 rounded-xl" />
+            <div className="lg:col-span-2 h-96 animate-pulse bg-neutral-800 rounded-lg" />
+            <div className="h-96 animate-pulse bg-neutral-800 rounded-lg" />
           </div>
         </div>
       </Layout>
@@ -359,31 +352,27 @@ const DashboardPage = () => {
 
   return (
     <Layout>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="max-w-6xl mx-auto space-y-6">
+        {/* Header with title and refresh */}
+        <div className="flex items-start justify-between">
           <div>
-            {/* Section accent bar */}
-            <div className="flex items-center gap-3 mb-2">
-              <div className="w-12 h-1 bg-primary-400 rounded-md" />
-            </div>
-            <h1 className="text-2xl font-semibold text-text-primary">Dashboard</h1>
-            <p className="text-sm mt-0.5 text-text-secondary">
-              {workflowCount} workflows &#9632; {stats.totalExecutions} executions
+            <h1 className="text-3xl font-bold text-text-primary tracking-tight">Pipeline Executions</h1>
+            <p className="text-sm text-text-tertiary mt-1">
+              {workflowCount} workflows • {stats.totalExecutions} total runs
             </p>
           </div>
-
           <button
             onClick={() => fetchData(true)}
             disabled={refreshing}
-            className="h-9 px-3 flex items-center gap-2 text-sm transition-colors text-text-secondary bg-surface-secondary border border-neutral-800 rounded-lg hover:bg-surface-tertiary"
+            className="h-9 px-3 flex items-center gap-2 text-xs font-medium transition-all text-text-secondary hover:text-text-primary bg-neutral-800/50 border border-neutral-700/50 rounded-lg hover:bg-neutral-700/50"
+            title="Refresh data"
           >
-            <RefreshCw className={cn("w-4 h-4", refreshing && "animate-spin")} />
-            <span className="hidden sm:inline text-xs">Refresh</span>
+            <RefreshCw className={cn("w-3.5 h-3.5", refreshing && "animate-spin")} />
+            Refresh
           </button>
         </div>
 
-        {/* API Error Banner */}
+        {/* Error Banner */}
         {fetchError && (
           <div className="bg-error/10 border border-error/20 rounded-lg p-4 flex items-center justify-between">
             <p className="text-sm text-error">{fetchError}</p>
@@ -396,73 +385,85 @@ const DashboardPage = () => {
           </div>
         )}
 
-        {/* Stats Grid */}
-        <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
-          <div className="p-4 bg-surface-secondary border border-neutral-800 rounded-xl">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-surface-tertiary rounded-lg">
-                <Activity className="w-5 h-5 text-primary-400" />
-              </div>
-              <div>
-                <p className="text-2xl font-semibold text-text-primary">{stats.totalExecutions}</p>
-                <p className="text-xs text-text-secondary">Total Executions</p>
-              </div>
-            </div>
+        {/* KPI Cards - 4 Column Grid */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          {/* Total Runs - Yellow accent */}
+          <div
+            className="p-4 rounded-lg border transition-all"
+            style={{
+              backgroundColor: 'rgb(15, 15, 18 / 0.8)',
+              borderColor: 'rgba(255, 255, 255, 0.06)',
+              boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.08)',
+            }}
+          >
+            <p className="text-xs uppercase tracking-widest text-neutral-400 font-semibold mb-2">
+              Total Runs
+            </p>
+            <p className="text-3xl font-bold text-primary-400" style={{ fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.02em' }}>
+              {stats.totalExecutions}
+            </p>
           </div>
 
-          <div className="p-4 bg-surface-secondary border border-neutral-800 rounded-xl">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-surface-tertiary rounded-lg">
-                <TrendingUp className="w-5 h-5 text-success" />
-              </div>
-              <div>
-                <p className="text-2xl font-semibold text-text-primary">{stats.successRate}%</p>
-                <p className="text-xs text-text-secondary">Success Rate</p>
-              </div>
-            </div>
+          {/* Success Rate - Green */}
+          <div
+            className="p-4 rounded-lg border transition-all"
+            style={{
+              backgroundColor: 'rgb(15, 15, 18 / 0.8)',
+              borderColor: 'rgba(255, 255, 255, 0.06)',
+              boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.08)',
+            }}
+          >
+            <p className="text-xs uppercase tracking-widest text-neutral-400 font-semibold mb-2">
+              Success Rate
+            </p>
+            <p className="text-3xl font-bold text-success" style={{ fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.02em' }}>
+              {stats.successRate}%
+            </p>
           </div>
 
-          <div className="p-4 bg-surface-secondary border border-neutral-800 rounded-xl">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-surface-tertiary rounded-lg">
-                <XCircle className="w-5 h-5 text-error" />
-              </div>
-              <div>
-                <p className="text-2xl font-semibold text-text-primary">{stats.failedExecutions}</p>
-                <p className="text-xs text-text-secondary">Failed</p>
-              </div>
-            </div>
+          {/* Failed Runs - Red */}
+          <div
+            className="p-4 rounded-lg border transition-all"
+            style={{
+              backgroundColor: 'rgb(15, 15, 18 / 0.8)',
+              borderColor: 'rgba(255, 255, 255, 0.06)',
+              boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.08)',
+            }}
+          >
+            <p className="text-xs uppercase tracking-widest text-neutral-400 font-semibold mb-2">
+              Failed Runs
+            </p>
+            <p className="text-3xl font-bold text-error" style={{ fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.02em' }}>
+              {stats.failedExecutions}
+            </p>
           </div>
 
-          <div className="p-4 bg-surface-secondary border border-neutral-800 rounded-xl">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-surface-tertiary rounded-lg">
-                <Timer className="w-5 h-5 text-text-secondary" />
-              </div>
-              <div>
-                <p className="text-2xl font-semibold text-text-primary">{formatDuration(stats.avgDuration)}</p>
-                <p className="text-xs text-text-secondary">Avg Duration</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="p-4 bg-surface-secondary border border-neutral-800 rounded-xl">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-surface-tertiary rounded-lg">
-                <DollarSign className="w-5 h-5 text-warning" />
-              </div>
-              <div>
-                <p className="text-2xl font-semibold text-warning">{formatCost(stats.totalCost)}</p>
-                <p className="text-xs text-text-secondary">Total Cost</p>
-              </div>
-            </div>
+          {/* Avg Duration */}
+          <div
+            className="p-4 rounded-lg border transition-all"
+            style={{
+              backgroundColor: 'rgb(15, 15, 18 / 0.8)',
+              borderColor: 'rgba(255, 255, 255, 0.06)',
+              boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.08)',
+            }}
+          >
+            <p className="text-xs uppercase tracking-widest text-neutral-400 font-semibold mb-2">
+              Avg Duration
+            </p>
+            <p className="text-3xl font-bold text-neutral-200" style={{ fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.02em' }}>
+              {formatDuration(stats.avgDuration)}
+            </p>
           </div>
         </div>
 
-        {/* Main Content */}
+        {/* Main Content - 2/3 + 1/3 layout */}
         <div className="grid lg:grid-cols-3 gap-6">
-          {/* Recent Executions */}
-          <div className="lg:col-span-2 overflow-hidden bg-surface-secondary border border-neutral-800 rounded-xl">
+          {/* Execution Log Table - 2/3 width */}
+          <div className="lg:col-span-2 overflow-hidden rounded-lg border transition-all" style={{
+            backgroundColor: 'rgb(15, 15, 18 / 0.8)',
+            borderColor: 'rgba(255, 255, 255, 0.06)',
+            boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.08)',
+          }}>
             <div className="flex items-center justify-between px-4 py-3 border-b border-neutral-800">
               <div className="flex items-center gap-2">
                 <Clock className="w-4 h-4 text-primary-400" />
