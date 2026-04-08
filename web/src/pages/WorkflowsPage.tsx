@@ -3,49 +3,32 @@ import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { workflowApiService } from "@/services/workflowApiService";
 import Layout from "../components/Layout";
-import { useWorkflows, useWorkflowCategories } from "../hooks/useWorkflows";
+import { useWorkflows } from "../hooks/useWorkflows";
 import { useDeferredLoading } from "../hooks/useDeferredLoading";
 import { getRelativeTime } from "../utils/workflowTransformers";
 import {
   Plus,
-  Grid as GridIcon,
-  List as ListIcon,
   RefreshCw,
   Play,
   Edit,
   Trash2,
-  Clock,
   Search,
   Zap,
-  Activity,
-  Pause,
-  Check,
   History,
-  ChevronDown,
-  Calendar,
   MoreHorizontal,
   X,
   FileText,
   Sparkles,
   Copy,
+  GitBranch,
+  ChevronDown,
 } from "lucide-react";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { ExecutionHistoryModal } from "@/components/workflow/ExecutionHistoryModal";
 import { TemplateSelector } from "@/components/workflow/TemplateSelector";
 import { templateToWorkflow, WorkflowTemplate } from "@/data/workflowTemplates";
 import { cn } from "@/lib/utils";
-import { Switch } from "@/components/shared/form/Switch";
-import { Button } from "@/components/shared/Button";
 import { WorkflowStatus } from "../types/workflow";
-
-interface StatusConfig {
-  color: string;
-  text: string;
-  bg: string;
-  icon: React.ComponentType<{ className?: string }>;
-  dot: string;
-  borderClass: string;
-}
 
 const WorkflowsPage = () => {
   const navigate = useNavigate();
@@ -57,8 +40,6 @@ const WorkflowsPage = () => {
     deleteWorkflow,
     duplicateWorkflow,
     executeWorkflow,
-    setStatus,
-    updatingStatusId,
     executingWorkflowId,
     duplicatingWorkflowId,
   } = useWorkflows();
@@ -66,26 +47,14 @@ const WorkflowsPage = () => {
   const showLoading = useDeferredLoading(loading, 150);
 
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState("All");
   const [selectedStatus, setSelectedStatus] = useState<"All" | WorkflowStatus>("All");
-  const [isGridView, setIsGridView] = useState(() => {
-    try { return localStorage.getItem('workflows-grid-view') === 'true'; } catch { return false; }
-  });
   const [debouncedSearch, setDebouncedSearch] = useState("");
-  const [categoryDropdownOpen, setCategoryDropdownOpen] = useState(false);
   const [confirmTargetId, setConfirmTargetId] = useState<string | null>(null);
   const [isConfirming, setIsConfirming] = useState(false);
   const [logsWorkflow, setLogsWorkflow] = useState<{ id: string; name: string } | null>(null);
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [showNewWorkflowMenu, setShowNewWorkflowMenu] = useState(false);
   const [showTemplateSelector, setShowTemplateSelector] = useState(false);
-
-  const categories = useWorkflowCategories(workflows);
-
-  // Persist grid/list view preference
-  useEffect(() => {
-    try { localStorage.setItem('workflows-grid-view', String(isGridView)); } catch {}
-  }, [isGridView]);
 
   // Debounce search term
   useEffect(() => {
@@ -96,30 +65,10 @@ const WorkflowsPage = () => {
   const filteredWorkflows = useMemo(() => {
     return workflows.filter((w) => {
       const matchesText = w.name.toLowerCase().includes(debouncedSearch.toLowerCase());
-      const matchesCategory = selectedCategory === "All" || w.category === selectedCategory;
       const matchesStatus = selectedStatus === "All" || w.status === selectedStatus;
-      return matchesText && matchesCategory && matchesStatus;
+      return matchesText && matchesStatus;
     });
-  }, [workflows, debouncedSearch, selectedCategory, selectedStatus]);
-
-  const statusConfig: Record<string, StatusConfig> = {
-    [WorkflowStatus.ACTIVE]: {
-      color: "text-success-dark",
-      text: "Active",
-      bg: "bg-success/10",
-      icon: Zap,
-      dot: "bg-success",
-      borderClass: "border-l-success",
-    },
-    [WorkflowStatus.PAUSED]: {
-      color: "text-warning-dark",
-      text: "Paused",
-      bg: "bg-warning/10",
-      icon: Pause,
-      dot: "bg-warning",
-      borderClass: "border-l-warning",
-    },
-  };
+  }, [workflows, debouncedSearch, selectedStatus]);
 
   const handleEditWorkflow = async (idOrJobId: string) => {
     try {
@@ -166,10 +115,7 @@ const WorkflowsPage = () => {
   };
 
   const handleSelectTemplate = (template: WorkflowTemplate) => {
-    // Convert template to workflow nodes and connections with unique IDs
     const { nodes, connections } = templateToWorkflow(template);
-
-    // Navigate to builder with template data
     navigate("/workflows/builder", {
       state: {
         template: {
@@ -182,20 +128,40 @@ const WorkflowsPage = () => {
     });
   };
 
-  const activeCount = workflows.filter((w) => w.status === WorkflowStatus.ACTIVE).length;
-  const pausedCount = workflows.filter((w) => w.status === WorkflowStatus.PAUSED).length;
-
   if (error) {
     return (
       <Layout>
-        <div className="min-h-screen flex items-center justify-center">
-          <div className="p-8 text-center max-w-md mx-4 bg-surface-secondary border border-neutral-800 rounded-xl">
-            <div className="w-16 h-16 flex items-center justify-center mx-auto mb-4 bg-error rounded-lg">
-              <Activity className="w-8 h-8 text-white" />
+        <div className="min-h-[60vh] flex items-center justify-center">
+          <div 
+            className="p-8 text-center max-w-md rounded-[14px]"
+            style={{ 
+              backgroundColor: 'rgb(22, 22, 25)',
+              border: '1px solid rgba(255, 255, 255, 0.055)',
+            }}
+          >
+            <div 
+              className="w-12 h-12 flex items-center justify-center mx-auto mb-4 rounded-lg"
+              style={{ backgroundColor: '#EF4444' }}
+            >
+              <GitBranch size={24} className="text-white" />
             </div>
-            <h2 className="text-xl font-semibold mb-2 text-text-primary">Failed to load workflows</h2>
-            <p className="mb-6 text-text-secondary">{error}</p>
-            <button onClick={refreshWorkflows} className="px-6 py-2 text-neutral-950 font-medium bg-primary-400 hover:bg-primary-500 rounded-md transition-colors">
+            <h2 
+              className="text-[16px] font-semibold mb-2"
+              style={{ color: 'rgba(255, 255, 255, 0.88)' }}
+            >
+              Failed to load workflows
+            </h2>
+            <p 
+              className="text-[13px] mb-6"
+              style={{ color: 'rgba(255, 255, 255, 0.50)' }}
+            >
+              {error}
+            </p>
+            <button 
+              onClick={refreshWorkflows} 
+              className="px-4 py-2 text-[13px] font-medium rounded-lg"
+              style={{ backgroundColor: '#FACC15', color: 'rgb(13, 13, 16)' }}
+            >
               Try Again
             </button>
           </div>
@@ -206,496 +172,479 @@ const WorkflowsPage = () => {
 
   return (
     <Layout>
-      <div className="min-h-screen pb-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
-          {/* Header */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div>
-              <div className="flex items-center gap-3 mb-2">
-                <div className="w-12 h-1 bg-primary-400" />
-              </div>
-              <h1 className="text-2xl font-semibold text-text-primary">Workflows</h1>
-              <p className="text-sm mt-0.5 text-text-secondary">
-                {workflows.length} workflows &#9632; {activeCount} active &#9632; {pausedCount} paused
-              </p>
-            </div>
-
-            <div className="flex items-center gap-2">
-              <button
-                onClick={refreshWorkflows}
-                disabled={loading}
-                className="h-9 px-3 flex items-center gap-2 text-sm transition-colors text-text-secondary bg-surface-secondary border border-neutral-800 rounded-md hover:bg-surface-tertiary"
-              >
-                <RefreshCw className={cn("w-4 h-4", loading && "animate-spin")} />
-                <span className="hidden sm:inline text-xs">Refresh</span>
-              </button>
-              <div className="relative">
-                <button
-                  onClick={() => setShowNewWorkflowMenu(!showNewWorkflowMenu)}
-                  className="h-9 px-4 flex items-center gap-2 text-sm font-medium text-neutral-950 transition-colors bg-primary-400 hover:bg-primary-500 rounded-md"
-                >
-                  <Plus className="w-4 h-4" />
-                  New Workflow
-                  <ChevronDown className={cn("w-4 h-4 transition-transform", showNewWorkflowMenu && "rotate-180")} />
-                </button>
-
-                {/* Dropdown Menu */}
-                {showNewWorkflowMenu && (
-                  <>
-                    <div
-                      className="fixed inset-0 z-40"
-                      onClick={() => setShowNewWorkflowMenu(false)}
-                    />
-                    <div className="absolute right-0 mt-2 w-56 overflow-hidden z-50 bg-surface-secondary border border-neutral-800 rounded-lg shadow-md">
-                      <button
-                        onClick={() => {
-                          navigate("/workflows/builder");
-                          setShowNewWorkflowMenu(false);
-                        }}
-                        className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-surface-tertiary transition-colors"
-                      >
-                        <div className="p-2 bg-surface-tertiary rounded-md">
-                          <FileText className="w-4 h-4 text-text-secondary" />
-                        </div>
-                        <div>
-                          <div className="text-sm font-medium text-text-primary">Blank Workflow</div>
-                          <div className="text-xs text-text-secondary">Start from scratch</div>
-                        </div>
-                      </button>
-                      <button
-                        onClick={() => {
-                          setShowTemplateSelector(true);
-                          setShowNewWorkflowMenu(false);
-                        }}
-                        className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-surface-tertiary transition-colors border-t border-neutral-800"
-                      >
-                        <div className="p-2 bg-primary-400 rounded-md">
-                          <Sparkles className="w-4 h-4 text-neutral-950" />
-                        </div>
-                        <div>
-                          <div className="text-sm font-medium text-text-primary">From Template</div>
-                          <div className="text-xs text-text-secondary">Use a pre-built workflow</div>
-                        </div>
-                      </button>
-                    </div>
-                  </>
-                )}
-              </div>
-            </div>
+      <div className="space-y-6">
+        {/* Page Header */}
+        <div className="flex items-start justify-between">
+          <div>
+            <h1 
+              className="font-display text-[18px] font-semibold"
+              style={{ color: 'rgba(255, 255, 255, 0.88)' }}
+            >
+              Workflows
+            </h1>
+            <p 
+              className="text-[12px] mt-1"
+              style={{ color: 'rgba(255, 255, 255, 0.28)' }}
+            >
+              {workflows.length} workflow{workflows.length !== 1 ? 's' : ''}
+            </p>
           </div>
 
-          {/* Filters Bar */}
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 p-3 bg-surface-secondary border border-neutral-800 rounded-lg">
-            {/* Search */}
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-secondary" />
-              <input
-                type="text"
-                placeholder="Search workflows..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full h-9 pl-9 pr-9 text-sm focus:outline-none transition-all bg-neutral-900 border border-neutral-700 rounded-md text-text-primary placeholder:text-text-tertiary focus:border-primary-400 focus:ring-1 focus:ring-primary-400"
-              />
-              {searchTerm && (
-                <button
-                  onClick={() => setSearchTerm("")}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary hover:text-text-primary"
-                >
-                  <X className="w-4 h-4" />
-                </button>
-              )}
-            </div>
+          <div className="relative">
+            <button
+              onClick={() => setShowNewWorkflowMenu(!showNewWorkflowMenu)}
+              className="h-8 px-4 flex items-center gap-2 text-[13px] font-medium rounded-lg"
+              style={{ backgroundColor: '#FACC15', color: 'rgb(13, 13, 16)' }}
+            >
+              <Plus size={14} />
+              New Workflow
+              <ChevronDown size={14} className={cn("transition-transform", showNewWorkflowMenu && "rotate-180")} />
+            </button>
 
-            <div className="flex items-center gap-2">
-              {/* Category Dropdown */}
-              <div className="relative">
-                <button
-                  onClick={() => setCategoryDropdownOpen(!categoryDropdownOpen)}
-                  className="h-9 px-3 flex items-center gap-2 text-sm transition-colors min-w-[120px] bg-surface-secondary border border-neutral-800 rounded-md text-text-primary hover:bg-surface-tertiary"
-                >
-                  <span>{selectedCategory}</span>
-                  <ChevronDown className={cn("w-4 h-4 ml-auto transition-transform text-text-secondary", categoryDropdownOpen && "rotate-180")} />
-                </button>
-                {categoryDropdownOpen && (
-                  <div className="absolute z-50 mt-1 w-full overflow-hidden bg-surface-secondary border border-neutral-800 rounded-lg shadow-md">
-                    {categories.map((cat) => (
-                      <button
-                        key={cat}
-                        onClick={() => {
-                          setSelectedCategory(cat);
-                          setCategoryDropdownOpen(false);
-                        }}
-                        className={cn(
-                          "w-full px-3 py-2 text-left text-sm hover:bg-surface-tertiary transition-colors flex items-center justify-between text-text-primary",
-                          cat === selectedCategory && "bg-surface-tertiary"
-                        )}
-                      >
-                        <span>{cat}</span>
-                        {cat === selectedCategory && <Check className="w-4 h-4 text-primary-400" />}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Status Tabs */}
-              <div className="flex p-0.5 bg-surface-secondary border border-neutral-800 rounded-md">
-                {([
-                  { key: "All", label: "All" },
-                  { key: WorkflowStatus.ACTIVE, label: "Active" },
-                  { key: WorkflowStatus.PAUSED, label: "Paused" },
-                ] as const).map((tab) => (
-                  <button
-                    key={tab.key}
-                    onClick={() => setSelectedStatus(tab.key as "All" | WorkflowStatus)}
-                    className={cn(
-                      "px-3 py-1.5 text-sm font-medium transition-all rounded-md",
-                      selectedStatus === tab.key
-                        ? "bg-neutral-800 text-primary-400"
-                        : "text-text-secondary hover:text-text-primary hover:bg-surface-tertiary"
-                    )}
-                  >
-                    {tab.label}
-                  </button>
-                ))}
-              </div>
-
-              {/* View Toggle */}
-              <div className="flex p-0.5 bg-surface-secondary border border-neutral-800 rounded-md">
-                <button
-                  onClick={() => setIsGridView(true)}
-                  className={cn(
-                    "p-1.5 transition-all rounded-md",
-                    isGridView
-                      ? "bg-neutral-800 text-primary-400"
-                      : "text-text-secondary hover:text-text-primary hover:bg-surface-tertiary"
-                  )}
-                >
-                  <GridIcon className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => setIsGridView(false)}
-                  className={cn(
-                    "p-1.5 transition-all rounded-md",
-                    !isGridView
-                      ? "bg-neutral-800 text-primary-400"
-                      : "text-text-secondary hover:text-text-primary hover:bg-surface-tertiary"
-                  )}
-                >
-                  <ListIcon className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Workflows */}
-          <AnimatePresence mode="wait">
-            {showLoading ? (
-              <motion.div
-                key="loading"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className={cn(
-                  isGridView
-                    ? "grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4"
-                    : "space-y-2"
-                )}
-              >
-                {[1, 2, 3, 4, 5, 6].map((i) => (
+            {/* Dropdown Menu */}
+            <AnimatePresence>
+              {showNewWorkflowMenu && (
+                <>
                   <div
-                    key={i}
-                    className={cn(
-                      "animate-pulse bg-surface-secondary border border-neutral-800 rounded-xl",
-                      isGridView ? "p-4 h-48" : "p-4 h-20"
-                    )}
+                    className="fixed inset-0 z-40"
+                    onClick={() => setShowNewWorkflowMenu(false)}
+                  />
+                  <motion.div 
+                    initial={{ opacity: 0, y: -4 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -4 }}
+                    className="absolute right-0 mt-2 w-56 z-50 rounded-lg overflow-hidden"
+                    style={{ 
+                      backgroundColor: 'rgb(22, 22, 25)',
+                      border: '1px solid rgba(255, 255, 255, 0.055)',
+                      boxShadow: '0 8px 30px rgba(0, 0, 0, 0.5)',
+                    }}
                   >
-                    <div className="flex items-start gap-3">
-                      <div className="w-10 h-10 bg-neutral-800 rounded-md" />
-                      <div className="flex-1 space-y-2">
-                        <div className="h-4 w-32 bg-neutral-800 rounded-md" />
-                        <div className="h-3 w-24 bg-neutral-800 rounded-md" />
+                    <button
+                      onClick={() => {
+                        navigate("/workflows/builder");
+                        setShowNewWorkflowMenu(false);
+                      }}
+                      className="w-full flex items-center gap-3 px-4 py-3 text-left transition-colors"
+                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.03)'}
+                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                    >
+                      <div 
+                        className="p-2 rounded-lg"
+                        style={{ backgroundColor: 'rgba(255, 255, 255, 0.06)' }}
+                      >
+                        <FileText size={14} style={{ color: 'rgba(255, 255, 255, 0.50)' }} />
+                      </div>
+                      <div>
+                        <div 
+                          className="text-[13px] font-medium"
+                          style={{ color: 'rgba(255, 255, 255, 0.88)' }}
+                        >
+                          Blank Workflow
+                        </div>
+                        <div 
+                          className="text-[11px]"
+                          style={{ color: 'rgba(255, 255, 255, 0.28)' }}
+                        >
+                          Start from scratch
+                        </div>
+                      </div>
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowTemplateSelector(true);
+                        setShowNewWorkflowMenu(false);
+                      }}
+                      className="w-full flex items-center gap-3 px-4 py-3 text-left transition-colors"
+                      style={{ borderTop: '1px solid rgba(255, 255, 255, 0.055)' }}
+                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.03)'}
+                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                    >
+                      <div 
+                        className="p-2 rounded-lg"
+                        style={{ backgroundColor: '#FACC15' }}
+                      >
+                        <Sparkles size={14} style={{ color: 'rgb(13, 13, 16)' }} />
+                      </div>
+                      <div>
+                        <div 
+                          className="text-[13px] font-medium"
+                          style={{ color: 'rgba(255, 255, 255, 0.88)' }}
+                        >
+                          From Template
+                        </div>
+                        <div 
+                          className="text-[11px]"
+                          style={{ color: 'rgba(255, 255, 255, 0.28)' }}
+                        >
+                          Use a pre-built workflow
+                        </div>
+                      </div>
+                    </button>
+                  </motion.div>
+                </>
+              )}
+            </AnimatePresence>
+          </div>
+        </div>
+
+        {/* Toolbar */}
+        <div className="flex items-center gap-3">
+          {/* Search */}
+          <div className="relative flex-1">
+            <Search 
+              size={14} 
+              className="absolute left-3 top-1/2 -translate-y-1/2"
+              style={{ color: 'rgba(255, 255, 255, 0.28)' }}
+            />
+            <input
+              type="text"
+              placeholder="Search workflows..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full h-9 pl-9 pr-9 text-[13px] focus:outline-none rounded-lg transition-colors"
+              style={{ 
+                backgroundColor: 'rgb(28, 28, 33)',
+                border: '1px solid rgba(255, 255, 255, 0.055)',
+                color: 'rgba(255, 255, 255, 0.88)',
+              }}
+            />
+            {searchTerm && (
+              <button
+                onClick={() => setSearchTerm("")}
+                className="absolute right-3 top-1/2 -translate-y-1/2"
+                style={{ color: 'rgba(255, 255, 255, 0.28)' }}
+              >
+                <X size={14} />
+              </button>
+            )}
+          </div>
+
+          {/* Status Filter */}
+          <div 
+            className="flex p-0.5 rounded-lg"
+            style={{ 
+              backgroundColor: 'rgb(28, 28, 33)',
+              border: '1px solid rgba(255, 255, 255, 0.055)',
+            }}
+          >
+            {([
+              { key: "All", label: "All" },
+              { key: WorkflowStatus.ACTIVE, label: "Active" },
+              { key: WorkflowStatus.PAUSED, label: "Paused" },
+            ] as const).map((tab) => (
+              <button
+                key={tab.key}
+                onClick={() => setSelectedStatus(tab.key as "All" | WorkflowStatus)}
+                className="px-3 py-1.5 text-[12px] font-medium transition-all rounded-md"
+                style={{
+                  backgroundColor: selectedStatus === tab.key ? 'rgba(255, 255, 255, 0.06)' : 'transparent',
+                  color: selectedStatus === tab.key ? '#FACC15' : 'rgba(255, 255, 255, 0.50)',
+                }}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Refresh */}
+          <button
+            onClick={refreshWorkflows}
+            disabled={loading}
+            className="h-9 px-3 flex items-center gap-2 text-[12px] font-medium rounded-lg transition-colors"
+            style={{ 
+              backgroundColor: 'transparent',
+              border: '1px solid rgba(255, 255, 255, 0.055)',
+              color: 'rgba(255, 255, 255, 0.50)',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.03)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'transparent';
+            }}
+          >
+            <RefreshCw size={14} className={cn(loading && "animate-spin")} />
+          </button>
+        </div>
+
+        {/* Workflow List */}
+        <AnimatePresence mode="wait">
+          {showLoading ? (
+            <motion.div
+              key="loading"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="space-y-3"
+            >
+              {[1, 2, 3].map((i) => (
+                <div
+                  key={i}
+                  className="h-24 animate-pulse rounded-[14px]"
+                  style={{ backgroundColor: 'rgba(255, 255, 255, 0.03)' }}
+                />
+              ))}
+            </motion.div>
+          ) : filteredWorkflows.length === 0 ? (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="py-16 text-center rounded-[14px]"
+              style={{ 
+                backgroundColor: 'rgb(22, 22, 25)',
+                border: '2px dashed rgba(255, 255, 255, 0.055)',
+              }}
+            >
+              <GitBranch 
+                size={40} 
+                className="mx-auto mb-4"
+                style={{ color: 'rgba(255, 255, 255, 0.16)' }}
+              />
+              <h3 
+                className="text-[16px] font-medium mb-2"
+                style={{ color: 'rgba(255, 255, 255, 0.50)' }}
+              >
+                {searchTerm || selectedStatus !== "All" ? "No workflows found" : "No workflows yet"}
+              </h3>
+              <p 
+                className="text-[13px] mb-6 max-w-sm mx-auto"
+                style={{ color: 'rgba(255, 255, 255, 0.28)' }}
+              >
+                {searchTerm || selectedStatus !== "All"
+                  ? "Try adjusting your filters to find what you're looking for."
+                  : "Build your first data pipeline to get started."}
+              </p>
+              <button
+                onClick={() => navigate("/workflows/builder")}
+                className="inline-flex items-center gap-2 px-4 py-2 text-[13px] font-medium rounded-lg"
+                style={{ backgroundColor: '#FACC15', color: 'rgb(13, 13, 16)' }}
+              >
+                <Plus size={14} />
+                New Workflow
+              </button>
+            </motion.div>
+          ) : (
+            <motion.div
+              key="list"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="space-y-3"
+            >
+              {filteredWorkflows.map((workflow) => {
+                const isActive = workflow.status === WorkflowStatus.ACTIVE;
+                const statusColor = isActive ? '#10B981' : '#F59E0B';
+                const statusText = isActive ? 'Active' : 'Paused';
+
+                return (
+                  <motion.div
+                    key={workflow.id}
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="group flex items-center gap-4 px-5 py-4 rounded-[14px] transition-colors"
+                    style={{ 
+                      backgroundColor: 'rgb(22, 22, 25)',
+                      border: '1px solid rgba(255, 255, 255, 0.055)',
+                      boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.05)',
+                    }}
+                    onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgb(24, 24, 28)'}
+                    onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'rgb(22, 22, 25)'}
+                  >
+                    {/* Left Icon */}
+                    <div 
+                      className="w-9 h-9 flex items-center justify-center rounded-[10px] flex-shrink-0"
+                      style={{ backgroundColor: 'rgba(255, 255, 255, 0.06)' }}
+                    >
+                      <Zap size={16} style={{ color: '#FACC15' }} />
+                    </div>
+
+                    {/* Workflow Info */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <h3 
+                          className="text-[14px] font-semibold truncate cursor-pointer transition-colors"
+                          style={{ color: 'rgba(255, 255, 255, 0.88)' }}
+                          onClick={() => handleEditWorkflow(workflow.id)}
+                          onMouseEnter={(e) => e.currentTarget.style.color = '#FACC15'}
+                          onMouseLeave={(e) => e.currentTarget.style.color = 'rgba(255, 255, 255, 0.88)'}
+                        >
+                          {workflow.name}
+                        </h3>
+                      </div>
+                      <p 
+                        className="text-[12px] mt-0.5"
+                        style={{ color: 'rgba(255, 255, 255, 0.28)' }}
+                      >
+                        {workflow.nodes?.length || 0} nodes &middot; Last run {workflow.lastRun === "Never" ? "never" : getRelativeTime(workflow.updatedAt)}
+                      </p>
+                      {/* Node type pills */}
+                      <div className="flex items-center gap-1.5 mt-2">
+                        {workflow.nodes?.slice(0, 3).map((node, idx) => (
+                          <span 
+                            key={idx}
+                            className="text-[11px] px-2 py-0.5 rounded-md"
+                            style={{ 
+                              backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                              border: '1px solid rgba(255, 255, 255, 0.055)',
+                              color: 'rgba(255, 255, 255, 0.50)',
+                            }}
+                          >
+                            {node.type || 'Node'}
+                          </span>
+                        ))}
+                        {(workflow.nodes?.length || 0) > 3 && (
+                          <span 
+                            className="text-[11px]"
+                            style={{ color: 'rgba(255, 255, 255, 0.28)' }}
+                          >
+                            +{workflow.nodes!.length - 3} more
+                          </span>
+                        )}
                       </div>
                     </div>
-                  </div>
-                ))}
-              </motion.div>
-            ) : filteredWorkflows.length === 0 ? (
-              <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="p-12 text-center bg-surface-secondary border-2 border-dashed border-neutral-800 rounded-xl"
-              >
-                <div className="w-16 h-16 flex items-center justify-center mx-auto mb-4 bg-surface-tertiary rounded-lg">
-                  <Search className="w-8 h-8 text-text-secondary" />
-                </div>
-                <h3 className="text-lg font-medium mb-2 text-text-primary">No workflows found</h3>
-                <p className="text-sm mb-6 max-w-sm mx-auto text-text-secondary">
-                  {searchTerm || selectedCategory !== "All" || selectedStatus !== "All"
-                    ? "Try adjusting your filters to find what you're looking for."
-                    : "Get started by creating your first workflow."}
-                </p>
-                <button
-                  onClick={() => navigate("/workflows/builder")}
-                  className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-neutral-950 transition-colors bg-primary-400 hover:bg-primary-500 rounded-md"
-                >
-                  <Plus className="w-4 h-4" />
-                  Create Workflow
-                </button>
-              </motion.div>
-            ) : isGridView ? (
-              <motion.div
-                key="grid"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4"
-              >
-                {filteredWorkflows.map((workflow) => {
-                  const config = statusConfig[workflow.status];
-                  return (
-                    <motion.div
-                      key={workflow.id}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className={cn(
-                        "group overflow-hidden transition-all bg-surface-secondary border border-neutral-800 border-l-4 rounded-xl",
-                        config.borderClass
-                      )}
-                    >
-                      {/* Card Header */}
-                      <div className="p-4 pb-3">
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="flex items-start gap-3 min-w-0 flex-1">
-                            <div className="p-2 flex-shrink-0 bg-surface-tertiary rounded-md">
-                              <config.icon className={cn("w-5 h-5", config.color)} />
-                            </div>
-                            <div className="min-w-0 flex-1">
-                              <h3
-                                className="font-medium truncate cursor-pointer transition-colors text-text-primary hover:text-primary-400"
-                                onClick={() => handleEditWorkflow(workflow.id)}
-                              >
-                                {workflow.name}
-                              </h3>
-                              <div className="flex items-center gap-2 mt-1">
-                                <span className={cn("inline-flex items-center gap-1 text-xs font-medium", config.color)}>
-                                  <span className={cn("w-1.5 h-1.5 rounded-full", config.dot)} />
-                                  {config.text}
-                                </span>
-                                <span className="text-xs text-text-tertiary">&#9632;</span>
-                                <span className="text-xs text-text-secondary">{workflow.category}</span>
-                              </div>
-                            </div>
-                          </div>
 
-                          {/* Actions Menu */}
-                          <div className="relative">
-                            <button
-                              onClick={() => setOpenMenuId(openMenuId === workflow.id ? null : workflow.id)}
-                              className="p-1.5 transition-colors text-text-secondary hover:text-text-primary rounded-md hover:bg-surface-tertiary"
-                            >
-                              <MoreHorizontal className="w-4 h-4" />
-                            </button>
-                            {openMenuId === workflow.id && (
-                              <div className="absolute right-0 top-8 z-50 w-40 overflow-hidden bg-surface-secondary border border-neutral-800 rounded-lg shadow-md">
+                    {/* Last run info (center-right) */}
+                    <div className="flex flex-col items-end mr-4">
+                      <div className="flex items-center gap-1.5">
+                        <span 
+                          className="w-1.5 h-1.5 rounded-full"
+                          style={{ backgroundColor: statusColor }}
+                        />
+                        <span 
+                          className="text-[13px]"
+                          style={{ color: statusColor }}
+                        >
+                          {statusText}
+                        </span>
+                      </div>
+                      <span 
+                        className="text-[11px] mt-0.5"
+                        style={{ color: 'rgba(255, 255, 255, 0.28)' }}
+                      >
+                        {workflow.executions || 0} runs total
+                      </span>
+                    </div>
+
+                    {/* Action Buttons (visible on hover) */}
+                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button
+                        onClick={() => handleExecuteWorkflow(workflow.id)}
+                        disabled={executingWorkflowId === workflow.id || !isActive}
+                        className="h-8 px-3 flex items-center gap-1.5 text-[12px] font-medium rounded-lg transition-colors disabled:opacity-40"
+                        style={{ 
+                          backgroundColor: 'transparent',
+                          border: '1px solid rgba(255, 255, 255, 0.055)',
+                          color: 'rgba(255, 255, 255, 0.50)',
+                        }}
+                        onMouseEnter={(e) => {
+                          if (!e.currentTarget.disabled) {
+                            e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.03)';
+                            e.currentTarget.style.color = 'rgba(255, 255, 255, 0.88)';
+                          }
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.backgroundColor = 'transparent';
+                          e.currentTarget.style.color = 'rgba(255, 255, 255, 0.50)';
+                        }}
+                      >
+                        <Play size={12} fill="currentColor" />
+                        Run
+                      </button>
+
+                      {/* More menu */}
+                      <div className="relative">
+                        <button
+                          onClick={() => setOpenMenuId(openMenuId === workflow.id ? null : workflow.id)}
+                          className="w-8 h-8 flex items-center justify-center rounded-lg transition-colors"
+                          style={{ 
+                            backgroundColor: openMenuId === workflow.id ? 'rgba(255, 255, 255, 0.06)' : 'transparent',
+                            color: 'rgba(255, 255, 255, 0.50)',
+                          }}
+                          onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.06)'}
+                          onMouseLeave={(e) => {
+                            if (openMenuId !== workflow.id) {
+                              e.currentTarget.style.backgroundColor = 'transparent';
+                            }
+                          }}
+                        >
+                          <MoreHorizontal size={16} />
+                        </button>
+
+                        <AnimatePresence>
+                          {openMenuId === workflow.id && (
+                            <>
+                              <div
+                                className="fixed inset-0 z-40"
+                                onClick={() => setOpenMenuId(null)}
+                              />
+                              <motion.div 
+                                initial={{ opacity: 0, y: -4 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -4 }}
+                                className="absolute right-0 top-10 z-50 w-40 rounded-lg overflow-hidden"
+                                style={{ 
+                                  backgroundColor: 'rgb(22, 22, 25)',
+                                  border: '1px solid rgba(255, 255, 255, 0.055)',
+                                  boxShadow: '0 8px 30px rgba(0, 0, 0, 0.5)',
+                                }}
+                              >
                                 <button
                                   onClick={() => {
                                     setLogsWorkflow({ id: workflow.id, name: workflow.name });
                                     setOpenMenuId(null);
                                   }}
-                                  className="w-full px-3 py-2 text-left text-sm hover:bg-surface-tertiary transition-colors flex items-center gap-2 text-text-primary"
+                                  className="w-full px-3 py-2 text-left text-[13px] flex items-center gap-2 transition-colors"
+                                  style={{ color: 'rgba(255, 255, 255, 0.88)' }}
+                                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.03)'}
+                                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                                 >
-                                  <History className="w-4 h-4 text-info" />
-                                  View Logs
+                                  <History size={14} style={{ color: '#3B82F6' }} />
+                                  View History
+                                </button>
+                                <button
+                                  onClick={() => handleEditWorkflow(workflow.id)}
+                                  className="w-full px-3 py-2 text-left text-[13px] flex items-center gap-2 transition-colors"
+                                  style={{ color: 'rgba(255, 255, 255, 0.88)' }}
+                                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.03)'}
+                                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                                >
+                                  <Edit size={14} style={{ color: '#FACC15' }} />
+                                  Edit
                                 </button>
                                 <button
                                   onClick={() => handleDuplicateWorkflow(workflow.id)}
                                   disabled={duplicatingWorkflowId === workflow.id}
-                                  className="w-full px-3 py-2 text-left text-sm hover:bg-surface-tertiary transition-colors flex items-center gap-2 disabled:opacity-50 text-text-primary"
+                                  className="w-full px-3 py-2 text-left text-[13px] flex items-center gap-2 transition-colors disabled:opacity-50"
+                                  style={{ color: 'rgba(255, 255, 255, 0.88)' }}
+                                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.03)'}
+                                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                                 >
-                                  <Copy className="w-4 h-4 text-success" />
+                                  <Copy size={14} style={{ color: '#10B981' }} />
                                   {duplicatingWorkflowId === workflow.id ? "Duplicating..." : "Duplicate"}
                                 </button>
                                 <button
-                                  onClick={() => {
-                                    handleEditWorkflow(workflow.id);
-                                    setOpenMenuId(null);
-                                  }}
-                                  className="w-full px-3 py-2 text-left text-sm hover:bg-surface-tertiary transition-colors flex items-center gap-2 text-text-primary"
-                                >
-                                  <Edit className="w-4 h-4 text-primary-400" />
-                                  Edit
-                                </button>
-                                <button
                                   onClick={() => handleDeleteWorkflow(workflow.id)}
-                                  className="w-full px-3 py-2 text-left text-sm hover:bg-error-light transition-colors flex items-center gap-2 text-error"
+                                  className="w-full px-3 py-2 text-left text-[13px] flex items-center gap-2 transition-colors"
+                                  style={{ color: '#EF4444' }}
+                                  onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.1)'}
+                                  onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
                                 >
-                                  <Trash2 className="w-4 h-4" />
+                                  <Trash2 size={14} />
                                   Delete
                                 </button>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-
-                        <p className="text-xs line-clamp-2 mt-3 leading-relaxed text-text-secondary">
-                          {workflow.description || "No description"}
-                        </p>
+                              </motion.div>
+                            </>
+                          )}
+                        </AnimatePresence>
                       </div>
-
-                      {/* Card Footer */}
-                      <div className="px-4 py-3 flex items-center justify-between bg-surface-tertiary border-t border-neutral-800">
-                        <div className="flex items-center gap-4 text-xs text-text-secondary">
-                          <span className="flex items-center gap-1">
-                            <Clock className="w-3.5 h-3.5" />
-                            {workflow.lastRun === "Never" ? "Never run" : getRelativeTime(workflow.updatedAt)}
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <Calendar className="w-3.5 h-3.5" />
-                            {workflow.nextRun}
-                          </span>
-                        </div>
-
-                        <div className="flex items-center gap-2">
-                          <Switch
-                            checked={workflow.status === WorkflowStatus.ACTIVE}
-                            onChange={(checked) =>
-                              setStatus(workflow.id, checked ? WorkflowStatus.ACTIVE : WorkflowStatus.PAUSED)
-                            }
-                            disabled={updatingStatusId === workflow.id}
-                            size="sm"
-                          />
-                          <Button
-                            onClick={() => handleExecuteWorkflow(workflow.id)}
-                            disabled={executingWorkflowId === workflow.id || workflow.status !== WorkflowStatus.ACTIVE}
-                            isLoading={executingWorkflowId === workflow.id}
-                            leftIcon={<Play className="w-3 h-3 fill-current" />}
-                            size="sm"
-                            className="h-7 px-2.5"
-                          >
-                            Run
-                          </Button>
-                        </div>
-                      </div>
-                    </motion.div>
-                  );
-                })}
-              </motion.div>
-            ) : (
-              <motion.div
-                key="list"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="overflow-hidden bg-surface-secondary border border-neutral-800 rounded-xl"
-              >
-                {/* Table Header */}
-                <div className="grid grid-cols-12 gap-4 px-4 py-3 text-xs font-medium bg-surface-tertiary border-b border-neutral-800 text-text-secondary">
-                  <div className="col-span-4">Workflow</div>
-                  <div className="col-span-2">Status</div>
-                  <div className="col-span-2">Schedule</div>
-                  <div className="col-span-2">Last Run</div>
-                  <div className="col-span-2 text-right">Actions</div>
-                </div>
-
-                {/* Table Body */}
-                <div>
-                  {filteredWorkflows.map((workflow) => {
-                    const config = statusConfig[workflow.status];
-                    return (
-                      <div
-                        key={workflow.id}
-                        className="grid grid-cols-12 gap-4 px-4 py-3 hover:bg-neutral-800/50 transition-colors group border-b border-neutral-800"
-                      >
-                        <div className="col-span-4 flex items-center gap-3 min-w-0">
-                          <div className="p-1.5 flex-shrink-0 bg-surface-tertiary rounded-md">
-                            <config.icon className={cn("w-4 h-4", config.color)} />
-                          </div>
-                          <div className="min-w-0">
-                            <p
-                              className="font-medium truncate cursor-pointer transition-colors text-sm text-text-primary hover:text-primary-400"
-                              onClick={() => handleEditWorkflow(workflow.id)}
-                            >
-                              {workflow.name}
-                            </p>
-                            <p className="text-xs truncate text-text-secondary">{workflow.category}</p>
-                          </div>
-                        </div>
-
-                        <div className="col-span-2 flex items-center">
-                          <span className={cn("inline-flex items-center gap-1.5 text-xs font-medium", config.color)}>
-                            <span className={cn("w-1.5 h-1.5 rounded-full", config.dot)} />
-                            {config.text}
-                          </span>
-                        </div>
-
-                        <div className="col-span-2 flex items-center">
-                          <span className="text-sm truncate text-text-secondary">{workflow.nextRun}</span>
-                        </div>
-
-                        <div className="col-span-2 flex items-center">
-                          <span className="text-sm text-text-secondary">
-                            {workflow.lastRun === "Never" ? "-" : getRelativeTime(workflow.updatedAt)}
-                          </span>
-                        </div>
-
-                        <div className="col-span-2 flex items-center justify-end gap-2">
-                          <div className="flex items-center gap-0.5 p-0.5 bg-surface-tertiary rounded-md">
-                            <button
-                              onClick={() => setLogsWorkflow({ id: workflow.id, name: workflow.name })}
-                              className="p-1.5 text-text-tertiary hover:text-info hover:bg-info/10 transition-colors rounded-md"
-                              title="View Logs"
-                            >
-                              <History className="w-4 h-4" />
-                            </button>
-                            <button
-                              onClick={() => handleExecuteWorkflow(workflow.id)}
-                              disabled={executingWorkflowId === workflow.id || workflow.status !== WorkflowStatus.ACTIVE}
-                              className="p-1.5 text-text-tertiary hover:text-success hover:bg-success/10 transition-colors disabled:opacity-30 disabled:cursor-not-allowed rounded-md"
-                              title="Run Now"
-                            >
-                              <Play className="w-4 h-4" />
-                            </button>
-                            <button
-                              onClick={() => handleDuplicateWorkflow(workflow.id)}
-                              disabled={duplicatingWorkflowId === workflow.id}
-                              className="p-1.5 text-text-tertiary hover:text-success hover:bg-success/10 transition-colors disabled:opacity-30 rounded-md"
-                              title="Duplicate"
-                            >
-                              <Copy className="w-4 h-4" />
-                            </button>
-                            <button
-                              onClick={() => handleEditWorkflow(workflow.id)}
-                              className="p-1.5 text-text-tertiary hover:text-primary-500 hover:bg-primary-500/10 transition-colors rounded-md"
-                              title="Edit"
-                            >
-                              <Edit className="w-4 h-4" />
-                            </button>
-                            <button
-                              onClick={() => handleDeleteWorkflow(workflow.id)}
-                              className="p-1.5 text-text-tertiary hover:text-error hover:bg-error/10 transition-colors rounded-md"
-                              title="Delete"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </button>
-                          </div>
-                          <Switch
-                            checked={workflow.status === WorkflowStatus.ACTIVE}
-                            onChange={(checked) =>
-                              setStatus(workflow.id, checked ? WorkflowStatus.ACTIVE : WorkflowStatus.PAUSED)
-                            }
-                            disabled={updatingStatusId === workflow.id}
-                            size="sm"
-                          />
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
+                    </div>
+                  </motion.div>
+                );
+              })}
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       <ConfirmDialog
@@ -704,7 +653,7 @@ const WorkflowsPage = () => {
         message={
           <div className="space-y-2">
             <p>Are you sure you want to delete this workflow?</p>
-            <p className="text-sm text-text-tertiary">
+            <p className="text-[13px]" style={{ color: 'rgba(255, 255, 255, 0.28)' }}>
               This action cannot be undone and will stop all scheduled executions.
             </p>
           </div>
