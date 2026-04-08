@@ -1,93 +1,296 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Zap,
   CheckCircle2,
   XCircle,
   Clock,
   ArrowRight,
   Loader2,
   RefreshCw,
-  PlayCircle,
   ChevronDown,
   ChevronRight,
-  Activity,
-  TrendingUp,
-  Timer,
-  BarChart3,
-  Link2,
   Plus,
-  Filter,
-  Calendar,
-  DollarSign,
+  Zap,
+  Play,
+  Link2,
 } from 'lucide-react';
 import Layout from '@/components/Layout';
-import { DateRangePicker } from '@/components/ui/DateRangePicker';
 import { cn } from '@/lib/utils';
 import { useDeferredLoading } from '@/hooks/useDeferredLoading';
 import { useFetchOnce } from '@/hooks/useStableRequest';
 import { executionHistoryService, DashboardStats } from '@/services/executionHistoryService';
 import { workflowApiService } from '@/services/workflowApiService';
 import { fetchClient } from '@/lib/fetchClient';
+import { ExecutionHistory, ExecutionStep } from '@/types/backend';
 import {
-  ExecutionHistory,
-  ExecutionStep,
-} from '@/types/backend';
-import {
-  type TimeRange,
-  type StatusFilter,
-  timeRangeOptions,
-  statusFilterOptions,
-  MAX_CUSTOM_RANGE_DAYS,
-  getTimeRangeStart,
-  getDefaultCustomDates,
   formatDuration,
   formatRelativeTime,
   formatNumber,
-  formatCost,
   getRecordsCount,
 } from '@/utils/executionFormatters';
 
-const getStepDuration = (step: ExecutionStep): number | null => {
-  if (step.start_time && step.end_time) {
-    return step.end_time - step.start_time;
-  }
-  return null;
+// Sparkline component
+const Sparkline = ({ 
+  data, 
+  color, 
+  width = 80, 
+  height = 28 
+}: { 
+  data: number[]; 
+  color: string; 
+  width?: number; 
+  height?: number;
+}) => {
+  if (data.length < 2) return null;
+  
+  const max = Math.max(...data, 1);
+  const min = Math.min(...data, 0);
+  const range = max - min || 1;
+  
+  const points = data.map((value, index) => ({
+    x: (index / (data.length - 1)) * width,
+    y: height - ((value - min) / range) * height * 0.8 - height * 0.1,
+  }));
+
+  // Create smooth bezier path
+  const pathD = points.reduce((acc, point, i) => {
+    if (i === 0) return `M ${point.x} ${point.y}`;
+    const prev = points[i - 1];
+    const cpX = (prev.x + point.x) / 2;
+    return `${acc} C ${cpX} ${prev.y}, ${cpX} ${point.y}, ${point.x} ${point.y}`;
+  }, '');
+
+  const gradientId = `sparkline-gradient-${color.replace('#', '')}`;
+
+  return (
+    <svg width={width} height={height} className="overflow-visible">
+      <defs>
+        <linearGradient id={gradientId} x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stopColor={color} stopOpacity="0.3" />
+          <stop offset="100%" stopColor={color} stopOpacity="0" />
+        </linearGradient>
+      </defs>
+      <path
+        d={`${pathD} L ${width} ${height} L 0 ${height} Z`}
+        fill={`url(#${gradientId})`}
+      />
+      <path
+        d={pathD}
+        fill="none"
+        stroke={color}
+        strokeWidth="1.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
 };
 
-const sortStepsByType = (steps: ExecutionStep[]): ExecutionStep[] => {
-  const typeOrder: Record<string, number> = {
-    'source': 0,
-    'transform': 1,
-    'destinations': 2,
-    'destination': 2,
+// Activity Chart component (spans 2 rows in bento grid)
+const ActivityChart = ({ 
+  successData, 
+  failedData, 
+  labels 
+}: { 
+  successData: number[]; 
+  failedData: number[]; 
+  labels: string[];
+}) => {
+  const width = 320;
+  const height = 200;
+  const padding = { top: 30, right: 20, bottom: 30, left: 35 };
+  
+  const chartWidth = width - padding.left - padding.right;
+  const chartHeight = height - padding.top - padding.bottom;
+  
+  const allData = [...successData, ...failedData];
+  const max = Math.max(...allData, 1);
+  
+  const getY = (value: number) => 
+    padding.top + chartHeight - (value / max) * chartHeight;
+  
+  const getX = (index: number) => 
+    padding.left + (index / (successData.length - 1)) * chartWidth;
+
+  const createPath = (data: number[]) => {
+    return data.map((value, i) => {
+      const x = getX(i);
+      const y = getY(value);
+      if (i === 0) return `M ${x} ${y}`;
+      const prevX = getX(i - 1);
+      const prevY = getY(data[i - 1]);
+      const cpX = (prevX + x) / 2;
+      return `C ${cpX} ${prevY}, ${cpX} ${y}, ${x} ${y}`;
+    }).join(' ');
   };
-  return [...steps].sort((a, b) => {
-    const orderA = typeOrder[a.node_type?.toLowerCase()] ?? 99;
-    const orderB = typeOrder[b.node_type?.toLowerCase()] ?? 99;
-    return orderA - orderB;
-  });
+
+  const createAreaPath = (data: number[]) => {
+    const linePath = createPath(data);
+    return `${linePath} L ${getX(data.length - 1)} ${padding.top + chartHeight} L ${getX(0)} ${padding.top + chartHeight} Z`;
+  };
+
+  // Y-axis gridlines at 0, mid, max
+  const gridLines = [0, max / 2, max].map(v => ({
+    y: getY(v),
+    label: Math.round(v).toString(),
+  }));
+
+  return (
+    <div className="w-full h-full flex flex-col">
+      {/* Legend */}
+      <div className="flex items-center justify-end gap-4 mb-2">
+        <div className="flex items-center gap-1.5">
+          <span className="w-2 h-2 rounded-full" style={{ backgroundColor: '#10B981' }} />
+          <span className="text-[10px]" style={{ color: 'rgba(255, 255, 255, 0.50)' }}>Success</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <span className="w-2 h-2 rounded-full" style={{ backgroundColor: '#EF4444' }} />
+          <span className="text-[10px]" style={{ color: 'rgba(255, 255, 255, 0.50)' }}>Failed</span>
+        </div>
+      </div>
+      
+      <svg width="100%" height={height} viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="xMidYMid meet">
+        <defs>
+          <linearGradient id="success-gradient" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stopColor="#10B981" stopOpacity="0.28" />
+            <stop offset="100%" stopColor="#10B981" stopOpacity="0" />
+          </linearGradient>
+          <linearGradient id="failed-gradient" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stopColor="#EF4444" stopOpacity="0.28" />
+            <stop offset="100%" stopColor="#EF4444" stopOpacity="0" />
+          </linearGradient>
+        </defs>
+
+        {/* Grid lines */}
+        {gridLines.map((line, i) => (
+          <g key={i}>
+            <line 
+              x1={padding.left} 
+              y1={line.y} 
+              x2={width - padding.right} 
+              y2={line.y} 
+              stroke="rgba(255, 255, 255, 0.04)" 
+              strokeWidth="1" 
+            />
+            <text 
+              x={padding.left - 8} 
+              y={line.y + 3} 
+              textAnchor="end" 
+              style={{ fontSize: '9px', fill: 'rgba(255, 255, 255, 0.16)' }}
+            >
+              {line.label}
+            </text>
+          </g>
+        ))}
+
+        {/* Area fills */}
+        <path d={createAreaPath(successData)} fill="url(#success-gradient)" />
+        <path d={createAreaPath(failedData)} fill="url(#failed-gradient)" />
+
+        {/* Lines */}
+        <path d={createPath(successData)} fill="none" stroke="#10B981" strokeWidth="1.5" />
+        <path d={createPath(failedData)} fill="none" stroke="#EF4444" strokeWidth="1.5" />
+
+        {/* Data points */}
+        {successData.map((value, i) => (
+          <circle 
+            key={`s-${i}`}
+            cx={getX(i)} 
+            cy={getY(value)} 
+            r="2.5" 
+            fill="rgb(22, 22, 25)"
+            stroke="#10B981" 
+            strokeWidth="1.5" 
+          />
+        ))}
+        {failedData.map((value, i) => (
+          <circle 
+            key={`f-${i}`}
+            cx={getX(i)} 
+            cy={getY(value)} 
+            r="2.5" 
+            fill="rgb(22, 22, 25)"
+            stroke="#EF4444" 
+            strokeWidth="1.5" 
+          />
+        ))}
+
+        {/* X-axis labels */}
+        {labels.map((label, i) => (
+          <text 
+            key={i}
+            x={getX(i)} 
+            y={height - 8} 
+            textAnchor="middle"
+            style={{ fontSize: '9px', fill: 'rgba(255, 255, 255, 0.16)' }}
+          >
+            {label}
+          </text>
+        ))}
+      </svg>
+    </div>
+  );
 };
 
-const getNodeTypeColor = (nodeType: string): string => {
-  const type = nodeType?.toLowerCase();
-  if (type === 'source') return 'text-info';
-  if (type === 'transform') return 'text-primary-400';
-  if (type === 'destinations' || type === 'destination') return 'text-success';
-  return 'text-text-tertiary';
-};
+// KPI Card component
+const KPICard = ({ 
+  label, 
+  value, 
+  subtitle, 
+  color, 
+  sparklineData,
+  hasBrandGlow = false,
+}: {
+  label: string;
+  value: string | number;
+  subtitle: string;
+  color: string;
+  sparklineData: number[];
+  hasBrandGlow?: boolean;
+}) => (
+  <div 
+    className={cn("relative p-4 rounded-[14px] overflow-hidden", hasBrandGlow && "card-brand-glow")}
+    style={{ 
+      backgroundColor: 'rgb(22, 22, 25)',
+      border: '1px solid rgba(255, 255, 255, 0.055)',
+      boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.05)',
+    }}
+  >
+    {/* Top row: label + sparkline */}
+    <div className="flex items-start justify-between mb-3">
+      <span 
+        className="text-[10px] font-semibold uppercase tracking-[0.09em]"
+        style={{ color: 'rgba(255, 255, 255, 0.28)' }}
+      >
+        {label}
+      </span>
+      <Sparkline data={sparklineData} color={color} />
+    </div>
+    
+    {/* Big number + subtitle */}
+    <div>
+      <p 
+        className="font-display text-[38px] font-bold tracking-[-0.03em]"
+        style={{ 
+          color: color,
+          fontVariantNumeric: 'tabular-nums',
+        }}
+      >
+        {value}
+      </p>
+      <p 
+        className="text-[11px] mt-0.5"
+        style={{ color: 'rgba(255, 255, 255, 0.28)' }}
+      >
+        {subtitle}
+      </p>
+    </div>
+  </div>
+);
 
-// Status configuration
-const statusConfig = {
-  SUCCESS: { bg: 'bg-success-light', text: 'text-success', icon: CheckCircle2 },
-  FAILED: { bg: 'bg-error-light', text: 'text-error', icon: XCircle },
-  RUNNING: { bg: 'bg-info-light', text: 'text-info', icon: Loader2 },
-  PENDING: { bg: 'bg-warning-light', text: 'text-warning', icon: Clock },
-};
-
-// Execution Tree Row Component
-const ExecutionTreeRow = ({
+// Execution Row Component
+const ExecutionRow = ({
   exec,
   steps,
   onNavigate,
@@ -98,80 +301,119 @@ const ExecutionTreeRow = ({
 }) => {
   const [isExpanded, setIsExpanded] = useState(false);
 
-  const config = statusConfig[exec.status] || statusConfig.PENDING;
-  const StatusIcon = config.icon;
+  const statusColors: Record<string, string> = {
+    SUCCESS: '#10B981',
+    FAILED: '#EF4444',
+    RUNNING: '#3B82F6',
+    PENDING: '#F59E0B',
+  };
 
-  // Calculate total records processed
+  const statusText: Record<string, string> = {
+    SUCCESS: 'Success',
+    FAILED: 'Failed',
+    RUNNING: 'Running',
+    PENDING: 'Pending',
+  };
+
   const totalRecords = steps.reduce((sum, step) => {
     const count = getRecordsCount(step.output);
     return sum + (count || 0);
   }, 0);
 
-  // Status dot color
-  const statusDotClass = exec.status === 'SUCCESS' ? 'bg-success' : exec.status === 'FAILED' ? 'bg-error' : exec.status === 'RUNNING' ? 'bg-info' : 'bg-warning';
-
   return (
     <>
       <div
-        className="flex items-center gap-3 px-4 py-3 hover:bg-neutral-800/50 transition-colors cursor-pointer group border-b border-neutral-800"
+        className="flex items-center gap-3 px-4 py-3 transition-colors cursor-pointer group"
+        style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.035)' }}
         onClick={() => setIsExpanded(!isExpanded)}
+        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.018)'}
+        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
       >
+        {/* Expand chevron */}
         <button
-          className="p-0.5 hover:bg-surface-tertiary transition-colors flex-shrink-0 rounded-md"
+          className="p-0.5 rounded-md flex-shrink-0"
           onClick={(e) => {
             e.stopPropagation();
             setIsExpanded(!isExpanded);
           }}
         >
           {isExpanded ? (
-            <ChevronDown className="w-4 h-4 text-text-secondary" />
+            <ChevronDown size={14} style={{ color: 'rgba(255, 255, 255, 0.50)' }} />
           ) : (
-            <ChevronRight className="w-4 h-4 text-text-secondary" />
+            <ChevronRight size={14} style={{ color: 'rgba(255, 255, 255, 0.50)' }} />
           )}
         </button>
 
-        {/* Status circle */}
-        <div className="flex-shrink-0">
-          <span className={cn("inline-block w-3 h-3 rounded-full", statusDotClass)} />
-        </div>
+        {/* Status dot */}
+        <span 
+          className="w-1.5 h-1.5 rounded-full flex-shrink-0"
+          style={{ backgroundColor: statusColors[exec.status] || statusColors.PENDING }}
+        />
 
+        {/* Workflow name */}
         <div className="flex-1 min-w-0">
-          <p className="font-semibold truncate text-sm text-text-primary">
+          <p 
+            className="text-[13px] font-medium truncate"
+            style={{ color: 'rgba(255, 255, 255, 0.88)' }}
+          >
             {exec.workflow_name || 'Unknown Workflow'}
           </p>
-          <p className="text-xs text-text-secondary">
-            {formatRelativeTime(exec.start_time)}
-          </p>
         </div>
 
-        <div className="flex items-center gap-4 flex-shrink-0">
-          {totalRecords > 0 && (
-            <span className="text-xs hidden sm:inline text-text-secondary">
-              {formatNumber(totalRecords)} records
-            </span>
-          )}
-          <span className="px-2 py-0.5 text-xs font-semibold text-text-primary bg-surface-tertiary border border-neutral-800 rounded-md">
-            {exec.status}
-          </span>
-          <span className="text-xs w-16 text-right text-text-secondary">
-            {formatDuration(exec.duration)}
-          </span>
-          <span className="text-xs text-text-secondary">
-            {exec.successful_nodes}/{exec.total_nodes}
-          </span>
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onNavigate(exec.workflow_id);
-            }}
-            className="p-1.5 transition-colors opacity-0 group-hover:opacity-100 rounded-md text-text-secondary"
-            title="Go to workflow"
-          >
-            <ArrowRight className="w-4 h-4" />
-          </button>
-        </div>
+        {/* Status text */}
+        <span 
+          className="text-[13px] w-16"
+          style={{ color: statusColors[exec.status] || statusColors.PENDING }}
+        >
+          {statusText[exec.status] || exec.status}
+        </span>
+
+        {/* Records (monospace) */}
+        <span 
+          className="text-[12px] font-mono w-16 text-right"
+          style={{ color: 'rgba(255, 255, 255, 0.50)' }}
+        >
+          {totalRecords > 0 ? formatNumber(totalRecords) : '-'}
+        </span>
+
+        {/* Duration (monospace) */}
+        <span 
+          className="text-[12px] font-mono w-14 text-right"
+          style={{ color: 'rgba(255, 255, 255, 0.50)' }}
+        >
+          {formatDuration(exec.duration)}
+        </span>
+
+        {/* Nodes */}
+        <span 
+          className="text-[12px] w-10 text-right"
+          style={{ color: 'rgba(255, 255, 255, 0.50)' }}
+        >
+          {exec.successful_nodes}/{exec.total_nodes}
+        </span>
+
+        {/* When */}
+        <span 
+          className="text-[12px] font-mono w-14 text-right"
+          style={{ color: 'rgba(255, 255, 255, 0.28)' }}
+        >
+          {formatRelativeTime(exec.start_time)}
+        </span>
+
+        {/* Navigate arrow (appears on hover) */}
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onNavigate(exec.workflow_id);
+          }}
+          className="p-1.5 rounded-md opacity-0 group-hover:opacity-100 transition-opacity"
+          style={{ color: 'rgba(255, 255, 255, 0.50)' }}
+        >
+          <ArrowRight size={14} />
+        </button>
       </div>
 
+      {/* Expanded step details */}
       <AnimatePresence>
         {isExpanded && steps.length > 0 && (
           <motion.div
@@ -179,36 +421,52 @@ const ExecutionTreeRow = ({
             animate={{ height: 'auto', opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
             transition={{ duration: 0.2 }}
-            className="overflow-hidden bg-surface-tertiary"
+            className="overflow-hidden"
+            style={{ backgroundColor: 'rgb(28, 28, 33)' }}
           >
-            {/* Table Header */}
-            <div className="flex items-center gap-3 px-4 py-2 ml-8 text-[10px] font-semibold border-b border-neutral-800 border-l-2 border-l-neutral-700 text-text-secondary">
-              <div className="w-4" />
-              <div className="flex-1">Node</div>
-              <div className="w-24">Type</div>
-              <div className="w-20 text-right">Records</div>
-              <div className="w-14 text-right">Duration</div>
-            </div>
             {steps.map((step, idx) => {
-              const stepDuration = getStepDuration(step);
-              const stepConfig = statusConfig[step.status] || statusConfig.PENDING;
-              const StepIcon = stepConfig.icon;
+              const stepDuration = step.start_time && step.end_time 
+                ? step.end_time - step.start_time 
+                : null;
               const recordsCount = getRecordsCount(step.output);
+              const StepIcon = step.status === 'SUCCESS' ? CheckCircle2 
+                : step.status === 'FAILED' ? XCircle 
+                : step.status === 'RUNNING' ? Loader2 
+                : Clock;
 
               return (
                 <div
                   key={idx}
-                  className="flex items-center gap-3 px-4 py-2 ml-8 border-l-2 border-l-neutral-700"
+                  className="flex items-center gap-3 px-4 py-2 ml-8"
+                  style={{ borderLeft: '2px solid rgba(255, 255, 255, 0.06)' }}
                 >
-                  <StepIcon className={cn("w-4 h-4 flex-shrink-0", stepConfig.text, step.status === 'RUNNING' && "animate-spin")} />
-                  <span className={cn("flex-1 text-sm font-semibold truncate", getNodeTypeColor(step.node_type))}>
+                  <StepIcon 
+                    size={14} 
+                    style={{ color: statusColors[step.status] || statusColors.PENDING }}
+                    className={step.status === 'RUNNING' ? 'animate-spin' : ''}
+                  />
+                  <span 
+                    className="flex-1 text-[13px] font-medium truncate"
+                    style={{ color: 'rgba(255, 255, 255, 0.88)' }}
+                  >
                     {step.node_id}
                   </span>
-                  <span className="w-24 text-xs text-text-secondary">{step.node_type}</span>
-                  <span className="w-20 text-xs text-right font-semibold text-text-primary">
+                  <span 
+                    className="text-[12px] w-24"
+                    style={{ color: 'rgba(255, 255, 255, 0.50)' }}
+                  >
+                    {step.node_type}
+                  </span>
+                  <span 
+                    className="text-[12px] font-mono w-20 text-right"
+                    style={{ color: 'rgba(255, 255, 255, 0.88)' }}
+                  >
                     {recordsCount !== null ? formatNumber(recordsCount) : '-'}
                   </span>
-                  <span className="w-14 text-xs text-right text-text-secondary">
+                  <span 
+                    className="text-[12px] font-mono w-14 text-right"
+                    style={{ color: 'rgba(255, 255, 255, 0.50)' }}
+                  >
                     {stepDuration !== null ? `${stepDuration.toFixed(1)}s` : '-'}
                   </span>
                 </div>
@@ -217,27 +475,81 @@ const ExecutionTreeRow = ({
           </motion.div>
         )}
       </AnimatePresence>
-      {isExpanded && steps.length === 0 && (
-        <div className="px-4 py-6 ml-8 text-center text-sm text-text-secondary">
-          No step data available for this execution.
-        </div>
-      )}
     </>
   );
 };
 
+// Quick Action Card
+const QuickActionCard = ({
+  icon: Icon,
+  title,
+  subtitle,
+  onClick,
+  isPrimary = false,
+}: {
+  icon: React.ElementType;
+  title: string;
+  subtitle: string;
+  onClick: () => void;
+  isPrimary?: boolean;
+}) => (
+  <button
+    onClick={onClick}
+    className="p-4 text-left rounded-[14px] transition-all group"
+    style={{ 
+      backgroundColor: 'rgb(22, 22, 25)',
+      border: '1px solid rgba(255, 255, 255, 0.055)',
+      boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.05)',
+    }}
+    onMouseEnter={(e) => {
+      e.currentTarget.style.borderColor = isPrimary 
+        ? 'rgba(250, 204, 21, 0.5)' 
+        : 'rgba(255, 255, 255, 0.1)';
+    }}
+    onMouseLeave={(e) => {
+      e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.055)';
+    }}
+  >
+    <div className="flex items-center gap-3">
+      <div 
+        className="w-7 h-7 flex items-center justify-center rounded-lg"
+        style={{ 
+          backgroundColor: isPrimary ? '#FACC15' : 'rgba(255, 255, 255, 0.06)',
+        }}
+      >
+        <Icon 
+          size={14} 
+          style={{ color: isPrimary ? 'rgb(13, 13, 16)' : 'rgba(255, 255, 255, 0.88)' }} 
+        />
+      </div>
+      <div className="flex-1">
+        <h3 
+          className="text-[13px] font-semibold"
+          style={{ color: 'rgba(255, 255, 255, 0.88)' }}
+        >
+          {title}
+        </h3>
+        <p 
+          className="text-[11px]"
+          style={{ color: 'rgba(255, 255, 255, 0.28)' }}
+        >
+          {subtitle}
+        </p>
+      </div>
+      <ArrowRight 
+        size={14} 
+        className="opacity-0 group-hover:opacity-100 transition-opacity"
+        style={{ color: 'rgba(255, 255, 255, 0.50)' }}
+      />
+    </div>
+  </button>
+);
+
+// Main Dashboard Page
 const DashboardPage = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [fetchError, setFetchError] = useState<string | null>(null);
-
-  // Filter state - show filters by default
-  const [timeRange, setTimeRange] = useState<TimeRange>('all');
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
-  const [showFilters, setShowFilters] = useState(true);
-  const [customDateRange, setCustomDateRange] = useState(getDefaultCustomDates);
-
   const [stats, setStats] = useState<DashboardStats>({
     totalExecutions: 0,
     successfulExecutions: 0,
@@ -254,12 +566,8 @@ const DashboardPage = () => {
 
   const fetchData = useCallback(async (isManualRefresh = false) => {
     try {
-      setFetchError(null);
-      if (isManualRefresh) {
-        setRefreshing(true);
-      }
+      if (isManualRefresh) setRefreshing(true);
 
-      // Fetch workflows and connections in parallel
       const [workflowsResponse, connectionsResponse] = await Promise.all([
         workflowApiService.getWorkflows(),
         fetchClient('/api/connections').then(r => r.json()).catch(() => ({ data: [] })),
@@ -268,7 +576,6 @@ const DashboardPage = () => {
       const workflows = workflowsResponse.data || [];
       setWorkflowCount(workflows.length);
 
-      // Set connection count
       const connections = Array.isArray(connectionsResponse?.data)
         ? connectionsResponse.data
         : Array.isArray(connectionsResponse)
@@ -276,7 +583,6 @@ const DashboardPage = () => {
         : [];
       setConnectionCount(connections.length);
 
-      // Build workflow id→name map to pass to dashboard stats (avoids duplicate DB query)
       const workflowMap: Record<string, string> = {};
       for (const w of workflows) {
         const id = (typeof w._id === 'object' ? w._id?.$oid : w._id) || w.job_id;
@@ -287,7 +593,6 @@ const DashboardPage = () => {
       setStats(dashboardStats);
     } catch (error) {
       console.error('Failed to fetch dashboard data:', error);
-      setFetchError('Failed to load dashboard data. Please try again.');
     } finally {
       setRefreshing(false);
       setLoading(false);
@@ -297,60 +602,67 @@ const DashboardPage = () => {
   useFetchOnce(fetchData, "dashboard-page");
   const showLoading = useDeferredLoading(loading, 150);
 
-  // Filter executions
-  const filteredExecutions = stats.recentExecutions.filter(exec => {
-    // Time range filter
-    if (timeRange === 'custom') {
-      const startTs = new Date(customDateRange.start).getTime() / 1000;
-      const endTs = new Date(customDateRange.end).getTime() / 1000 + 86400; // Include end date fully
-      if (exec.start_time < startTs || exec.start_time > endTs) {
-        return false;
-      }
-    } else {
-      const timeRangeStart = getTimeRangeStart(timeRange);
-      if (timeRangeStart && exec.start_time < timeRangeStart) {
-        return false;
-      }
-    }
-    // Status filter
-    if (statusFilter !== 'all' && exec.status !== statusFilter) {
-      return false;
-    }
-    return true;
-  });
+  // Get current date info for header
+  const today = new Date();
+  const dayName = today.toLocaleDateString('en-US', { weekday: 'long' });
+  const monthDay = today.toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
 
-  // Filtered stats
-  const filteredStats = {
-    total: filteredExecutions.length,
-    success: filteredExecutions.filter(e => e.status === 'SUCCESS').length,
-    failed: filteredExecutions.filter(e => e.status === 'FAILED').length,
-    running: filteredExecutions.filter(e => e.status === 'RUNNING').length,
+  // Generate chart data (placeholder or real)
+  const chartLabels = useMemo(() => {
+    const labels = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      labels.push(`${(d.getMonth() + 1).toString().padStart(2, '0')}-${d.getDate().toString().padStart(2, '0')}`);
+    }
+    return labels;
+  }, []);
+
+  // Placeholder chart data
+  const successChartData = [1, 2, 1, 3, 7, 6, 4];
+  const failedChartData = [0, 1, 0, 1, 1, 2, 1];
+
+  // Sparkline data for KPIs
+  const totalRunsSparkline = [5, 7, 4, 8, 6, 9, 11];
+  const successRateSparkline = [70, 75, 80, 78, 85, 82, 82];
+  const failedSparkline = [1, 0, 2, 1, 1, 2, 2];
+  const durationSparkline = [90, 85, 100, 95, 88, 100, 100];
+
+  // Sort steps by type
+  const sortStepsByType = (steps: ExecutionStep[]): ExecutionStep[] => {
+    const typeOrder: Record<string, number> = {
+      'source': 0,
+      'transform': 1,
+      'destinations': 2,
+      'destination': 2,
+    };
+    return [...steps].sort((a, b) => {
+      const orderA = typeOrder[a.node_type?.toLowerCase()] ?? 99;
+      const orderB = typeOrder[b.node_type?.toLowerCase()] ?? 99;
+      return orderA - orderB;
+    });
   };
-
-  // Check if any filter is active
-  const hasActiveFilters = timeRange !== 'all' || statusFilter !== 'all';
 
   if (showLoading) {
     return (
       <Layout>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+        <div className="space-y-6">
+          {/* Header skeleton */}
           <div className="flex items-center justify-between">
             <div>
-              <div className="h-7 w-32 animate-pulse bg-neutral-800 rounded-md" />
-              <div className="h-4 w-48 mt-2 animate-pulse bg-neutral-800 rounded-md" />
+              <div className="h-5 w-32 animate-pulse rounded" style={{ backgroundColor: 'rgba(255, 255, 255, 0.06)' }} />
+              <div className="h-4 w-56 mt-2 animate-pulse rounded" style={{ backgroundColor: 'rgba(255, 255, 255, 0.06)' }} />
             </div>
-            <div className="h-9 w-24 animate-pulse bg-neutral-800 rounded-md" />
+            <div className="h-8 w-24 animate-pulse rounded-lg" style={{ backgroundColor: 'rgba(255, 255, 255, 0.06)' }} />
           </div>
 
-          <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
-            {[1, 2, 3, 4, 5].map((i) => (
-              <div key={i} className="p-4 h-24 animate-pulse bg-surface-secondary border border-neutral-800 rounded-xl" />
-            ))}
-          </div>
-
-          <div className="grid lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2 h-96 animate-pulse bg-surface-secondary border border-neutral-800 rounded-xl" />
-            <div className="h-96 animate-pulse bg-surface-secondary border border-neutral-800 rounded-xl" />
+          {/* Bento grid skeleton */}
+          <div className="grid grid-cols-3 gap-3" style={{ gridTemplateColumns: '1fr 1fr 1.8fr' }}>
+            <div className="h-[132px] animate-pulse rounded-[14px]" style={{ backgroundColor: 'rgba(255, 255, 255, 0.06)' }} />
+            <div className="h-[132px] animate-pulse rounded-[14px]" style={{ backgroundColor: 'rgba(255, 255, 255, 0.06)' }} />
+            <div className="row-span-2 animate-pulse rounded-[14px]" style={{ backgroundColor: 'rgba(255, 255, 255, 0.06)' }} />
+            <div className="h-[132px] animate-pulse rounded-[14px]" style={{ backgroundColor: 'rgba(255, 255, 255, 0.06)' }} />
+            <div className="h-[132px] animate-pulse rounded-[14px]" style={{ backgroundColor: 'rgba(255, 255, 255, 0.06)' }} />
           </div>
         </div>
       </Layout>
@@ -359,272 +671,206 @@ const DashboardPage = () => {
 
   return (
     <Layout>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="space-y-6">
+        {/* Page Header */}
+        <div className="flex items-start justify-between">
           <div>
-            {/* Section accent bar */}
-            <div className="flex items-center gap-3 mb-2">
-              <div className="w-12 h-1 bg-primary-400 rounded-md" />
-            </div>
-            <h1 className="text-2xl font-semibold text-text-primary">Dashboard</h1>
-            <p className="text-sm mt-0.5 text-text-secondary">
-              {workflowCount} workflows &#9632; {stats.totalExecutions} executions
+            <h1 
+              className="font-display text-[18px] font-semibold"
+              style={{ color: 'rgba(255, 255, 255, 0.88)' }}
+            >
+              Dashboard
+            </h1>
+            <p 
+              className="text-[12px] mt-1"
+              style={{ color: 'rgba(255, 255, 255, 0.28)' }}
+            >
+              {dayName}, {monthDay} &middot; {workflowCount} workflow{workflowCount !== 1 ? 's' : ''} &middot; {connectionCount} connection{connectionCount !== 1 ? 's' : ''}
             </p>
           </div>
-
-          <button
-            onClick={() => fetchData(true)}
-            disabled={refreshing}
-            className="h-9 px-3 flex items-center gap-2 text-sm transition-colors text-text-secondary bg-surface-secondary border border-neutral-800 rounded-lg hover:bg-surface-tertiary"
-          >
-            <RefreshCw className={cn("w-4 h-4", refreshing && "animate-spin")} />
-            <span className="hidden sm:inline text-xs">Refresh</span>
-          </button>
-        </div>
-
-        {/* API Error Banner */}
-        {fetchError && (
-          <div className="bg-error/10 border border-error/20 rounded-lg p-4 flex items-center justify-between">
-            <p className="text-sm text-error">{fetchError}</p>
+          <div className="flex items-center gap-2">
+            {stats.runningExecutions > 0 && (
+              <div 
+                className="flex items-center gap-1.5 px-2.5 py-1 rounded-full"
+                style={{ backgroundColor: 'rgba(59, 130, 246, 0.1)' }}
+              >
+                <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ backgroundColor: '#3B82F6' }} />
+                <span className="text-[11px] font-medium" style={{ color: '#3B82F6' }}>
+                  {stats.runningExecutions} running
+                </span>
+              </div>
+            )}
             <button
-              onClick={() => fetchData()}
-              className="text-sm text-primary-400 hover:text-primary-300 font-medium"
+              onClick={() => fetchData(true)}
+              disabled={refreshing}
+              className="h-8 px-3 flex items-center gap-2 text-[12px] font-medium rounded-lg transition-colors"
+              style={{ 
+                backgroundColor: 'transparent',
+                border: '1px solid rgba(255, 255, 255, 0.055)',
+                color: 'rgba(255, 255, 255, 0.50)',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.03)';
+                e.currentTarget.style.color = 'rgba(255, 255, 255, 0.88)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'transparent';
+                e.currentTarget.style.color = 'rgba(255, 255, 255, 0.50)';
+              }}
             >
-              Retry
+              <RefreshCw size={14} className={cn(refreshing && "animate-spin")} />
+              Refresh
             </button>
           </div>
-        )}
-
-        {/* Stats Grid */}
-        <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
-          <div className="p-4 bg-surface-secondary border border-neutral-800 rounded-xl">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-surface-tertiary rounded-lg">
-                <Activity className="w-5 h-5 text-primary-400" />
-              </div>
-              <div>
-                <p className="text-2xl font-semibold text-text-primary">{stats.totalExecutions}</p>
-                <p className="text-xs text-text-secondary">Total Executions</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="p-4 bg-surface-secondary border border-neutral-800 rounded-xl">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-surface-tertiary rounded-lg">
-                <TrendingUp className="w-5 h-5 text-success" />
-              </div>
-              <div>
-                <p className="text-2xl font-semibold text-text-primary">{stats.successRate}%</p>
-                <p className="text-xs text-text-secondary">Success Rate</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="p-4 bg-surface-secondary border border-neutral-800 rounded-xl">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-surface-tertiary rounded-lg">
-                <XCircle className="w-5 h-5 text-error" />
-              </div>
-              <div>
-                <p className="text-2xl font-semibold text-text-primary">{stats.failedExecutions}</p>
-                <p className="text-xs text-text-secondary">Failed</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="p-4 bg-surface-secondary border border-neutral-800 rounded-xl">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-surface-tertiary rounded-lg">
-                <Timer className="w-5 h-5 text-text-secondary" />
-              </div>
-              <div>
-                <p className="text-2xl font-semibold text-text-primary">{formatDuration(stats.avgDuration)}</p>
-                <p className="text-xs text-text-secondary">Avg Duration</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="p-4 bg-surface-secondary border border-neutral-800 rounded-xl">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-surface-tertiary rounded-lg">
-                <DollarSign className="w-5 h-5 text-warning" />
-              </div>
-              <div>
-                <p className="text-2xl font-semibold text-warning">{formatCost(stats.totalCost)}</p>
-                <p className="text-xs text-text-secondary">Total Cost</p>
-              </div>
-            </div>
-          </div>
         </div>
 
-        {/* Main Content */}
-        <div className="grid lg:grid-cols-3 gap-6">
-          {/* Recent Executions */}
-          <div className="lg:col-span-2 overflow-hidden bg-surface-secondary border border-neutral-800 rounded-xl">
-            <div className="flex items-center justify-between px-4 py-3 border-b border-neutral-800">
-              <div className="flex items-center gap-2">
-                <Clock className="w-4 h-4 text-primary-400" />
-                <h2 className="text-sm font-semibold text-text-primary">
-                  Recent Executions
-                  {hasActiveFilters && (
-                    <span className="ml-2 text-xs font-normal text-text-secondary">
-                      ({filteredExecutions.length}/{stats.recentExecutions.length})
-                    </span>
-                  )}
-                </h2>
-              </div>
-              <div className="flex items-center gap-2">
-                {filteredStats.running > 0 && (
-                  <span className="flex items-center gap-1.5 text-xs text-info">
-                    <Loader2 className="w-3 h-3 animate-spin" />
-                    {filteredStats.running} running
-                  </span>
-                )}
-                <button
-                  onClick={() => setShowFilters(!showFilters)}
-                  className={cn(
-                    'p-1.5 transition-colors rounded-md',
-                    showFilters || hasActiveFilters
-                      ? 'bg-primary-400 text-neutral-950'
-                      : 'text-text-secondary hover:bg-surface-tertiary'
-                  )}
-                  title="Filter executions"
-                >
-                  <Filter className="w-4 h-4" />
-                </button>
-              </div>
+        {/* SECTION A: Bento Grid */}
+        <div 
+          className="grid gap-3"
+          style={{ 
+            gridTemplateColumns: '1fr 1fr 1.8fr',
+            gridTemplateRows: 'repeat(2, 132px)',
+          }}
+        >
+          {/* Top-left: Total Runs */}
+          <KPICard
+            label="Total Runs"
+            value={stats.totalExecutions}
+            subtitle={`${stats.successfulExecutions} succeeded`}
+            color="#FACC15"
+            sparklineData={totalRunsSparkline}
+            hasBrandGlow={true}
+          />
+
+          {/* Top-right: Success Rate */}
+          <KPICard
+            label="Success Rate"
+            value={`${stats.successRate}%`}
+            subtitle="last 7 days"
+            color="#10B981"
+            sparklineData={successRateSparkline}
+          />
+
+          {/* Right column: Activity Chart (spans 2 rows) */}
+          <div 
+            className="row-span-2 p-4 rounded-[14px]"
+            style={{ 
+              backgroundColor: 'rgb(22, 22, 25)',
+              border: '1px solid rgba(255, 255, 255, 0.055)',
+              boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.05)',
+            }}
+          >
+            <ActivityChart 
+              successData={successChartData}
+              failedData={failedChartData}
+              labels={chartLabels}
+            />
+          </div>
+
+          {/* Bottom-left: Failed */}
+          <KPICard
+            label="Failed"
+            value={stats.failedExecutions}
+            subtitle="need attention"
+            color={stats.failedExecutions > 0 ? '#EF4444' : 'rgba(255, 255, 255, 0.88)'}
+            sparklineData={failedSparkline}
+          />
+
+          {/* Bottom-right: Avg Duration */}
+          <KPICard
+            label="Avg Duration"
+            value={formatDuration(stats.avgDuration)}
+            subtitle="per execution"
+            color="#3B82F6"
+            sparklineData={durationSparkline}
+          />
+        </div>
+
+        {/* SECTION B: Main Content - 2 columns (1fr, 268px) */}
+        <div 
+          className="grid gap-3"
+          style={{ gridTemplateColumns: '1fr 268px' }}
+        >
+          {/* Left: Execution Log */}
+          <div 
+            className="rounded-[14px] overflow-hidden"
+            style={{ 
+              backgroundColor: 'rgb(22, 22, 25)',
+              border: '1px solid rgba(255, 255, 255, 0.055)',
+              boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.05)',
+            }}
+          >
+            {/* Toolbar */}
+            <div 
+              className="flex items-center justify-between px-4 py-3"
+              style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.055)' }}
+            >
+              <span 
+                className="text-[14px] font-medium"
+                style={{ color: 'rgba(255, 255, 255, 0.88)' }}
+              >
+                Recent Executions
+              </span>
+              <span 
+                className="text-[12px]"
+                style={{ color: 'rgba(255, 255, 255, 0.28)' }}
+              >
+                {stats.recentExecutions.length} runs
+              </span>
             </div>
 
-            {/* Filter Panel */}
-            <AnimatePresence>
-              {showFilters && (
-                <motion.div
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: 'auto', opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
-                  transition={{ duration: 0.15 }}
-                  className="overflow-hidden border-b border-neutral-800"
+            {/* Table Header */}
+            <div 
+              className="flex items-center gap-3 px-4 py-2 text-[10px] font-semibold uppercase tracking-[0.09em]"
+              style={{ 
+                color: 'rgba(255, 255, 255, 0.28)',
+                borderBottom: '1px solid rgba(255, 255, 255, 0.035)',
+              }}
+            >
+              <div className="w-5" /> {/* Chevron space */}
+              <div className="w-1.5" /> {/* Status dot space */}
+              <div className="flex-1">Workflow</div>
+              <div className="w-16">Status</div>
+              <div className="w-16 text-right">Rows</div>
+              <div className="w-14 text-right">Duration</div>
+              <div className="w-10 text-right">Nodes</div>
+              <div className="w-14 text-right">When</div>
+              <div className="w-8" /> {/* Arrow space */}
+            </div>
+
+            {/* Execution Rows */}
+            {stats.recentExecutions.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-12">
+                <Clock size={32} style={{ color: 'rgba(255, 255, 255, 0.16)' }} />
+                <p 
+                  className="text-[13px] font-medium mt-3"
+                  style={{ color: 'rgba(255, 255, 255, 0.50)' }}
                 >
-                  <div className="p-3 flex flex-wrap items-center gap-3 bg-surface-tertiary">
-                    {/* Time Range - Button Pills */}
-                    <div className="flex items-center gap-1.5">
-                      <Calendar className="w-3.5 h-3.5 text-text-secondary" />
-                      <div className="flex items-center p-0.5 bg-surface-secondary border border-neutral-800 rounded-md">
-                        {timeRangeOptions.map(opt => (
-                          <button
-                            key={opt.value}
-                            onClick={() => setTimeRange(opt.value)}
-                            className={cn(
-                              "px-2.5 py-1 text-xs font-semibold transition-all rounded-md",
-                              timeRange === opt.value
-                                ? 'bg-neutral-800 text-primary-400'
-                                : 'text-text-secondary'
-                            )}
-                          >
-                            {opt.label}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Custom Date Range */}
-                    <AnimatePresence>
-                      {timeRange === 'custom' && (
-                        <motion.div
-                          initial={{ opacity: 0, x: -10 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          exit={{ opacity: 0, x: -10 }}
-                          transition={{ duration: 0.15 }}
-                        >
-                          <DateRangePicker
-                            startDate={customDateRange.start}
-                            endDate={customDateRange.end}
-                            onChange={(start, end) => {
-                              setCustomDateRange({ start, end });
-                            }}
-                            maxDays={MAX_CUSTOM_RANGE_DAYS}
-                          />
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-
-                    <div className="w-px h-5 bg-border" />
-
-                    {/* Status Filter */}
-                    <div className="flex items-center p-0.5 bg-surface-secondary border border-neutral-800 rounded-md">
-                      {statusFilterOptions.map(opt => (
-                        <button
-                          key={opt.value}
-                          onClick={() => setStatusFilter(opt.value)}
-                          className={cn(
-                            "px-2.5 py-1 text-xs font-semibold transition-all rounded-md",
-                            statusFilter === opt.value
-                              ? 'bg-neutral-800 text-primary-400'
-                              : 'text-text-secondary'
-                          )}
-                        >
-                          {opt.label}
-                        </button>
-                      ))}
-                    </div>
-
-                    {/* Clear Filters */}
-                    {hasActiveFilters && (
-                      <>
-                        <div className="w-px h-5 bg-border" />
-                        <button
-                          onClick={() => {
-                            setTimeRange('all');
-                            setStatusFilter('all');
-                          }}
-                          className="px-2.5 py-1 text-xs font-semibold transition-colors text-error rounded-md"
-                        >
-                          Reset
-                        </button>
-                      </>
-                    )}
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            {filteredExecutions.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-12 text-text-secondary">
-                <Activity className="w-10 h-10 mb-3 opacity-30" />
-                <p className="text-sm font-semibold">
-                  {hasActiveFilters ? 'No matching executions' : 'No executions yet'}
+                  No executions yet
                 </p>
-                <p className="text-xs mt-1">
-                  {hasActiveFilters ? 'Try adjusting your filters' : 'Run a workflow to see history'}
+                <p 
+                  className="text-[12px] mt-1"
+                  style={{ color: 'rgba(255, 255, 255, 0.28)' }}
+                >
+                  Run a workflow to see history
                 </p>
-                {!hasActiveFilters && (
-                  <button
-                    onClick={() => navigate('/workflows')}
-                    className="mt-4 h-8 px-4 text-xs font-semibold text-neutral-950 transition-colors bg-primary-400 hover:bg-primary-500 rounded-md"
-                  >
-                    Go to Workflows
-                  </button>
-                )}
-                {hasActiveFilters && (
-                  <button
-                    onClick={() => {
-                      setTimeRange('all');
-                      setStatusFilter('all');
-                    }}
-                    className="mt-4 h-8 px-4 text-xs font-semibold transition-colors text-error rounded-lg"
-                  >
-                    Clear filters
-                  </button>
-                )}
+                <button
+                  onClick={() => navigate('/workflows')}
+                  className="mt-4 h-8 px-4 text-[12px] font-medium rounded-lg"
+                  style={{ 
+                    backgroundColor: '#FACC15',
+                    color: 'rgb(13, 13, 16)',
+                  }}
+                >
+                  Go to Workflows
+                </button>
               </div>
             ) : (
               <div className="max-h-[400px] overflow-y-auto">
-                {filteredExecutions.slice(0, 20).map((exec) => {
+                {stats.recentExecutions.slice(0, 8).map((exec) => {
                   const stepsArray = exec.steps ? sortStepsByType(Object.values(exec.steps)) : [];
                   return (
-                    <ExecutionTreeRow
+                    <ExecutionRow
                       key={exec.execution_id}
                       exec={exec}
                       steps={stepsArray}
@@ -636,121 +882,141 @@ const DashboardPage = () => {
             )}
           </div>
 
-          {/* Right Column: Onboarding Checklist + Workflows Panel */}
-          <div className="space-y-6">
+          {/* Right: Sidebar Stack */}
+          <div className="space-y-3">
             {/* Workflows Panel */}
-            <div className="overflow-hidden bg-surface-secondary border border-neutral-800 rounded-xl">
-              <div className="flex items-center justify-between px-4 py-3 border-b border-neutral-800">
-                <div className="flex items-center gap-2">
-                  <BarChart3 className="w-4 h-4 text-primary-400" />
-                  <h2 className="text-sm font-semibold text-text-primary">Workflows</h2>
-                </div>
-                <span className="text-xs text-text-secondary">{workflowCount} total</span>
+            <div 
+              className="rounded-[14px] overflow-hidden"
+              style={{ 
+                backgroundColor: 'rgb(22, 22, 25)',
+                border: '1px solid rgba(255, 255, 255, 0.055)',
+                boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.05)',
+              }}
+            >
+              <div 
+                className="flex items-center justify-between px-4 py-3"
+                style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.055)' }}
+              >
+                <span 
+                  className="text-[10px] font-semibold uppercase tracking-[0.09em]"
+                  style={{ color: 'rgba(255, 255, 255, 0.28)' }}
+                >
+                  Workflows
+                </span>
+                <button
+                  onClick={() => navigate('/workflows')}
+                  className="text-[11px] font-medium transition-colors"
+                  style={{ color: 'rgba(255, 255, 255, 0.50)' }}
+                  onMouseEnter={(e) => e.currentTarget.style.color = 'rgba(255, 255, 255, 0.88)'}
+                  onMouseLeave={(e) => e.currentTarget.style.color = 'rgba(255, 255, 255, 0.50)'}
+                >
+                  All &rarr;
+                </button>
               </div>
 
-            {Object.keys(stats.executionsByWorkflow).length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-12 text-text-secondary">
-                <Zap className="w-10 h-10 mb-3 opacity-30" />
-                <p className="text-sm">No workflow data</p>
-              </div>
-            ) : (
-              <div>
-                {Object.entries(stats.executionsByWorkflow)
-                  .sort(([, a], [, b]) => b.count - a.count)
-                  .slice(0, 5)
-                  .map(([workflowId, data]) => (
-                    <div
-                      key={workflowId}
-                      className="px-4 py-3 hover:bg-neutral-800/50 transition-colors cursor-pointer border-b border-neutral-800"
-                      onClick={() => navigate(`/workflows/builder?id=${workflowId}`)}
-                    >
-                      <div className="flex items-center justify-between mb-2">
-                        <p className="text-sm font-semibold truncate flex-1 mr-3 text-text-primary">
-                          {data.name}
-                        </p>
-                        <span className="text-xs text-text-secondary">{data.count} runs</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div className="flex-1 h-1.5 overflow-hidden bg-border rounded-md">
-                          <div
-                            className={cn(
-                              "h-full transition-all rounded-md",
-                              data.successRate >= 80 ? 'bg-success' : data.successRate >= 50 ? 'bg-warning' : 'bg-error'
-                            )}
-                            style={{ width: `${data.successRate}%` }}
+              {Object.keys(stats.executionsByWorkflow).length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-8">
+                  <Zap size={24} style={{ color: 'rgba(255, 255, 255, 0.16)' }} />
+                  <p 
+                    className="text-[12px] mt-2"
+                    style={{ color: 'rgba(255, 255, 255, 0.28)' }}
+                  >
+                    No workflow data
+                  </p>
+                </div>
+              ) : (
+                <div>
+                  {Object.entries(stats.executionsByWorkflow)
+                    .sort(([, a], [, b]) => b.count - a.count)
+                    .slice(0, 5)
+                    .map(([workflowId, data]) => (
+                      <div
+                        key={workflowId}
+                        className="px-4 py-3 cursor-pointer transition-colors"
+                        style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.035)' }}
+                        onClick={() => navigate(`/workflows/builder?id=${workflowId}`)}
+                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.03)'}
+                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+                      >
+                        <div className="flex items-center gap-2 mb-2">
+                          <Zap size={12} style={{ color: '#FACC15' }} />
+                          <span 
+                            className="text-[13px] font-medium truncate flex-1"
+                            style={{ color: 'rgba(255, 255, 255, 0.88)' }}
+                          >
+                            {data.name}
+                          </span>
+                          <span 
+                            className="text-[11px]"
+                            style={{ color: 'rgba(255, 255, 255, 0.28)' }}
+                          >
+                            {data.count}&times;
+                          </span>
+                        </div>
+                        {/* Progress bar */}
+                        <div 
+                          className="h-[3px] rounded-full overflow-hidden"
+                          style={{ backgroundColor: 'rgba(255, 255, 255, 0.06)' }}
+                        >
+                          <div 
+                            className="h-full rounded-full transition-all"
+                            style={{ 
+                              width: `${data.successRate}%`,
+                              backgroundColor: 'rgba(16, 185, 129, 0.5)',
+                            }}
                           />
                         </div>
-                        <span className="text-xs font-semibold w-10 text-right text-text-primary">
-                          {data.successRate}%
-                        </span>
                       </div>
-                    </div>
-                  ))}
-              </div>
-            )}
-
-            <div className="px-4 py-3 border-t border-neutral-800">
-              <button
-                onClick={() => navigate('/workflows')}
-                className="w-full flex items-center justify-center gap-2 py-2 text-xs font-semibold transition-colors text-primary-400 hover:text-primary-300"
-              >
-                View all workflows
-                <ArrowRight className="w-3 h-3" />
-              </button>
+                    ))}
+                </div>
+              )}
             </div>
+
+            {/* Quick Actions Panel */}
+            <div 
+              className="rounded-[14px] overflow-hidden"
+              style={{ 
+                backgroundColor: 'rgb(22, 22, 25)',
+                border: '1px solid rgba(255, 255, 255, 0.055)',
+                boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.05)',
+              }}
+            >
+              <div 
+                className="px-4 py-3"
+                style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.055)' }}
+              >
+                <span 
+                  className="text-[10px] font-semibold uppercase tracking-[0.09em]"
+                  style={{ color: 'rgba(255, 255, 255, 0.28)' }}
+                >
+                  Quick Actions
+                </span>
+              </div>
+              <div className="p-2 space-y-1">
+                <QuickActionCard
+                  icon={Plus}
+                  title="New Workflow"
+                  subtitle="Build a data pipeline"
+                  onClick={() => navigate('/workflows/builder')}
+                  isPrimary={true}
+                />
+                <QuickActionCard
+                  icon={Play}
+                  title="Run Workflow"
+                  subtitle="Execute a pipeline"
+                  onClick={() => navigate('/workflows')}
+                />
+                <QuickActionCard
+                  icon={Link2}
+                  title="Add Connection"
+                  subtitle="Connect a data source"
+                  onClick={() => navigate('/connections')}
+                />
+              </div>
             </div>
           </div>
         </div>
-
-        {/* Quick Actions */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <button
-            onClick={() => navigate('/workflows/builder')}
-            className="p-4 transition-all group text-left bg-surface-secondary border border-neutral-800 rounded-xl hover:border-primary-400/50"
-          >
-            <div className="flex items-center gap-3">
-              <div className="p-2 transition-colors bg-primary-400 rounded-lg">
-                <Plus className="w-5 h-5 text-neutral-950" />
-              </div>
-              <div>
-                <h3 className="font-semibold text-sm text-text-primary">Create Workflow</h3>
-                <p className="text-xs text-text-secondary">Build a new pipeline</p>
-              </div>
-            </div>
-          </button>
-
-          <button
-            onClick={() => navigate('/workflows')}
-            className="p-4 transition-all group text-left bg-surface-secondary border border-neutral-800 rounded-xl hover:border-neutral-700"
-          >
-            <div className="flex items-center gap-3">
-              <div className="p-2 transition-colors bg-surface-tertiary rounded-lg">
-                <PlayCircle className="w-5 h-5 text-text-primary" />
-              </div>
-              <div>
-                <h3 className="font-semibold text-sm text-text-primary">Run Workflow</h3>
-                <p className="text-xs text-text-secondary">Execute pipelines</p>
-              </div>
-            </div>
-          </button>
-
-          <button
-            onClick={() => navigate('/connections')}
-            className="p-4 transition-all group text-left bg-surface-secondary border border-neutral-800 rounded-xl hover:border-neutral-700"
-          >
-            <div className="flex items-center gap-3">
-              <div className="p-2 transition-colors bg-surface-tertiary rounded-lg">
-                <Link2 className="w-5 h-5 text-primary-400" />
-              </div>
-              <div>
-                <h3 className="font-semibold text-sm text-text-primary">Connections</h3>
-                <p className="text-xs text-text-secondary">Manage data sources</p>
-              </div>
-            </div>
-          </button>
-        </div>
       </div>
-
     </Layout>
   );
 };

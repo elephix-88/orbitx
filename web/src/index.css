@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -6,27 +6,43 @@
 
 @layer base {
   :root {
-    /* ── Surfaces — warm dark (lifted from pure black) ── */
-    --surface-primary: 17 17 20;
-    --surface-secondary: 28 28 33;
-    --surface-tertiary: 40 40 46;
+    /* ── Backgrounds (per OrbitX spec) ── */
+    --bg-page: 13 13 16;           /* #0D0D10 — outermost shell, sidebar */
+    --bg-card: 22 22 25;           /* #161619 — all cards, panels, modals */
+    --bg-input: 28 28 33;          /* #1C1C21 — form inputs, dropdowns */
+    --bg-hover: 255 255 255;       /* use with /3 opacity */
+    --bg-active: 255 255 255;      /* use with /6 opacity */
+    
+    /* Legacy surface aliases */
+    --surface-primary: 13 13 16;
+    --surface-secondary: 22 22 25;
+    --surface-tertiary: 28 28 33;
     --surface-dark: 10 10 12;
 
-    /* ── Text ── */
-    --text-primary: 245 245 245;
-    --text-secondary: 163 163 175;
-    --text-tertiary: 115 115 130;
-    --text-inverse: 17 17 20;
+    /* ── Text (per OrbitX spec using rgba) ── */
+    --text-1: 255 255 255;         /* rgba(255,255,255,0.88) — primary content */
+    --text-2: 255 255 255;         /* rgba(255,255,255,0.50) — secondary, labels */
+    --text-3: 255 255 255;         /* rgba(255,255,255,0.28) — muted, placeholders */
+    --text-4: 255 255 255;         /* rgba(255,255,255,0.16) — very faint, disabled */
+    
+    /* Legacy text aliases */
+    --text-primary: 255 255 255;
+    --text-secondary: 255 255 255;
+    --text-tertiary: 255 255 255;
+    --text-inverse: 13 13 16;
 
-    /* ── Borders — visible on dark bg ── */
-    --border-default: 55 55 65;
-    --border-subtle: 40 40 46;
+    /* ── Borders (per OrbitX spec) ── */
+    --border: 255 255 255;         /* rgba(255,255,255,0.055) */
+    --border-sub: 255 255 255;     /* rgba(255,255,255,0.035) */
+    
+    /* Legacy border aliases */
+    --border-default: 255 255 255;
+    --border-subtle: 255 255 255;
+    --border-primary: 255 255 255;
+    --border-secondary: 255 255 255;
 
-    /* ── Backward compat ── */
-    --border-primary: 55 55 65;
-    --border-secondary: 40 40 46;
-
-    /* ── Brand / primary (yellow) ── */
+    /* ── Brand (OrbitX yellow) ── */
+    --brand: 250 204 21;           /* #FACC15 */
     --brand-50: 254 252 232;
     --brand-100: 254 249 195;
     --brand-200: 254 240 138;
@@ -38,42 +54,43 @@
     --brand-800: 133 77 14;
     --brand-900: 113 63 18;
 
-    /* ── Status: success ── */
+    /* ── Semantic colors (per OrbitX spec) ── */
+    --success: 16 185 129;         /* #10B981 — green */
     --success-light: 6 78 59;
-    --success: 16 185 129;
     --success-dark: 167 243 208;
 
-    /* ── Status: warning ── */
-    --warning-light: 120 53 15;
-    --warning: 245 158 11;
-    --warning-dark: 253 230 138;
-
-    /* ── Status: error ── */
+    --error: 239 68 68;            /* #EF4444 — red */
     --error-light: 127 29 29;
-    --error: 239 68 68;
     --error-dark: 254 202 202;
 
-    /* ── Status: info ── */
+    --info: 59 130 246;            /* #3B82F6 — blue */
     --info-light: 30 58 138;
-    --info: 59 130 246;
     --info-dark: 191 219 254;
+
+    --warning: 245 158 11;         /* #F59E0B — amber */
+    --warning-light: 120 53 15;
+    --warning-dark: 253 230 138;
   }
 
   .dark {
-    --surface-primary: 17 17 20;
-    --surface-secondary: 28 28 33;
-    --surface-tertiary: 40 40 46;
+    --bg-page: 13 13 16;
+    --bg-card: 22 22 25;
+    --bg-input: 28 28 33;
+    
+    --surface-primary: 13 13 16;
+    --surface-secondary: 22 22 25;
+    --surface-tertiary: 28 28 33;
     --surface-dark: 10 10 12;
 
-    --text-primary: 245 245 245;
-    --text-secondary: 163 163 175;
-    --text-tertiary: 115 115 130;
-    --text-inverse: 17 17 20;
+    --text-primary: 255 255 255;
+    --text-secondary: 255 255 255;
+    --text-tertiary: 255 255 255;
+    --text-inverse: 13 13 16;
 
-    --border-default: 55 55 65;
-    --border-subtle: 40 40 46;
-    --border-primary: 55 55 65;
-    --border-secondary: 40 40 46;
+    --border-default: 255 255 255;
+    --border-subtle: 255 255 255;
+    --border-primary: 255 255 255;
+    --border-secondary: 255 255 255;
   }
 
   html, body, #root {
@@ -84,21 +101,54 @@
   }
 
   body {
-    @apply bg-surface-primary text-text-primary antialiased;
+    background-color: rgb(var(--bg-page));
+    color: rgba(255, 255, 255, 0.88);
     font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 400;
     line-height: 1.5;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
-    letter-spacing: -0.011em;
   }
 
-  h1, h2, h3, h4, h5, h6 {
+  /* Typography per OrbitX spec */
+  h1 {
+    font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
+    font-size: 18px;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.88);
+    letter-spacing: -0.02em;
+  }
+
+  h2, h3, h4, h5, h6 {
+    font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
     font-weight: 600;
     letter-spacing: -0.02em;
     line-height: 1.3;
+  }
+
+  /* Section labels / table headers */
+  .label-section {
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.09em;
+    color: rgba(255, 255, 255, 0.28);
+  }
+
+  /* KPI numbers */
+  .kpi-number {
+    font-family: 'Plus Jakarta Sans', 'Inter', sans-serif;
+    font-size: 38px;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Ensure all numbers use tabular figures */
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
   }
 
   button {
@@ -106,14 +156,15 @@
   }
 
   input, textarea, select {
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 400;
+    background-color: rgb(var(--bg-input));
   }
 
   label {
     font-weight: 500;
     font-size: 13px;
-    color: rgb(var(--text-secondary));
+    color: rgba(255, 255, 255, 0.50);
   }
 
   strong, b {
@@ -122,65 +173,83 @@
 }
 
 @layer components {
-  /* ── Panels ── */
-  .glass-panel {
-    @apply bg-surface-secondary border border-border-primary rounded-lg;
+  /* ── Card system (per OrbitX spec) ── */
+  .card {
+    background-color: rgb(var(--bg-card));
+    border: 1px solid rgba(255, 255, 255, 0.055);
+    border-radius: 14px;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
   }
 
-  .glass-panel-hover {
-    @apply hover:bg-surface-tertiary transition-colors duration-150;
+  .card-hover:hover {
+    background-color: rgba(255, 255, 255, 0.03);
   }
 
-  /* ── Button system ── */
+  /* ── Button system (per OrbitX spec) ── */
   .btn-base {
-    @apply inline-flex items-center justify-center font-medium transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-yellow-400 focus-visible:ring-offset-zinc-950 disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply inline-flex items-center justify-center font-medium transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-yellow-400 disabled:opacity-50 disabled:cursor-not-allowed;
     font-size: 13px;
     border-radius: 8px;
   }
 
   .btn-primary {
-    @apply btn-base text-zinc-950 border border-transparent;
+    @apply btn-base border border-transparent;
     background-color: #FACC15;
+    color: rgb(var(--bg-page));
   }
   .btn-primary:hover:not(:disabled) {
     background-color: #EAB308;
   }
 
-  .btn-secondary {
-    @apply btn-base text-text-primary bg-surface-tertiary;
-    border: 1px solid rgb(var(--border-default));
-  }
-  .btn-secondary:hover:not(:disabled) {
-    background-color: rgb(var(--surface-tertiary));
-  }
-
   .btn-ghost {
-    @apply btn-base bg-transparent text-text-secondary;
+    @apply btn-base bg-transparent;
+    color: rgba(255, 255, 255, 0.50);
     border: 1px solid transparent;
   }
   .btn-ghost:hover:not(:disabled) {
-    @apply text-text-primary;
-    background-color: rgb(var(--surface-tertiary));
-  }
-
-  .btn-destructive {
-    @apply btn-base text-white;
-    background-color: #EF4444;
-    border: 1px solid #EF4444;
-  }
-  .btn-destructive:hover:not(:disabled) {
-    background-color: #DC2626;
-    border-color: #DC2626;
+    color: rgba(255, 255, 255, 0.88);
+    background-color: rgba(255, 255, 255, 0.03);
   }
 
   .btn-icon {
     @apply btn-base p-2 aspect-square;
   }
 
-  /* ── Typography ── */
-  .text-display {
-    @apply font-semibold;
-    letter-spacing: -0.025em;
+  /* ── Status dots (per OrbitX spec) ── */
+  .status-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+  }
+
+  .status-dot-success { background-color: #10B981; }
+  .status-dot-error { background-color: #EF4444; }
+  .status-dot-warning { background-color: #F59E0B; }
+  .status-dot-info { background-color: #3B82F6; }
+
+  /* ── Tags (per OrbitX spec) ── */
+  .tag {
+    font-size: 11px;
+    padding: 2px 8px;
+    border-radius: 6px;
+    background-color: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.055);
+    color: rgba(255, 255, 255, 0.50);
+  }
+
+  /* ── Input styles (per OrbitX spec) ── */
+  .input {
+    background-color: rgb(var(--bg-input));
+    border: 1px solid rgba(255, 255, 255, 0.055);
+    border-radius: 8px;
+    color: rgba(255, 255, 255, 0.88);
+  }
+  .input::placeholder {
+    color: rgba(255, 255, 255, 0.28);
+  }
+  .input:focus {
+    border-color: #FACC15;
+    outline: none;
   }
 
   /* ── Scrollbar ── */
@@ -194,31 +263,50 @@
   }
 
   ::-webkit-scrollbar-thumb {
-    background-color: rgb(63 63 70);
+    background-color: rgba(255, 255, 255, 0.1);
     border-radius: 3px;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background-color: rgb(113 113 122);
+    background-color: rgba(255, 255, 255, 0.2);
   }
 }
 
-/* ── Utilities ── */
-.text-gradient {
+/* ── Utilities (OrbitX spec) ── */
+.text-brand {
   color: #FACC15;
 }
 
-.bauhaus-divider {
-  width: 48px;
-  height: 3px;
-  background-color: #FACC15;
-  border-radius: 2px;
-}
+/* Text opacity helpers */
+.text-primary-content { color: rgba(255, 255, 255, 0.88); }
+.text-secondary-content { color: rgba(255, 255, 255, 0.50); }
+.text-muted-content { color: rgba(255, 255, 255, 0.28); }
+.text-faint-content { color: rgba(255, 255, 255, 0.16); }
 
-.bauhaus-accent-bar {
-  width: 3px;
-  background-color: #FACC15;
-  border-radius: 2px;
+/* Background helpers */
+.bg-page { background-color: rgb(var(--bg-page)); }
+.bg-card { background-color: rgb(var(--bg-card)); }
+.bg-input { background-color: rgb(var(--bg-input)); }
+.bg-hover { background-color: rgba(255, 255, 255, 0.03); }
+.bg-active { background-color: rgba(255, 255, 255, 0.06); }
+
+/* Border helpers */
+.border-spec { border-color: rgba(255, 255, 255, 0.055); }
+.border-subtle { border-color: rgba(255, 255, 255, 0.035); }
+
+/* Card with brand glow (for Total Runs KPI) */
+.card-brand-glow {
+  position: relative;
+}
+.card-brand-glow::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 120px;
+  height: 120px;
+  background: radial-gradient(circle at top left, rgba(250, 204, 21, 0.06), transparent 70%);
+  pointer-events: none;
 }
 
 @keyframes fadeIn {

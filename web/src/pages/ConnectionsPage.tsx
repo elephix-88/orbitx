@@ -1,7 +1,6 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useCallback } from "react";
 import { createPortal } from "react-dom";
 import Layout from "@/components/Layout";
-import { Button } from "@/components/shared/Button";
 import { ConfirmDialog } from "@/components/shared/ConfirmDialog";
 import { useNotification } from "@/hooks/useNotification";
 import { useDeferredLoading } from "@/hooks/useDeferredLoading";
@@ -11,21 +10,14 @@ import { googleSheetsService } from "@/services/googleSheetsService";
 import { googleAdsService } from "@/services/googleAdsService";
 import { facebookOAuthService } from "@/services/facebookOAuthService";
 import { tiktokOAuthService } from "@/services/tiktokOAuthService";
-// import { testConnection, type TestConnectionResult } from "@/services/connectionService";
 import { fetchClient } from "@/lib/fetchClient";
 import {
-  Search,
-  Link2,
+  Plus,
   X,
   RefreshCw,
-  Plus,
-  Info,
+  Loader2,
 } from "lucide-react";
 import { FacebookIcon, TikTokIcon, GoogleAdsIcon, BigQueryIcon, MySQLIcon, GoogleSheetsIcon } from "@/components/icons/BrandIcons";
-import ConnectionRow from "@/components/connections/ConnectionRow";
-import ConnectionGroupRow, { type ConnectionItem } from "@/components/connections/ConnectionGroupRow";
-import { FacebookAdsSelector } from "@/components/connections/FacebookAdsSelector";
-import { ConnectionHelp } from "@/components/connections/ConnectionHelp";
 import { cn } from "@/lib/utils";
 
 interface Connection {
@@ -41,51 +33,51 @@ interface ConnectionType {
   name: string;
   description: string;
   icon: React.ReactNode;
-  setupFields: string[];
+  category: "source" | "destination";
 }
 
 const connectionTypes: ConnectionType[] = [
   {
-    id: "google_ads",
-    name: "Google Ads",
-    description: "Connect to Google Ads for campaign reporting and management.",
-    icon: <GoogleAdsIcon className="w-10 h-10" />,
-    setupFields: [],
-  },
-  {
     id: "facebook_ads",
     name: "Facebook Ads",
-    description: "Sync lead data and campaign performance metrics from Meta Ads.",
-    icon: <FacebookIcon className="w-10 h-10" />,
-    setupFields: [],
+    description: "Meta Ads campaigns and metrics",
+    icon: <FacebookIcon className="w-8 h-8" />,
+    category: "source",
+  },
+  {
+    id: "google_ads",
+    name: "Google Ads",
+    description: "Google Ads campaign data",
+    icon: <GoogleAdsIcon className="w-8 h-8" />,
+    category: "source",
   },
   {
     id: "tiktok_ads",
     name: "TikTok Ads",
-    description: "Extract campaign performance and ad metrics from TikTok Ads Manager.",
-    icon: <TikTokIcon className="w-10 h-10" />,
-    setupFields: [],
+    description: "TikTok Ads performance",
+    icon: <TikTokIcon className="w-8 h-8" />,
+    category: "source",
   },
   {
     id: "bigquery",
     name: "BigQuery",
-    description: "Connect to Google BigQuery for data warehousing and analytics.",
-    icon: <BigQueryIcon className="w-10 h-10" />,
-    setupFields: ["projectId", "keyFile"],
-  },
-  {
-    id: "mysql",
-    name: "MySQL",
-    description: "Connect to MySQL databases for SQL querying and data extraction.",
-    icon: <MySQLIcon className="w-10 h-10" />,
-    setupFields: ["host", "port", "database", "username", "password"],
+    description: "Google BigQuery warehouse",
+    icon: <BigQueryIcon className="w-8 h-8" />,
+    category: "destination",
   },
   {
     id: "google_sheets",
     name: "Google Sheets",
-    description: "Read and write data directly to Google Spreadsheets.",
-    icon: <GoogleSheetsIcon className="w-10 h-10" />,
-    setupFields: [],
+    description: "Google Spreadsheets",
+    icon: <GoogleSheetsIcon className="w-8 h-8" />,
+    category: "destination",
+  },
+  {
+    id: "mysql",
+    name: "MySQL",
+    description: "MySQL database",
+    icon: <MySQLIcon className="w-8 h-8" />,
+    category: "destination",
   },
 ];
 
@@ -118,7 +110,6 @@ const ConnectionsPage = () => {
   const [viewing, setViewing] = useState<Connection | null>(null);
   const [pendingDisconnectId, setPendingDisconnectId] = useState<string | null>(null);
   const [isDisconnecting, setIsDisconnecting] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
 
   const { notify } = useNotification();
   const STORAGE_KEY = "app_connections";
@@ -161,36 +152,6 @@ const ConnectionsPage = () => {
   }, []);
 
   useFetchOnce(loadConnections, "connections-page");
-
-  useEffect(() => {
-    function friendlyName(typeId: string): string {
-      const match = connectionTypes.find((t) => t.id === typeId);
-      return match ? match.name : typeId;
-    }
-
-    async function handleOAuthMessage(event: MessageEvent) {
-      const msgType: string | undefined = event.data?.type;
-      const providerFromMsg: string | undefined = event.data?.provider;
-      if (!msgType) return;
-
-      const providerType =
-        providerFromMsg || (msgType.endsWith("_connected") ? msgType.replace(/_connected$/, "") : undefined);
-      if (!providerType) return;
-
-      const normalized = normalizeConnectorType(providerType);
-      const label = friendlyName(normalized);
-
-      try {
-        await loadConnections();
-        notify.success("Connected", `${label} connected successfully`);
-      } catch {
-        notify.error("Connection Error", `${label} connected but failed to refresh the list. Please reload.`);
-      }
-    }
-    const handleMessage = (event: MessageEvent) => { void handleOAuthMessage(event); };
-    window.addEventListener("message", handleMessage);
-    return () => window.removeEventListener("message", handleMessage);
-  }, [notify, loadConnections]);
 
   const handleConnect = async (typeId: string) => {
     setConnectingType(typeId);
@@ -238,15 +199,16 @@ const ConnectionsPage = () => {
       });
       if (!resp.ok) throw new Error(`Failed ${resp.status}`);
       await loadConnections();
-      notify.successDialog("Disconnected", ["The connection was removed."], "✅");
+      notify.success("Disconnected", "The connection was removed.");
     } catch {
-      notify.errorDialog("Disconnect failed", ["Please try again."]);
+      notify.error("Error", "Disconnect failed. Please try again.");
     } finally {
       setIsDisconnecting(false);
       setPendingDisconnectId(null);
     }
   };
 
+  // Group connections by type
   const connectionsByType = connections.reduce<Record<string, Connection[]>>((acc, connection) => {
     if (!acc[connection.type]) {
       acc[connection.type] = [];
@@ -255,48 +217,163 @@ const ConnectionsPage = () => {
     return acc;
   }, {});
 
-  const connectedTypes = connectionTypes.filter((type) => connectionsByType[type.id]?.length > 0);
+  // Sources and Destinations
+  const sourceTypes = connectionTypes.filter(t => t.category === "source");
+  const destinationTypes = connectionTypes.filter(t => t.category === "destination");
 
-  const availableTypes = connectionTypes.filter(
-    (type) =>
-      type.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      type.description.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-
-  const showLoading = useDeferredLoading(loading, 150);
+  const connectedSourceTypes = sourceTypes.filter(t => connectionsByType[t.id]?.length > 0);
+  const connectedDestinationTypes = destinationTypes.filter(t => connectionsByType[t.id]?.length > 0);
 
   const totalConnections = connections.length;
+  const showLoading = useDeferredLoading(loading, 150);
+
+  // Connection Card Component
+  const ConnectionCard = ({ 
+    type, 
+    connection 
+  }: { 
+    type: ConnectionType; 
+    connection?: Connection;
+  }) => {
+    const isConnected = !!connection;
+    const status = connection?.status || 'connected';
+    const statusColor = status === 'error' ? '#EF4444' : status === 'reconnect' ? '#F59E0B' : '#10B981';
+    const statusText = status === 'error' ? 'Error' : status === 'reconnect' ? 'Reconnect needed' : 'Connected';
+
+    return (
+      <div 
+        className="p-5 rounded-[14px]"
+        style={{ 
+          backgroundColor: 'rgb(22, 22, 25)',
+          border: '1px solid rgba(255, 255, 255, 0.055)',
+          boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.05)',
+        }}
+      >
+        {/* Top row */}
+        <div className="flex items-start justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 flex items-center justify-center">
+              {type.icon}
+            </div>
+            <span 
+              className="text-[14px] font-semibold"
+              style={{ color: 'rgba(255, 255, 255, 0.88)' }}
+            >
+              {type.name}
+            </span>
+          </div>
+          {isConnected && (
+            <div className="flex items-center gap-1.5">
+              <span 
+                className="w-1.5 h-1.5 rounded-full"
+                style={{ backgroundColor: statusColor }}
+              />
+              <span 
+                className="text-[11px]"
+                style={{ color: statusColor }}
+              >
+                {statusText}
+              </span>
+            </div>
+          )}
+        </div>
+
+        {/* Account info */}
+        {isConnected && connection && (
+          <p 
+            className="text-[12px] mt-3 truncate"
+            style={{ color: 'rgba(255, 255, 255, 0.28)' }}
+          >
+            {connection.accountInfo || 'Account connected'}
+          </p>
+        )}
+
+        {/* Bottom row */}
+        <div className="flex items-center justify-between mt-3">
+          {isConnected ? (
+            <>
+              <span 
+                className="text-[11px]"
+                style={{ color: 'rgba(255, 255, 255, 0.16)' }}
+              >
+                Synced recently
+              </span>
+              <button
+                onClick={() => connection && handleDisconnect(connection.id)}
+                className="text-[12px] font-medium px-2.5 py-1 rounded-md transition-colors"
+                style={{ 
+                  color: 'rgba(255, 255, 255, 0.50)',
+                  backgroundColor: 'transparent',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.1)';
+                  e.currentTarget.style.color = '#EF4444';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'transparent';
+                  e.currentTarget.style.color = 'rgba(255, 255, 255, 0.50)';
+                }}
+              >
+                Disconnect
+              </button>
+            </>
+          ) : (
+            <>
+              <span 
+                className="text-[11px]"
+                style={{ color: 'rgba(255, 255, 255, 0.28)' }}
+              >
+                {type.description}
+              </span>
+              <button
+                onClick={() => handleConnect(type.id)}
+                disabled={connectingType === type.id}
+                className="text-[12px] font-medium px-3 py-1.5 rounded-md transition-colors flex items-center gap-1.5 disabled:opacity-50"
+                style={{ 
+                  backgroundColor: '#FACC15',
+                  color: 'rgb(13, 13, 16)',
+                }}
+              >
+                {connectingType === type.id ? (
+                  <>
+                    <Loader2 size={12} className="animate-spin" />
+                    Connecting...
+                  </>
+                ) : (
+                  <>
+                    <Plus size={12} />
+                    Connect
+                  </>
+                )}
+              </button>
+            </>
+          )}
+        </div>
+      </div>
+    );
+  };
 
   if (showLoading) {
     return (
       <Layout>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+        <div className="space-y-6">
+          {/* Header skeleton */}
           <div className="flex items-center justify-between">
             <div>
-              <div className="h-7 w-32 animate-pulse bg-neutral-800 rounded-md" />
-              <div className="h-4 w-48 mt-2 animate-pulse bg-neutral-800 rounded-md" />
+              <div className="h-5 w-32 animate-pulse rounded" style={{ backgroundColor: 'rgba(255, 255, 255, 0.06)' }} />
+              <div className="h-4 w-24 mt-2 animate-pulse rounded" style={{ backgroundColor: 'rgba(255, 255, 255, 0.06)' }} />
             </div>
-            <div className="h-9 w-24 animate-pulse bg-neutral-800 rounded-md" />
+            <div className="h-8 w-32 animate-pulse rounded-lg" style={{ backgroundColor: 'rgba(255, 255, 255, 0.06)' }} />
           </div>
 
-          <div className="h-12 animate-pulse bg-surface-secondary border border-neutral-800 rounded-lg" />
-
-          {/* Row-based loading skeleton */}
-          <div className="space-y-2">
-            {[1, 2, 3, 4, 5].map((i) => (
-              <div key={i} className="p-3 animate-pulse bg-surface-secondary border border-neutral-800 rounded-xl">
-                <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 flex-shrink-0 bg-neutral-800 rounded-md" />
-                  <div className="flex-1 space-y-2">
-                    <div className="h-4 w-32 bg-neutral-800 rounded-md" />
-                    <div className="h-3 w-48 bg-neutral-800 rounded-md" />
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <div className="h-5 w-20 bg-neutral-800 rounded-md" />
-                    <div className="w-6 h-6 bg-neutral-800 rounded-md" />
-                  </div>
-                </div>
-              </div>
+          {/* Grid skeleton */}
+          <div className="grid grid-cols-3 gap-3">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <div 
+                key={i} 
+                className="h-32 animate-pulse rounded-[14px]"
+                style={{ backgroundColor: 'rgba(255, 255, 255, 0.03)' }}
+              />
             ))}
           </div>
         </div>
@@ -306,235 +383,211 @@ const ConnectionsPage = () => {
 
   return (
     <Layout>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="space-y-8">
+        {/* Page Header */}
+        <div className="flex items-start justify-between">
           <div>
-            <div className="flex items-center gap-3 mb-2">
-              <div className="w-12 h-1 bg-primary-400" />
-            </div>
-            <h1 className="text-2xl font-semibold text-text-primary">Connections</h1>
-            <p className="text-sm mt-0.5 text-text-secondary">
-              {totalConnections} connected &#9632; {connectionTypes.length} available
+            <h1 
+              className="font-display text-[18px] font-semibold"
+              style={{ color: 'rgba(255, 255, 255, 0.88)' }}
+            >
+              Connections
+            </h1>
+            <p 
+              className="text-[12px] mt-1"
+              style={{ color: 'rgba(255, 255, 255, 0.28)' }}
+            >
+              {totalConnections} active
             </p>
           </div>
 
           <button
             onClick={() => loadConnections()}
             disabled={loading}
-            className="h-9 px-3 flex items-center gap-2 text-sm transition-colors text-text-secondary bg-surface-secondary border border-neutral-800 rounded-lg hover:bg-surface-tertiary"
+            className="h-8 px-3 flex items-center gap-2 text-[12px] font-medium rounded-lg transition-colors"
+            style={{ 
+              backgroundColor: 'transparent',
+              border: '1px solid rgba(255, 255, 255, 0.055)',
+              color: 'rgba(255, 255, 255, 0.50)',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.03)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'transparent';
+            }}
           >
-            <RefreshCw className={cn("w-4 h-4", loading && "animate-spin")} />
-            <span className="hidden sm:inline text-xs">Refresh</span>
+            <RefreshCw size={14} className={cn(loading && "animate-spin")} />
+            Refresh
           </button>
         </div>
 
-        {/* Search Bar */}
-        <div className="p-3 bg-surface-secondary border border-neutral-800 rounded-lg">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-secondary" />
-            <input
-              type="text"
-              placeholder="Search connectors..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full h-9 pl-9 pr-9 text-sm focus:outline-none transition-all bg-neutral-900 border border-neutral-700 rounded-md text-text-primary focus:border-primary-400 focus:ring-1 focus:ring-primary-400"
-            />
-            {searchTerm && (
-              <button
-                onClick={() => setSearchTerm("")}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            )}
-          </div>
-        </div>
-
-        {/* Setup Guides (shown when no connections or search is empty) */}
-        {totalConnections === 0 && !searchTerm && (
-          <section className="space-y-4">
-            <div className="flex items-center gap-3">
-              <Info className="w-4 h-4 text-text-secondary" />
-              <h2 className="text-sm font-medium text-text-primary">Setup Guides</h2>
-            </div>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              {connectionTypes.slice(0, 4).map((type) => (
-                <ConnectionHelp key={type.id} connectionType={type.id} />
-              ))}
-            </div>
-          </section>
-        )}
-
-        {/* Active Connections - Grouped Row View */}
-        {connectedTypes.length > 0 && (
-          <section className="space-y-4">
-            <div className="flex items-center gap-3">
-              {/* Green circle for connected */}
-              <span className="inline-block w-3 h-3 rounded-full bg-success" />
-              <h2 className="text-sm font-medium text-text-primary">Active Connections</h2>
-              <span className="text-xs px-2 py-0.5 text-text-secondary bg-surface-tertiary border border-neutral-800 rounded-md">
-                {totalConnections}
-              </span>
-            </div>
-
-            <div className="space-y-2">
-              {connectedTypes.map((type) => {
-                const typeConnections = connectionsByType[type.id] || [];
-                const connectionItems: ConnectionItem[] = typeConnections.map((conn) => ({
-                  id: conn.id,
-                  accountInfo: conn.accountInfo,
-                  status: conn.status,
-                  createdAt: conn.createdAt,
-                }));
-
-                return (
-                  <ConnectionGroupRow
-                    key={type.id}
-                    icon={type.icon}
-                    name={type.name}
-                    connections={connectionItems}
-                    onViewDetails={(conn) => {
-                      const fullConnection = typeConnections.find((c) => c.id === conn.id);
-                      if (fullConnection) setViewing(fullConnection);
-                    }}
-                    onDisconnect={(connectionId) => handleDisconnect(connectionId)}
-                  />
-                );
-              })}
-            </div>
-          </section>
-        )}
-
-        {/* Available Connectors - Clean Row View */}
+        {/* SOURCES Section */}
         <section className="space-y-4">
-          <div className="flex items-center gap-3">
-            {/* Gray circle for available */}
-            <span className="inline-block w-3 h-3 rounded-full bg-neutral-600" />
-            <h2 className="text-sm font-medium text-text-primary">Available Connectors</h2>
-            <span className="text-xs px-2 py-0.5 text-text-secondary bg-surface-tertiary border border-neutral-800 rounded-md">
-              {availableTypes.length}
+          <div className="flex items-center gap-2">
+            <span 
+              className="text-[10px] font-semibold uppercase tracking-[0.09em]"
+              style={{ color: 'rgba(255, 255, 255, 0.28)' }}
+            >
+              Sources
+            </span>
+            <span 
+              className="text-[10px]"
+              style={{ color: 'rgba(255, 255, 255, 0.16)' }}
+            >
+              Ad Platforms
             </span>
           </div>
 
-          {availableTypes.length === 0 ? (
-            <div className="p-8 text-center bg-surface-secondary border-2 border-dashed border-neutral-800 rounded-xl">
-              <Search className="w-8 h-8 mx-auto mb-3 text-text-secondary" />
-              <p className="text-sm text-text-secondary">No connectors match "{searchTerm}"</p>
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {availableTypes.map((type) => (
-                <ConnectionRow
-                  key={type.id}
-                  icon={type.icon}
-                  name={type.name}
-                  description={type.description}
-                  variant="available"
-                  onConnect={() => handleConnect(type.id)}
-                  isConnecting={connectingType === type.id}
-                />
-              ))}
-            </div>
-          )}
+          <div className="grid grid-cols-3 gap-3">
+            {sourceTypes.map((type) => {
+              const typeConnections = connectionsByType[type.id] || [];
+              // Show connected card for each connection, or empty card if none
+              if (typeConnections.length > 0) {
+                return typeConnections.map((conn) => (
+                  <ConnectionCard key={conn.id} type={type} connection={conn} />
+                ));
+              }
+              return <ConnectionCard key={type.id} type={type} />;
+            })}
+          </div>
+        </section>
+
+        {/* DESTINATIONS Section */}
+        <section className="space-y-4">
+          <div className="flex items-center gap-2">
+            <span 
+              className="text-[10px] font-semibold uppercase tracking-[0.09em]"
+              style={{ color: 'rgba(255, 255, 255, 0.28)' }}
+            >
+              Destinations
+            </span>
+            <span 
+              className="text-[10px]"
+              style={{ color: 'rgba(255, 255, 255, 0.16)' }}
+            >
+              Data Warehouses
+            </span>
+          </div>
+
+          <div className="grid grid-cols-3 gap-3">
+            {destinationTypes.map((type) => {
+              const typeConnections = connectionsByType[type.id] || [];
+              if (typeConnections.length > 0) {
+                return typeConnections.map((conn) => (
+                  <ConnectionCard key={conn.id} type={type} connection={conn} />
+                ));
+              }
+              return <ConnectionCard key={type.id} type={type} />;
+            })}
+          </div>
         </section>
       </div>
 
-      {/* Connection Details Modal - Compact auto-height */}
+      {/* Connection Details Modal */}
       {viewing && createPortal(
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ backgroundColor: 'rgba(0, 0, 0, 0.6)', backdropFilter: 'blur(4px)' }}
           onClick={() => setViewing(null)}
         >
           <div
-            className="w-full max-w-md bg-surface-secondary border border-neutral-800 rounded-2xl shadow-md"
+            className="w-full max-w-md rounded-[16px] overflow-hidden"
+            style={{ 
+              backgroundColor: 'rgb(22, 22, 25)',
+              border: '1px solid rgba(255, 255, 255, 0.055)',
+            }}
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="flex justify-between items-center px-5 py-4 border-b border-neutral-800">
+            <div 
+              className="flex justify-between items-center px-5 py-4"
+              style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.055)' }}
+            >
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 flex items-center justify-center text-neutral-950 bg-primary-400 rounded-md">
-                  {React.cloneElement(
-                    (connectionTypes.find((t) => t.id === viewing.type)?.icon || <Link2 className="w-5 h-5" />) as React.ReactElement,
-                    { className: 'w-5 h-5' }
-                  )}
+                <div 
+                  className="w-10 h-10 flex items-center justify-center rounded-lg"
+                  style={{ backgroundColor: '#FACC15' }}
+                >
+                  {connectionTypes.find((t) => t.id === viewing.type)?.icon}
                 </div>
                 <div>
-                  <h2 className="text-base font-semibold text-text-primary">
+                  <h2 
+                    className="text-[16px] font-semibold"
+                    style={{ color: 'rgba(255, 255, 255, 0.88)' }}
+                  >
                     {connectionTypes.find((t) => t.id === viewing.type)?.name || viewing.type}
                   </h2>
                   <div className="flex items-center gap-1.5 mt-0.5">
-                    <span className="w-2 h-2 rounded-full bg-success" />
-                    <span className="text-xs font-medium text-success">Connected</span>
+                    <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: '#10B981' }} />
+                    <span className="text-[11px]" style={{ color: '#10B981' }}>Connected</span>
                   </div>
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => setViewing(null)}
-                className="p-2 hover:bg-surface-tertiary transition-colors rounded-md text-text-secondary"
-                title="Close"
+                className="p-2 rounded-md transition-colors"
+                style={{ color: 'rgba(255, 255, 255, 0.50)' }}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.03)'}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
               >
                 <X size={18} />
               </button>
             </div>
 
             {/* Content */}
-            <div className="p-5">
-              {viewing.type === "facebook_ads" ? (
-                <FacebookAdsSelector
-                  connectionId={viewing.id}
-                  onSelect={(account) => {
-                    notify.success("Account Selected", `Selected ${account.name}`);
-                  }}
-                  onCancel={() => setViewing(null)}
-                />
-              ) : (
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between py-2 border-b border-neutral-800">
-                    <span className="text-sm text-text-secondary">Service</span>
-                    <span className="text-sm font-medium text-text-primary">
-                      {connectionTypes.find((t) => t.id === viewing.type)?.name || viewing.type}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between py-2 border-b border-neutral-800">
-                    <span className="text-sm text-text-secondary">Account</span>
-                    <span className="text-sm font-medium text-text-primary">{viewing.accountInfo}</span>
-                  </div>
-                  {viewing.createdAt && (
-                    <div className="flex items-center justify-between py-2 border-b border-neutral-800">
-                      <span className="text-sm text-text-secondary">Created</span>
-                      <span className="text-sm font-medium text-text-primary">
-                        {new Date(viewing.createdAt).toLocaleDateString()}
-                      </span>
-                    </div>
-                  )}
-                  <div className="flex items-center justify-between py-2">
-                    <span className="text-sm text-text-secondary">Status</span>
-                    <div className="flex items-center gap-1.5">
-                      <span className="w-2 h-2 rounded-full bg-success" />
-                      <span className="text-sm font-medium text-success">Active</span>
-                    </div>
-                  </div>
+            <div className="p-5 space-y-3">
+              <div 
+                className="flex items-center justify-between py-2"
+                style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.035)' }}
+              >
+                <span className="text-[13px]" style={{ color: 'rgba(255, 255, 255, 0.50)' }}>Account</span>
+                <span className="text-[13px] font-medium" style={{ color: 'rgba(255, 255, 255, 0.88)' }}>
+                  {viewing.accountInfo}
+                </span>
+              </div>
+              {viewing.createdAt && (
+                <div 
+                  className="flex items-center justify-between py-2"
+                  style={{ borderBottom: '1px solid rgba(255, 255, 255, 0.035)' }}
+                >
+                  <span className="text-[13px]" style={{ color: 'rgba(255, 255, 255, 0.50)' }}>Created</span>
+                  <span className="text-[13px] font-medium" style={{ color: 'rgba(255, 255, 255, 0.88)' }}>
+                    {new Date(viewing.createdAt).toLocaleDateString()}
+                  </span>
                 </div>
               )}
             </div>
 
             {/* Footer */}
-            <div className="flex gap-3 px-5 py-4 border-t border-neutral-800">
-              <Button
-                variant="destructive"
+            <div 
+              className="flex gap-3 px-5 py-4"
+              style={{ borderTop: '1px solid rgba(255, 255, 255, 0.055)' }}
+            >
+              <button
                 onClick={() => {
                   setViewing(null);
                   handleDisconnect(viewing.id);
                 }}
-                className="flex-1"
+                className="flex-1 py-2 text-[13px] font-medium rounded-lg"
+                style={{ backgroundColor: '#EF4444', color: 'white' }}
               >
                 Disconnect
-              </Button>
-              <Button variant="outline" onClick={() => setViewing(null)} className="flex-1">
+              </button>
+              <button 
+                onClick={() => setViewing(null)} 
+                className="flex-1 py-2 text-[13px] font-medium rounded-lg transition-colors"
+                style={{ 
+                  backgroundColor: 'transparent',
+                  border: '1px solid rgba(255, 255, 255, 0.055)',
+                  color: 'rgba(255, 255, 255, 0.88)',
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = 'rgba(255, 255, 255, 0.03)'}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+              >
                 Close
-              </Button>
+              </button>
             </div>
           </div>
         </div>,
@@ -547,7 +600,9 @@ const ConnectionsPage = () => {
         message={
           <div className="space-y-2">
             <p>This will revoke access to this connector immediately.</p>
-            <p className="text-sm text-text-tertiary">Workflows using this connection may fail until updated.</p>
+            <p className="text-[13px]" style={{ color: 'rgba(255, 255, 255, 0.28)' }}>
+              Workflows using this connection may fail until updated.
+            </p>
           </div>
         }
         confirmText="Remove"
