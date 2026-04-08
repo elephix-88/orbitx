@@ -2,7 +2,8 @@ import asyncio
 import json
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
-from fastapi.responses import JSONResponse, StreamingResponse
+from fastapi.responses import JSONResponse
+from sse_starlette.sse import EventSourceResponse
 from loguru import logger
 from pymongo.errors import DuplicateKeyError
 
@@ -87,7 +88,6 @@ async def execute_workflow_endpoint(
 
 
 TERMINAL_STATUSES = {Status.SUCCESS, Status.FAILED}
-SSE_POLL_INTERVAL = 1.5
 SSE_MAX_DURATION = 600  # 10 minutes safety cap
 
 
@@ -98,9 +98,10 @@ async def execution_stream(
 ):
     """SSE endpoint that streams execution status changes for a workflow.
 
-    Watches the latest RUNNING execution in MongoDB and pushes updates
-    whenever the document changes. Closes when the execution reaches
-    a terminal status (SUCCESS/FAILED/CANCELED) or the safety cap expires.
+    Uses MongoDB change streams for real push-based updates.
+    Emits the full execution document whenever it changes.
+    Closes when the execution reaches a terminal status or the safety
+    cap expires.
     """
     collection = database[settings.execution_history_collection]
 
@@ -110,48 +111,54 @@ async def execution_stream(
         return results[0] if results else None
 
     async def event_generator():
-        previous_snapshot = None
-        elapsed = 0.0
+        # Send current state immediately so the client doesn't wait
+        document = await find_latest(
+            {"workflow_id": workflow_id, "status": Status.RUNNING},
+        )
+        if document is None:
+            document = await find_latest({"workflow_id": workflow_id})
+        if document is None:
+            yield {"data": "{}"}
+            return
 
-        while elapsed < SSE_MAX_DURATION:
-            document = await find_latest(
-                {"workflow_id": workflow_id, "status": Status.RUNNING}
-            )
+        if "_id" in document:
+            document["_id"] = str(document["_id"])
+        yield {"data": json.dumps(document, default=str)}
 
-            if document is None:
-                document = await find_latest(
-                    {"workflow_id": workflow_id}
-                )
+        if document.get("status") in TERMINAL_STATUSES:
+            return
 
-            if document is None:
-                yield "data: {}\n\n"
-                return
+        # Watch for changes via MongoDB change stream
+        pipeline = [
+            {"$match": {
+                "operationType": {"$in": ["update", "replace"]},
+                "fullDocument.workflow_id": workflow_id,
+            }},
+        ]
+        try:
+            async with collection.watch(
+                pipeline,
+                full_document="updateLookup",
+                max_await_time_ms=SSE_MAX_DURATION * 1000,
+            ) as stream:
+                async for change in stream:
+                    full_document = change.get("fullDocument")
+                    if not full_document:
+                        continue
 
-            if "_id" in document:
-                document["_id"] = str(document["_id"])
+                    if "_id" in full_document:
+                        full_document["_id"] = str(full_document["_id"])
 
-            current_snapshot = json.dumps(
-                document, default=str, sort_keys=True
-            )
+                    yield {"data": json.dumps(full_document, default=str)}
 
-            if current_snapshot != previous_snapshot:
-                yield f"data: {json.dumps(document, default=str)}\n\n"
-                previous_snapshot = current_snapshot
+                    if full_document.get("status") in TERMINAL_STATUSES:
+                        return
+        except asyncio.CancelledError:
+            return
 
-            execution_status = document.get("status", "")
-            if execution_status in TERMINAL_STATUSES:
-                return
-
-            await asyncio.sleep(SSE_POLL_INTERVAL)
-            elapsed += SSE_POLL_INTERVAL
-
-    return StreamingResponse(
+    return EventSourceResponse(
         event_generator(),
-        media_type="text/event-stream",
-        headers={
-            "Cache-Control": "no-cache",
-            "X-Accel-Buffering": "no",
-        },
+        ping=15,
     )
 
 

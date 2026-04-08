@@ -27,6 +27,7 @@ from server.api.tiktok.oauth import router as tiktok_oauth_router
 from server.api.tiktok.tiktok_fields import router as tiktok_fields_router
 from server.api.workflow import router as workflow_router
 from server.configs.config import settings
+from server.middleware.request_logging import RequestLoggingMiddleware
 from server.middleware import (
     AuthContextMiddleware,
     CSRFMiddleware,
@@ -87,6 +88,7 @@ app.add_middleware(
 app.add_middleware(SecurityHeadersMiddleware)
 app.add_middleware(CSRFMiddleware)
 app.add_middleware(AuthContextMiddleware)
+app.add_middleware(RequestLoggingMiddleware)
 
 app.include_router(auth_router)
 app.include_router(workflow_router)

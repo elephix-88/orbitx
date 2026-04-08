@@ -23,7 +23,6 @@ import { useResponsiveLayout } from "../hooks/useResponsiveLayout";
 import { useElementSize } from "../hooks/useElementSize";
 import { autoLayoutDynamic } from "../utils/workflowLayout";
 import { executionDebugService, type ExecutionDetail } from "../services/executionDebugService";
-import { executionHistoryService } from "../services/executionHistoryService";
 import { previewService, type PreviewResponse } from "../services/previewService";
 import type { NodeStatus } from "../types/workflow";
 
@@ -44,33 +43,6 @@ interface LocationState {
     nodes: WorkflowNode[];
     connections: WorkflowConnection[];
   };
-}
-
-/**
- * Apply execution statuses from the latest execution to workflow nodes.
- * Called during bootstrap so nodes have correct status from the start.
- */
-function applyExecutionStatuses(
-  nodes: WorkflowNode[],
-  executions: ExecutionHistory[]
-): WorkflowNode[] {
-  if (executions.length === 0) return nodes;
-
-  const sorted = [...executions].sort((a, b) => b.start_time - a.start_time);
-  const target = sorted.find((e) => e.status === "RUNNING") || sorted[0];
-  if (!target?.steps) return nodes;
-
-  const stepStatuses = new Map<string, NodeStatus>();
-  for (const [key, step] of Object.entries(target.steps)) {
-    const normalized = step.status === "FAILED" ? "error" : step.status.toLowerCase();
-    stepStatuses.set(key, normalized as NodeStatus);
-  }
-
-  return nodes.map((node) => {
-    const instanceId = String(node.data?.node_instance_id);
-    const status = stepStatuses.get(instanceId);
-    return status ? { ...node, status } : node;
-  });
 }
 
 const WorkflowBuilderPage: React.FC = () => {
@@ -380,23 +352,10 @@ const WorkflowBuilderPage: React.FC = () => {
           }
           setOriginalBackendWorkflow(backendData);
 
-          // Fetch execution history to set initial node statuses.
-          // Done here (not in ExecutionLogPanel) to avoid race conditions.
-          const workflowDocId = extractMongoId(backendData?._id) || docId;
-          let nodesWithStatus = workflowNodes;
-          if (workflowDocId) {
-            try {
-              const executions = await executionHistoryService.getExecutionHistory(workflowDocId);
-              nodesWithStatus = applyExecutionStatuses(workflowNodes, executions);
-            } catch {
-              // Non-critical — nodes will just show validation status instead
-            }
-          }
-
           updateWorkflow({
             ...workflow,
           });
-          setNodes(nodesWithStatus);
+          setNodes(workflowNodes);
           setConnections(workflowConnections);
           markAsSaved();
         }

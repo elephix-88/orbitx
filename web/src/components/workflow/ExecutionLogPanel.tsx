@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { ExecutionHistory, ExecutionStep, ExecutionStatus, ExecutionDeliveryResult } from '@/types/backend';
 import { executionHistoryService } from '@/services/executionHistoryService';
+import { useExecutionStream } from '@/hooks/useExecutionStream';
 import { DateRangePicker } from '@/components/ui/DateRangePicker';
 import { cn } from '@/lib/utils';
 import { useWorkflowStore } from '@/store/workflowStore';
@@ -239,17 +240,31 @@ export const ExecutionLogPanel = ({ workflowId, executing: externalExecuting, on
     wasRunningRef.current = isRunning;
   }, [isRunning, onExecutionComplete]);
 
-  // Poll for execution status updates.
-  // Polls every 5s while an execution is running, 30s otherwise (only when expanded).
+  // Real-time SSE stream while an execution is running.
+  // Replaces the old 5s setTimeout polling with ~1.5s push updates.
+  useExecutionStream({
+    workflowId,
+    enabled: isRunning,
+    onMessage: useCallback((execution: ExecutionHistory) => {
+      setExecutions((prev) => {
+        const index = prev.findIndex(e => e.execution_id === execution.execution_id);
+        if (index >= 0) {
+          const next = [...prev];
+          next[index] = execution;
+          return next;
+        }
+        return [execution, ...prev];
+      });
+      syncNodeStatusesFromExecution(execution);
+    }, []),
+  });
+
+  // Slow poll (30s) only when panel is expanded and nothing is running.
+  // Picks up completed scheduled runs, etc.
   useEffect(() => {
-    if (!workflowId) return;
-    if (!isRunning && !expanded) return;
+    if (!workflowId || !expanded || isRunning) return;
 
-    const interval = isRunning ? 5000 : 30000;
-    const timeoutId = setTimeout(() => {
-      fetchData();
-    }, interval);
-
+    const timeoutId = setTimeout(fetchData, 30000);
     return () => clearTimeout(timeoutId);
   }, [expanded, workflowId, isRunning, fetchData]);
 
