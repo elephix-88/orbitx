@@ -358,7 +358,7 @@ export const FacebookAdsForm: React.FC<FacebookAdsFormProps> = ({
  );
 
  return (
- <div className="h-full flex flex-col gap-4">
+ <div className="flex flex-col gap-4">
  {/* Connection & Account Section */}
  <div className="bg-bg-card/30 border border-line-1 rounded-xl p-4 space-y-4">
  <div className="flex items-center gap-2 text-sm font-medium text-text-1">
@@ -578,7 +578,7 @@ export const FacebookAdsForm: React.FC<FacebookAdsFormProps> = ({
  </div>
 
  {/* Fields Section */}
- <div className="flex-1 min-h-0 flex flex-col">
+ <div className="flex flex-col">
  <div className="flex-shrink-0 flex items-center justify-between mb-3">
  <div className="flex items-center gap-2 text-sm font-medium text-text-1">
  <Database className="w-4 h-4 text-green-500" />
@@ -603,7 +603,7 @@ export const FacebookAdsForm: React.FC<FacebookAdsFormProps> = ({
  </div>
  )}
 
- <div className="flex-1 min-h-0 overflow-y-auto">
+ <div className="max-h-[420px] overflow-y-auto">
  <SchemaFieldSelector
  fields={availableFields.map((f) => ({
  id: f.field,

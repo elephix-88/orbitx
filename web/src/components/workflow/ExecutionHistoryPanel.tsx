@@ -152,15 +152,15 @@ export const ExecutionHistoryPanel: React.FC<ExecutionHistoryPanelProps> = ({
  <AnimatePresence>
  {isOpen && (
  <motion.div
- initial={{ x: '100%', opacity: 0 }}
- animate={{ x: 0, opacity: 1 }}
- exit={{ x: '100%', opacity: 0 }}
+ initial={{ y: '100%', opacity: 0 }}
+ animate={{ y: 0, opacity: 1 }}
+ exit={{ y: '100%', opacity: 0 }}
  transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
  className={cn(
- 'absolute top-0 right-0 h-full z-30',
- 'w-[320px] flex flex-col',
- 'bg-bg-page border-l border-line-1',
- 'shadow-[-4px_0_20px_rgba(0,0,0,0.3)]'
+ 'absolute bottom-0 left-0 right-0 h-[280px] z-30',
+ 'flex flex-col',
+ 'bg-bg-page border-t border-line-1',
+ 'shadow-[0_-4px_20px_rgba(0,0,0,0.18)]'
  )}
  >
  {/* Header */}

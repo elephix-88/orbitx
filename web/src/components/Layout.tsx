@@ -26,7 +26,7 @@ const Layout = ({
  noPadding = false,
 }: LayoutProps) => {
  return (
- <div className="flex min-h-screen bg-bg-page text-text-1">
+ <div className={cn('flex bg-bg-page text-text-1', noPadding ? 'h-screen overflow-hidden' : 'min-h-screen')}>
  <Sidebar sections={sections} />
  <div className={cn('flex-1 flex flex-col min-w-0', noPadding && 'overflow-hidden')}>
  <Topbar

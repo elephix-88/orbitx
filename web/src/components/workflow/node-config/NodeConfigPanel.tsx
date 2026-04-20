@@ -161,7 +161,7 @@ export const NodeConfigPanel: React.FC<NodeConfigPanelProps> = ({
  role="complementary"
  aria-label={`${node.name} configuration`}
  className={cn(
- 'relative flex flex-col h-full shrink-0',
+ 'relative flex flex-col h-full min-h-0 shrink-0',
  'w-full lg:w-[420px] lg:max-w-[460px]',
  'bg-bg-card border border-line-1 rounded-xl shadow-sm',
  'overflow-hidden'
@@ -229,7 +229,7 @@ export const NodeConfigPanel: React.FC<NodeConfigPanelProps> = ({
  </Button>
  </header>
 
- <div className="flex-1 overflow-y-auto">
+ <div className="flex-1 overflow-y-auto min-h-0">
  <div className="p-4 space-y-4">
  <div>
  <label className="block text-[11.5px] font-medium text-text-3 mb-1">
