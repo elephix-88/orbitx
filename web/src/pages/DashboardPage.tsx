@@ -1,758 +1,613 @@
-import { useState, useCallback } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Zap,
-  CheckCircle2,
-  XCircle,
-  Clock,
-  ArrowRight,
-  Loader2,
-  RefreshCw,
-  PlayCircle,
-  ChevronDown,
-  ChevronRight,
-  Activity,
-  TrendingUp,
-  Timer,
-  BarChart3,
-  Link2,
-  Plus,
-  Filter,
-  Calendar,
-  DollarSign,
+ AlertTriangle,
+ Inbox,
+ Plus,
+ Link2,
+ Database,
+ CalendarClock,
+ RefreshCw,
+ Loader2,
 } from 'lucide-react';
 import Layout from '@/components/Layout';
-import { DateRangePicker } from '@/components/ui/DateRangePicker';
+import { Card } from '@/components/shared/Card';
+import { Button } from '@/components/shared/Button';
+import { Chip } from '@/components/shared/Chip';
+import { Dot } from '@/components/shared/Dot';
+import { Avatar } from '@/components/shared/Avatar';
+import { StatTile } from '@/components/shared/StatTile';
+import { SegmentedControl } from '@/components/shared/SegmentedControl';
+import { EmptyState } from '@/components/shared/EmptyState';
+import { AIInsightCard } from '@/components/insights/AIInsightCard';
+import { useAuthStore } from '@/store/authStore';
+import { useWorkflows } from '@/hooks/useWorkflows';
+import {
+ executionHistoryService,
+ type DashboardStats,
+} from '@/services/executionHistoryService';
+import { formatRelativeTime, formatDuration } from '@/utils/executionFormatters';
+import {
+ bucketThroughputHourly,
+ computeKpis,
+ deriveNeedsAttention,
+ filterHistoryByRange,
+ type HomeRange,
+ type ThroughputBucket,
+} from '@/pages/home/aggregations';
+import { fetchAiInsight, type AiInsight } from '@/pages/home/mockAiInsights';
+import { WorkflowStatus } from '@/types/workflow';
+import type { ExecutionHistory } from '@/types/backend';
 import { cn } from '@/lib/utils';
-import { useDeferredLoading } from '@/hooks/useDeferredLoading';
-import { useFetchOnce } from '@/hooks/useStableRequest';
-import { executionHistoryService, DashboardStats } from '@/services/executionHistoryService';
-import { workflowApiService } from '@/services/workflowApiService';
-import { fetchClient } from '@/lib/fetchClient';
-import {
-  ExecutionHistory,
-  ExecutionStep,
-} from '@/types/backend';
-import {
-  type TimeRange,
-  type StatusFilter,
-  timeRangeOptions,
-  statusFilterOptions,
-  MAX_CUSTOM_RANGE_DAYS,
-  getTimeRangeStart,
-  getDefaultCustomDates,
-  formatDuration,
-  formatRelativeTime,
-  formatNumber,
-  formatCost,
-  getRecordsCount,
-} from '@/utils/executionFormatters';
 
-const getStepDuration = (step: ExecutionStep): number | null => {
-  if (step.start_time && step.end_time) {
-    return step.end_time - step.start_time;
-  }
-  return null;
+const rangeOptions: { value: HomeRange; label: string }[] = [
+ { value: 'today', label: 'Today' },
+ { value: '7d', label: '7d' },
+ { value: '30d', label: '30d' },
+ { value: '90d', label: '90d' },
+];
+
+const formatCompactNumber = (value: number): string => {
+ if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(2)}M`;
+ if (value >= 1_000) return `${(value / 1_000).toFixed(1)}K`;
+ return value.toLocaleString();
 };
 
-const sortStepsByType = (steps: ExecutionStep[]): ExecutionStep[] => {
-  const typeOrder: Record<string, number> = {
-    'source': 0,
-    'transform': 1,
-    'destinations': 2,
-    'destination': 2,
-  };
-  return [...steps].sort((a, b) => {
-    const orderA = typeOrder[a.node_type?.toLowerCase()] ?? 99;
-    const orderB = typeOrder[b.node_type?.toLowerCase()] ?? 99;
-    return orderA - orderB;
-  });
+const formatUsd = (value: number): string => {
+ if (value >= 1_000_000) return `$${(value / 1_000_000).toFixed(2)}M`;
+ if (value >= 1_000) return `$${(value / 1_000).toFixed(1)}K`;
+ return `$${value.toFixed(2)}`;
 };
 
-const getNodeTypeColor = (nodeType: string): string => {
-  const type = nodeType?.toLowerCase();
-  if (type === 'source') return 'text-info';
-  if (type === 'transform') return 'text-primary-400';
-  if (type === 'destinations' || type === 'destination') return 'text-success';
-  return 'text-text-tertiary';
+const triggerLabel = (triggered: string): string => {
+ const normalized = triggered?.toLowerCase() ?? '';
+ if (normalized.includes('schedule') || normalized.includes('cron')) return 'Schedule';
+ if (normalized.includes('manual') || normalized.includes('user')) return 'Manual';
+ if (normalized.includes('webhook')) return 'Webhook';
+ return triggered || 'Unknown';
 };
 
-// Status configuration
-const statusConfig = {
-  SUCCESS: { bg: 'bg-success-light', text: 'text-success', icon: CheckCircle2 },
-  FAILED: { bg: 'bg-error-light', text: 'text-error', icon: XCircle },
-  RUNNING: { bg: 'bg-info-light', text: 'text-info', icon: Loader2 },
-  PENDING: { bg: 'bg-warning-light', text: 'text-warning', icon: Clock },
+const statusChipVariant = (status: string): 'success' | 'danger' | 'blue' | 'soft' => {
+ switch (status) {
+ case 'SUCCESS':
+ return 'success';
+ case 'FAILED':
+ return 'danger';
+ case 'RUNNING':
+ case 'PENDING':
+ return 'blue';
+ default:
+ return 'soft';
+ }
 };
 
-// Execution Tree Row Component
-const ExecutionTreeRow = ({
-  exec,
-  steps,
-  onNavigate,
-}: {
-  exec: ExecutionHistory;
-  steps: ExecutionStep[];
-  onNavigate: (id: string) => void;
-}) => {
-  const [isExpanded, setIsExpanded] = useState(false);
-
-  const config = statusConfig[exec.status] || statusConfig.PENDING;
-  const StatusIcon = config.icon;
-
-  // Calculate total records processed
-  const totalRecords = steps.reduce((sum, step) => {
-    const count = getRecordsCount(step.output);
-    return sum + (count || 0);
-  }, 0);
-
-  // Status dot color
-  const statusDotClass = exec.status === 'SUCCESS' ? 'bg-success' : exec.status === 'FAILED' ? 'bg-error' : exec.status === 'RUNNING' ? 'bg-info' : 'bg-warning';
-
-  return (
-    <>
-      <div
-        className="flex items-center gap-3 px-4 py-3 hover:bg-neutral-800/50 transition-colors cursor-pointer group border-b border-neutral-800"
-        onClick={() => setIsExpanded(!isExpanded)}
-      >
-        <button
-          className="p-0.5 hover:bg-surface-tertiary transition-colors flex-shrink-0 rounded-md"
-          onClick={(e) => {
-            e.stopPropagation();
-            setIsExpanded(!isExpanded);
-          }}
-        >
-          {isExpanded ? (
-            <ChevronDown className="w-4 h-4 text-text-secondary" />
-          ) : (
-            <ChevronRight className="w-4 h-4 text-text-secondary" />
-          )}
-        </button>
-
-        {/* Status circle */}
-        <div className="flex-shrink-0">
-          <span className={cn("inline-block w-3 h-3 rounded-full", statusDotClass)} />
-        </div>
-
-        <div className="flex-1 min-w-0">
-          <p className="font-semibold truncate text-sm text-text-primary">
-            {exec.workflow_name || 'Unknown Workflow'}
-          </p>
-          <p className="text-xs text-text-secondary">
-            {formatRelativeTime(exec.start_time)}
-          </p>
-        </div>
-
-        <div className="flex items-center gap-4 flex-shrink-0">
-          {totalRecords > 0 && (
-            <span className="text-xs hidden sm:inline text-text-secondary">
-              {formatNumber(totalRecords)} records
-            </span>
-          )}
-          <span className="px-2 py-0.5 text-xs font-semibold text-text-primary bg-surface-tertiary border border-neutral-800 rounded-md">
-            {exec.status}
-          </span>
-          <span className="text-xs w-16 text-right text-text-secondary">
-            {formatDuration(exec.duration)}
-          </span>
-          <span className="text-xs text-text-secondary">
-            {exec.successful_nodes}/{exec.total_nodes}
-          </span>
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onNavigate(exec.workflow_id);
-            }}
-            className="p-1.5 transition-colors opacity-0 group-hover:opacity-100 rounded-md text-text-secondary"
-            title="Go to workflow"
-          >
-            <ArrowRight className="w-4 h-4" />
-          </button>
-        </div>
-      </div>
-
-      <AnimatePresence>
-        {isExpanded && steps.length > 0 && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="overflow-hidden bg-surface-tertiary"
-          >
-            {/* Table Header */}
-            <div className="flex items-center gap-3 px-4 py-2 ml-8 text-[10px] font-semibold border-b border-neutral-800 border-l-2 border-l-neutral-700 text-text-secondary">
-              <div className="w-4" />
-              <div className="flex-1">Node</div>
-              <div className="w-24">Type</div>
-              <div className="w-20 text-right">Records</div>
-              <div className="w-14 text-right">Duration</div>
-            </div>
-            {steps.map((step, idx) => {
-              const stepDuration = getStepDuration(step);
-              const stepConfig = statusConfig[step.status] || statusConfig.PENDING;
-              const StepIcon = stepConfig.icon;
-              const recordsCount = getRecordsCount(step.output);
-
-              return (
-                <div
-                  key={idx}
-                  className="flex items-center gap-3 px-4 py-2 ml-8 border-l-2 border-l-neutral-700"
-                >
-                  <StepIcon className={cn("w-4 h-4 flex-shrink-0", stepConfig.text, step.status === 'RUNNING' && "animate-spin")} />
-                  <span className={cn("flex-1 text-sm font-semibold truncate", getNodeTypeColor(step.node_type))}>
-                    {step.node_id}
-                  </span>
-                  <span className="w-24 text-xs text-text-secondary">{step.node_type}</span>
-                  <span className="w-20 text-xs text-right font-semibold text-text-primary">
-                    {recordsCount !== null ? formatNumber(recordsCount) : '-'}
-                  </span>
-                  <span className="w-14 text-xs text-right text-text-secondary">
-                    {stepDuration !== null ? `${stepDuration.toFixed(1)}s` : '-'}
-                  </span>
-                </div>
-              );
-            })}
-          </motion.div>
-        )}
-      </AnimatePresence>
-      {isExpanded && steps.length === 0 && (
-        <div className="px-4 py-6 ml-8 text-center text-sm text-text-secondary">
-          No step data available for this execution.
-        </div>
-      )}
-    </>
-  );
+const statusDotVariant = (
+ status: string
+): 'success' | 'danger' | 'blue' | 'muted' => {
+ switch (status) {
+ case 'SUCCESS':
+ return 'success';
+ case 'FAILED':
+ return 'danger';
+ case 'RUNNING':
+ case 'PENDING':
+ return 'blue';
+ default:
+ return 'muted';
+ }
 };
 
-const DashboardPage = () => {
-  const navigate = useNavigate();
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-  const [fetchError, setFetchError] = useState<string | null>(null);
+interface ThroughputChartProps {
+ buckets: ThroughputBucket[];
+}
 
-  // Filter state - show filters by default
-  const [timeRange, setTimeRange] = useState<TimeRange>('all');
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
-  const [showFilters, setShowFilters] = useState(true);
-  const [customDateRange, setCustomDateRange] = useState(getDefaultCustomDates);
-
-  const [stats, setStats] = useState<DashboardStats>({
-    totalExecutions: 0,
-    successfulExecutions: 0,
-    failedExecutions: 0,
-    runningExecutions: 0,
-    successRate: 0,
-    avgDuration: 0,
-    totalCost: 0,
-    recentExecutions: [],
-    executionsByWorkflow: {},
-  });
-  const [workflowCount, setWorkflowCount] = useState(0);
-  const [connectionCount, setConnectionCount] = useState(0);
-
-  const fetchData = useCallback(async (isManualRefresh = false) => {
-    try {
-      setFetchError(null);
-      if (isManualRefresh) {
-        setRefreshing(true);
-      }
-
-      // Fetch workflows and connections in parallel
-      const [workflowsResponse, connectionsResponse] = await Promise.all([
-        workflowApiService.getWorkflows(),
-        fetchClient('/api/connections').then(r => r.json()).catch(() => ({ data: [] })),
-      ]);
-
-      const workflows = workflowsResponse.data || [];
-      setWorkflowCount(workflows.length);
-
-      // Set connection count
-      const connections = Array.isArray(connectionsResponse?.data)
-        ? connectionsResponse.data
-        : Array.isArray(connectionsResponse)
-        ? connectionsResponse
-        : [];
-      setConnectionCount(connections.length);
-
-      // Build workflow id→name map to pass to dashboard stats (avoids duplicate DB query)
-      const workflowMap: Record<string, string> = {};
-      for (const w of workflows) {
-        const id = (typeof w._id === 'object' ? w._id?.$oid : w._id) || w.job_id;
-        if (id) workflowMap[id] = w.job_name || '';
-      }
-
-      const dashboardStats = await executionHistoryService.getDashboardStats(workflowMap);
-      setStats(dashboardStats);
-    } catch (error) {
-      console.error('Failed to fetch dashboard data:', error);
-      setFetchError('Failed to load dashboard data. Please try again.');
-    } finally {
-      setRefreshing(false);
-      setLoading(false);
-    }
-  }, []);
-
-  useFetchOnce(fetchData, "dashboard-page");
-  const showLoading = useDeferredLoading(loading, 150);
-
-  // Filter executions
-  const filteredExecutions = stats.recentExecutions.filter(exec => {
-    // Time range filter
-    if (timeRange === 'custom') {
-      const startTs = new Date(customDateRange.start).getTime() / 1000;
-      const endTs = new Date(customDateRange.end).getTime() / 1000 + 86400; // Include end date fully
-      if (exec.start_time < startTs || exec.start_time > endTs) {
-        return false;
-      }
-    } else {
-      const timeRangeStart = getTimeRangeStart(timeRange);
-      if (timeRangeStart && exec.start_time < timeRangeStart) {
-        return false;
-      }
-    }
-    // Status filter
-    if (statusFilter !== 'all' && exec.status !== statusFilter) {
-      return false;
-    }
-    return true;
-  });
-
-  // Filtered stats
-  const filteredStats = {
-    total: filteredExecutions.length,
-    success: filteredExecutions.filter(e => e.status === 'SUCCESS').length,
-    failed: filteredExecutions.filter(e => e.status === 'FAILED').length,
-    running: filteredExecutions.filter(e => e.status === 'RUNNING').length,
-  };
-
-  // Check if any filter is active
-  const hasActiveFilters = timeRange !== 'all' || statusFilter !== 'all';
-
-  if (showLoading) {
-    return (
-      <Layout>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="h-7 w-32 animate-pulse bg-neutral-800 rounded-md" />
-              <div className="h-4 w-48 mt-2 animate-pulse bg-neutral-800 rounded-md" />
-            </div>
-            <div className="h-9 w-24 animate-pulse bg-neutral-800 rounded-md" />
-          </div>
-
-          <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
-            {[1, 2, 3, 4, 5].map((i) => (
-              <div key={i} className="p-4 h-24 animate-pulse bg-surface-secondary border border-neutral-800 rounded-xl" />
-            ))}
-          </div>
-
-          <div className="grid lg:grid-cols-3 gap-6">
-            <div className="lg:col-span-2 h-96 animate-pulse bg-surface-secondary border border-neutral-800 rounded-xl" />
-            <div className="h-96 animate-pulse bg-surface-secondary border border-neutral-800 rounded-xl" />
-          </div>
-        </div>
-      </Layout>
-    );
-  }
-
-  return (
-    <Layout>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            {/* Section accent bar */}
-            <div className="flex items-center gap-3 mb-2">
-              <div className="w-12 h-1 bg-primary-400 rounded-md" />
-            </div>
-            <h1 className="text-2xl font-semibold text-text-primary">Dashboard</h1>
-            <p className="text-sm mt-0.5 text-text-secondary">
-              {workflowCount} workflows &#9632; {stats.totalExecutions} executions
-            </p>
-          </div>
-
-          <button
-            onClick={() => fetchData(true)}
-            disabled={refreshing}
-            className="h-9 px-3 flex items-center gap-2 text-sm transition-colors text-text-secondary bg-surface-secondary border border-neutral-800 rounded-lg hover:bg-surface-tertiary"
-          >
-            <RefreshCw className={cn("w-4 h-4", refreshing && "animate-spin")} />
-            <span className="hidden sm:inline text-xs">Refresh</span>
-          </button>
-        </div>
-
-        {/* API Error Banner */}
-        {fetchError && (
-          <div className="bg-error/10 border border-error/20 rounded-lg p-4 flex items-center justify-between">
-            <p className="text-sm text-error">{fetchError}</p>
-            <button
-              onClick={() => fetchData()}
-              className="text-sm text-primary-400 hover:text-primary-300 font-medium"
-            >
-              Retry
-            </button>
-          </div>
-        )}
-
-        {/* Stats Grid */}
-        <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
-          <div className="p-4 bg-surface-secondary border border-neutral-800 rounded-xl">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-surface-tertiary rounded-lg">
-                <Activity className="w-5 h-5 text-primary-400" />
-              </div>
-              <div>
-                <p className="text-2xl font-semibold text-text-primary">{stats.totalExecutions}</p>
-                <p className="text-xs text-text-secondary">Total Executions</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="p-4 bg-surface-secondary border border-neutral-800 rounded-xl">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-surface-tertiary rounded-lg">
-                <TrendingUp className="w-5 h-5 text-success" />
-              </div>
-              <div>
-                <p className="text-2xl font-semibold text-text-primary">{stats.successRate}%</p>
-                <p className="text-xs text-text-secondary">Success Rate</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="p-4 bg-surface-secondary border border-neutral-800 rounded-xl">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-surface-tertiary rounded-lg">
-                <XCircle className="w-5 h-5 text-error" />
-              </div>
-              <div>
-                <p className="text-2xl font-semibold text-text-primary">{stats.failedExecutions}</p>
-                <p className="text-xs text-text-secondary">Failed</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="p-4 bg-surface-secondary border border-neutral-800 rounded-xl">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-surface-tertiary rounded-lg">
-                <Timer className="w-5 h-5 text-text-secondary" />
-              </div>
-              <div>
-                <p className="text-2xl font-semibold text-text-primary">{formatDuration(stats.avgDuration)}</p>
-                <p className="text-xs text-text-secondary">Avg Duration</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="p-4 bg-surface-secondary border border-neutral-800 rounded-xl">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-surface-tertiary rounded-lg">
-                <DollarSign className="w-5 h-5 text-warning" />
-              </div>
-              <div>
-                <p className="text-2xl font-semibold text-warning">{formatCost(stats.totalCost)}</p>
-                <p className="text-xs text-text-secondary">Total Cost</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Main Content */}
-        <div className="grid lg:grid-cols-3 gap-6">
-          {/* Recent Executions */}
-          <div className="lg:col-span-2 overflow-hidden bg-surface-secondary border border-neutral-800 rounded-xl">
-            <div className="flex items-center justify-between px-4 py-3 border-b border-neutral-800">
-              <div className="flex items-center gap-2">
-                <Clock className="w-4 h-4 text-primary-400" />
-                <h2 className="text-sm font-semibold text-text-primary">
-                  Recent Executions
-                  {hasActiveFilters && (
-                    <span className="ml-2 text-xs font-normal text-text-secondary">
-                      ({filteredExecutions.length}/{stats.recentExecutions.length})
-                    </span>
-                  )}
-                </h2>
-              </div>
-              <div className="flex items-center gap-2">
-                {filteredStats.running > 0 && (
-                  <span className="flex items-center gap-1.5 text-xs text-info">
-                    <Loader2 className="w-3 h-3 animate-spin" />
-                    {filteredStats.running} running
-                  </span>
-                )}
-                <button
-                  onClick={() => setShowFilters(!showFilters)}
-                  className={cn(
-                    'p-1.5 transition-colors rounded-md',
-                    showFilters || hasActiveFilters
-                      ? 'bg-primary-400 text-neutral-950'
-                      : 'text-text-secondary hover:bg-surface-tertiary'
-                  )}
-                  title="Filter executions"
-                >
-                  <Filter className="w-4 h-4" />
-                </button>
-              </div>
-            </div>
-
-            {/* Filter Panel */}
-            <AnimatePresence>
-              {showFilters && (
-                <motion.div
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: 'auto', opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
-                  transition={{ duration: 0.15 }}
-                  className="overflow-hidden border-b border-neutral-800"
-                >
-                  <div className="p-3 flex flex-wrap items-center gap-3 bg-surface-tertiary">
-                    {/* Time Range - Button Pills */}
-                    <div className="flex items-center gap-1.5">
-                      <Calendar className="w-3.5 h-3.5 text-text-secondary" />
-                      <div className="flex items-center p-0.5 bg-surface-secondary border border-neutral-800 rounded-md">
-                        {timeRangeOptions.map(opt => (
-                          <button
-                            key={opt.value}
-                            onClick={() => setTimeRange(opt.value)}
-                            className={cn(
-                              "px-2.5 py-1 text-xs font-semibold transition-all rounded-md",
-                              timeRange === opt.value
-                                ? 'bg-neutral-800 text-primary-400'
-                                : 'text-text-secondary'
-                            )}
-                          >
-                            {opt.label}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Custom Date Range */}
-                    <AnimatePresence>
-                      {timeRange === 'custom' && (
-                        <motion.div
-                          initial={{ opacity: 0, x: -10 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          exit={{ opacity: 0, x: -10 }}
-                          transition={{ duration: 0.15 }}
-                        >
-                          <DateRangePicker
-                            startDate={customDateRange.start}
-                            endDate={customDateRange.end}
-                            onChange={(start, end) => {
-                              setCustomDateRange({ start, end });
-                            }}
-                            maxDays={MAX_CUSTOM_RANGE_DAYS}
-                          />
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-
-                    <div className="w-px h-5 bg-border" />
-
-                    {/* Status Filter */}
-                    <div className="flex items-center p-0.5 bg-surface-secondary border border-neutral-800 rounded-md">
-                      {statusFilterOptions.map(opt => (
-                        <button
-                          key={opt.value}
-                          onClick={() => setStatusFilter(opt.value)}
-                          className={cn(
-                            "px-2.5 py-1 text-xs font-semibold transition-all rounded-md",
-                            statusFilter === opt.value
-                              ? 'bg-neutral-800 text-primary-400'
-                              : 'text-text-secondary'
-                          )}
-                        >
-                          {opt.label}
-                        </button>
-                      ))}
-                    </div>
-
-                    {/* Clear Filters */}
-                    {hasActiveFilters && (
-                      <>
-                        <div className="w-px h-5 bg-border" />
-                        <button
-                          onClick={() => {
-                            setTimeRange('all');
-                            setStatusFilter('all');
-                          }}
-                          className="px-2.5 py-1 text-xs font-semibold transition-colors text-error rounded-md"
-                        >
-                          Reset
-                        </button>
-                      </>
-                    )}
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            {filteredExecutions.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-12 text-text-secondary">
-                <Activity className="w-10 h-10 mb-3 opacity-30" />
-                <p className="text-sm font-semibold">
-                  {hasActiveFilters ? 'No matching executions' : 'No executions yet'}
-                </p>
-                <p className="text-xs mt-1">
-                  {hasActiveFilters ? 'Try adjusting your filters' : 'Run a workflow to see history'}
-                </p>
-                {!hasActiveFilters && (
-                  <button
-                    onClick={() => navigate('/workflows')}
-                    className="mt-4 h-8 px-4 text-xs font-semibold text-neutral-950 transition-colors bg-primary-400 hover:bg-primary-500 rounded-md"
-                  >
-                    Go to Workflows
-                  </button>
-                )}
-                {hasActiveFilters && (
-                  <button
-                    onClick={() => {
-                      setTimeRange('all');
-                      setStatusFilter('all');
-                    }}
-                    className="mt-4 h-8 px-4 text-xs font-semibold transition-colors text-error rounded-lg"
-                  >
-                    Clear filters
-                  </button>
-                )}
-              </div>
-            ) : (
-              <div className="max-h-[400px] overflow-y-auto">
-                {filteredExecutions.slice(0, 20).map((exec) => {
-                  const stepsArray = exec.steps ? sortStepsByType(Object.values(exec.steps)) : [];
-                  return (
-                    <ExecutionTreeRow
-                      key={exec.execution_id}
-                      exec={exec}
-                      steps={stepsArray}
-                      onNavigate={(id) => navigate(`/workflows/builder?id=${id}`)}
-                    />
-                  );
-                })}
-              </div>
-            )}
-          </div>
-
-          {/* Right Column: Onboarding Checklist + Workflows Panel */}
-          <div className="space-y-6">
-            {/* Workflows Panel */}
-            <div className="overflow-hidden bg-surface-secondary border border-neutral-800 rounded-xl">
-              <div className="flex items-center justify-between px-4 py-3 border-b border-neutral-800">
-                <div className="flex items-center gap-2">
-                  <BarChart3 className="w-4 h-4 text-primary-400" />
-                  <h2 className="text-sm font-semibold text-text-primary">Workflows</h2>
-                </div>
-                <span className="text-xs text-text-secondary">{workflowCount} total</span>
-              </div>
-
-            {Object.keys(stats.executionsByWorkflow).length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-12 text-text-secondary">
-                <Zap className="w-10 h-10 mb-3 opacity-30" />
-                <p className="text-sm">No workflow data</p>
-              </div>
-            ) : (
-              <div>
-                {Object.entries(stats.executionsByWorkflow)
-                  .sort(([, a], [, b]) => b.count - a.count)
-                  .slice(0, 5)
-                  .map(([workflowId, data]) => (
-                    <div
-                      key={workflowId}
-                      className="px-4 py-3 hover:bg-neutral-800/50 transition-colors cursor-pointer border-b border-neutral-800"
-                      onClick={() => navigate(`/workflows/builder?id=${workflowId}`)}
-                    >
-                      <div className="flex items-center justify-between mb-2">
-                        <p className="text-sm font-semibold truncate flex-1 mr-3 text-text-primary">
-                          {data.name}
-                        </p>
-                        <span className="text-xs text-text-secondary">{data.count} runs</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div className="flex-1 h-1.5 overflow-hidden bg-border rounded-md">
-                          <div
-                            className={cn(
-                              "h-full transition-all rounded-md",
-                              data.successRate >= 80 ? 'bg-success' : data.successRate >= 50 ? 'bg-warning' : 'bg-error'
-                            )}
-                            style={{ width: `${data.successRate}%` }}
-                          />
-                        </div>
-                        <span className="text-xs font-semibold w-10 text-right text-text-primary">
-                          {data.successRate}%
-                        </span>
-                      </div>
-                    </div>
-                  ))}
-              </div>
-            )}
-
-            <div className="px-4 py-3 border-t border-neutral-800">
-              <button
-                onClick={() => navigate('/workflows')}
-                className="w-full flex items-center justify-center gap-2 py-2 text-xs font-semibold transition-colors text-primary-400 hover:text-primary-300"
-              >
-                View all workflows
-                <ArrowRight className="w-3 h-3" />
-              </button>
-            </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Quick Actions */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <button
-            onClick={() => navigate('/workflows/builder')}
-            className="p-4 transition-all group text-left bg-surface-secondary border border-neutral-800 rounded-xl hover:border-primary-400/50"
-          >
-            <div className="flex items-center gap-3">
-              <div className="p-2 transition-colors bg-primary-400 rounded-lg">
-                <Plus className="w-5 h-5 text-neutral-950" />
-              </div>
-              <div>
-                <h3 className="font-semibold text-sm text-text-primary">Create Workflow</h3>
-                <p className="text-xs text-text-secondary">Build a new pipeline</p>
-              </div>
-            </div>
-          </button>
-
-          <button
-            onClick={() => navigate('/workflows')}
-            className="p-4 transition-all group text-left bg-surface-secondary border border-neutral-800 rounded-xl hover:border-neutral-700"
-          >
-            <div className="flex items-center gap-3">
-              <div className="p-2 transition-colors bg-surface-tertiary rounded-lg">
-                <PlayCircle className="w-5 h-5 text-text-primary" />
-              </div>
-              <div>
-                <h3 className="font-semibold text-sm text-text-primary">Run Workflow</h3>
-                <p className="text-xs text-text-secondary">Execute pipelines</p>
-              </div>
-            </div>
-          </button>
-
-          <button
-            onClick={() => navigate('/connections')}
-            className="p-4 transition-all group text-left bg-surface-secondary border border-neutral-800 rounded-xl hover:border-neutral-700"
-          >
-            <div className="flex items-center gap-3">
-              <div className="p-2 transition-colors bg-surface-tertiary rounded-lg">
-                <Link2 className="w-5 h-5 text-primary-400" />
-              </div>
-              <div>
-                <h3 className="font-semibold text-sm text-text-primary">Connections</h3>
-                <p className="text-xs text-text-secondary">Manage data sources</p>
-              </div>
-            </div>
-          </button>
-        </div>
-      </div>
-
-    </Layout>
-  );
+const ThroughputChart: React.FC<ThroughputChartProps> = ({ buckets }) => {
+ const maxTotal = Math.max(1, ...buckets.map((b) => b.success + b.failed));
+ const CHART_H = 120;
+ return (
+ <div>
+ <div className="flex items-end gap-[2px] h-[120px]">
+ {buckets.map((bucket) => {
+ const total = bucket.success + bucket.failed;
+ const totalPct = (total / maxTotal) * 100;
+ const totalPx = Math.max(total > 0 ? 4 : 2, (totalPct / 100) * CHART_H);
+ const failedPx = total > 0 ? (bucket.failed / total) * totalPx : 0;
+ const successPx = totalPx - failedPx;
+ const label = `${String(bucket.hour).padStart(2, '0')}:00 — ${bucket.success} ok · ${bucket.failed} failed`;
+ return (
+ <div
+ key={bucket.hour}
+ className="flex-1 h-full flex flex-col justify-end"
+ title={label}
+ >
+ {total === 0 ? (
+ <div className="w-full rounded-t-[2px] bg-bg-muted" style={{ height: 2 }} />
+ ) : (
+ <>
+ {failedPx > 0 && (
+ <div
+ className="w-full bg-danger rounded-t-[0px]"
+ style={{ height: failedPx }}
+ />
+ )}
+ {successPx > 0 && (
+ <div
+ className={cn(
+ 'w-full bg-blue-primary',
+ failedPx === 0 ? 'rounded-t-[2px]' : ''
+ )}
+ style={{ height: successPx }}
+ />
+ )}
+ </>
+ )}
+ </div>
+ );
+ })}
+ </div>
+ <div className="mt-2 flex justify-between text-[10.5px] font-mono text-text-3">
+ <span>00:00</span>
+ <span>06:00</span>
+ <span>12:00</span>
+ <span>18:00</span>
+ <span>now</span>
+ </div>
+ </div>
+ );
 };
 
-export default DashboardPage;
+interface HealthRow {
+ label: string;
+ count: number;
+ tone: 'success' | 'blue' | 'warning' | 'danger' | 'muted';
+}
+
+const HealthBar: React.FC<{ row: HealthRow; max: number }> = ({ row, max }) => {
+ const pct = max > 0 ? (row.count / max) * 100 : 0;
+ const barColor: Record<HealthRow['tone'], string> = {
+ success: 'bg-success',
+ blue: 'bg-blue-primary',
+ warning: 'bg-warning',
+ danger: 'bg-danger',
+ muted: 'bg-text-4',
+ };
+ return (
+ <div className="flex items-center gap-3">
+ <Dot variant={row.tone === 'muted' ? 'muted' : row.tone === 'blue' ? 'blue' : row.tone} />
+ <span className="text-[12.5px] text-text-2 flex-1">{row.label}</span>
+ <span className="font-mono text-[12.5px] text-text-1 w-8 text-right">
+ {row.count}
+ </span>
+ <div className="w-20 h-[5px] rounded-full bg-bg-muted overflow-hidden">
+ <div
+ className={cn('h-full rounded-full', barColor[row.tone])}
+ style={{ width: `${pct}%` }}
+ />
+ </div>
+ </div>
+ );
+};
+
+const QuickActions: React.FC<{ onNavigate: (path: string) => void }> = ({
+ onNavigate,
+}) => (
+ <div className="grid grid-cols-2 gap-2">
+ <Button
+ variant="secondary"
+ size="sm"
+ leftIcon={<Plus size={14} />}
+ onClick={() => onNavigate('/workflows/builder')}
+ >
+ New pipeline
+ </Button>
+ <Button
+ variant="secondary"
+ size="sm"
+ leftIcon={<Link2 size={14} />}
+ onClick={() => onNavigate('/connections')}
+ >
+ Connect source
+ </Button>
+ <Button
+ variant="secondary"
+ size="sm"
+ leftIcon={<Database size={14} />}
+ onClick={() => onNavigate('/connections')}
+ disabled
+ >
+ Add destination
+ </Button>
+ <Button
+ variant="secondary"
+ size="sm"
+ leftIcon={<CalendarClock size={14} />}
+ onClick={() => onNavigate('/reports')}
+ disabled
+ >
+ Schedule report
+ </Button>
+ </div>
+);
+
+interface TeamActivityItem {
+ id: string;
+ name: string;
+ action: string;
+ object: string;
+ timestamp: number;
+}
+
+// HOME-ACTIVITY-FEED-TODO: swap to real endpoint when activity service ships.
+const teamActivity: TeamActivityItem[] = [];
+
+export default function DashboardPage() {
+ const navigate = useNavigate();
+ const { user } = useAuthStore();
+ const {
+ workflows,
+ loading: workflowsLoading,
+ refreshing,
+ refreshWorkflows,
+ } = useWorkflows();
+
+ const [range, setRange] = useState<HomeRange>('7d');
+ const [stats, setStats] = useState<DashboardStats | null>(null);
+ const [statsLoading, setStatsLoading] = useState(true);
+ const [statsError, setStatsError] = useState<string | null>(null);
+ const [insight, setInsight] = useState<AiInsight | null>(null);
+ const [insightLoading, setInsightLoading] = useState(true);
+
+ const loadStats = useCallback(async () => {
+ setStatsLoading(true);
+ setStatsError(null);
+ try {
+ const result = await executionHistoryService.getDashboardStats();
+ setStats(result);
+ } catch (err) {
+ setStatsError(err instanceof Error ? err.message : 'Failed to load stats');
+ } finally {
+ setStatsLoading(false);
+ }
+ }, []);
+
+ useEffect(() => {
+ loadStats();
+ }, [loadStats, range]);
+
+ useEffect(() => {
+ setInsightLoading(true);
+ fetchAiInsight()
+ .then((result) => setInsight(result))
+ .finally(() => setInsightLoading(false));
+ }, [range]);
+
+ const history: ExecutionHistory[] = stats?.recentExecutions ?? [];
+
+ const kpis = useMemo(() => computeKpis(workflows, history), [workflows, history]);
+ const throughput = useMemo(() => bucketThroughputHourly(history), [history]);
+ const attention = useMemo(() => deriveNeedsAttention(workflows), [workflows]);
+ const recentRuns = useMemo(
+ () => filterHistoryByRange(history, range).slice(0, 6),
+ [history, range]
+ );
+
+ const healthRows: HealthRow[] = useMemo(() => {
+ const active = workflows.filter((w) => w.status === WorkflowStatus.ACTIVE).length;
+ const paused = workflows.filter((w) => w.status === WorkflowStatus.PAUSED).length;
+ const running = (stats?.runningExecutions ?? 0);
+ const failed = attention.length;
+ const healthy = Math.max(0, active - running - failed);
+ return [
+ { label: 'Healthy', count: healthy, tone: 'success' },
+ { label: 'Running', count: running, tone: 'blue' },
+ { label: 'Token expiring', count: 0, tone: 'warning' },
+ { label: 'Failed', count: failed, tone: 'danger' },
+ { label: 'Paused', count: paused, tone: 'muted' },
+ ];
+ }, [workflows, stats, attention]);
+
+ const firstName = (user?.name ?? '').split(' ')[0] || 'there';
+
+ const loadingAny = workflowsLoading || statsLoading;
+
+ return (
+ <Layout title="Home">
+ <div className="space-y-6">
+ <header className="flex flex-wrap items-end justify-between gap-4">
+ <div>
+ <h1 className="text-[24px] font-bold text-text-1 tracking-tight">
+ Welcome back, {firstName}
+ </h1>
+ <p className="text-[13px] text-text-3 mt-1">
+ Here's what your pipelines have been up to.
+ </p>
+ </div>
+ <div className="flex items-center gap-2">
+ <SegmentedControl<HomeRange>
+ options={rangeOptions}
+ value={range}
+ onChange={setRange}
+ size="sm"
+ ariaLabel="Time range"
+ />
+ <Button
+ variant="secondary"
+ size="sm"
+ leftIcon={
+ refreshing ? (
+ <Loader2 size={14} className="animate-spin" />
+ ) : (
+ <RefreshCw size={14} />
+ )
+ }
+ onClick={() => {
+ refreshWorkflows();
+ loadStats();
+ }}
+ disabled={refreshing || statsLoading}
+ >
+ Refresh
+ </Button>
+ </div>
+ </header>
+
+ <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+ <StatTile
+ label="Active pipelines"
+ value={<span className="text-blue-primary">{kpis.activePipelines}</span>}
+ />
+ <StatTile
+ label="Rows synced · 24h"
+ value={<span className="text-blue-primary">{formatCompactNumber(kpis.rowsSynced24h)}</span>}
+ mono
+ />
+ <StatTile
+ label="Successful runs · 24h"
+ value={<span className="text-success">{kpis.successfulRuns24h}</span>}
+ delta={kpis.successfulRuns24h > 0 ? { direction: 'up', text: 'runs completed' } : undefined}
+ />
+ <StatTile
+ label="Failed runs · 24h"
+ value={
+ <span className={kpis.failedRuns24h > 0 ? 'text-danger' : 'text-text-3'}>
+ {kpis.failedRuns24h}
+ </span>
+ }
+ delta={kpis.failedRuns24h > 0 ? { direction: 'down', text: 'need attention' } : undefined}
+ />
+ <StatTile
+ label="Spend captured · 7d"
+ value={<span className="text-blue-primary">{formatUsd(kpis.spendCaptured7d)}</span>}
+ mono
+ />
+ </div>
+
+ <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+ <div className="lg:col-span-2 space-y-6">
+ <Card padding="none">
+ <div className="flex items-center justify-between px-4 py-3 border-b border-line-soft">
+ <div className="flex items-center gap-2">
+ <AlertTriangle size={16} className="text-danger" aria-hidden="true" />
+ <h2 className="text-[14px] font-semibold text-text-1">
+ Needs attention
+ </h2>
+ {attention.length > 0 && (
+ <Chip variant="danger" className="ml-1">
+ {attention.length}
+ </Chip>
+ )}
+ </div>
+ </div>
+ <div>
+ {loadingAny && attention.length === 0 ? (
+ <div className="px-4 py-6 text-[12.5px] text-text-3">Loading…</div>
+ ) : attention.length === 0 ? (
+ <EmptyState
+ icon={<Inbox size={18} />}
+ title="All pipelines look healthy"
+ description="We'll surface failures, expiring tokens, and stuck runs here when they happen."
+ />
+ ) : (
+ <ul className="divide-y divide-line-soft">
+ {attention.slice(0, 5).map((item) => (
+ <li
+ key={item.id}
+ className="flex items-center gap-3 px-4 py-3"
+ >
+ <Dot variant={item.severity} />
+ <div className="min-w-0 flex-1">
+ <div className="text-[13px] font-medium text-text-1 truncate">
+ {item.name}
+ </div>
+ <div className="text-[12px] text-text-3">{item.reason}</div>
+ </div>
+ <Chip variant={item.severity}>Failed</Chip>
+ <Button
+ variant="secondary"
+ size="sm"
+ onClick={() => navigate(`/workflows/builder?id=${item.id}`)}
+ >
+ {item.actionLabel}
+ </Button>
+ </li>
+ ))}
+ </ul>
+ )}
+ </div>
+ </Card>
+
+ <Card padding="none">
+ <div className="flex items-center justify-between px-4 py-3 border-b border-line-soft">
+ <h2 className="text-[14px] font-semibold text-text-1">
+ Throughput · last 24h
+ </h2>
+ <div className="flex items-center gap-3 text-[11px] text-text-3">
+ <span className="inline-flex items-center gap-1.5">
+ <span className="w-2 h-2 rounded-sm bg-blue-primary" />
+ Success
+ </span>
+ <span className="inline-flex items-center gap-1.5">
+ <span className="w-2 h-2 rounded-sm bg-danger" />
+ Failed
+ </span>
+ </div>
+ </div>
+ <div className="p-4">
+ {loadingAny ? (
+ <div className="h-[120px] rounded-lg bg-bg-muted animate-pulse" />
+ ) : throughput.every((b) => b.rows === 0 && b.success === 0 && b.failed === 0) ? (
+ <EmptyState
+ icon={<Inbox size={18} />}
+ title="No activity in the last 24h"
+ description="Run a pipeline to see throughput show up here."
+ />
+ ) : (
+ <ThroughputChart buckets={throughput} />
+ )}
+ </div>
+ </Card>
+
+ <Card padding="none">
+ <div className="flex items-center justify-between px-4 py-3 border-b border-line-soft">
+ <h2 className="text-[14px] font-semibold text-text-1">Recent runs</h2>
+ <Button
+ variant="ghost"
+ size="sm"
+ onClick={() => navigate('/workflows')}
+ >
+ View all
+ </Button>
+ </div>
+ {statsError ? (
+ <div className="px-4 py-6 text-[12.5px] text-danger">
+ {statsError}
+ <Button
+ variant="ghost"
+ size="sm"
+ className="ml-2"
+ onClick={loadStats}
+ >
+ Retry
+ </Button>
+ </div>
+ ) : recentRuns.length === 0 ? (
+ <EmptyState
+ icon={<Inbox size={18} />}
+ title="No runs in this window"
+ description="Switch to a longer range or run a pipeline to see recent activity."
+ />
+ ) : (
+ <table className="w-full text-[13px]">
+ <thead>
+ <tr className="text-left text-[11px] font-medium text-text-3 uppercase tracking-wider">
+ <th className="px-4 py-2 w-6"></th>
+ <th className="px-2 py-2">Pipeline</th>
+ <th className="px-2 py-2">Trigger</th>
+ <th className="px-2 py-2">Duration</th>
+ <th className="px-2 py-2">Rows</th>
+ <th className="px-2 py-2">Started</th>
+ <th className="px-2 py-2">Status</th>
+ </tr>
+ </thead>
+ <tbody>
+ {recentRuns.map((run) => (
+ <tr
+ key={run.execution_id}
+ className="border-t border-line-soft hover:bg-bg-row-hv transition-colors"
+ >
+ <td className="px-4 py-3">
+ <Dot
+ variant={statusDotVariant(run.status)}
+ pulseRing={run.status === 'RUNNING'}
+ />
+ </td>
+ <td className="px-2 py-3 font-medium text-text-1 truncate max-w-[220px]">
+ {run.workflow_name}
+ </td>
+ <td className="px-2 py-3">
+ <Chip variant="soft">{triggerLabel(run.triggered_by)}</Chip>
+ </td>
+ <td className="px-2 py-3 font-mono text-text-2">
+ {formatDuration(run.duration)}
+ </td>
+ <td className="px-2 py-3 font-mono text-text-2">—</td>
+ <td className="px-2 py-3 text-text-3">
+ {formatRelativeTime(run.start_time)}
+ </td>
+ <td className="px-2 py-3">
+ <Chip variant={statusChipVariant(run.status)}>
+ {run.status.charAt(0) +
+ run.status.slice(1).toLowerCase()}
+ </Chip>
+ </td>
+ </tr>
+ ))}
+ </tbody>
+ </table>
+ )}
+ </Card>
+ </div>
+
+ <div className="space-y-6">
+ <AIInsightCard insight={insight} loading={insightLoading} />
+
+ <Card padding="none">
+ <div className="px-4 py-3 border-b border-line-soft">
+ <h2 className="text-[14px] font-semibold text-text-1">
+ Pipeline health
+ </h2>
+ </div>
+ <div className="p-4 space-y-3">
+ {healthRows.map((row) => (
+ <HealthBar
+ key={row.label}
+ row={row}
+ max={Math.max(1, ...healthRows.map((r) => r.count))}
+ />
+ ))}
+ </div>
+ </Card>
+
+ <Card padding="none">
+ <div className="px-4 py-3 border-b border-line-soft">
+ <h2 className="text-[14px] font-semibold text-text-1">Quick actions</h2>
+ </div>
+ <div className="p-4">
+ <QuickActions onNavigate={navigate} />
+ </div>
+ </Card>
+
+ <Card padding="none">
+ <div className="px-4 py-3 border-b border-line-soft">
+ <h2 className="text-[14px] font-semibold text-text-1">Team activity</h2>
+ </div>
+ {teamActivity.length === 0 ? (
+ <EmptyState
+ icon={<Inbox size={18} />}
+ title="No team activity yet"
+ description="Invites, edits, and reconnects will show up here as your team collaborates."
+ />
+ ) : (
+ <ul className="divide-y divide-line-soft">
+ {teamActivity.map((item) => (
+ <li key={item.id} className="flex items-center gap-3 px-4 py-3">
+ <Avatar name={item.name} size="sm" />
+ <div className="min-w-0 flex-1 text-[12.5px]">
+ <span className="text-text-1 font-medium">{item.name}</span>{' '}
+ <span className="text-text-2">{item.action}</span>{' '}
+ <span className="text-text-1">{item.object}</span>
+ </div>
+ <span className="text-[11px] text-text-3 shrink-0">
+ {formatRelativeTime(item.timestamp)}
+ </span>
+ </li>
+ ))}
+ </ul>
+ )}
+ </Card>
+ </div>
+ </div>
+ </div>
+ </Layout>
+ );
+}

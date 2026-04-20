@@ -1,4 +1,8 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap');
+/* Geist — self-hosted via @fontsource-variable/geist */
+@import '@fontsource-variable/geist';
+@import '@fontsource-variable/geist-mono';
+/* Noto Sans Thai as fallback for Thai characters */
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -6,74 +10,155 @@
 
 @layer base {
   :root {
-    /* ── Surfaces — warm dark (lifted from pure black) ── */
-    --surface-primary: 17 17 20;
-    --surface-secondary: 28 28 33;
-    --surface-tertiary: 40 40 46;
-    --surface-dark: 10 10 12;
+    /* ── Surfaces — light mode ── */
+    --surface-primary: 248 250 252;
+    --surface-secondary: 255 255 255;
+    --surface-tertiary: 241 245 249;
+    --surface-dark: 15 23 42;
 
-    /* ── Text ── */
-    --text-primary: 245 245 245;
-    --text-secondary: 163 163 175;
-    --text-tertiary: 115 115 130;
-    --text-inverse: 17 17 20;
+    /* ── Text — light mode ── */
+    --text-primary: 15 23 42;
+    --text-secondary: 71 85 105;
+    --text-tertiary: 148 163 184;
+    --text-inverse: 248 250 252;
 
-    /* ── Borders — visible on dark bg ── */
-    --border-default: 55 55 65;
-    --border-subtle: 40 40 46;
+    /* ── Borders — light mode ── */
+    --border-default: 226 232 240;
+    --border-subtle: 241 245 249;
 
     /* ── Backward compat ── */
-    --border-primary: 55 55 65;
-    --border-secondary: 40 40 46;
+    --border-primary: 226 232 240;
+    --border-secondary: 241 245 249;
 
-    /* ── Brand / primary (yellow) ── */
-    --brand-50: 254 252 232;
-    --brand-100: 254 249 195;
-    --brand-200: 254 240 138;
-    --brand-300: 253 224 71;
-    --brand-400: 250 204 21;
-    --brand-500: 234 179 8;
-    --brand-600: 202 138 4;
-    --brand-700: 161 98 7;
-    --brand-800: 133 77 14;
-    --brand-900: 113 63 18;
+    /* ── Brand / primary (blue) ── */
+    --brand-50: 239 246 255;
+    --brand-100: 219 234 254;
+    --brand-200: 191 219 254;
+    --brand-300: 147 197 253;
+    --brand-400: 96 165 250;
+    --brand-500: 59 130 246;
+    --brand-600: 37 99 235;
+    --brand-700: 29 78 216;
+    --brand-800: 30 64 175;
+    --brand-900: 30 58 138;
+
+    /* ── Accent (amber) ── */
+    --accent-50: 255 251 235;
+    --accent-100: 254 243 199;
+    --accent-200: 253 230 138;
+    --accent-300: 252 211 77;
+    --accent-400: 251 191 36;
+    --accent-500: 245 158 11;
+    --accent-600: 217 119 6;
+    --accent-700: 180 83 9;
 
     /* ── Status: success ── */
+    --success-light: 209 250 229;
+    --success: 16 185 129;
+    --success-dark: 6 95 70;
+
+    /* ── Status: warning ── */
+    --warning-light: 254 243 199;
+    --warning: 245 158 11;
+    --warning-dark: 146 64 14;
+
+    /* ── Status: error ── */
+    --error-light: 254 226 226;
+    --error: 239 68 68;
+    --error-dark: 153 27 27;
+
+    /* ── Status: info ── */
+    --info-light: 219 234 254;
+    --info: 59 130 246;
+    --info-dark: 30 64 175;
+
+    /* ══════════════════════════════════════════════════════ */
+    /* Light Professional design system                       */
+    /* ══════════════════════════════════════════════════════ */
+
+    /* Brand */
+    --navy: #0B1A5E;
+    --blue-primary: #1848F3;
+    --blue-primary-hover: #0E35C4;
+    --blue-soft: #EEF2FE;
+    --blue-border: #C2D4F9;
+
+    /* Surfaces */
+    --bg-page: #F7F9FC;
+    --bg-card: #FFFFFF;
+    --bg-row-alt: #FAFBFD;
+    --bg-row-hv: #F2F5FB;
+    --bg-muted: #F1F5F9;
+
+    /* Hairlines */
+    --line-1: #E5EAF2;
+    --line-2: #D3DAE6;
+    --line-soft: #EEF2F7;
+
+    /* 4-tier text */
+    --text-1: #0E172A;
+    --text-2: #3B4557;
+    --text-3: #64748B;
+    --text-4: #94A2B8;
+
+    /* Semantic */
+    --success: #047857;
+    --success-bg: #ECFDF5;
+    --success-border: #A7F3D0;
+    --warning: #B45309;
+    --warning-bg: #FFFBEB;
+    --warning-border: #FDE68A;
+    --danger: #B91C1C;
+    --danger-bg: #FEF2F2;
+    --danger-border: #FECACA;
+    --violet: #6D28D9;
+    --violet-bg: #F5F3FF;
+    --violet-border: #DDD6FE;
+
+    /* Shadows — flat elevation, no glow */
+    --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.04);
+    --shadow-md: 0 4px 12px rgba(15, 23, 42, 0.06);
+    --shadow-lg: 0 12px 32px rgba(15, 23, 42, 0.08);
+  }
+
+  .dark {
+    /* ── Surfaces — dark mode ── */
+    --surface-primary: 15 23 42;
+    --surface-secondary: 30 41 59;
+    --surface-tertiary: 51 65 85;
+    --surface-dark: 2 6 23;
+
+    /* ── Text — dark mode ── */
+    --text-primary: 248 250 252;
+    --text-secondary: 203 213 225;
+    --text-tertiary: 100 116 139;
+    --text-inverse: 15 23 42;
+
+    /* ── Borders — dark mode ── */
+    --border-default: 51 65 85;
+    --border-subtle: 30 41 59;
+    --border-primary: 51 65 85;
+    --border-secondary: 30 41 59;
+
+    /* ── Status: success (dark-optimized) ── */
     --success-light: 6 78 59;
     --success: 16 185 129;
     --success-dark: 167 243 208;
 
-    /* ── Status: warning ── */
+    /* ── Status: warning (dark-optimized) ── */
     --warning-light: 120 53 15;
     --warning: 245 158 11;
     --warning-dark: 253 230 138;
 
-    /* ── Status: error ── */
+    /* ── Status: error (dark-optimized) ── */
     --error-light: 127 29 29;
     --error: 239 68 68;
     --error-dark: 254 202 202;
 
-    /* ── Status: info ── */
+    /* ── Status: info (dark-optimized) ── */
     --info-light: 30 58 138;
     --info: 59 130 246;
     --info-dark: 191 219 254;
-  }
-
-  .dark {
-    --surface-primary: 17 17 20;
-    --surface-secondary: 28 28 33;
-    --surface-tertiary: 40 40 46;
-    --surface-dark: 10 10 12;
-
-    --text-primary: 245 245 245;
-    --text-secondary: 163 163 175;
-    --text-tertiary: 115 115 130;
-    --text-inverse: 17 17 20;
-
-    --border-default: 55 55 65;
-    --border-subtle: 40 40 46;
-    --border-primary: 55 55 65;
-    --border-secondary: 40 40 46;
   }
 
   html, body, #root {
@@ -85,14 +170,24 @@
 
   body {
     @apply bg-surface-primary text-text-primary antialiased;
-    font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
+    font-family: 'Geist Variable', 'Noto Sans Thai', system-ui, sans-serif;
+    font-feature-settings: 'tnum' 0;
     font-size: 14px;
     font-weight: 400;
-    line-height: 1.5;
+    line-height: 1.55;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
     letter-spacing: -0.011em;
+  }
+
+  :lang(th) {
+    line-height: 1.55;
+    letter-spacing: 0;
+  }
+
+  .font-mono {
+    font-feature-settings: 'tnum';
   }
 
   h1, h2, h3, h4, h5, h6 {
@@ -133,17 +228,19 @@
 
   /* ── Button system ── */
   .btn-base {
-    @apply inline-flex items-center justify-center font-medium transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-yellow-400 focus-visible:ring-offset-zinc-950 disabled:opacity-50 disabled:cursor-not-allowed;
-    font-size: 13px;
+    @apply inline-flex items-center justify-center font-medium transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed;
+    --tw-ring-color: rgb(var(--brand-500));
+    --tw-ring-offset-color: rgb(var(--surface-primary));
+    font-size: 14px;
     border-radius: 8px;
   }
 
   .btn-primary {
-    @apply btn-base text-zinc-950 border border-transparent;
-    background-color: #FACC15;
+    @apply btn-base text-white border border-transparent;
+    background-color: rgb(var(--brand-500));
   }
   .btn-primary:hover:not(:disabled) {
-    background-color: #EAB308;
+    background-color: rgb(var(--brand-600));
   }
 
   .btn-secondary {
@@ -179,7 +276,7 @@
 
   /* ── Typography ── */
   .text-display {
-    @apply font-semibold;
+    @apply font-display font-semibold;
     letter-spacing: -0.025em;
   }
 
@@ -194,36 +291,61 @@
   }
 
   ::-webkit-scrollbar-thumb {
-    background-color: rgb(63 63 70);
+    background-color: rgb(var(--border-default) / 0.6);
     border-radius: 3px;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background-color: rgb(113 113 122);
+    background-color: rgb(var(--text-tertiary) / 0.6);
   }
 }
 
 /* ── Utilities ── */
 .text-gradient {
-  color: #FACC15;
+  color: rgb(var(--brand-500));
 }
 
 .bauhaus-divider {
   width: 48px;
   height: 3px;
-  background-color: #FACC15;
+  background-color: rgb(var(--brand-500));
   border-radius: 2px;
 }
 
 .bauhaus-accent-bar {
   width: 3px;
-  background-color: #FACC15;
+  background-color: rgb(var(--brand-500));
   border-radius: 2px;
 }
 
 @keyframes fadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
+}
+
+/* ── Pulse ring (running status indicator) ── */
+@keyframes pulse {
+  0%   { opacity: 0.6; transform: scale(0.8); }
+  100% { opacity: 0;   transform: scale(1.6); }
+}
+
+.pulse-ring {
+  position: relative;
+}
+
+.pulse-ring::after {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border-radius: 9999px;
+  border: 2px solid var(--blue-primary);
+  opacity: 0;
+  animation: pulse 1.6s ease-out infinite;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pulse-ring::after { animation: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -236,9 +358,9 @@
 
 /* ── React Day Picker ── */
 .date-range-picker-custom {
-  --rdp-accent-color: #FACC15;
-  --rdp-accent-background-color: rgba(250, 204, 21, 0.1);
-  --rdp-background-color: #18181B;
+  --rdp-accent-color: #3B82F6;
+  --rdp-accent-background-color: rgba(59, 130, 246, 0.1);
+  --rdp-background-color: rgb(var(--surface-secondary));
   --rdp-day-height: 2rem;
   --rdp-day-width: 2rem;
   --rdp-day_button-border-radius: 6px;
@@ -247,11 +369,11 @@
   --rdp-selected-border: none;
   --rdp-disabled-opacity: 0.3;
   --rdp-outside-opacity: 0.5;
-  --rdp-today-color: #FACC15;
+  --rdp-today-color: #3B82F6;
   --rdp-selected-font: inherit;
-  --rdp-range_start-date-background-color: #FACC15;
-  --rdp-range_end-date-background-color: #FACC15;
-  --rdp-range_middle-background-color: rgba(250, 204, 21, 0.1);
+  --rdp-range_start-date-background-color: #3B82F6;
+  --rdp-range_end-date-background-color: #3B82F6;
+  --rdp-range_middle-background-color: rgba(59, 130, 246, 0.1);
 }
 
 .date-range-picker-custom .rdp-root {
@@ -281,7 +403,7 @@
 }
 .date-range-picker-custom .rdp-button_previous:hover,
 .date-range-picker-custom .rdp-button_next:hover {
-  background: rgb(39 39 42); color: rgb(var(--text-primary));
+  background: rgb(var(--surface-tertiary)); color: rgb(var(--text-primary));
 }
 
 .date-range-picker-custom .rdp-weekdays { display: flex; }
@@ -298,12 +420,12 @@
   color: rgb(var(--text-primary)); background: transparent; border: none; cursor: pointer;
   transition: all 0.15s ease;
 }
-.date-range-picker-custom .rdp-day_button:hover:not(:disabled) { background: rgb(39 39 42); }
-.date-range-picker-custom .rdp-today .rdp-day_button { background: rgba(250, 204, 21, 0.1); font-weight: 600; }
-.date-range-picker-custom .rdp-selected .rdp-day_button { background: #FACC15; color: #09090B; font-weight: 500; }
+.date-range-picker-custom .rdp-day_button:hover:not(:disabled) { background: rgb(var(--surface-tertiary)); }
+.date-range-picker-custom .rdp-today .rdp-day_button { background: rgba(59, 130, 246, 0.1); font-weight: 600; }
+.date-range-picker-custom .rdp-selected .rdp-day_button { background: #3B82F6; color: #FFFFFF; font-weight: 500; }
 .date-range-picker-custom .rdp-range_start .rdp-day_button,
-.date-range-picker-custom .rdp-range_end .rdp-day_button { background: #FACC15; color: #09090B; font-weight: 500; }
-.date-range-picker-custom .rdp-range_middle .rdp-day_button { background: rgba(250, 204, 21, 0.1); color: rgb(var(--text-primary)); border-radius: 0; }
+.date-range-picker-custom .rdp-range_end .rdp-day_button { background: #3B82F6; color: #FFFFFF; font-weight: 500; }
+.date-range-picker-custom .rdp-range_middle .rdp-day_button { background: rgba(59, 130, 246, 0.1); color: rgb(var(--text-primary)); border-radius: 0; }
 .date-range-picker-custom .rdp-range_start .rdp-day_button { border-radius: 6px 0 0 6px; }
 .date-range-picker-custom .rdp-range_end .rdp-day_button { border-radius: 0 6px 6px 0; }
 .date-range-picker-custom .rdp-range_start.rdp-range_end .rdp-day_button { border-radius: 6px; }

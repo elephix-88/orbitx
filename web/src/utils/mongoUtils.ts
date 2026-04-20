@@ -5,8 +5,8 @@ import { MongoId } from '../types/backend';
  * Returns undefined when the input is falsy or unrecognisable.
  */
 export const extractMongoId = (id: MongoId | undefined): string | undefined => {
-  if (!id) return undefined;
-  if (typeof id === 'string') return id;
-  if (typeof id === 'object' && '$oid' in id) return id.$oid;
-  return undefined;
+ if (!id) return undefined;
+ if (typeof id === 'string') return id;
+ if (typeof id === 'object' && '$oid' in id) return id.$oid;
+ return undefined;
 };

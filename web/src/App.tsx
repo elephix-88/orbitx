@@ -27,89 +27,101 @@ const WorkflowBuilderPage = lazy(() => import('./pages/WorkflowBuilderPage'));
 const ConnectionsPage = lazy(() => import('./pages/ConnectionsPage'));
 const SettingsPage = lazy(() => import('./pages/SettingsPage'));
 
+// Dev-only pages (DEV build only)
+const AtomsPage = import.meta.env.DEV
+ ? lazy(() => import('./pages/_dev/AtomsPage'))
+ : null;
+
 // =============================================================================
 // App Component
 // =============================================================================
 
 function App() {
-  // Set up global error handlers for unhandled promises and errors
-  useGlobalErrorHandler();
+ // Set up global error handlers for unhandled promises and errors
+ useGlobalErrorHandler();
 
-  // Initialize theme store (ensures theme is applied on app load)
-  useThemeStore();
+ // Initialize theme store (ensures theme is applied on app load)
+ useThemeStore();
 
-  // Monitor session expiration and show warning 5 minutes before expiry
-  const { showWarning, minutesRemaining, dismissWarning, logout } = useSessionTimeout(5);
+ // Monitor session expiration and show warning 5 minutes before expiry
+ const { showWarning, minutesRemaining, dismissWarning, logout } = useSessionTimeout(5);
 
-  return (
-    <ErrorBoundary>
-      {/* Global offline indicator */}
-      <OfflineIndicator />
+ return (
+ <ErrorBoundary>
+ {/* Global offline indicator */}
+ <OfflineIndicator />
 
-      {/* Session expiration warning modal */}
-      {showWarning && (
-        <SessionWarningModal
-          minutesRemaining={minutesRemaining}
-          onDismiss={dismissWarning}
-          onLogout={logout}
-        />
-      )}
-      <BrowserRouter
-        future={{
-          v7_startTransition: true,
-          v7_relativeSplatPath: true,
-        }}
-      >
-        <NotificationContainer />
-        <RouteProgressBar />
-        <RouteChangeLoader />
-        <Suspense fallback={<PageLoader message="Loading..." />}>
-          <Routes>
-            {/* Public routes */}
-            <Route path="/" element={<LandingPage />} />
-            <Route path="/login" element={<LoginPage />} />
+ {/* Session expiration warning modal */}
+ {showWarning && (
+ <SessionWarningModal
+ minutesRemaining={minutesRemaining}
+ onDismiss={dismissWarning}
+ onLogout={logout}
+ />
+ )}
+ <BrowserRouter
+ future={{
+ v7_startTransition: true,
+ v7_relativeSplatPath: true,
+ }}
+ >
+ <NotificationContainer />
+ <RouteProgressBar />
+ <RouteChangeLoader />
+ <Suspense fallback={<PageLoader message="Loading..." />}>
+ <Routes>
+ {/* Public routes */}
+ <Route path="/" element={<LandingPage />} />
+ <Route path="/login" element={<LoginPage />} />
 
-            {/* Protected routes */}
-            <Route path="/dashboard" element={
-              <ProtectedRoute>
-                <ErrorBoundary>
-                  <DashboardPage />
-                </ErrorBoundary>
-              </ProtectedRoute>
-            } />
-            <Route path="/workflows" element={
-              <ProtectedRoute>
-                <ErrorBoundary>
-                  <WorkflowsPage />
-                </ErrorBoundary>
-              </ProtectedRoute>
-            } />
-            <Route path="/workflows/builder" element={
-              <ProtectedRoute>
-                <ErrorBoundary>
-                  <WorkflowBuilderPage />
-                </ErrorBoundary>
-              </ProtectedRoute>
-            } />
-            <Route path="/connections" element={
-              <ProtectedRoute>
-                <ErrorBoundary>
-                  <ConnectionsPage />
-                </ErrorBoundary>
-              </ProtectedRoute>
-            } />
-            <Route path="/settings" element={
-              <ProtectedRoute>
-                <ErrorBoundary>
-                  <SettingsPage />
-                </ErrorBoundary>
-              </ProtectedRoute>
-            } />
-          </Routes>
-        </Suspense>
-      </BrowserRouter>
-    </ErrorBoundary>
-  );
+ {/* Protected routes */}
+ <Route path="/dashboard" element={
+ <ProtectedRoute>
+ <ErrorBoundary>
+ <DashboardPage />
+ </ErrorBoundary>
+ </ProtectedRoute>
+ } />
+ <Route path="/workflows" element={
+ <ProtectedRoute>
+ <ErrorBoundary>
+ <WorkflowsPage />
+ </ErrorBoundary>
+ </ProtectedRoute>
+ } />
+ <Route path="/workflows/builder" element={
+ <ProtectedRoute>
+ <ErrorBoundary>
+ <WorkflowBuilderPage />
+ </ErrorBoundary>
+ </ProtectedRoute>
+ } />
+ <Route path="/connections" element={
+ <ProtectedRoute>
+ <ErrorBoundary>
+ <ConnectionsPage />
+ </ErrorBoundary>
+ </ProtectedRoute>
+ } />
+ <Route path="/settings" element={
+ <ProtectedRoute>
+ <ErrorBoundary>
+ <SettingsPage />
+ </ErrorBoundary>
+ </ProtectedRoute>
+ } />
+ {AtomsPage && (
+ <Route path="/_dev/atoms" element={
+ <ErrorBoundary>
+ <AtomsPage />
+ </ErrorBoundary>
+ } />
+ )}
+ </Routes>
+ </Suspense>
+ </BrowserRouter>
+ </ErrorBoundary>
+ );
 }
 
 export default App;

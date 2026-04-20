@@ -4,12 +4,12 @@
  */
 
 interface PageLoaderProps {
-  /** Optional message to display */
-  message?: string;
-  /** Size of the spinner */
-  size?: 'sm' | 'md' | 'lg';
-  /** Whether to show full screen overlay */
-  fullScreen?: boolean;
+ /** Optional message to display */
+ message?: string;
+ /** Size of the spinner */
+ size?: 'sm' | 'md' | 'lg';
+ /** Whether to show full screen overlay */
+ fullScreen?: boolean;
 }
 
 /**
@@ -18,7 +18,7 @@ interface PageLoaderProps {
  * @example
  * // Basic usage as Suspense fallback
  * <Suspense fallback={<PageLoader />}>
- *   <LazyPage />
+ * <LazyPage />
  * </Suspense>
  *
  * @example
@@ -26,60 +26,60 @@ interface PageLoaderProps {
  * <PageLoader message="Loading dashboard..." size="lg" />
  */
 export function PageLoader({
-  message,
-  size = 'md',
-  fullScreen = true,
+ message,
+ size = 'md',
+ fullScreen = true,
 }: PageLoaderProps) {
-  const sizeClasses = {
-    sm: 'h-6 w-6 border-2',
-    md: 'h-10 w-10 border-[3px]',
-    lg: 'h-14 w-14 border-4',
-  };
+ const sizeClasses = {
+ sm: 'h-6 w-6 border-2',
+ md: 'h-10 w-10 border-[3px]',
+ lg: 'h-14 w-14 border-4',
+ };
 
-  const containerClasses = fullScreen
-    ? 'fixed inset-0 flex items-center justify-center bg-surface-primary z-50'
-    : 'flex items-center justify-center p-8';
+ const containerClasses = fullScreen
+ ? 'fixed inset-0 flex items-center justify-center bg-bg-page z-50'
+ : 'flex items-center justify-center p-8';
 
-  return (
-    <div className={containerClasses} role="status" aria-label="Loading">
-      <div className="flex flex-col items-center gap-4">
-        {/* Spinner */}
-        <div
-          className={`
-            ${sizeClasses[size]}
-            animate-spin
-            rounded-full
-            border-neutral-700
-            border-t-primary-400
-          `}
-        />
+ return (
+ <div className={containerClasses} role="status" aria-label="Loading">
+ <div className="flex flex-col items-center gap-4">
+ {/* Spinner */}
+ <div
+ className={`
+ ${sizeClasses[size]}
+ animate-spin
+ rounded-full
+ border-line-1
+ border-t-blue-primary
+ `}
+ />
 
-        {/* Message */}
-        {message && (
-          <p className="text-sm text-text-secondary animate-pulse">
-            {message}
-          </p>
-        )}
+ {/* Message */}
+ {message && (
+ <p className="text-sm text-text-2 animate-pulse">
+ {message}
+ </p>
+ )}
 
-        {/* Screen reader text */}
-        <span className="sr-only">Loading{message ? `: ${message}` : '...'}</span>
-      </div>
-    </div>
-  );
+ {/* Screen reader text */}
+ <span className="sr-only">Loading{message ? `: ${message}` : '...'}</span>
+ </div>
+ </div>
+ );
 }
 
 /**
  * Inline loader for smaller sections.
  */
 export function InlineLoader({ message }: { message?: string }) {
-  return (
-    <div className="flex items-center justify-center p-4 gap-2">
-      <div className="h-4 w-4 animate-spin rounded-full border-2 border-neutral-700 border-t-primary-400" />
-      {message && (
-        <span className="text-sm text-text-secondary">{message}</span>
-      )}
-    </div>
-  );
+ return (
+ <div className="flex items-center justify-center p-4 gap-2">
+ <div className="h-4 w-4 animate-spin rounded-full border-2 border-line-1 border-t-blue-primary" />
+ {message && (
+ <span className="text-sm text-text-2">{message}</span>
+ )}
+ </div>
+ );
 }
 
 export default PageLoader;

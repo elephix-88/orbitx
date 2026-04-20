@@ -171,7 +171,7 @@ describe('Dialog', () => {
     // Find the icon wrapper (grandparent of icon text)
     const icon = screen.getByTestId('danger-icon');
     const iconWrapper = icon.parentElement?.parentElement;
-    expect(iconWrapper?.className).toContain('bg-red');
+    expect(iconWrapper?.className).toContain('bg-danger-bg');
   });
 
   it('should apply warning variant styles to icon wrapper', () => {
@@ -185,7 +185,7 @@ describe('Dialog', () => {
 
     const icon = screen.getByTestId('warning-icon');
     const iconWrapper = icon.parentElement?.parentElement;
-    expect(iconWrapper?.className).toContain('bg-amber');
+    expect(iconWrapper?.className).toContain('bg-warning-light');
   });
 
   it('should apply success variant styles to icon wrapper', () => {
@@ -199,6 +199,6 @@ describe('Dialog', () => {
 
     const icon = screen.getByTestId('success-icon');
     const iconWrapper = icon.parentElement?.parentElement;
-    expect(iconWrapper?.className).toContain('bg-emerald');
+    expect(iconWrapper?.className).toContain('bg-success-light');
   });
 });

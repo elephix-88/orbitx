@@ -13,7 +13,15 @@ describe("Button", () => {
     it("should render with default variant (primary)", () => {
       render(<Button>Primary</Button>);
       const button = screen.getByRole("button");
-      expect(button).toHaveClass("btn-primary");
+      expect(button).toHaveClass("bg-blue-primary");
+      expect(button).toHaveClass("text-white");
+    });
+
+    it("should render with danger variant", () => {
+      render(<Button variant="danger">Disconnect</Button>);
+      const button = screen.getByRole("button");
+      expect(button).toHaveClass("text-danger");
+      expect(button).toHaveClass("border-danger-border");
     });
 
     it("should render with secondary variant", () => {
@@ -44,13 +52,13 @@ describe("Button", () => {
     it("should render with warning variant", () => {
       render(<Button variant="warning">Warning</Button>);
       const button = screen.getByRole("button");
-      expect(button).toHaveClass("bg-amber-500");
+      expect(button).toHaveClass("bg-warning");
     });
 
     it("should render with success variant", () => {
       render(<Button variant="success">Success</Button>);
       const button = screen.getByRole("button");
-      expect(button).toHaveClass("bg-emerald-500");
+      expect(button).toHaveClass("bg-success");
     });
   });
 

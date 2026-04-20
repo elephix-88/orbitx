@@ -3,62 +3,62 @@ import { authService } from '@/services/authService';
 import type { User } from '@/types/auth';
 
 interface AuthStore {
-  user: User | null;
-  isAuthenticated: boolean;
-  isLoading: boolean;
-  error: string | null;
+ user: User | null;
+ isAuthenticated: boolean;
+ isLoading: boolean;
+ error: string | null;
 
-  initialize: () => Promise<void>;
-  googleAuth: (credential: string) => Promise<void>;
-  logout: () => void;
-  clearError: () => void;
+ initialize: () => Promise<void>;
+ googleAuth: (credential: string) => Promise<void>;
+ logout: () => void;
+ clearError: () => void;
 }
 
 export const useAuthStore = create<AuthStore>((set, get) => ({
-  user: authService.getStoredUser(),
-  isAuthenticated: authService.isAuthenticated(),
-  isLoading: false,
-  error: null,
+ user: authService.getStoredUser(),
+ isAuthenticated: authService.isAuthenticated(),
+ isLoading: false,
+ error: null,
 
-  initialize: async () => {
-    // Already initialized with a valid user — skip API call
-    if (get().user && get().isAuthenticated) return;
+ initialize: async () => {
+ // Already initialized with a valid user — skip API call
+ if (get().user && get().isAuthenticated) return;
 
-    if (!authService.isAuthenticated()) {
-      set({ isAuthenticated: false, user: null, isLoading: false });
-      return;
-    }
+ if (!authService.isAuthenticated()) {
+ set({ isAuthenticated: false, user: null, isLoading: false });
+ return;
+ }
 
-    set({ isLoading: true });
-    try {
-      const user = await authService.getCurrentUser();
-      set({ user, isAuthenticated: true, isLoading: false });
-    } catch {
-      authService.logout();
-      set({ user: null, isAuthenticated: false, isLoading: false });
-    }
-  },
+ set({ isLoading: true });
+ try {
+ const user = await authService.getCurrentUser();
+ set({ user, isAuthenticated: true, isLoading: false });
+ } catch {
+ authService.logout();
+ set({ user: null, isAuthenticated: false, isLoading: false });
+ }
+ },
 
-  googleAuth: async (credential: string) => {
-    set({ isLoading: true, error: null });
-    try {
-      const response = await authService.googleAuth(credential);
-      set({ user: response.user, isAuthenticated: true, isLoading: false });
-    } catch (error) {
-      set({
-        error: error instanceof Error ? error.message : 'Google authentication failed',
-        isLoading: false
-      });
-      throw error;
-    }
-  },
+ googleAuth: async (credential: string) => {
+ set({ isLoading: true, error: null });
+ try {
+ const response = await authService.googleAuth(credential);
+ set({ user: response.user, isAuthenticated: true, isLoading: false });
+ } catch (error) {
+ set({
+ error: error instanceof Error ? error.message : 'Google authentication failed',
+ isLoading: false
+ });
+ throw error;
+ }
+ },
 
-  logout: () => {
-    authService.logout();
-    set({ user: null, isAuthenticated: false, error: null });
-  },
+ logout: () => {
+ authService.logout();
+ set({ user: null, isAuthenticated: false, error: null });
+ },
 
-  clearError: () => {
-    set({ error: null });
-  },
+ clearError: () => {
+ set({ error: null });
+ },
 }));

@@ -1,0 +1,1066 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>OrbitX — Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:            #F8FAFC;
+      --surface:       #FFFFFF;
+      --surface-2:     #F1F5F9;
+      --surface-3:     #E9EFF5;
+      --border:        #E2E8F0;
+      --border-subtle: #F1F5F9;
+      --text-1:        #0F172A;
+      --text-2:        #475569;
+      --text-3:        #94A3B8;
+      --blue-50:  #EFF6FF;
+      --blue-100: #DBEAFE;
+      --blue-500: #3B82F6;
+      --blue-600: #2563EB;
+      --blue-700: #1D4ED8;
+      --green:    #10B981;
+      --green-bg: #D1FAE5;
+      --red:      #EF4444;
+      --red-bg:   #FEE2E2;
+      --amber:    #F59E0B;
+      --amber-bg: #FEF3C7;
+      --shadow-sm: 0 1px 3px rgba(0,0,0,.07), 0 0 0 1px rgba(0,0,0,.04);
+      --shadow-md: 0 4px 16px rgba(0,0,0,.09), 0 0 0 1px rgba(0,0,0,.04);
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      font-size: 14px;
+      background: var(--bg);
+      color: var(--text-1);
+      display: flex;
+      min-height: 100vh;
+    }
+
+    /* ── SIDEBAR ─────────────────────────────────── */
+    .sidebar {
+      width: 220px;
+      min-height: 100vh;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      inset: 0 auto 0 0;
+      z-index: 40;
+    }
+
+    .sb-logo {
+      height: 56px;
+      padding: 0 16px;
+      display: flex; align-items: center; gap: 10px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .logo-box {
+      width: 28px; height: 28px;
+      background: var(--blue-500);
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .logo-box svg { width: 15px; height: 15px; }
+
+    .logo-name {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 16px; font-weight: 700;
+      color: var(--text-1);
+      letter-spacing: -.3px;
+    }
+
+    .sb-nav { flex: 1; padding: 10px 8px; display: flex; flex-direction: column; gap: 1px; }
+
+    .sb-group { font-size: 11px; font-weight: 600; color: var(--text-3); text-transform: uppercase; letter-spacing: .06em; padding: 10px 8px 4px; }
+
+    .sb-item {
+      display: flex; align-items: center; gap: 9px;
+      padding: 7px 10px; border-radius: 8px;
+      font-size: 13px; font-weight: 500; color: var(--text-2);
+      cursor: pointer; transition: background .12s, color .12s;
+      text-decoration: none;
+    }
+    .sb-item:hover { background: var(--surface-2); color: var(--text-1); }
+    .sb-item.active { background: var(--blue-50); color: var(--blue-600); }
+    .sb-item svg { width: 15px; height: 15px; flex-shrink: 0; stroke: currentColor; }
+    .sb-badge {
+      margin-left: auto; font-size: 11px; font-weight: 600;
+      padding: 1px 6px; border-radius: 99px;
+    }
+    .sb-badge.blue { background: var(--blue-100); color: var(--blue-600); }
+    .sb-badge.red  { background: var(--red-bg);   color: #B91C1C; }
+
+    .sb-footer {
+      padding: 10px 8px;
+      border-top: 1px solid var(--border);
+    }
+    .sb-user {
+      display: flex; align-items: center; gap: 9px;
+      padding: 7px 10px; border-radius: 8px;
+      cursor: pointer; transition: background .12s;
+    }
+    .sb-user:hover { background: var(--surface-2); }
+    .avatar {
+      width: 28px; height: 28px; border-radius: 50%; flex-shrink: 0;
+      background: linear-gradient(135deg, #60A5FA, #2563EB);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; font-weight: 700; color: white;
+    }
+    .user-name { font-size: 13px; font-weight: 600; }
+    .user-role { font-size: 11px; color: var(--text-3); }
+
+    .sb-actions { display: flex; gap: 2px; padding: 4px 2px 0; }
+    .ib {
+      width: 32px; height: 32px; border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; background: transparent; border: none; color: var(--text-3);
+      transition: background .12s, color .12s;
+    }
+    .ib:hover { background: var(--surface-2); color: var(--text-1); }
+    .ib svg { width: 15px; height: 15px; }
+
+    /* ── MAIN ────────────────────────────────────── */
+    .main { margin-left: 220px; flex: 1; display: flex; flex-direction: column; }
+
+    .topbar {
+      height: 56px; background: var(--surface); border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 28px; position: sticky; top: 0; z-index: 30;
+    }
+
+    .page-title {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 18px; font-weight: 700; color: var(--text-1); letter-spacing: -.3px;
+    }
+
+    .tb-right { display: flex; align-items: center; gap: 8px; }
+
+    .btn {
+      display: flex; align-items: center; gap: 6px;
+      padding: 6px 14px; border-radius: 8px;
+      font-size: 13px; font-weight: 600;
+      cursor: pointer; border: none;
+      font-family: 'Inter', sans-serif; transition: all .15s;
+    }
+    .btn svg { width: 14px; height: 14px; }
+    .btn-ghost {
+      background: var(--surface); color: var(--text-2);
+      border: 1px solid var(--border);
+    }
+    .btn-ghost:hover { background: var(--surface-2); color: var(--text-1); }
+    .btn-primary { background: var(--blue-500); color: white; }
+    .btn-primary:hover { background: var(--blue-600); box-shadow: 0 2px 8px rgba(59,130,246,.3); }
+
+    /* ── CONTENT ─────────────────────────────────── */
+    .content { padding: 24px 28px; }
+
+    /* ── STATS BAR ───────────────────────────────── */
+    .stats-bar {
+      display: grid; grid-template-columns: repeat(5, 1fr);
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 12px; overflow: hidden;
+      box-shadow: var(--shadow-sm); margin-bottom: 20px;
+    }
+    .stat-cell {
+      padding: 14px 18px;
+      border-right: 1px solid var(--border);
+    }
+    .stat-cell:last-child { border-right: none; }
+    .stat-lbl {
+      font-size: 11px; font-weight: 600; color: var(--text-3);
+      text-transform: uppercase; letter-spacing: .06em; margin-bottom: 5px;
+    }
+    .stat-val {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 22px; font-weight: 700; color: var(--text-1);
+      letter-spacing: -.5px; line-height: 1.1;
+    }
+    .stat-sub { font-size: 11px; color: var(--text-3); margin-top: 3px; }
+    .text-green { color: var(--green); }
+    .text-red   { color: var(--red); }
+    .text-amber { color: var(--amber); }
+    .text-blue  { color: var(--blue-500); }
+
+    /* ── TREND MINI CHART ────────────────────────── */
+    .trend-bar-wrap { display: flex; align-items: flex-end; gap: 2px; height: 28px; margin-top: 6px; }
+    .trend-bar {
+      flex: 1; border-radius: 2px;
+      transition: opacity .15s;
+    }
+    .trend-bar:hover { opacity: .7; }
+
+    /* ── LAYOUT GRID ─────────────────────────────── */
+    .layout-grid {
+      display: grid;
+      grid-template-columns: 1fr 320px;
+      gap: 16px;
+    }
+
+    /* ── TOOLBAR ─────────────────────────────────── */
+    .toolbar {
+      display: flex; align-items: center; gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .search-box {
+      display: flex; align-items: center; gap: 8px;
+      padding: 7px 12px; border-radius: 8px;
+      background: var(--surface); border: 1px solid var(--border);
+      color: var(--text-2); font-size: 13px; flex: 1;
+      cursor: text; transition: border-color .15s;
+    }
+    .search-box:hover { border-color: #CBD5E1; }
+    .search-box svg { width: 14px; height: 14px; color: var(--text-3); flex-shrink: 0; }
+    .search-placeholder { color: var(--text-3); }
+
+    .filter-pill {
+      display: flex; align-items: center; gap: 5px;
+      padding: 6px 12px; border-radius: 8px;
+      background: var(--surface); border: 1px solid var(--border);
+      font-size: 12px; font-weight: 500; color: var(--text-2);
+      cursor: pointer; white-space: nowrap; transition: all .12s;
+    }
+    .filter-pill:hover { border-color: #CBD5E1; color: var(--text-1); }
+    .filter-pill.active { background: var(--blue-50); border-color: var(--blue-100); color: var(--blue-600); }
+    .filter-pill svg { width: 12px; height: 12px; }
+
+    .spacer { flex: 1; }
+
+    /* ── SECTION LABEL ───────────────────────────── */
+    .section-lbl {
+      font-size: 12px; font-weight: 600; color: var(--text-3);
+      text-transform: uppercase; letter-spacing: .06em;
+      margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between;
+    }
+    .section-lbl a {
+      font-weight: 500; color: var(--blue-500); cursor: pointer;
+      text-transform: none; letter-spacing: 0;
+      display: flex; align-items: center; gap: 2px;
+    }
+    .section-lbl a svg { width: 12px; height: 12px; }
+
+    /* ── WORKFLOW CARD ───────────────────────────── */
+    .wf-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 12px; margin-bottom: 8px;
+      box-shadow: var(--shadow-sm);
+      transition: box-shadow .2s, border-color .2s;
+      overflow: hidden;
+    }
+    .wf-card:hover { box-shadow: var(--shadow-md); border-color: #CBD5E1; }
+    .wf-card:last-child { margin-bottom: 0; }
+
+    .wf-main {
+      display: flex; align-items: center; gap: 12px;
+      padding: 14px 16px;
+    }
+
+    /* status dot */
+    .wf-dot {
+      width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: 1px;
+    }
+    .dot-ok      { background: var(--green); }
+    .dot-fail    { background: var(--red); }
+    .dot-run     { background: var(--blue-500); animation: pulse 1.4s infinite; }
+    .dot-idle    { background: #CBD5E1; }
+    .dot-warn    { background: var(--amber); }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.35} }
+
+    .wf-info { flex: 1; min-width: 0; }
+
+    .wf-name {
+      font-size: 14px; font-weight: 600; color: var(--text-1);
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+
+    .wf-meta {
+      display: flex; align-items: center; gap: 10px; margin-top: 3px;
+    }
+    .wf-meta-item {
+      display: flex; align-items: center; gap: 4px;
+      font-size: 12px; color: var(--text-3);
+    }
+    .wf-meta-item svg { width: 12px; height: 12px; }
+    .wf-meta-sep { color: var(--border); }
+
+    /* last run badge */
+    .run-badge {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 2px 8px; border-radius: 6px;
+      font-size: 11px; font-weight: 600;
+    }
+    .badge-ok   { background: var(--green-bg); color: #065F46; }
+    .badge-fail { background: var(--red-bg);   color: #991B1B; }
+    .badge-run  { background: var(--blue-100); color: #1E40AF; }
+    .badge-idle { background: var(--surface-2); color: var(--text-3); }
+    .badge-warn { background: var(--amber-bg); color: #92400E; }
+
+    /* sparkline */
+    .wf-spark { display: flex; align-items: flex-end; gap: 2.5px; height: 22px; margin: 0 12px; }
+    .sp-bar { width: 4px; border-radius: 2px; }
+
+    /* toggle switch */
+    .toggle-wrap { display: flex; align-items: center; gap: 6px; }
+    .toggle {
+      width: 36px; height: 20px; border-radius: 99px;
+      background: var(--blue-500); cursor: pointer; position: relative;
+      transition: background .2s; flex-shrink: 0;
+    }
+    .toggle.off { background: #CBD5E1; }
+    .toggle::after {
+      content: ''; position: absolute;
+      width: 14px; height: 14px; border-radius: 50%;
+      background: white; top: 3px; left: 19px;
+      transition: left .2s; box-shadow: 0 1px 3px rgba(0,0,0,.2);
+    }
+    .toggle.off::after { left: 3px; }
+
+    /* action buttons */
+    .wf-actions { display: flex; gap: 2px; }
+    .wf-btn {
+      width: 30px; height: 30px; border-radius: 7px;
+      display: flex; align-items: center; justify-content: center;
+      background: transparent; border: none; color: var(--text-3);
+      cursor: pointer; transition: background .12s, color .12s;
+    }
+    .wf-btn:hover { background: var(--surface-2); color: var(--text-1); }
+    .wf-btn svg { width: 14px; height: 14px; }
+    .wf-btn.run:hover { background: var(--blue-50); color: var(--blue-600); }
+
+    /* expanded history */
+    .wf-history {
+      border-top: 1px solid var(--border-subtle);
+      background: var(--bg);
+    }
+    .wf-hist-row {
+      display: flex; align-items: center; gap: 10px;
+      padding: 8px 16px 8px 36px;
+      border-bottom: 1px solid var(--border-subtle);
+      font-size: 12px; color: var(--text-2);
+      cursor: pointer; transition: background .1s;
+    }
+    .wf-hist-row:last-child { border-bottom: none; }
+    .wf-hist-row:hover { background: var(--surface); }
+
+    .hist-status { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+    .hist-id { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text-3); width: 80px; }
+    .hist-time { flex: 1; color: var(--text-2); }
+    .hist-dur { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--text-3); }
+    .hist-nodes { display: flex; gap: 4px; align-items: center; }
+    .node-chip {
+      padding: 1px 6px; border-radius: 4px;
+      font-size: 10px; font-weight: 600; letter-spacing: .02em;
+    }
+    .node-src  { background: #EFF6FF; color: #1D4ED8; }
+    .node-tfm  { background: #F5F3FF; color: #6D28D9; }
+    .node-dst  { background: #ECFDF5; color: #065F46; }
+
+    .show-more {
+      padding: 8px 16px 8px 36px;
+      font-size: 12px; color: var(--blue-500); cursor: pointer;
+      display: flex; align-items: center; gap: 4px;
+      transition: color .12s;
+    }
+    .show-more:hover { color: var(--blue-600); }
+    .show-more svg { width: 12px; height: 12px; }
+
+    /* ── RIGHT PANEL ─────────────────────────────── */
+    .right-panel { display: flex; flex-direction: column; gap: 14px; }
+
+    .panel {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 12px; box-shadow: var(--shadow-sm);
+      overflow: hidden;
+    }
+
+    .panel-hdr {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 12px 16px; border-bottom: 1px solid var(--border-subtle);
+    }
+    .panel-title {
+      font-size: 13px; font-weight: 600; color: var(--text-1);
+      display: flex; align-items: center; gap: 6px;
+    }
+    .panel-link {
+      font-size: 12px; color: var(--blue-500); cursor: pointer;
+      display: flex; align-items: center; gap: 2px;
+    }
+    .panel-link svg { width: 11px; height: 11px; }
+
+    /* Live feed */
+    .feed-item {
+      display: flex; align-items: flex-start; gap: 10px;
+      padding: 10px 16px;
+      border-bottom: 1px solid var(--border-subtle);
+      font-size: 12px;
+    }
+    .feed-item:last-child { border-bottom: none; }
+    .feed-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; margin-top: 3px; }
+    .feed-body { flex: 1; }
+    .feed-title { font-weight: 600; color: var(--text-1); line-height: 1.4; }
+    .feed-sub { color: var(--text-3); margin-top: 2px; font-size: 11px; }
+    .feed-time { font-size: 11px; color: var(--text-3); white-space: nowrap; margin-top: 1px; }
+
+    /* Alert items */
+    .alert-item {
+      display: flex; align-items: flex-start; gap: 10px;
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+    .alert-item:last-child { border-bottom: none; }
+    .alert-icon {
+      width: 26px; height: 26px; border-radius: 7px;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .alert-icon svg { width: 13px; height: 13px; }
+    .alert-title { font-size: 12px; font-weight: 600; color: var(--text-1); }
+    .alert-desc { font-size: 11px; color: var(--text-3); margin-top: 2px; line-height: 1.4; }
+    .alert-time { font-size: 10px; color: var(--text-3); margin-top: 4px; }
+
+    /* Mini chart */
+    .minichart-wrap { padding: 12px 16px 16px; }
+    .mc-legend { display: flex; gap: 12px; margin-bottom: 8px; }
+    .mc-legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--text-2); }
+    .mc-dot { width: 7px; height: 7px; border-radius: 50%; }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }
+  </style>
+</head>
+<body>
+
+<!-- ═══ SIDEBAR ═══════════════════════════════════════════════════ -->
+<aside class="sidebar">
+  <div class="sb-logo">
+    <div class="logo-box">
+      <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="3"/>
+        <path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M16.9 16.9l2.1 2.1M4.9 19.1l2.1-2.1M16.9 7.1l2.1-2.1"/>
+      </svg>
+    </div>
+    <span class="logo-name">OrbitX</span>
+  </div>
+
+  <nav class="sb-nav">
+    <div class="sb-group">Main</div>
+    <a class="sb-item active">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/>
+        <rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>
+      </svg>
+      Dashboard
+    </a>
+    <a class="sb-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+      </svg>
+      Workflows
+      <span class="sb-badge blue">12</span>
+    </a>
+    <a class="sb-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/>
+        <path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/>
+      </svg>
+      Connections
+    </a>
+    <div class="sb-group" style="margin-top:6px;">Observability</div>
+    <a class="sb-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
+      </svg>
+      Executions
+    </a>
+    <a class="sb-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+      </svg>
+      Alerts
+      <span class="sb-badge red">2</span>
+    </a>
+    <a class="sb-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>
+      </svg>
+      Reports
+    </a>
+    <div class="sb-group" style="margin-top:6px;">System</div>
+    <a class="sb-item">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 010 14.14M4.93 4.93a10 10 0 000 14.14"/>
+      </svg>
+      Settings
+    </a>
+  </nav>
+
+  <div class="sb-footer">
+    <div class="sb-user">
+      <div class="avatar">NS</div>
+      <div>
+        <div class="user-name">Natthapon S.</div>
+        <div class="user-role">Admin</div>
+      </div>
+    </div>
+    <div class="sb-actions">
+      <button class="ib">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/>
+          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+          <line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>
+          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+        </svg>
+      </button>
+      <button class="ib">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+</aside>
+
+<!-- ═══ MAIN ══════════════════════════════════════════════════════ -->
+<main class="main">
+
+  <div class="topbar">
+    <span class="page-title">Dashboard</span>
+    <div class="tb-right">
+      <button class="btn btn-ghost">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M23 4v6h-6"/><path d="M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/>
+        </svg>
+        Refresh
+      </button>
+      <button class="btn btn-primary">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+        </svg>
+        New Workflow
+      </button>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- ── STATS BAR ──────────────────────────── -->
+    <div class="stats-bar">
+      <div class="stat-cell">
+        <div class="stat-lbl">Total Runs · 24h</div>
+        <div class="stat-val">248</div>
+        <div class="stat-sub text-green">↑ 14 from yesterday</div>
+      </div>
+      <div class="stat-cell">
+        <div class="stat-lbl">Success Rate</div>
+        <div class="stat-val text-green">96.4%</div>
+        <div class="stat-sub text-green">↑ 1.2% vs last week</div>
+      </div>
+      <div class="stat-cell">
+        <div class="stat-lbl">Failed · 24h</div>
+        <div class="stat-val text-red">9</div>
+        <div class="stat-sub text-amber">2 need attention</div>
+      </div>
+      <div class="stat-cell">
+        <div class="stat-lbl">Avg. Duration</div>
+        <div class="stat-val">2.3s</div>
+        <div class="stat-sub text-green">↓ 0.4s faster</div>
+      </div>
+      <div class="stat-cell">
+        <div class="stat-lbl">Run history · 7d</div>
+        <div class="trend-bar-wrap">
+          <div class="trend-bar" style="height:40%;background:var(--green);"></div>
+          <div class="trend-bar" style="height:55%;background:var(--green);"></div>
+          <div class="trend-bar" style="height:48%;background:var(--green);"></div>
+          <div class="trend-bar" style="height:70%;background:var(--green);"></div>
+          <div class="trend-bar" style="height:38%;background:var(--red);"></div>
+          <div class="trend-bar" style="height:82%;background:var(--green);"></div>
+          <div class="trend-bar" style="height:90%;background:var(--green);"></div>
+          <div class="trend-bar" style="height:75%;background:var(--green);"></div>
+          <div class="trend-bar" style="height:60%;background:var(--green);"></div>
+          <div class="trend-bar" style="height:88%;background:var(--green);"></div>
+          <div class="trend-bar" style="height:72%;background:var(--amber);"></div>
+          <div class="trend-bar" style="height:95%;background:var(--green);border:1px solid #059669;"></div>
+        </div>
+        <div class="stat-sub">Today: 248 runs</div>
+      </div>
+    </div>
+
+    <!-- ── MAIN LAYOUT ─────────────────────────── -->
+    <div class="layout-grid">
+
+      <!-- LEFT: WORKFLOW LIST -->
+      <div>
+        <div class="toolbar">
+          <div class="search-box">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <span class="search-placeholder">Search workflows…</span>
+          </div>
+          <div class="filter-pill active">
+            All <span style="background:var(--blue-100);color:var(--blue-600);font-size:10px;font-weight:700;padding:0px 5px;border-radius:99px;margin-left:2px;">12</span>
+          </div>
+          <div class="filter-pill">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="16 12 12 8 8 12"/><line x1="12" y1="16" x2="12" y2="8"/></svg>
+            Active <span style="background:var(--green-bg);color:#065F46;font-size:10px;font-weight:700;padding:0px 5px;border-radius:99px;margin-left:2px;">8</span>
+          </div>
+          <div class="filter-pill">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            Failed
+          </div>
+          <div class="spacer"></div>
+          <button class="btn btn-ghost" style="padding:6px 10px;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;">
+              <line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/>
+              <line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/>
+            </svg>
+          </button>
+        </div>
+
+        <div class="section-lbl">
+          Workflows (12)
+          <a>Sort: Last run <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></a>
+        </div>
+
+        <!-- ── WORKFLOW: Running ── -->
+        <div class="wf-card">
+          <div class="wf-main">
+            <div class="wf-dot dot-run" style="margin-top:0;"></div>
+            <div class="wf-info">
+              <div class="wf-name">Facebook Ads → BigQuery (daily)</div>
+              <div class="wf-meta">
+                <span class="run-badge badge-run">
+                  <svg style="width:10px;height:10px;animation:spin .8s linear infinite" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="2" x2="12" y2="6"/><line x1="12" y1="18" x2="12" y2="22"/><line x1="4.93" y1="4.93" x2="7.76" y2="7.76"/><line x1="16.24" y1="16.24" x2="19.07" y2="19.07"/><line x1="2" y1="12" x2="6" y2="12"/><line x1="18" y1="12" x2="22" y2="12"/><line x1="4.93" y1="19.07" x2="7.76" y2="16.24"/><line x1="16.24" y1="7.76" x2="19.07" y2="4.93"/></svg>
+                  Running…
+                </span>
+                <span class="wf-meta-sep">·</span>
+                <span class="wf-meta-item">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                  Started 45s ago
+                </span>
+                <span class="wf-meta-sep">·</span>
+                <span class="wf-meta-item">Next: Tomorrow 02:00</span>
+              </div>
+            </div>
+            <!-- sparkline -->
+            <div class="wf-spark">
+              <div class="sp-bar" style="height:55%;background:var(--green);"></div>
+              <div class="sp-bar" style="height:70%;background:var(--green);"></div>
+              <div class="sp-bar" style="height:60%;background:var(--green);"></div>
+              <div class="sp-bar" style="height:80%;background:var(--green);"></div>
+              <div class="sp-bar" style="height:65%;background:var(--green);"></div>
+              <div class="sp-bar" style="height:90%;background:var(--green);"></div>
+              <div class="sp-bar" style="height:75%;background:var(--green);"></div>
+              <div class="sp-bar" style="height:85%;background:var(--green);"></div>
+              <div class="sp-bar" style="height:70%;background:var(--green);"></div>
+              <div class="sp-bar" style="height:95%;background:var(--blue-500);animation:pulse 1.4s infinite;"></div>
+            </div>
+            <div class="toggle-wrap">
+              <div class="toggle"></div>
+            </div>
+            <div class="wf-actions">
+              <button class="wf-btn run" title="Run now"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg></button>
+              <button class="wf-btn" title="Edit"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+              <button class="wf-btn" title="More"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg></button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── WORKFLOW: Success + expanded ── -->
+        <div class="wf-card">
+          <div class="wf-main">
+            <div class="wf-dot dot-ok"></div>
+            <div class="wf-info">
+              <div class="wf-name">Google Ads → Snowflake (hourly)</div>
+              <div class="wf-meta">
+                <span class="run-badge badge-ok">✓ Success</span>
+                <span class="wf-meta-sep">·</span>
+                <span class="wf-meta-item">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                  3 min ago
+                </span>
+                <span class="wf-meta-sep">·</span>
+                <span class="wf-meta-item">1.8s</span>
+                <span class="wf-meta-sep">·</span>
+                <span class="wf-meta-item">Next: in 57 min</span>
+              </div>
+            </div>
+            <div class="wf-spark">
+              <div class="sp-bar" style="height:50%;background:var(--green);"></div>
+              <div class="sp-bar" style="height:65%;background:var(--green);"></div>
+              <div class="sp-bar" style="height:45%;background:var(--green);"></div>
+              <div class="sp-bar" style="height:75%;background:var(--green);"></div>
+              <div class="sp-bar" style="height:55%;background:var(--green);"></div>
+              <div class="sp-bar" style="height:80%;background:var(--red);"></div>
+              <div class="sp-bar" style="height:70%;background:var(--green);"></div>
+              <div class="sp-bar" style="height:85%;background:var(--green);"></div>
+              <div class="sp-bar" style="height:60%;background:var(--green);"></div>
+              <div class="sp-bar" style="height:95%;background:var(--green);"></div>
+            </div>
+            <div class="toggle-wrap">
+              <div class="toggle"></div>
+            </div>
+            <div class="wf-actions">
+              <button class="wf-btn run"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg></button>
+              <button class="wf-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+              <button class="wf-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg></button>
+            </div>
+          </div>
+          <!-- Execution history (expanded state example) -->
+          <div class="wf-history">
+            <div class="wf-hist-row">
+              <div class="hist-status dot-ok" style="background:var(--green);"></div>
+              <div class="hist-id">#run-8421</div>
+              <div class="hist-time">3 min ago</div>
+              <div class="hist-dur">1.8s</div>
+              <div class="hist-nodes">
+                <span class="node-chip node-src">Source</span>
+                <svg style="width:10px;height:10px;color:#CBD5E1;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+                <span class="node-chip node-tfm">Transform</span>
+                <svg style="width:10px;height:10px;color:#CBD5E1;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+                <span class="node-chip node-dst">BigQuery</span>
+              </div>
+            </div>
+            <div class="wf-hist-row">
+              <div class="hist-status" style="background:var(--red);width:6px;height:6px;border-radius:50%;flex-shrink:0;"></div>
+              <div class="hist-id">#run-8420</div>
+              <div class="hist-time">1 hour ago</div>
+              <div class="hist-dur">4.2s</div>
+              <div class="hist-nodes">
+                <span class="node-chip node-src">Source</span>
+                <svg style="width:10px;height:10px;color:#CBD5E1;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+                <span class="node-chip" style="background:#FEE2E2;color:#991B1B;">Failed</span>
+              </div>
+            </div>
+            <div class="wf-hist-row">
+              <div class="hist-status" style="background:var(--green);width:6px;height:6px;border-radius:50%;flex-shrink:0;"></div>
+              <div class="hist-id">#run-8419</div>
+              <div class="hist-time">2 hours ago</div>
+              <div class="hist-dur">2.1s</div>
+              <div class="hist-nodes">
+                <span class="node-chip node-src">Source</span>
+                <svg style="width:10px;height:10px;color:#CBD5E1;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+                <span class="node-chip node-tfm">Transform</span>
+                <svg style="width:10px;height:10px;color:#CBD5E1;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+                <span class="node-chip node-dst">BigQuery</span>
+              </div>
+            </div>
+            <div class="show-more">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+              Show 9 more runs
+            </div>
+          </div>
+        </div>
+
+        <!-- ── WORKFLOW: Failed ── -->
+        <div class="wf-card" style="border-color:#FECACA;">
+          <div class="wf-main">
+            <div class="wf-dot dot-fail"></div>
+            <div class="wf-info">
+              <div class="wf-name">Shopify Orders → Warehouse</div>
+              <div class="wf-meta">
+                <span class="run-badge badge-fail">✕ Failed</span>
+                <span class="wf-meta-sep">·</span>
+                <span class="wf-meta-item">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                  2 hours ago
+                </span>
+                <span class="wf-meta-sep">·</span>
+                <span class="wf-meta-item" style="color:var(--red);">Auth token expired</span>
+              </div>
+            </div>
+            <div class="wf-spark">
+              <div class="sp-bar" style="height:70%;background:var(--green);"></div>
+              <div class="sp-bar" style="height:65%;background:var(--green);"></div>
+              <div class="sp-bar" style="height:80%;background:var(--green);"></div>
+              <div class="sp-bar" style="height:60%;background:var(--green);"></div>
+              <div class="sp-bar" style="height:75%;background:var(--green);"></div>
+              <div class="sp-bar" style="height:55%;background:var(--green);"></div>
+              <div class="sp-bar" style="height:85%;background:var(--green);"></div>
+              <div class="sp-bar" style="height:90%;background:var(--green);"></div>
+              <div class="sp-bar" style="height:70%;background:var(--red);"></div>
+              <div class="sp-bar" style="height:95%;background:var(--red);"></div>
+            </div>
+            <div class="toggle-wrap">
+              <div class="toggle off"></div>
+            </div>
+            <div class="wf-actions">
+              <button class="wf-btn run"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg></button>
+              <button class="wf-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+              <button class="wf-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg></button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── WORKFLOW: Idle (disabled) ── -->
+        <div class="wf-card" style="opacity:.6;">
+          <div class="wf-main">
+            <div class="wf-dot dot-idle"></div>
+            <div class="wf-info">
+              <div class="wf-name">TikTok Ads → BigQuery (daily)</div>
+              <div class="wf-meta">
+                <span class="run-badge badge-idle">Disabled</span>
+                <span class="wf-meta-sep">·</span>
+                <span class="wf-meta-item">Last ran 3 days ago · 3.1s</span>
+              </div>
+            </div>
+            <div class="wf-spark">
+              <div class="sp-bar" style="height:50%;background:#E2E8F0;"></div>
+              <div class="sp-bar" style="height:65%;background:#E2E8F0;"></div>
+              <div class="sp-bar" style="height:45%;background:#E2E8F0;"></div>
+              <div class="sp-bar" style="height:75%;background:#E2E8F0;"></div>
+              <div class="sp-bar" style="height:55%;background:#E2E8F0;"></div>
+              <div class="sp-bar" style="height:60%;background:#E2E8F0;"></div>
+              <div class="sp-bar" style="height:40%;background:#E2E8F0;"></div>
+              <div class="sp-bar" style="height:70%;background:#E2E8F0;"></div>
+            </div>
+            <div class="toggle-wrap">
+              <div class="toggle off"></div>
+            </div>
+            <div class="wf-actions">
+              <button class="wf-btn run"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg></button>
+              <button class="wf-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+              <button class="wf-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg></button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── WORKFLOW: Success ── -->
+        <div class="wf-card">
+          <div class="wf-main">
+            <div class="wf-dot dot-ok"></div>
+            <div class="wf-info">
+              <div class="wf-name">GA4 → BigQuery (hourly)</div>
+              <div class="wf-meta">
+                <span class="run-badge badge-ok">✓ Success</span>
+                <span class="wf-meta-sep">·</span>
+                <span class="wf-meta-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>12 min ago</span>
+                <span class="wf-meta-sep">·</span>
+                <span class="wf-meta-item">0.9s</span>
+                <span class="wf-meta-sep">·</span>
+                <span class="wf-meta-item">Next: in 48 min</span>
+              </div>
+            </div>
+            <div class="wf-spark">
+              <div class="sp-bar" style="height:60%;background:var(--green);"></div>
+              <div class="sp-bar" style="height:75%;background:var(--green);"></div>
+              <div class="sp-bar" style="height:50%;background:var(--green);"></div>
+              <div class="sp-bar" style="height:85%;background:var(--green);"></div>
+              <div class="sp-bar" style="height:65%;background:var(--green);"></div>
+              <div class="sp-bar" style="height:90%;background:var(--green);"></div>
+              <div class="sp-bar" style="height:70%;background:var(--green);"></div>
+              <div class="sp-bar" style="height:80%;background:var(--green);"></div>
+              <div class="sp-bar" style="height:75%;background:var(--green);"></div>
+              <div class="sp-bar" style="height:95%;background:var(--green);"></div>
+            </div>
+            <div class="toggle-wrap"><div class="toggle"></div></div>
+            <div class="wf-actions">
+              <button class="wf-btn run"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg></button>
+              <button class="wf-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+              <button class="wf-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg></button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── WORKFLOW: Warning ── -->
+        <div class="wf-card">
+          <div class="wf-main">
+            <div class="wf-dot dot-warn"></div>
+            <div class="wf-info">
+              <div class="wf-name">LinkedIn Ads → Redshift</div>
+              <div class="wf-meta">
+                <span class="run-badge badge-warn">⚠ Delayed</span>
+                <span class="wf-meta-sep">·</span>
+                <span class="wf-meta-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>40 min late</span>
+                <span class="wf-meta-sep">·</span>
+                <span class="wf-meta-item" style="color:var(--amber);">Rate limit hit</span>
+              </div>
+            </div>
+            <div class="wf-spark">
+              <div class="sp-bar" style="height:60%;background:var(--green);"></div>
+              <div class="sp-bar" style="height:70%;background:var(--green);"></div>
+              <div class="sp-bar" style="height:65%;background:var(--green);"></div>
+              <div class="sp-bar" style="height:80%;background:var(--amber);"></div>
+              <div class="sp-bar" style="height:55%;background:var(--green);"></div>
+              <div class="sp-bar" style="height:75%;background:var(--green);"></div>
+              <div class="sp-bar" style="height:85%;background:var(--amber);"></div>
+              <div class="sp-bar" style="height:70%;background:var(--green);"></div>
+              <div class="sp-bar" style="height:90%;background:var(--amber);"></div>
+              <div class="sp-bar" style="height:60%;background:var(--amber);"></div>
+            </div>
+            <div class="toggle-wrap"><div class="toggle"></div></div>
+            <div class="wf-actions">
+              <button class="wf-btn run"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg></button>
+              <button class="wf-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
+              <button class="wf-btn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg></button>
+            </div>
+          </div>
+        </div>
+
+        <!-- more workflows placeholder -->
+        <div style="text-align:center;padding:14px;font-size:12px;color:var(--text-3);">
+          + 6 more workflows · <span style="color:var(--blue-500);cursor:pointer;">View all</span>
+        </div>
+      </div>
+
+      <!-- RIGHT PANEL -->
+      <div class="right-panel">
+
+        <!-- Live Activity Feed -->
+        <div class="panel">
+          <div class="panel-hdr">
+            <div class="panel-title">
+              <div style="width:7px;height:7px;border-radius:50%;background:var(--green);animation:pulse 2s infinite;"></div>
+              Live Activity
+            </div>
+            <div class="panel-link">View log <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>
+          </div>
+          <div class="feed-item">
+            <div class="feed-dot" style="background:var(--blue-500);animation:pulse 1.4s infinite;"></div>
+            <div class="feed-body">
+              <div class="feed-title">FB Ads → BigQuery started</div>
+              <div class="feed-sub">Extracting 3 ad accounts · run #run-8422</div>
+            </div>
+            <div class="feed-time">now</div>
+          </div>
+          <div class="feed-item">
+            <div class="feed-dot" style="background:var(--green);"></div>
+            <div class="feed-body">
+              <div class="feed-title">Google Ads → Snowflake completed</div>
+              <div class="feed-sub">42,840 rows loaded · 1.8s</div>
+            </div>
+            <div class="feed-time">3m ago</div>
+          </div>
+          <div class="feed-item">
+            <div class="feed-dot" style="background:var(--green);"></div>
+            <div class="feed-body">
+              <div class="feed-title">GA4 → BigQuery completed</div>
+              <div class="feed-sub">12,100 events loaded · 0.9s</div>
+            </div>
+            <div class="feed-time">12m ago</div>
+          </div>
+          <div class="feed-item">
+            <div class="feed-dot" style="background:var(--amber);"></div>
+            <div class="feed-body">
+              <div class="feed-title">LinkedIn Ads rate limit hit</div>
+              <div class="feed-sub">Retrying in 18 min · attempt 2/3</div>
+            </div>
+            <div class="feed-time">22m ago</div>
+          </div>
+          <div class="feed-item">
+            <div class="feed-dot" style="background:var(--red);"></div>
+            <div class="feed-body">
+              <div class="feed-title">Shopify → Warehouse failed</div>
+              <div class="feed-sub">OAuth token expired · action required</div>
+            </div>
+            <div class="feed-time">2h ago</div>
+          </div>
+        </div>
+
+        <!-- 7-day Run Chart -->
+        <div class="panel">
+          <div class="panel-hdr">
+            <div>
+              <div class="panel-title">Run History</div>
+              <div style="font-size:11px;color:var(--text-3);margin-top:2px;">Last 7 days</div>
+            </div>
+          </div>
+          <div class="minichart-wrap">
+            <div class="mc-legend">
+              <div class="mc-legend-item"><div class="mc-dot" style="background:var(--green);"></div> Success</div>
+              <div class="mc-legend-item"><div class="mc-dot" style="background:var(--red);"></div> Failed</div>
+            </div>
+            <svg width="100%" height="80" viewBox="0 0 280 80" preserveAspectRatio="none">
+              <defs>
+                <linearGradient id="runGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#10B981" stop-opacity=".3"/>
+                  <stop offset="100%" stop-color="#10B981" stop-opacity=".02"/>
+                </linearGradient>
+              </defs>
+              <line x1="0" y1="0"  x2="280" y2="0"  stroke="#F1F5F9" stroke-width="1"/>
+              <line x1="0" y1="27" x2="280" y2="27" stroke="#F1F5F9" stroke-width="1"/>
+              <line x1="0" y1="54" x2="280" y2="54" stroke="#F1F5F9" stroke-width="1"/>
+              <path d="M0,55 C20,48 40,45 80,40 C100,36 120,50 140,35 C160,28 200,20 240,15 C260,12 270,10 280,10"
+                    stroke="#10B981" stroke-width="2" fill="none"/>
+              <path d="M0,55 C20,48 40,45 80,40 C100,36 120,50 140,35 C160,28 200,20 240,15 C260,12 270,10 280,10 L280,80 L0,80Z"
+                    fill="url(#runGrad)"/>
+              <!-- fail dots -->
+              <circle cx="140" cy="50" r="3" fill="var(--red)"/>
+              <text x="0"   y="76" font-family="Inter" font-size="9" fill="#94A3B8">Apr 9</text>
+              <text x="200" y="76" font-family="Inter" font-size="9" fill="#94A3B8">Apr 14</text>
+              <text x="258" y="76" font-family="Inter" font-size="9" fill="#94A3B8">Today</text>
+            </svg>
+            <div style="display:flex;justify-content:space-between;margin-top:8px;padding-top:10px;border-top:1px solid var(--border-subtle);">
+              <div style="text-align:center;">
+                <div style="font-family:'Space Grotesk',sans-serif;font-size:17px;font-weight:700;color:var(--text-1);">1,612</div>
+                <div style="font-size:10px;color:var(--text-3);margin-top:1px;">total runs</div>
+              </div>
+              <div style="text-align:center;">
+                <div style="font-family:'Space Grotesk',sans-serif;font-size:17px;font-weight:700;color:var(--green);">96.4%</div>
+                <div style="font-size:10px;color:var(--text-3);margin-top:1px;">success rate</div>
+              </div>
+              <div style="text-align:center;">
+                <div style="font-family:'Space Grotesk',sans-serif;font-size:17px;font-weight:700;color:var(--red);">58</div>
+                <div style="font-size:10px;color:var(--text-3);margin-top:1px;">failed</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Alerts -->
+        <div class="panel">
+          <div class="panel-hdr">
+            <div class="panel-title">
+              Alerts
+              <span style="background:var(--red-bg);color:#B91C1C;font-size:10px;font-weight:700;padding:1px 6px;border-radius:99px;">2</span>
+            </div>
+            <div class="panel-link">Manage <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg></div>
+          </div>
+
+          <div class="alert-item">
+            <div class="alert-icon" style="background:var(--red-bg);color:var(--red);">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+            </div>
+            <div>
+              <div class="alert-title">Shopify pipeline failed</div>
+              <div class="alert-desc">OAuth token expired — reconnect the Shopify connection to resume.</div>
+              <div class="alert-time">2 hours ago · <span style="color:var(--blue-500);cursor:pointer;">Fix now →</span></div>
+            </div>
+          </div>
+
+          <div class="alert-item">
+            <div class="alert-icon" style="background:var(--amber-bg);color:var(--amber);">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            </div>
+            <div>
+              <div class="alert-title">LinkedIn rate limit</div>
+              <div class="alert-desc">3 runs delayed today. Consider spreading extraction intervals.</div>
+              <div class="alert-time">22 min ago</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</main>
+
+<style>
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+</style>
+</body>
+</html>

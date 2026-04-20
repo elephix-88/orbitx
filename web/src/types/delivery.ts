@@ -5,43 +5,43 @@ export type DeliveryChannelType = 'slack' | 'line';
 export type DeliveryChannelStatus = 'pending' | 'connected' | 'error';
 
 export interface SlackChannel {
-  id: string;
-  name: string;
+ id: string;
+ name: string;
 }
 
 export interface SlackDeliveryChannel {
-  type: 'slack';
-  channelId: string;
-  channelName: string;
-  status: DeliveryChannelStatus;
-  workspaceId?: string;
-  workspaceName?: string;
+ type: 'slack';
+ channelId: string;
+ channelName: string;
+ status: DeliveryChannelStatus;
+ workspaceId?: string;
+ workspaceName?: string;
 }
 
 export interface LineDeliveryChannel {
-  type: 'line';
-  status: DeliveryChannelStatus;
-  notifyToken?: string;
+ type: 'line';
+ status: DeliveryChannelStatus;
+ notifyToken?: string;
 }
 
 export type DeliveryChannel = SlackDeliveryChannel | LineDeliveryChannel;
 
 export interface DeliveryConfig {
-  channels: DeliveryChannel[];
-  includeAiSummary: boolean;
+ channels: DeliveryChannel[];
+ includeAiSummary: boolean;
 }
 
 export const DEFAULT_DELIVERY_CONFIG: DeliveryConfig = {
-  channels: [],
-  includeAiSummary: false,
+ channels: [],
+ includeAiSummary: false,
 };
 
 // Execution delivery result — stored per execution run
 export type ChannelDeliveryStatus = 'delivered' | 'failed' | 'not_configured';
 
 export interface ExecutionDeliveryResult {
-  channelType: DeliveryChannelType;
-  status: ChannelDeliveryStatus;
-  channelLabel?: string; // e.g. "#marketing-alerts"
-  error?: string;
+ channelType: DeliveryChannelType;
+ status: ChannelDeliveryStatus;
+ channelLabel?: string; // e.g. "#marketing-alerts"
+ error?: string;
 }

@@ -1,0 +1,881 @@
+<!doctype html>
+<html lang="en" class="dark">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>OrbitX · Home v2</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --bg-0:#070912;           /* deepest */
+    --bg-1:#0A0D1A;           /* page */
+    --bg-2:#11152A;           /* card */
+    --bg-3:#161A33;           /* elevated */
+    --line-1:#1F2540;         /* border subtle */
+    --line-2:#2A3154;         /* border default */
+    --text-1:#F8FAFC;
+    --text-2:#94A3B8;
+    --text-3:#64748B;
+    --violet:#8B5CF6;
+    --violet-2:#7C3AED;
+    --cyan:#06B6D4;
+    --lime:#A3E635;
+    --amber:#FBBF24;
+    --coral:#FB7185;
+    --glass: rgba(139,92,246,.08);
+  }
+  html, body {
+    font-family:'Inter','IBM Plex Sans Thai',system-ui,sans-serif;
+    background: radial-gradient(1200px 800px at 20% -10%, rgba(124,58,237,.12), transparent 60%),
+                radial-gradient(900px 600px at 90% 10%, rgba(6,182,212,.08), transparent 55%),
+                var(--bg-1);
+    color: var(--text-1);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+    font-feature-settings: 'cv11','ss01','ss03';
+    letter-spacing: -0.005em;
+  }
+  .font-display {
+    font-family:'Inter','IBM Plex Sans Thai',system-ui,sans-serif;
+    font-weight: 700;
+    letter-spacing:-0.022em;
+  }
+  .font-mono { font-family:'JetBrains Mono',ui-monospace,monospace; font-feature-settings:'tnum'; }
+  :lang(th){ line-height:1.55; letter-spacing:0; }
+
+  /* ====== SURFACES ====== */
+  .surface-card{
+    background: linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,0)) , var(--bg-2);
+    border: 1px solid var(--line-1);
+    border-radius: 16px;
+    box-shadow:
+      0 1px 0 rgba(255,255,255,.04) inset,
+      0 24px 40px -24px rgba(0,0,0,.7),
+      0 2px 4px rgba(0,0,0,.3);
+  }
+  .surface-card:hover{ border-color: var(--line-2); }
+  .surface-elev{
+    background: var(--bg-3);
+    border: 1px solid var(--line-1);
+    border-radius: 14px;
+  }
+
+  /* ====== GRADIENTS & ACCENTS ====== */
+  .grad-text{
+    background: linear-gradient(120deg, #C4B5FD 0%, #8B5CF6 40%, #06B6D4 100%);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .grad-bg{
+    background: linear-gradient(135deg, #7C3AED 0%, #06B6D4 100%);
+  }
+  .grad-border{
+    position: relative;
+  }
+  .grad-border::before{
+    content:''; position:absolute; inset:0; border-radius: inherit; padding:1px;
+    background: linear-gradient(135deg, rgba(139,92,246,.8), rgba(6,182,212,.6));
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+    -webkit-mask-composite: xor; mask-composite: exclude;
+    pointer-events:none;
+  }
+  .btn-primary{
+    background: linear-gradient(135deg, #7C3AED, #6D28D9);
+    color:white;
+    box-shadow: 0 6px 20px -6px rgba(124,58,237,.7), 0 0 0 1px rgba(255,255,255,.06) inset;
+    transition: transform 160ms ease, box-shadow 160ms ease;
+  }
+  .btn-primary:hover{ transform: translateY(-1px); box-shadow: 0 10px 30px -8px rgba(124,58,237,.9); }
+  .btn-ghost{
+    background: rgba(255,255,255,.04);
+    border: 1px solid var(--line-1);
+    color: var(--text-1);
+  }
+  .btn-ghost:hover{ background: rgba(255,255,255,.08); border-color: var(--line-2); }
+
+  /* ====== MICRO-ATOMS ====== */
+  .chip{
+    display:inline-flex; align-items:center; gap:6px;
+    padding: 3px 8px; border-radius: 999px;
+    font-size: 11px; font-weight:500;
+    border:1px solid var(--line-1);
+    background: rgba(255,255,255,.02);
+    color: var(--text-2);
+  }
+  .chip-brand{
+    background: linear-gradient(135deg, rgba(124,58,237,.15), rgba(6,182,212,.12));
+    border:1px solid rgba(139,92,246,.35);
+    color: #DDD6FE;
+  }
+  .dot{ width:6px; height:6px; border-radius:999px; }
+  .kbd{
+    font-family:'JetBrains Mono', monospace; font-size:10px;
+    padding:2px 6px; border-radius:5px;
+    background: rgba(255,255,255,.04); border:1px solid var(--line-1);
+    color: var(--text-2);
+  }
+
+  /* pulse for running */
+  @keyframes pulse-ring{
+    0%   { box-shadow: 0 0 0 0 rgba(6,182,212,.6); }
+    100% { box-shadow: 0 0 0 10px rgba(6,182,212,0); }
+  }
+  .pulse-ring{ animation: pulse-ring 1.8s cubic-bezier(.4,0,.6,1) infinite; }
+  @media (prefers-reduced-motion: reduce){
+    .pulse-ring { animation: none; }
+  }
+
+  /* scrollbar */
+  ::-webkit-scrollbar{ width:10px; height:10px; }
+  ::-webkit-scrollbar-track{ background: transparent; }
+  ::-webkit-scrollbar-thumb{ background: var(--line-1); border-radius: 999px; }
+  ::-webkit-scrollbar-thumb:hover{ background: var(--line-2); }
+
+  /* icon default */
+  .icon{ width:16px; height:16px; stroke-width:1.75; }
+
+  /* spark bar */
+  .spark-bar{ width:4px; border-radius: 2px; }
+
+  /* segmented control */
+  .seg{ display:flex; gap:2px; padding:3px; background: rgba(255,255,255,.03); border:1px solid var(--line-1); border-radius:10px; }
+  .seg > button{ padding:5px 10px; border-radius:7px; font-size:12px; color: var(--text-2); display:inline-flex; align-items:center; gap:6px; }
+  .seg > button.active{ background: rgba(255,255,255,.07); color: var(--text-1); box-shadow: 0 1px 0 rgba(255,255,255,.05) inset; }
+
+  /* progress thin */
+  .progress{ height:4px; background: rgba(255,255,255,.06); border-radius: 999px; overflow:hidden; }
+  .progress > div{ height:100%; border-radius:inherit; background: linear-gradient(90deg,#7C3AED,#06B6D4); }
+</style>
+</head>
+<body>
+
+<!-- ============ APP SHELL ============ -->
+<div class="flex min-h-screen">
+
+  <!-- ===== SIDEBAR ===== -->
+  <aside class="w-[248px] shrink-0 border-r border-[var(--line-1)] bg-[var(--bg-0)]/60 backdrop-blur-xl flex flex-col">
+    <!-- Brand -->
+    <div class="px-4 pt-5 pb-4">
+      <div class="flex items-center gap-2.5">
+        <div class="relative w-8 h-8 rounded-lg grad-bg flex items-center justify-center">
+          <div class="absolute inset-0 rounded-lg blur-md opacity-60 grad-bg -z-10"></div>
+          <svg class="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.5 7.5a10 10 0 1 0 0 9"/></svg>
+        </div>
+        <div class="font-display text-[17px] font-semibold tracking-tight">OrbitX</div>
+        <span class="chip ml-auto !text-[9px] !px-1.5 !py-0.5 !text-[var(--text-3)]">v2</span>
+      </div>
+    </div>
+
+    <!-- Workspace -->
+    <button class="mx-3 mb-3 flex items-center gap-2.5 px-2.5 py-2 rounded-xl surface-elev hover:bg-[rgba(255,255,255,.04)] transition-colors">
+      <div class="w-7 h-7 rounded-lg bg-gradient-to-br from-violet-500 to-fuchsia-500 flex items-center justify-center font-display font-semibold text-white text-sm">A</div>
+      <div class="flex-1 text-left min-w-0">
+        <div class="text-[13px] font-semibold truncate">Acme Agency</div>
+        <div class="text-[10px] text-[var(--text-3)]">4 workspaces · admin</div>
+      </div>
+      <svg class="icon text-[var(--text-3)]" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="m7 15 5 5 5-5"/><path d="m7 9 5-5 5 5"/></svg>
+    </button>
+
+    <!-- Search pill -->
+    <button class="mx-3 mb-4 flex items-center gap-2 px-3 h-9 rounded-xl bg-[rgba(255,255,255,.03)] border border-[var(--line-1)] hover:border-[var(--line-2)] transition-colors">
+      <svg class="icon text-[var(--text-3)]" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+      <span class="text-[12px] text-[var(--text-3)] flex-1 text-left">Search or jump…</span>
+      <span class="kbd">⌘K</span>
+    </button>
+
+    <!-- Nav -->
+    <nav class="px-2 space-y-0.5 flex-1 overflow-y-auto">
+      <div class="px-2.5 py-1.5 text-[10px] uppercase tracking-[0.12em] text-[var(--text-3)] font-semibold">Workspace</div>
+
+      <a class="relative flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13px] font-medium text-white bg-[rgba(139,92,246,.12)]">
+        <span class="absolute left-0 top-1.5 bottom-1.5 w-[3px] rounded-r grad-bg"></span>
+        <svg class="icon text-violet-300" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/><path d="M9 22V12h6v10"/></svg>
+        Home
+      </a>
+      <a class="flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13px] text-[var(--text-2)] hover:bg-[rgba(255,255,255,.04)] hover:text-white transition-colors">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 7h16M4 12h16M4 17h10"/></svg>
+        Pipelines
+        <span class="ml-auto font-mono text-[10px] text-[var(--text-3)]">12</span>
+      </a>
+      <a class="flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13px] text-[var(--text-2)] hover:bg-[rgba(255,255,255,.04)] hover:text-white transition-colors">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+        Connections
+        <span class="ml-auto w-1.5 h-1.5 rounded-full bg-[var(--amber)]"></span>
+      </a>
+      <a class="flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13px] text-[var(--text-2)] hover:bg-[rgba(255,255,255,.04)] hover:text-white transition-colors">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M14 3v4a1 1 0 0 0 1 1h4"/><path d="M17 21H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h7l5 5v11a2 2 0 0 1-2 2Z"/></svg>
+        Reports
+      </a>
+      <a class="flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13px] text-[var(--text-2)] hover:bg-[rgba(255,255,255,.04)] hover:text-white transition-colors">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+        Alerts
+      </a>
+      <a class="flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13px] text-[var(--text-2)] hover:bg-[rgba(255,255,255,.04)] hover:text-white transition-colors">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M3 5v14a9 3 0 0 0 18 0V5"/><path d="M3 12a9 3 0 0 0 18 0"/></svg>
+        Data
+      </a>
+
+      <div class="px-2.5 pt-4 pb-1.5 text-[10px] uppercase tracking-[0.12em] text-[var(--text-3)] font-semibold">Intelligence</div>
+      <a class="flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13px] text-[var(--text-2)] hover:bg-[rgba(255,255,255,.04)] hover:text-white transition-colors">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 2 2 7l10 5 10-5-10-5Z"/><path d="m2 17 10 5 10-5"/><path d="m2 12 10 5 10-5"/></svg>
+        Ask OrbitX
+        <span class="chip-brand !text-[9px] !px-1.5 !py-0.5 ml-auto">AI</span>
+      </a>
+      <a class="flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13px] text-[var(--text-2)] hover:bg-[rgba(255,255,255,.04)] hover:text-white transition-colors">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="m3 3 7 7 4-4 7 7"/></svg>
+        Anomalies
+        <span class="ml-auto text-[10px] font-mono text-[var(--coral)]">3</span>
+      </a>
+    </nav>
+
+    <!-- Storage -->
+    <div class="px-3 pb-3">
+      <div class="surface-elev p-3">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-[11px] text-[var(--text-2)] font-medium">Monthly quota</span>
+          <span class="text-[11px] font-mono text-[var(--text-3)]">68%</span>
+        </div>
+        <div class="progress"><div style="width:68%"></div></div>
+        <div class="mt-2 text-[10px] text-[var(--text-3)]">6.8M / 10M rows processed</div>
+      </div>
+    </div>
+
+    <!-- User -->
+    <div class="mx-3 mb-3 p-2 rounded-xl flex items-center gap-2.5 hover:bg-[rgba(255,255,255,.04)] cursor-pointer">
+      <div class="w-8 h-8 rounded-full bg-gradient-to-br from-violet-500 to-cyan-400 flex items-center justify-center text-white text-xs font-semibold">NS</div>
+      <div class="flex-1 min-w-0">
+        <div class="text-[12px] font-medium truncate">Natthapon S.</div>
+        <div class="text-[10px] text-[var(--text-3)] truncate">Agency · admin</div>
+      </div>
+      <svg class="icon text-[var(--text-3)]" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+    </div>
+  </aside>
+
+  <!-- ===== MAIN ===== -->
+  <main class="flex-1 min-w-0">
+    <!-- Top bar -->
+    <header class="h-14 px-6 flex items-center gap-3 border-b border-[var(--line-1)] bg-[var(--bg-1)]/80 backdrop-blur-xl sticky top-0 z-20">
+      <nav class="flex items-center gap-1.5 text-[13px] text-[var(--text-2)]">
+        <span class="text-[var(--text-3)]">Acme Agency</span>
+        <svg class="w-3 h-3 text-[var(--text-3)]" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="m9 6 6 6-6 6"/></svg>
+        <span class="text-white font-medium">Home</span>
+      </nav>
+      <div class="flex-1"></div>
+      <div class="seg">
+        <button class="active">Last 24 h</button>
+        <button>7 d</button>
+        <button>30 d</button>
+      </div>
+      <button class="h-9 w-9 grid place-items-center rounded-xl btn-ghost relative">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+        <span class="absolute top-2 right-2 w-1.5 h-1.5 rounded-full bg-[var(--coral)]"></span>
+      </button>
+      <button class="h-9 px-3.5 rounded-xl btn-primary text-[13px] font-semibold inline-flex items-center gap-1.5">
+        <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 5v14M5 12h14"/></svg>
+        New pipeline
+      </button>
+    </header>
+
+    <!-- Page -->
+    <div class="px-6 py-8 max-w-[1480px] mx-auto space-y-8">
+
+      <!-- ===== HERO / GREETING ===== -->
+      <section class="flex items-end justify-between gap-6 flex-wrap">
+        <div>
+          <div class="text-[12px] text-[var(--text-3)] font-mono uppercase tracking-[0.2em] mb-2">
+            <span class="inline-block w-1.5 h-1.5 rounded-full bg-[var(--lime)] mr-2 align-middle"></span>
+            All systems operational
+          </div>
+          <h1 class="font-display text-[40px] md:text-[48px] font-semibold leading-[1.05]">
+            Good afternoon, <span class="grad-text">Natthapon.</span>
+          </h1>
+          <p class="text-[15px] text-[var(--text-2)] mt-2 max-w-xl">
+            <span class="font-mono text-white">142</span> pipeline runs since yesterday.
+            <span class="text-[var(--coral)] font-mono">3</span> failures need you,
+            <span class="text-[var(--lime)] font-mono">12 h</span> of manual work saved.
+          </p>
+        </div>
+        <div class="flex items-center gap-2">
+          <button class="btn-ghost h-10 px-4 rounded-xl text-[13px] inline-flex items-center gap-2">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+            Export
+          </button>
+          <button class="btn-ghost h-10 px-4 rounded-xl text-[13px] inline-flex items-center gap-2">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 2 2 7l10 5 10-5-10-5Z"/><path d="m2 17 10 5 10-5M2 12l10 5 10-5"/></svg>
+            Ask OrbitX
+            <span class="kbd">⌘J</span>
+          </button>
+        </div>
+      </section>
+
+      <!-- ===== BENTO: KPIs + BIG CHART ===== -->
+      <section class="grid grid-cols-12 gap-4">
+
+        <!-- Big chart (spans 8) -->
+        <div class="col-span-12 lg:col-span-8 surface-card p-6 relative overflow-hidden">
+          <!-- decorative gradient blob -->
+          <div class="absolute -top-24 -right-20 w-80 h-80 rounded-full opacity-[0.18] blur-3xl grad-bg pointer-events-none"></div>
+
+          <div class="flex items-start justify-between mb-5 relative">
+            <div>
+              <div class="flex items-center gap-2">
+                <h2 class="font-display text-[15px] font-semibold">Run activity</h2>
+                <span class="chip">Workspace · 7 d</span>
+              </div>
+              <div class="mt-2 flex items-baseline gap-3">
+                <span class="font-display text-[36px] font-semibold font-mono">1,284</span>
+                <span class="chip-brand">
+                  <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m6 15 6-6 6 6"/></svg>
+                  +18.4% vs last week
+                </span>
+              </div>
+            </div>
+            <div class="seg">
+              <button class="active">Runs</button>
+              <button>Rows</button>
+              <button>Spend</button>
+            </div>
+          </div>
+
+          <!-- Chart -->
+          <div class="relative h-[220px]">
+            <!-- y-gridlines -->
+            <div class="absolute inset-0 flex flex-col justify-between pointer-events-none">
+              <div class="border-t border-dashed border-[var(--line-1)]"></div>
+              <div class="border-t border-dashed border-[var(--line-1)]"></div>
+              <div class="border-t border-dashed border-[var(--line-1)]"></div>
+              <div class="border-t border-dashed border-[var(--line-1)]"></div>
+            </div>
+            <!-- Bars -->
+            <div class="absolute inset-0 flex items-end justify-between gap-3 pr-1">
+              <!-- 7 days; each is a stacked column with subtle gradient -->
+              <!-- helper: we'll hardcode heights -->
+              <div class="flex-1 flex flex-col items-center gap-2 group">
+                <div class="w-full h-[80%] relative">
+                  <div class="absolute bottom-0 inset-x-0 rounded-md overflow-hidden flex flex-col justify-end" style="height:100%">
+                    <div class="w-full bg-[var(--coral)]" style="height:6%"></div>
+                    <div class="w-full" style="height:62%; background:linear-gradient(180deg,rgba(163,230,53,.85),rgba(163,230,53,.5));"></div>
+                  </div>
+                </div>
+                <span class="text-[10px] font-mono text-[var(--text-3)]">Mon</span>
+              </div>
+              <div class="flex-1 flex flex-col items-center gap-2">
+                <div class="w-full h-[65%] relative">
+                  <div class="absolute bottom-0 inset-x-0 rounded-md overflow-hidden flex flex-col justify-end" style="height:100%">
+                    <div class="w-full" style="height:100%; background:linear-gradient(180deg,rgba(163,230,53,.85),rgba(163,230,53,.5));"></div>
+                  </div>
+                </div>
+                <span class="text-[10px] font-mono text-[var(--text-3)]">Tue</span>
+              </div>
+              <div class="flex-1 flex flex-col items-center gap-2">
+                <div class="w-full h-[82%] relative">
+                  <div class="absolute bottom-0 inset-x-0 rounded-md overflow-hidden flex flex-col justify-end" style="height:100%">
+                    <div class="w-full" style="height:100%; background:linear-gradient(180deg,rgba(163,230,53,.85),rgba(163,230,53,.5));"></div>
+                  </div>
+                </div>
+                <span class="text-[10px] font-mono text-[var(--text-3)]">Wed</span>
+              </div>
+              <div class="flex-1 flex flex-col items-center gap-2">
+                <div class="w-full h-[90%] relative">
+                  <div class="absolute bottom-0 inset-x-0 rounded-md overflow-hidden flex flex-col justify-end" style="height:100%">
+                    <div class="w-full bg-[var(--coral)]" style="height:4%"></div>
+                    <div class="w-full" style="height:88%; background:linear-gradient(180deg,rgba(163,230,53,.85),rgba(163,230,53,.5));"></div>
+                  </div>
+                </div>
+                <span class="text-[10px] font-mono text-[var(--text-3)]">Thu</span>
+              </div>
+              <div class="flex-1 flex flex-col items-center gap-2">
+                <div class="w-full h-[70%] relative">
+                  <div class="absolute bottom-0 inset-x-0 rounded-md overflow-hidden flex flex-col justify-end" style="height:100%">
+                    <div class="w-full" style="height:100%; background:linear-gradient(180deg,rgba(163,230,53,.85),rgba(163,230,53,.5));"></div>
+                  </div>
+                </div>
+                <span class="text-[10px] font-mono text-[var(--text-3)]">Fri</span>
+              </div>
+              <div class="flex-1 flex flex-col items-center gap-2">
+                <div class="w-full h-[52%] relative">
+                  <div class="absolute bottom-0 inset-x-0 rounded-md overflow-hidden flex flex-col justify-end" style="height:100%">
+                    <div class="w-full" style="height:100%; background:linear-gradient(180deg,rgba(163,230,53,.7),rgba(163,230,53,.35));"></div>
+                  </div>
+                </div>
+                <span class="text-[10px] font-mono text-[var(--text-3)]">Sat</span>
+              </div>
+              <div class="flex-1 flex flex-col items-center gap-2">
+                <div class="w-full h-[95%] relative group">
+                  <div class="absolute -top-10 left-1/2 -translate-x-1/2 surface-elev text-[11px] px-2.5 py-1.5 whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">
+                    <span class="font-mono text-white">142 runs</span> · <span class="text-[var(--coral)] font-mono">3 failed</span>
+                  </div>
+                  <div class="absolute bottom-0 inset-x-0 rounded-md overflow-hidden flex flex-col justify-end" style="height:100%">
+                    <div class="w-full bg-[var(--coral)]" style="height:5%"></div>
+                    <div class="w-full" style="height:95%; background:linear-gradient(180deg,#A3E635,#65A30D);"></div>
+                  </div>
+                </div>
+                <span class="text-[10px] font-mono text-white font-semibold">Today</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-5 mt-4 text-[11px] text-[var(--text-2)]">
+            <span class="inline-flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-sm bg-[var(--lime)]"></span>Success</span>
+            <span class="inline-flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-sm bg-[var(--coral)]"></span>Failed</span>
+            <span class="ml-auto text-[var(--text-3)] font-mono">Updated 34 s ago</span>
+          </div>
+        </div>
+
+        <!-- KPI column (spans 4, stacked) -->
+        <div class="col-span-12 lg:col-span-4 grid grid-cols-2 lg:grid-cols-1 gap-4">
+
+          <!-- KPI card: spend -->
+          <div class="surface-card p-5">
+            <div class="flex items-center justify-between">
+              <span class="text-[11px] font-mono uppercase tracking-[0.1em] text-[var(--text-3)]">Spend tracked</span>
+              <div class="w-8 h-8 rounded-lg grid place-items-center bg-[rgba(139,92,246,.12)] text-violet-300">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+              </div>
+            </div>
+            <div class="font-display font-mono text-[28px] font-semibold mt-2">฿ 4.82<span class="text-[var(--text-3)] text-[18px]">M</span></div>
+            <div class="flex items-center gap-2 mt-1">
+              <span class="text-[var(--lime)] text-[11px] font-mono">+12.1%</span>
+              <span class="text-[11px] text-[var(--text-3)]">vs last 24 h</span>
+            </div>
+            <!-- sparkline -->
+            <div class="flex items-end gap-[3px] h-6 mt-3">
+              <div class="spark-bar bg-violet-500/60" style="height:30%"></div>
+              <div class="spark-bar bg-violet-500/70" style="height:45%"></div>
+              <div class="spark-bar bg-violet-500/60" style="height:40%"></div>
+              <div class="spark-bar bg-violet-500/80" style="height:60%"></div>
+              <div class="spark-bar bg-violet-500/70" style="height:50%"></div>
+              <div class="spark-bar bg-violet-500" style="height:70%"></div>
+              <div class="spark-bar bg-violet-500" style="height:55%"></div>
+              <div class="spark-bar bg-violet-500" style="height:75%"></div>
+              <div class="spark-bar bg-violet-500" style="height:65%"></div>
+              <div class="spark-bar bg-cyan-400" style="height:90%"></div>
+            </div>
+          </div>
+
+          <!-- KPI card: ROAS -->
+          <div class="surface-card p-5">
+            <div class="flex items-center justify-between">
+              <span class="text-[11px] font-mono uppercase tracking-[0.1em] text-[var(--text-3)]">Blended ROAS</span>
+              <div class="w-8 h-8 rounded-lg grid place-items-center bg-[rgba(6,182,212,.12)] text-cyan-300">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 3v18h18"/><path d="m7 14 4-4 4 4 5-5"/></svg>
+              </div>
+            </div>
+            <div class="font-display font-mono text-[28px] font-semibold mt-2">3.42<span class="text-[var(--text-3)] text-[18px]">×</span></div>
+            <div class="flex items-center gap-2 mt-1">
+              <span class="text-[var(--coral)] text-[11px] font-mono">-0.18</span>
+              <span class="text-[11px] text-[var(--text-3)]">vs 7-day avg</span>
+            </div>
+            <div class="flex items-end gap-[3px] h-6 mt-3">
+              <div class="spark-bar bg-cyan-400/60" style="height:75%"></div>
+              <div class="spark-bar bg-cyan-400/70" style="height:80%"></div>
+              <div class="spark-bar bg-cyan-400/70" style="height:72%"></div>
+              <div class="spark-bar bg-cyan-400/80" style="height:85%"></div>
+              <div class="spark-bar bg-cyan-400" style="height:90%"></div>
+              <div class="spark-bar bg-cyan-400" style="height:68%"></div>
+              <div class="spark-bar bg-cyan-400/80" style="height:60%"></div>
+              <div class="spark-bar bg-cyan-400/70" style="height:55%"></div>
+              <div class="spark-bar bg-cyan-400/60" style="height:50%"></div>
+              <div class="spark-bar bg-[var(--coral)]" style="height:45%"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== BENTO ROW 2: AI insight + Attention + Connections ===== -->
+      <section class="grid grid-cols-12 gap-4">
+
+        <!-- AI INSIGHT (spans 5) -->
+        <div class="col-span-12 lg:col-span-5 surface-card p-6 grad-border overflow-hidden relative">
+          <div class="absolute -bottom-10 -right-10 w-52 h-52 rounded-full opacity-25 blur-3xl grad-bg pointer-events-none"></div>
+          <div class="flex items-center gap-2 relative">
+            <div class="w-7 h-7 rounded-lg grid place-items-center grad-bg">
+              <svg class="w-4 h-4 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+            </div>
+            <span class="chip-brand">OrbitX AI · 2 m ago</span>
+          </div>
+          <div class="mt-4 font-display text-[17px] leading-snug relative">
+            Meta CPA for <span class="text-white font-semibold">"Q2 Prospecting"</span> jumped <span class="text-[var(--coral)] font-semibold">47%</span> since Tuesday.
+            Most of the lift came from <span class="text-[var(--amber)] font-semibold">ad set #4821</span>.
+          </div>
+          <div class="mt-5 flex items-center gap-2 relative">
+            <button class="btn-primary h-9 px-3.5 rounded-xl text-[12px] font-semibold inline-flex items-center gap-1.5">
+              Investigate
+              <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+            </button>
+            <button class="btn-ghost h-9 px-3.5 rounded-xl text-[12px] font-semibold">Draft alert rule</button>
+            <button class="ml-auto text-[11px] text-[var(--text-3)] hover:text-[var(--text-1)]">Dismiss</button>
+          </div>
+        </div>
+
+        <!-- NEEDS ATTENTION (spans 4) -->
+        <div class="col-span-12 lg:col-span-4 surface-card p-5">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="font-display text-[14px] font-semibold">Needs attention</h2>
+            <span class="chip !text-[10px]">3 items</span>
+          </div>
+          <div class="space-y-2.5">
+
+            <div class="flex items-center gap-3 p-2.5 rounded-xl bg-[rgba(251,191,36,.05)] border border-[rgba(251,191,36,.15)] hover:border-[rgba(251,191,36,.4)] transition-colors cursor-pointer">
+              <div class="w-8 h-8 rounded-lg grid place-items-center bg-[rgba(251,191,36,.12)] text-[var(--amber)] shrink-0">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="text-[12.5px] font-medium truncate">Meta Ads token expires in 2 d</div>
+                <div class="text-[10.5px] text-[var(--text-3)] font-mono">affects 4 pipelines</div>
+              </div>
+              <button class="text-[11px] font-semibold text-[var(--amber)] hover:text-white">Reconnect →</button>
+            </div>
+
+            <div class="flex items-center gap-3 p-2.5 rounded-xl bg-[rgba(251,113,133,.05)] border border-[rgba(251,113,133,.18)] hover:border-[rgba(251,113,133,.4)] transition-colors cursor-pointer">
+              <div class="w-8 h-8 rounded-lg grid place-items-center bg-[rgba(251,113,133,.12)] text-[var(--coral)] shrink-0">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="9"/><path d="m15 9-6 6M9 9l6 6"/></svg>
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="text-[12.5px] font-medium truncate">Weekly Client Report failed</div>
+                <div class="text-[10.5px] text-[var(--text-3)] font-mono truncate">schema mismatch · campaign_id</div>
+              </div>
+              <button class="text-[11px] font-semibold text-[var(--coral)] hover:text-white">See run →</button>
+            </div>
+
+            <div class="flex items-center gap-3 p-2.5 rounded-xl bg-[rgba(255,255,255,.02)] border border-[var(--line-1)] hover:border-[var(--line-2)] transition-colors cursor-pointer">
+              <div class="w-8 h-8 rounded-lg grid place-items-center bg-[rgba(255,255,255,.05)] text-[var(--text-2)] shrink-0">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 12a9 9 0 1 0 18 0 9 9 0 0 0-18 0"/><path d="M12 7v5l-3 3"/></svg>
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="text-[12.5px] font-medium truncate">TikTok → BQ stale 48 h</div>
+                <div class="text-[10.5px] text-[var(--text-3)] font-mono">last success Monday</div>
+              </div>
+              <button class="text-[11px] font-semibold text-[var(--text-2)] hover:text-white">Investigate →</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- CONNECTIONS HEALTH (spans 3) -->
+        <div class="col-span-12 lg:col-span-3 surface-card p-5">
+          <div class="flex items-center justify-between mb-4">
+            <h2 class="font-display text-[14px] font-semibold">Connections</h2>
+            <span class="chip !text-[10px]">8 active</span>
+          </div>
+
+          <div class="space-y-3">
+            <!-- Meta -->
+            <div class="flex items-center gap-3">
+              <div class="w-8 h-8 rounded-lg bg-[#1877F2] grid place-items-center text-white">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M9.198 21.5h4v-8.01h3.604l.396-3.98h-4V7.5a1 1 0 0 1 1-1h3v-4h-3a5 5 0 0 0-5 5v2.01h-2l-.396 3.98h2.396v8.01Z"/></svg>
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="text-[12px] font-medium">Meta Ads</div>
+                <div class="text-[10px] text-[var(--amber)] font-mono">token · 2 d left</div>
+              </div>
+              <div class="dot bg-[var(--amber)]"></div>
+            </div>
+            <!-- Google -->
+            <div class="flex items-center gap-3">
+              <div class="w-8 h-8 rounded-lg bg-white grid place-items-center">
+                <svg class="w-4 h-4" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="text-[12px] font-medium">Google Ads</div>
+                <div class="text-[10px] text-[var(--text-3)] font-mono">synced 3 m ago</div>
+              </div>
+              <div class="dot bg-[var(--lime)]"></div>
+            </div>
+            <!-- TikTok -->
+            <div class="flex items-center gap-3">
+              <div class="w-8 h-8 rounded-lg bg-black grid place-items-center text-white">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M19.3 5.8c-1.4-.9-2.4-2.3-2.6-4H13v14.4c0 1.7-1.4 3.1-3.1 3.1S6.8 17.9 6.8 16.2s1.4-3.1 3.1-3.1c.3 0 .7.1 1 .2V9.6c-.3-.1-.7-.1-1-.1-4 0-7.3 3.3-7.3 7.3s3.3 7.3 7.3 7.3 7.3-3.3 7.3-7.3V9.3c1.4 1 3.2 1.7 5 1.7V7.3c-1-0-2-.5-2.9-1.5Z"/></svg>
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="text-[12px] font-medium">TikTok Ads</div>
+                <div class="text-[10px] text-[var(--coral)] font-mono">stale 48 h</div>
+              </div>
+              <div class="dot bg-[var(--coral)]"></div>
+            </div>
+            <!-- BigQuery -->
+            <div class="flex items-center gap-3">
+              <div class="w-8 h-8 rounded-lg bg-[#4285F4] grid place-items-center text-white">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2 3 7v10l9 5 9-5V7l-9-5Zm0 2.18L18.82 8 12 11.82 5.18 8 12 4.18ZM5 9.74l6 3.34v7.16l-6-3.34V9.74Zm8 10.5v-7.16l6-3.34v7.16l-6 3.34Z"/></svg>
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="text-[12px] font-medium">BigQuery</div>
+                <div class="text-[10px] text-[var(--text-3)] font-mono">all ok</div>
+              </div>
+              <div class="dot bg-[var(--lime)]"></div>
+            </div>
+          </div>
+
+          <button class="mt-4 w-full btn-ghost h-9 rounded-xl text-[12px] font-medium inline-flex items-center justify-center gap-1.5">
+            Manage all
+            <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+          </button>
+        </div>
+      </section>
+
+      <!-- ===== PIPELINES ===== -->
+      <section>
+        <div class="flex items-end justify-between mb-4 flex-wrap gap-4">
+          <div>
+            <h2 class="font-display text-[18px] font-semibold">Your pipelines</h2>
+            <p class="text-[12px] text-[var(--text-3)] font-mono">12 total · sorted by last run</p>
+          </div>
+          <div class="flex items-center gap-2 flex-wrap">
+            <div class="seg">
+              <button class="active">All</button>
+              <button>Running</button>
+              <button>Failed</button>
+              <button>Paused</button>
+            </div>
+            <button class="btn-ghost h-9 px-3 rounded-xl text-[12px] inline-flex items-center gap-1.5">
+              <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M3 6h18M7 12h10M10 18h4"/></svg>
+              Filter
+            </button>
+            <div class="seg">
+              <button class="active">
+                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+              </button>
+              <button>
+                <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+
+          <!-- ===== CARD: SUCCESS ===== -->
+          <article class="surface-card p-5 hover:-translate-y-0.5 transition-transform cursor-pointer">
+            <div class="flex items-start justify-between">
+              <div class="flex items-center gap-2">
+                <span class="inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-[10.5px] font-semibold bg-[rgba(163,230,53,.12)] text-[var(--lime)] border border-[rgba(163,230,53,.2)]">
+                  <span class="w-1.5 h-1.5 rounded-full bg-[var(--lime)]"></span>
+                  Success
+                </span>
+                <span class="chip !text-[10px]">Hourly</span>
+              </div>
+              <button class="w-7 h-7 rounded-lg hover:bg-[rgba(255,255,255,.05)] grid place-items-center text-[var(--text-3)]">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+              </button>
+            </div>
+            <h3 class="font-display text-[16px] font-semibold mt-3 truncate">Weekly Client Report</h3>
+            <div class="flex items-center gap-1.5 mt-1.5 text-[11px] text-[var(--text-3)]">
+              <span class="chip !py-0.5 !px-1.5 !text-[10px]">Meta</span>
+              <span class="chip !py-0.5 !px-1.5 !text-[10px]">Google</span>
+              <span class="chip !py-0.5 !px-1.5 !text-[10px]">TikTok</span>
+              <svg class="w-3 h-3 text-[var(--text-3)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+              <span class="chip !py-0.5 !px-1.5 !text-[10px]">BigQuery</span>
+            </div>
+            <!-- Gradient sparkline area -->
+            <div class="relative mt-4 h-12">
+              <svg viewBox="0 0 200 40" class="absolute inset-0 w-full h-full" preserveAspectRatio="none">
+                <defs>
+                  <linearGradient id="g1" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="#A3E635" stop-opacity="0.4"/>
+                    <stop offset="100%" stop-color="#A3E635" stop-opacity="0"/>
+                  </linearGradient>
+                </defs>
+                <path d="M0,32 L20,28 L40,24 L60,30 L80,18 L100,22 L120,12 L140,16 L160,8 L180,12 L200,6 L200,40 L0,40 Z" fill="url(#g1)"/>
+                <path d="M0,32 L20,28 L40,24 L60,30 L80,18 L100,22 L120,12 L140,16 L160,8 L180,12 L200,6" fill="none" stroke="#A3E635" stroke-width="1.5"/>
+              </svg>
+              <div class="absolute bottom-1 right-1 text-[9px] font-mono text-[var(--text-3)]">10 runs</div>
+            </div>
+            <div class="flex items-center justify-between mt-3">
+              <span class="text-[11px] text-[var(--text-3)] font-mono">Ran 2 h ago · 1 m 24 s</span>
+              <div class="flex gap-1.5">
+                <button class="h-7 px-2.5 btn-ghost rounded-lg text-[11px] font-medium inline-flex items-center gap-1">
+                  <svg class="w-3 h-3" viewBox="0 0 24 24" fill="currentColor"><path d="M6 4l14 8-14 8z"/></svg>
+                  Run
+                </button>
+                <button class="h-7 px-2.5 btn-ghost rounded-lg text-[11px] font-medium">Open</button>
+              </div>
+            </div>
+          </article>
+
+          <!-- ===== CARD: RUNNING ===== -->
+          <article class="surface-card grad-border p-5 hover:-translate-y-0.5 transition-transform cursor-pointer relative">
+            <div class="absolute -top-10 -right-10 w-32 h-32 rounded-full opacity-20 blur-2xl bg-cyan-400 pointer-events-none"></div>
+            <div class="flex items-start justify-between">
+              <div class="flex items-center gap-2">
+                <span class="inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-[10.5px] font-semibold bg-[rgba(6,182,212,.12)] text-cyan-300 border border-[rgba(6,182,212,.25)]">
+                  <span class="w-1.5 h-1.5 rounded-full bg-cyan-400 pulse-ring"></span>
+                  Running
+                </span>
+                <span class="chip !text-[10px]">Step 2 / 5</span>
+              </div>
+              <button class="w-7 h-7 rounded-lg hover:bg-[rgba(255,255,255,.05)] grid place-items-center text-[var(--text-3)]">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+              </button>
+            </div>
+            <h3 class="font-display text-[16px] font-semibold mt-3 truncate">Daily Ad Spend Rollup</h3>
+            <div class="flex items-center gap-1.5 mt-1.5 text-[11px] text-[var(--text-3)]">
+              <span class="chip !py-0.5 !px-1.5 !text-[10px]">Meta</span>
+              <span class="chip !py-0.5 !px-1.5 !text-[10px]">Google</span>
+              <svg class="w-3 h-3 text-[var(--text-3)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+              <span class="chip !py-0.5 !px-1.5 !text-[10px]">MySQL</span>
+            </div>
+            <!-- Progress + nodes -->
+            <div class="mt-4 space-y-2">
+              <div class="flex items-center gap-1 font-mono text-[10px] text-[var(--text-3)]">
+                <div class="flex-1 progress !h-[3px]"><div style="width:40%"></div></div>
+                <span class="text-cyan-300">Transforming 8,241 rows</span>
+              </div>
+              <div class="flex items-center gap-1">
+                <div class="w-5 h-5 rounded grid place-items-center bg-[rgba(163,230,53,.12)] text-[var(--lime)]">
+                  <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="m5 12 5 5 9-9"/></svg>
+                </div>
+                <div class="w-4 h-px bg-[var(--line-2)]"></div>
+                <div class="w-5 h-5 rounded grid place-items-center bg-cyan-400/15 text-cyan-300 pulse-ring">
+                  <svg class="w-3 h-3 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2v4M12 18v4M4.9 4.9l2.8 2.8M16.2 16.2l2.9 2.9M2 12h4M18 12h4"/></svg>
+                </div>
+                <div class="w-4 h-px bg-[var(--line-1)]"></div>
+                <div class="w-5 h-5 rounded grid place-items-center bg-[rgba(255,255,255,.04)] text-[var(--text-3)] text-[9px] font-mono">3</div>
+                <div class="w-4 h-px bg-[var(--line-1)]"></div>
+                <div class="w-5 h-5 rounded grid place-items-center bg-[rgba(255,255,255,.04)] text-[var(--text-3)] text-[9px] font-mono">4</div>
+                <div class="w-4 h-px bg-[var(--line-1)]"></div>
+                <div class="w-5 h-5 rounded grid place-items-center bg-[rgba(255,255,255,.04)] text-[var(--text-3)] text-[9px] font-mono">5</div>
+              </div>
+            </div>
+            <div class="flex items-center justify-between mt-4">
+              <span class="text-[11px] text-[var(--text-3)] font-mono">Started 34 s ago</span>
+              <div class="flex gap-1.5">
+                <button class="h-7 px-2.5 btn-ghost rounded-lg text-[11px] font-medium">See logs</button>
+                <button class="h-7 px-2.5 btn-ghost rounded-lg text-[11px] font-medium">Open</button>
+              </div>
+            </div>
+          </article>
+
+          <!-- ===== CARD: FAILED (Thai) ===== -->
+          <article class="surface-card p-5 hover:-translate-y-0.5 transition-transform cursor-pointer relative" style="border-color: rgba(251,113,133,.25)">
+            <div class="flex items-start justify-between">
+              <div class="flex items-center gap-2">
+                <span class="inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-[10.5px] font-semibold bg-[rgba(251,113,133,.12)] text-[var(--coral)] border border-[rgba(251,113,133,.25)]">
+                  <svg class="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="9"/><path d="m15 9-6 6M9 9l6 6"/></svg>
+                  Failed
+                </span>
+                <span class="chip !text-[10px]">Retry 2 / 3</span>
+              </div>
+              <button class="w-7 h-7 rounded-lg hover:bg-[rgba(255,255,255,.05)] grid place-items-center text-[var(--text-3)]">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+              </button>
+            </div>
+            <h3 class="font-display text-[16px] font-semibold mt-3 truncate" lang="th">รายงานยอดขายรายสัปดาห์</h3>
+            <div class="flex items-center gap-1.5 mt-1.5 text-[11px] text-[var(--text-3)]">
+              <span class="chip !py-0.5 !px-1.5 !text-[10px]">Shopify</span>
+              <svg class="w-3 h-3 text-[var(--text-3)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+              <span class="chip !py-0.5 !px-1.5 !text-[10px]">Google Sheets</span>
+            </div>
+            <div class="mt-4 p-3 rounded-lg bg-[rgba(251,113,133,.05)] border border-[rgba(251,113,133,.15)]">
+              <div class="flex items-start gap-2">
+                <svg class="w-3.5 h-3.5 mt-0.5 text-[var(--coral)] shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v4m0 4h.01M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/></svg>
+                <div class="min-w-0">
+                  <div class="text-[11px] font-mono text-[var(--coral)] truncate">AuthError: invalid_grant</div>
+                  <div class="text-[10.5px] text-[var(--text-3)] mt-0.5">Refresh token revoked by user</div>
+                </div>
+              </div>
+            </div>
+            <div class="flex items-center justify-between mt-4">
+              <span class="text-[11px] text-[var(--text-3)] font-mono">Failed 2 h ago</span>
+              <div class="flex gap-1.5">
+                <button class="h-7 px-2.5 btn-primary rounded-lg text-[11px] font-semibold">Fix &amp; retry</button>
+                <button class="h-7 px-2.5 btn-ghost rounded-lg text-[11px] font-medium">Open</button>
+              </div>
+            </div>
+          </article>
+
+          <!-- ===== CARD: PAUSED ===== -->
+          <article class="surface-card p-5 opacity-80 hover:opacity-100 transition-opacity cursor-pointer">
+            <div class="flex items-start justify-between">
+              <div class="flex items-center gap-2">
+                <span class="inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-[10.5px] font-semibold bg-[rgba(255,255,255,.04)] text-[var(--text-2)] border border-[var(--line-1)]">
+                  <svg class="w-3 h-3" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+                  Paused
+                </span>
+              </div>
+              <button class="w-7 h-7 rounded-lg hover:bg-[rgba(255,255,255,.05)] grid place-items-center text-[var(--text-3)]">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+              </button>
+            </div>
+            <h3 class="font-display text-[16px] font-semibold mt-3 truncate">LinkedIn Lead Sync</h3>
+            <div class="flex items-center gap-1.5 mt-1.5 text-[11px] text-[var(--text-3)]">
+              <span class="chip !py-0.5 !px-1.5 !text-[10px]">LinkedIn Ads</span>
+              <svg class="w-3 h-3 text-[var(--text-3)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+              <span class="chip !py-0.5 !px-1.5 !text-[10px]">BigQuery</span>
+            </div>
+            <div class="relative mt-4 h-12 opacity-40">
+              <svg viewBox="0 0 200 40" class="absolute inset-0 w-full h-full" preserveAspectRatio="none">
+                <path d="M0,25 L40,22 L80,26 L120,20 L160,24 L200,22" fill="none" stroke="#64748B" stroke-width="1.5" stroke-dasharray="3,3"/>
+              </svg>
+            </div>
+            <div class="flex items-center justify-between mt-3">
+              <span class="text-[11px] text-[var(--text-3)] font-mono">Paused by you · Mar 4</span>
+              <div class="flex gap-1.5">
+                <button class="h-7 px-2.5 btn-ghost rounded-lg text-[11px] font-medium">Resume</button>
+                <button class="h-7 px-2.5 btn-ghost rounded-lg text-[11px] font-medium">Open</button>
+              </div>
+            </div>
+          </article>
+
+          <!-- ===== CARD: IDLE ===== -->
+          <article class="surface-card p-5 hover:-translate-y-0.5 transition-transform cursor-pointer">
+            <div class="flex items-start justify-between">
+              <span class="inline-flex items-center gap-1.5 px-2 py-1 rounded-md text-[10.5px] font-semibold bg-[rgba(255,255,255,.04)] text-[var(--text-2)] border border-[var(--line-1)]">
+                Never run
+              </span>
+              <button class="w-7 h-7 rounded-lg hover:bg-[rgba(255,255,255,.05)] grid place-items-center text-[var(--text-3)]">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+              </button>
+            </div>
+            <h3 class="font-display text-[16px] font-semibold mt-3 truncate">GA4 → Warehouse</h3>
+            <div class="flex items-center gap-1.5 mt-1.5 text-[11px] text-[var(--text-3)]">
+              <span class="chip !py-0.5 !px-1.5 !text-[10px]">GA4</span>
+              <svg class="w-3 h-3 text-[var(--text-3)]" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 5l7 7-7 7"/></svg>
+              <span class="chip !py-0.5 !px-1.5 !text-[10px]">BigQuery</span>
+            </div>
+            <div class="mt-4 h-12 rounded-lg border border-dashed border-[var(--line-2)] grid place-items-center">
+              <span class="text-[10px] text-[var(--text-3)] italic">No history yet</span>
+            </div>
+            <div class="flex items-center justify-between mt-3">
+              <span class="text-[11px] text-[var(--text-3)] font-mono">Built 12 m ago</span>
+              <button class="h-7 px-2.5 btn-primary rounded-lg text-[11px] font-semibold inline-flex items-center gap-1">
+                <svg class="w-3 h-3" viewBox="0 0 24 24" fill="currentColor"><path d="M6 4l14 8-14 8z"/></svg>
+                Run first time
+              </button>
+            </div>
+          </article>
+
+          <!-- ===== CARD: NEW ===== -->
+          <article class="rounded-2xl border-2 border-dashed border-[var(--line-2)] p-5 flex flex-col items-center justify-center text-center hover:border-violet-400/70 hover:bg-[rgba(139,92,246,.06)] transition-all cursor-pointer min-h-[250px]">
+            <div class="w-11 h-11 rounded-2xl grad-bg grid place-items-center mb-3 relative">
+              <div class="absolute inset-0 rounded-2xl grad-bg opacity-50 blur-md -z-10"></div>
+              <svg class="w-5 h-5 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+            </div>
+            <h3 class="font-display text-[14px] font-semibold">Create new pipeline</h3>
+            <p class="text-[11px] text-[var(--text-3)] mt-1 max-w-[200px]">Start from a template or blank canvas</p>
+            <div class="flex gap-1.5 mt-4">
+              <button class="h-7 px-2.5 btn-ghost rounded-lg text-[11px] font-medium">Templates</button>
+              <button class="h-7 px-2.5 rounded-lg text-[11px] font-medium text-violet-300 hover:text-white">Blank →</button>
+            </div>
+          </article>
+
+        </div>
+      </section>
+
+      <!-- Footer -->
+      <footer class="pt-4 pb-8 flex items-center justify-between text-[11px] text-[var(--text-3)] font-mono">
+        <span>OrbitX · v2.0 redesign mockup · Home surface</span>
+        <div class="flex items-center gap-4">
+          <span>Bento · AI-Native · Dimensional</span>
+          <a href="home-mockup-v2-light.html" class="hover:text-white">→ View light mode</a>
+        </div>
+      </footer>
+
+    </div>
+  </main>
+
+</div>
+
+</body>
+</html>

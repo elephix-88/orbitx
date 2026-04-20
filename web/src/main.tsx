@@ -5,11 +5,11 @@ import App from './App.tsx'
 
 const sentryDsn = import.meta.env.VITE_SENTRY_DSN;
 if (sentryDsn) {
-  Sentry.init({
-    dsn: sentryDsn,
-    environment: import.meta.env.MODE,
-    enabled: import.meta.env.PROD,
-  });
+ Sentry.init({
+ dsn: sentryDsn,
+ environment: import.meta.env.MODE,
+ enabled: import.meta.env.PROD,
+ });
 }
 
 createRoot(document.getElementById('root')!).render(<App />)
