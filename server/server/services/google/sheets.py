@@ -28,7 +28,11 @@ def _get_google_sheets_spreadsheets_sync(
     Synchronous implementation - fetches Google Sheets spreadsheets.
     Uses Google Drive API to list spreadsheets.
     """
-    scopes = [settings.google_oauth_sheets_scope, settings.google_oauth_drive_scope]
+    scopes = [
+        settings.google_oauth_sheets_scope,
+        settings.google_oauth_drive_scope,
+        settings.google_oauth_drive_file_scope,
+    ]
     credentials = build_google_credentials(connection, scopes=scopes)
     drive_service = build("drive", "v3", credentials=credentials)
 
@@ -102,7 +106,11 @@ def _get_google_sheets_worksheets_sync(
     """
     Synchronous implementation - fetches spreadsheet details including worksheets.
     """
-    scopes = [settings.google_oauth_sheets_scope, settings.google_oauth_drive_scope]
+    scopes = [
+        settings.google_oauth_sheets_scope,
+        settings.google_oauth_drive_scope,
+        settings.google_oauth_drive_file_scope,
+    ]
     credentials = build_google_credentials(connection, scopes=scopes)
     sheets_service = build("sheets", "v4", credentials=credentials)
 

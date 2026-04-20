@@ -34,6 +34,7 @@ class TestGoogleOAuthEndpoints:
         assert (
             "spreadsheets" in result["oauth_url"] or "auth" in result["oauth_url"]
         )  # Check scope or general auth
+        assert "drive.file" in result["oauth_url"]
 
     @pytest.mark.unit
     def test_google_sheets_login_invalid_payload(self, client: TestClient):
@@ -363,6 +364,9 @@ class TestGoogleOAuthEndpoints:
                 mock_settings.connection_collection = "connections"
                 mock_settings.google_oauth_drive_scope = (
                     "https://www.googleapis.com/auth/drive"
+                )
+                mock_settings.google_oauth_drive_file_scope = (
+                    "https://www.googleapis.com/auth/drive.file"
                 )
 
             # Step 1: Initiate OAuth login

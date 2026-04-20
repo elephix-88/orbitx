@@ -48,6 +48,7 @@ default:
   google_oauth_analytics_scope: https://www.googleapis.com/auth/analytics.readonly
   google_oauth_sheets_scope: https://www.googleapis.com/auth/spreadsheets
   google_oauth_drive_scope: https://www.googleapis.com/auth/drive.readonly
+  google_oauth_drive_file_scope: https://www.googleapis.com/auth/drive.file
   google_oauth_bigquery_scope: https://www.googleapis.com/auth/bigquery
   google_oauth_token_url: https://oauth2.googleapis.com/token
   google_ads_developer_token:

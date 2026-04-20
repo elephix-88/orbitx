@@ -1,6 +1,7 @@
 import re
 import sys
 from collections import deque
+from datetime import UTC, datetime
 
 from loguru import logger
 from prefect import flow
@@ -144,6 +145,8 @@ def build_and_execute_workflow(
         error_messages = "; ".join(error.message for error in validation.errors)
         raise ValueError(f"Workflow '{job_name}' has invalid structure: {error_messages}")
 
+    execution_datetime = datetime.now(UTC)
+
     incoming_edges = build_incoming_edges(workflow.nodes, workflow.connections)
     port_lookup = build_port_lookup(workflow.connections)
     sorted_nodes = topological_sort(workflow.nodes, workflow.connections)
@@ -219,7 +222,7 @@ def build_and_execute_workflow(
                     results_by_instance_id, router_instance_ids, port_lookup,
                 )
                 task_function = make_loader_task(
-                    node, task_name, execution_id, workflow.id,
+                    node, task_name, execution_id, workflow.id, execution_datetime,
                 )
                 result = task_function(parent_output)
                 results_by_instance_id[node.node_instance_id] = result

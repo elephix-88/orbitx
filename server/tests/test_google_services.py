@@ -37,6 +37,7 @@ def mock_settings():
         mock_sheets.connection_collection = "connections"
         mock_sheets.google_oauth_sheets_scope = "sheets_scope"
         mock_sheets.google_oauth_drive_scope = "drive_scope"
+        mock_sheets.google_oauth_drive_file_scope = "drive_file_scope"
         mock_sheets.google_oauth_client_id = "client_id"
         mock_sheets.google_oauth_client_secret = "client_secret"
         mock_sheets.google_oauth_token_url = "https://oauth2.googleapis.com/token"

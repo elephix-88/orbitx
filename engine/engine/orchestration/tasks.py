@@ -204,12 +204,15 @@ def make_loader_task(
     task_name: str,
     execution_id: str,
     workflow_id: str,
+    execution_datetime: datetime,
 ):
     @task(name=task_name)
     def loader_task(input_result: NodeResult) -> NodeResult:
         def execute():
             factory = LoaderFactory()
             loader = factory.create_loader(node.parameters, node.node_id)
+
+            loader.set_execution_context(execution_id, execution_datetime)
 
             if input_result.primary_keys:
                 loader.set_merge_keys(input_result.primary_keys)
