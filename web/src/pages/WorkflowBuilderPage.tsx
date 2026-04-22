@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo, lazy, Suspense } from "react";
+import React, { useState, useEffect, useCallback, useMemo, useRef, lazy, Suspense } from "react";
 import { useLocation, useSearchParams, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import Layout from "@/components/Layout";
@@ -23,6 +23,7 @@ import { DeliveryConfig, DEFAULT_DELIVERY_CONFIG } from "../types/delivery";
 import { extractMongoId } from "../utils/mongoUtils";
 import { useResponsiveLayout } from "../hooks/useResponsiveLayout";
 import { useElementSize } from "../hooks/useElementSize";
+import { useUnsavedChangesGuard } from "../hooks/useUnsavedChangesGuard";
 import { autoLayoutDynamic } from "../utils/workflowLayout";
 import { executionDebugService, type ExecutionDetail } from "../services/executionDebugService";
 import { previewService, type PreviewResponse } from "../services/previewService";
@@ -73,6 +74,8 @@ const WorkflowBuilderPage: React.FC = () => {
  const enterDebugMode = useWorkflowStore((state) => state.enterDebugMode);
  const exitDebugMode = useWorkflowStore((state) => state.exitDebugMode);
 
+	useUnsavedChangesGuard(hasUnsavedChanges);
+
  const workflowId = originalBackendWorkflow?.job_id || docId;
 
  // Execution ID: prefer Mongo ObjectId, fall back to job_id
@@ -94,8 +97,7 @@ const WorkflowBuilderPage: React.FC = () => {
 
  const [error, setError] = useState<string | null>(null);
  const [isLoading, setIsLoading] = useState(!!docId); // Only show loading if we have a docId to fetch
- const [bootstrapped, setBootstrapped] = useState(false); // Track if bootstrap has run
- const { notify } = useNotification();
+  const { notify } = useNotification();
  const [metaOpen, setMetaOpen] = useState(false);
  const [scheduleDeliveryOpen, setScheduleDeliveryOpen] = useState(false);
 
@@ -280,15 +282,22 @@ const WorkflowBuilderPage: React.FC = () => {
  [cw, ch, makeLayoutWithSize]
  );
 
+	// Bootstrap runs at most once per opened doc. Without this ref,
+	// transient reference changes in `location` or `layoutNodes` would re-run
+	// the effect and could clobber in-progress edits.
+	const bootstrappedForRef = useRef<string | null>(null);
+
  useEffect(() => {
  const bootstrap = async () => {
- // Skip bootstrap if already bootstrapped for new workflows
+ // Skip bootstrap if already bootstrapped for this doc
  // This prevents resetting state when dependencies change (e.g., location)
- if (bootstrapped && !docId) {
- return;
- }
+ const bootstrapKey = docId ?? '__new__';
+			if (bootstrappedForRef.current === bootstrapKey) {
+				return;
+			}
+			bootstrappedForRef.current = bootstrapKey;
 
- try {
+			try {
  setError(null);
  if (docId) setIsLoading(true);
  if (!docId) {
@@ -350,8 +359,7 @@ const WorkflowBuilderPage: React.FC = () => {
  setConnections([]);
  }
  markAsSaved();
- setBootstrapped(true);
- } else {
+  } else {
  const preload = location?.state?.workflow;
  const backendData =
  preload && Array.isArray(preload.nodes)
@@ -387,17 +395,10 @@ const WorkflowBuilderPage: React.FC = () => {
  }
  };
  bootstrap();
- }, [
- docId,
- bootstrapped,
- setNodes,
- setConnections,
- updateWorkflow,
- setOriginalBackendWorkflow,
- markAsSaved,
- layoutNodes,
- location,
- ]);
+		// The ref-based guard above prevents duplicate bootstraps. `location`,
+		// `layoutNodes`, and Zustand setters are intentionally excluded.
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [docId]);
 
  // Sync error_workflow_id from backend when workflow loads
  useEffect(() => {
@@ -490,26 +491,27 @@ const WorkflowBuilderPage: React.FC = () => {
  );
  };
 
- const handleSave = async () => {
+ const handleSave = async (options: { silent?: boolean } = {}) => {
+		const { silent = false } = options;
  if (!originalBackendWorkflow) {
- notify.error("Save failed", "Workflow not initialized");
+ if (!silent) notify.error("Save failed", "Workflow not initialized");
  return;
  }
 
  if (!hasUnsavedChanges) {
- notify.info("No changes", "There are no changes to save");
+ if (!silent) notify.info("No changes", "There are no changes to save");
  return;
  }
 
  setSaving(true);
  try {
- await new Promise((r) => setTimeout(r, 350));
+ if (!silent) await new Promise((r) => setTimeout(r, 350));
  const needsMetadata =
  !originalBackendWorkflow.job_id ||
  !originalBackendWorkflow.workflow_id ||
  !originalBackendWorkflow.job_name;
  if (needsMetadata) {
- setMetaOpen(true);
+ if (!silent) setMetaOpen(true);
  setSaving(false);
  return;
  }
@@ -565,7 +567,7 @@ const WorkflowBuilderPage: React.FC = () => {
  setConnections(() => wfConnections);
  markAsSaved();
 
- notify.successDialog("Workflow saved", [
+ if (!silent) notify.successDialog("Workflow saved", [
  "All changes have been committed.",
  ]);
 
@@ -617,7 +619,7 @@ const WorkflowBuilderPage: React.FC = () => {
  console.warn("Refetch after save failed:", refetchErr);
  }
  markAsSaved();
- notify.successDialog("Workflow saved", [
+ if (!silent) notify.successDialog("Workflow saved", [
  "All changes have been committed.",
  ]);
  } catch (error) {
@@ -631,7 +633,23 @@ const WorkflowBuilderPage: React.FC = () => {
  }
  };
 
- const getNodeIdFromType = (nodeType: string, nodeData?: Record<string, unknown>) => {
+ // Debounced autosave: fires ~3s after the user stops editing.
+	// Skipped if the workflow has never been saved (no metadata/id yet) — the
+	// explicit Save button still drives the first save-with-metadata flow.
+	const handleSaveRef = useRef(handleSave);
+	handleSaveRef.current = handleSave;
+	useEffect(() => {
+		if (!hasUnsavedChanges) return;
+		if (!originalBackendWorkflow?._id && !docId) return;
+		if (!originalBackendWorkflow?.job_id || !originalBackendWorkflow?.job_name) return;
+
+		const timer = window.setTimeout(() => {
+			handleSaveRef.current({ silent: true });
+		}, 3000);
+		return () => window.clearTimeout(timer);
+	}, [hasUnsavedChanges, nodes, connections, originalBackendWorkflow?._id, originalBackendWorkflow?.job_id, originalBackendWorkflow?.job_name, docId]);
+
+	const getNodeIdFromType = (nodeType: string, nodeData?: Record<string, unknown>) => {
  if (nodeData?.accessToken || nodeData?.adAccountId) return "facebook_ads";
  if (nodeData?.project_id || nodeData?.dataset) return "bigquery";
  if (nodeData?.spreadsheet_id) return "google_sheets";

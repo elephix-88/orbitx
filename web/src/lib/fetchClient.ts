@@ -62,11 +62,12 @@ export async function fetchClient(path: string, options: FetchOptions = {}) {
  });
  }
 
- // If still 401 after refresh (or refresh itself failed), force re-login.
- // Use clearLocalAuth — no server call needed since the session is already invalid.
+ // If still 401 after refresh (or refresh itself failed), surface the
+ // session expiry via a custom event. A React listener translates it to a
+ // soft redirect via the router so in-memory UI state is preserved.
  if (resp.status === 401) {
  authService.clearLocalAuth();
- window.location.href = '/login';
+ window.dispatchEvent(new CustomEvent('orbitx:auth-expired'));
  }
  }
 

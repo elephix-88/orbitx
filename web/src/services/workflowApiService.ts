@@ -13,6 +13,11 @@ import {
  MongoId,
 } from '../types/backend';
 import { extractMongoId } from '../utils/mongoUtils';
+import {
+	workflowDataSchema,
+	workflowListSchema,
+	logIfDrifted,
+} from '../schemas/backend';
 import { WorkflowStatus } from '../types/workflow';
 
 interface ApiResponse<T> {
@@ -278,8 +283,10 @@ class WorkflowApiService {
 
  const queryString = queryParams.toString();
  const endpoint = `/api/workflows${queryString ? `?${queryString}` : ''}`;
- 
- return this.makeRequestWithRetry<BackendWorkflow[]>(endpoint);
+
+ const response = await this.makeRequestWithRetry<BackendWorkflow[]>(endpoint);
+ logIfDrifted(workflowListSchema, response.data, 'GET /api/workflows');
+ return response;
  }
 
  /**
@@ -298,6 +305,8 @@ class WorkflowApiService {
  if (!workflowData) {
  throw new Error(`Workflow not found: ${idOrJobId}`);
  }
+
+ logIfDrifted(workflowDataSchema, workflowData, 'GET /api/workflows/:id');
 
  return {
  data: workflowData,

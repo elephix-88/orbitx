@@ -14,15 +14,6 @@ export type WorkflowMeta = {
  schedule_expression: string;
 };
 
-// eslint-disable-next-line react-refresh/only-export-components
-export function slugify(value: string): string {
- return (value || "")
- .toLowerCase()
- .replace(/[^a-z0-9]+/g, "_")
- .replace(/^_+|_+$/g, "")
- .replace(/_{2,}/g, "_");
-}
-
 export interface WorkflowMetaFormProps {
  initial?: Partial<WorkflowMeta> & { baseName?: string };
  onSubmit: (_data: WorkflowMeta) => void;

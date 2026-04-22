@@ -9,14 +9,10 @@ default:
   database: cron5
   workflow_collection: workflow
   connection_collection: connections
-  platform_tokens: platform_tokens
   facebook_fields: facebook_fields
   google_fields: google_fields
   tiktok_fields: tiktok_fields
   execution_history_collection: execution_history
-  pinned_data_collection: pinned_node_data
-  alert_history_collection: alert_history
-  share_tokens_collection: share_tokens
   users_collection: users
 
   # JWT Auth (MUST be set via environment variable in production)

@@ -7,6 +7,7 @@
 
 import { fetchClient } from '@/lib/fetchClient';
 import { useNodeDataCache, ConnectionOption, FieldDefinition, FacebookAdsAccount, GoogleAdsAccount, TikTokAdsAccount } from '@/store/nodeDataCache';
+import { connectionListSchema, logIfDrifted } from '@/schemas/backend';
 
 interface ConnectionResponse {
  _id?: string | { $oid: string };
@@ -94,6 +95,7 @@ export async function prefetchConnections(): Promise<ConnectionOption[]> {
  const resp = await fetchClient('/api/connections');
  const raw = await resp.json().catch(() => []);
  const arr: ConnectionResponse[] = Array.isArray(raw?.data) ? raw.data : (Array.isArray(raw) ? raw : []);
+ logIfDrifted(connectionListSchema, arr, 'GET /api/connections');
 
  const connections: ConnectionOption[] = arr.map((c) => ({
  id: extractConnectionId(c),

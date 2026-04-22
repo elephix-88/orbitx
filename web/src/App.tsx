@@ -3,13 +3,12 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import { NotificationContainer } from './components/shared/Notification';
 import RouteChangeLoader from './components/shared/RouteChangeLoader';
-import RouteProgressBar from './components/shared/RouteProgressBar';
 import ErrorBoundary from './components/shared/ErrorBoundary';
 import { PageLoader } from './components/shared/PageLoader';
 import { SessionWarningModal } from './components/shared/SessionWarningModal';
-import { OfflineIndicator } from './components/shared/OfflineIndicator';
 import { useGlobalErrorHandler } from './hooks/useGlobalErrorHandler';
 import { useSessionTimeout } from './hooks/useSessionTimeout';
+import { useAuthExpiredListener } from './hooks/useAuthExpiredListener';
 import { useThemeStore } from './store/themeStore';
 
 // =============================================================================
@@ -48,9 +47,6 @@ function App() {
 
  return (
  <ErrorBoundary>
- {/* Global offline indicator */}
- <OfflineIndicator />
-
  {/* Session expiration warning modal */}
  {showWarning && (
  <SessionWarningModal
@@ -65,9 +61,9 @@ function App() {
  v7_relativeSplatPath: true,
  }}
  >
- <NotificationContainer />
- <RouteProgressBar />
- <RouteChangeLoader />
+ <AuthExpiredBridge />
+				<NotificationContainer />
+  <RouteChangeLoader />
  <Suspense fallback={<PageLoader message="Loading..." />}>
  <Routes>
  {/* Public routes */}
@@ -122,6 +118,11 @@ function App() {
  </BrowserRouter>
  </ErrorBoundary>
  );
+}
+
+function AuthExpiredBridge() {
+	useAuthExpiredListener();
+	return null;
 }
 
 export default App;
