@@ -296,10 +296,16 @@ const ConnectionsPage = () => {
  <Layout title="Connections">
  <div className="space-y-6">
  <div>
- <h1 className="text-[26px] font-bold text-text-1 tracking-tight leading-tight">
+ <div className="flex items-center gap-2 mb-2">
+ <span className="w-8 h-1 bg-blue-primary rounded-full" />
+ <span className="text-[10.5px] font-semibold uppercase tracking-[0.14em] text-text-3">
+ Workspace
+ </span>
+ </div>
+ <h1 className="text-[26px] font-semibold text-text-1 tracking-tight leading-tight">
  Connections
  </h1>
- <p className="text-[14px] text-text-2 mt-0.5">
+ <p className="text-[14px] text-text-2 mt-1.5">
  OAuth accounts and API credentials linked to your workspace.
  </p>
  </div>
@@ -408,17 +414,18 @@ const ConnectionsPage = () => {
  )}
 
  {connections.length === 0 && (
- <div className="bg-bg-card border border-line-1 rounded-xl p-10 text-center">
- <div className="w-12 h-12 rounded-full bg-bg-muted flex items-center justify-center mx-auto mb-3">
- <Link2 size={20} className="text-text-3" />
+ <div className="relative bg-bg-card border border-line-1 rounded-xl p-12 text-center overflow-hidden">
+ <div className="absolute inset-x-0 top-0 h-1 bg-blue-primary" />
+ <div className="w-12 h-12 rounded-xl bg-blue-soft border border-blue-border flex items-center justify-center mx-auto mb-4">
+ <Link2 size={22} className="text-blue-primary" />
  </div>
- <div className="text-[14px] font-semibold text-text-1">No connections yet</div>
- <div className="text-[12.5px] text-text-3 mt-1">
- Connect a source platform to start syncing data.
+ <div className="text-[15px] font-semibold text-text-1">No connections yet</div>
+ <div className="text-[13px] text-text-2 mt-1.5 max-w-md mx-auto">
+ Link a source to start piping ad data into your warehouse. Takes about 30 seconds with OAuth.
  </div>
  <Button
  size="sm"
- className="mt-4"
+ className="mt-5"
  leftIcon={<Link2 size={14} />}
  onClick={() => handleConnect(connectionTypes[0]?.id ?? '')}
  >
@@ -429,54 +436,61 @@ const ConnectionsPage = () => {
 
  {/* Available sources */}
  <div>
- <h2 className="font-display text-[15px] font-semibold text-text-1 mb-3">
+ <div className="flex items-center gap-2 mb-2">
+ <span className="w-8 h-1 bg-blue-primary rounded-full" />
+ <span className="text-[10.5px] font-semibold uppercase tracking-[0.14em] text-text-3">
+ Library
+ </span>
+ </div>
+ <h2 className="text-[16px] font-semibold text-text-1 mb-1">
  Available sources
  </h2>
- <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
- {connectionTypes.map((type) => (
+ <p className="text-[12.5px] text-text-3 mb-4">
+ Connect a platform via OAuth. Coming-soon sources will enable as integrations ship.
+ </p>
+ <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
+ {connectionTypes.map((type) => {
+ const isOAuth = ['google_ads', 'facebook_ads', 'tiktok_ads', 'bigquery', 'google_sheets'].includes(type.id);
+ return (
  <button
  key={type.id}
  type="button"
  onClick={() => handleConnect(type.id)}
  disabled={connectingType === type.id}
- className="flex items-center gap-3 p-3 bg-bg-card border border-line-1 rounded-xl text-left hover:border-line-2 hover:shadow-md transition-[box-shadow,border-color]"
+ className="group flex items-center gap-3 p-3.5 bg-bg-card border border-line-1 rounded-xl text-left hover:border-blue-border hover:shadow-md transition-all cursor-pointer disabled:opacity-60"
  >
- <span className="w-8 h-8 rounded-md flex items-center justify-center shrink-0 text-text-2 bg-bg-muted border border-line-1">
+ <span className="w-9 h-9 rounded-md flex items-center justify-center shrink-0 bg-bg-muted border border-line-1 group-hover:bg-blue-soft group-hover:border-blue-border transition-colors">
  {React.cloneElement(type.icon as React.ReactElement, { className: 'w-5 h-5' })}
  </span>
- <div className="min-w-0">
- <div className="text-[13px] font-medium text-text-1 truncate">{type.name}</div>
- <div className="text-[11px] text-text-3">OAuth</div>
+ <div className="min-w-0 flex-1">
+ <div className="text-[13px] font-semibold text-text-1 truncate">{type.name}</div>
+ <div className="text-[11px] text-text-3">{isOAuth ? 'OAuth' : 'Credentials'}</div>
  </div>
  </button>
- ))}
- {availableSources.slice(0, 2).map((src) => (
+ );
+ })}
+ {availableSources.map((src) => (
  <div
  key={src.id}
- className="flex items-center gap-3 p-3 bg-bg-card border border-line-1 rounded-xl opacity-60 cursor-not-allowed"
+ className="flex items-center gap-3 p-3.5 bg-bg-card border border-dashed border-line-2 rounded-xl cursor-not-allowed"
  title="Coming soon"
  >
  <span
- className="w-8 h-8 rounded-md flex items-center justify-center shrink-0 text-white text-[11px] font-bold"
+ className="w-9 h-9 rounded-md flex items-center justify-center shrink-0 text-white text-[11px] font-bold opacity-60"
  style={{ background: src.bg }}
  >
  {src.abbr}
  </span>
- <div className="min-w-0">
- <div className="text-[13px] font-medium text-text-1 truncate">{src.name}</div>
- <div className="text-[11px] text-text-3">{src.auth}</div>
+ <div className="min-w-0 flex-1">
+ <div className="flex items-center gap-1.5">
+ <div className="text-[13px] font-medium text-text-3 truncate">{src.name}</div>
+ </div>
+ <div className="text-[10px] font-semibold uppercase tracking-wider text-text-4">
+ Soon
+ </div>
  </div>
  </div>
  ))}
- <div className="flex items-center gap-3 p-3 bg-bg-card border border-line-1 rounded-xl cursor-pointer hover:border-line-2 transition-colors">
- <span className="w-8 h-8 rounded-md flex items-center justify-center shrink-0 text-text-3 bg-bg-muted border border-line-1 text-[16px]">
- +
- </span>
- <div className="min-w-0">
- <div className="text-[13px] font-medium text-text-1">Browse all</div>
- <div className="text-[11px] text-text-3">24 sources</div>
- </div>
- </div>
  </div>
  </div>
  </div>

@@ -35,7 +35,7 @@ export const StatTile = React.forwardRef<HTMLDivElement, StatTileProps>(
  )}
  {...props}
  >
- <div className="text-[11.5px] text-text-3 font-medium tracking-[0.02em]">{label}</div>
+ <div className="text-[10.5px] font-semibold uppercase tracking-[0.14em] text-text-3">{label}</div>
  <div
  className={cn(
  'font-bold text-[24px] leading-tight mt-[2px] text-text-1 tracking-[-0.01em]',

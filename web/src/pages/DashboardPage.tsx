@@ -9,6 +9,11 @@ import {
  CalendarClock,
  RefreshCw,
  Loader2,
+ Clock,
+ Activity,
+ BarChart3,
+ Users,
+ Zap,
 } from 'lucide-react';
 import Layout from '@/components/Layout';
 import { Card } from '@/components/shared/Card';
@@ -188,46 +193,82 @@ const HealthBar: React.FC<{ row: HealthRow; max: number }> = ({ row, max }) => {
  );
 };
 
+interface QuickActionTile {
+ icon: React.ReactNode;
+ label: string;
+ path: string;
+ tint: string;
+ iconColor: string;
+ disabled?: boolean;
+}
+
 const QuickActions: React.FC<{ onNavigate: (path: string) => void }> = ({
  onNavigate,
-}) => (
+}) => {
+ const actions: QuickActionTile[] = [
+ {
+ icon: <Plus size={16} />,
+ label: 'New pipeline',
+ path: '/workflows/builder',
+ tint: 'bg-blue-soft border-blue-border',
+ iconColor: 'text-blue-primary',
+ },
+ {
+ icon: <Link2 size={16} />,
+ label: 'Connect source',
+ path: '/connections',
+ tint: 'bg-success-bg border-success-border',
+ iconColor: 'text-success',
+ },
+ {
+ icon: <Database size={16} />,
+ label: 'Add destination',
+ path: '/connections',
+ tint: 'bg-violet-bg border-violet-border',
+ iconColor: 'text-violet',
+ disabled: true,
+ },
+ {
+ icon: <CalendarClock size={16} />,
+ label: 'Schedule report',
+ path: '/reports',
+ tint: 'bg-warning-bg border-warning-border',
+ iconColor: 'text-warning',
+ disabled: true,
+ },
+ ];
+
+ return (
  <div className="grid grid-cols-2 gap-2">
- <Button
- variant="secondary"
- size="sm"
- leftIcon={<Plus size={14} />}
- onClick={() => onNavigate('/workflows/builder')}
+ {actions.map((action) => (
+ <button
+ key={action.label}
+ type="button"
+ onClick={() => !action.disabled && onNavigate(action.path)}
+ disabled={action.disabled}
+ className={cn(
+ 'group flex items-center gap-2.5 px-3 py-2.5 bg-bg-card border border-line-1 rounded-lg text-left transition-all',
+ !action.disabled && 'hover:border-blue-border hover:shadow-sm cursor-pointer',
+ action.disabled && 'opacity-60 cursor-not-allowed'
+ )}
  >
- New pipeline
- </Button>
- <Button
- variant="secondary"
- size="sm"
- leftIcon={<Link2 size={14} />}
- onClick={() => onNavigate('/connections')}
+ <span
+ className={cn(
+ 'w-7 h-7 flex items-center justify-center rounded-md border flex-shrink-0',
+ action.tint,
+ action.iconColor
+ )}
  >
- Connect source
- </Button>
- <Button
- variant="secondary"
- size="sm"
- leftIcon={<Database size={14} />}
- onClick={() => onNavigate('/connections')}
- disabled
- >
- Add destination
- </Button>
- <Button
- variant="secondary"
- size="sm"
- leftIcon={<CalendarClock size={14} />}
- onClick={() => onNavigate('/reports')}
- disabled
- >
- Schedule report
- </Button>
+ {action.icon}
+ </span>
+ <span className="text-[12.5px] font-medium text-text-1 truncate flex-1">
+ {action.label}
+ </span>
+ </button>
+ ))}
  </div>
-);
+ );
+};
 
 interface TeamActivityItem {
  id: string;
@@ -315,10 +356,16 @@ export default function DashboardPage() {
  <div className="space-y-6">
  <header className="flex flex-wrap items-end justify-between gap-4">
  <div>
- <h1 className="text-[24px] font-bold text-text-1 tracking-tight">
- Welcome back, {firstName}
+ <div className="flex items-center gap-2 mb-2">
+ <span className="w-8 h-1 bg-blue-primary rounded-full" />
+ <span className="text-[10.5px] font-semibold uppercase tracking-[0.14em] text-text-3">
+ Overview
+ </span>
+ </div>
+ <h1 className="text-[26px] font-semibold text-text-1 tracking-tight leading-tight">
+ Welcome back, <span className="text-blue-primary">{firstName}</span>
  </h1>
- <p className="text-[13px] text-text-3 mt-1">
+ <p className="text-[13px] text-text-3 mt-1.5">
  Here's what your pipelines have been up to.
  </p>
  </div>
@@ -386,13 +433,15 @@ export default function DashboardPage() {
  <div className="lg:col-span-2 space-y-6">
  <Card padding="none">
  <div className="flex items-center justify-between px-4 py-3 border-b border-line-soft">
- <div className="flex items-center gap-2">
- <AlertTriangle size={16} className="text-danger" aria-hidden="true" />
- <h2 className="text-[14px] font-semibold text-text-1">
+ <div className="flex items-center gap-2.5">
+ <span className="w-6 h-6 flex items-center justify-center bg-danger-bg border border-danger-border rounded-md">
+ <AlertTriangle size={13} className="text-danger" aria-hidden="true" />
+ </span>
+ <h2 className="text-[13.5px] font-semibold text-text-1">
  Needs attention
  </h2>
  {attention.length > 0 && (
- <Chip variant="danger" className="ml-1">
+ <Chip variant="danger" className="ml-0.5">
  {attention.length}
  </Chip>
  )}
@@ -438,9 +487,17 @@ export default function DashboardPage() {
 
  <Card padding="none">
  <div className="flex items-center justify-between px-4 py-3 border-b border-line-soft">
- <h2 className="text-[14px] font-semibold text-text-1">
- Throughput · last 24h
+ <div className="flex items-center gap-2.5">
+ <span className="w-6 h-6 flex items-center justify-center bg-blue-soft border border-blue-border rounded-md">
+ <BarChart3 size={13} className="text-blue-primary" aria-hidden="true" />
+ </span>
+ <h2 className="text-[13.5px] font-semibold text-text-1">
+ Throughput
  </h2>
+ <span className="text-[10.5px] font-medium uppercase tracking-wider text-text-3">
+ · last 24h
+ </span>
+ </div>
  <div className="flex items-center gap-3 text-[11px] text-text-3">
  <span className="inline-flex items-center gap-1.5">
  <span className="w-2 h-2 rounded-sm bg-blue-primary" />
@@ -469,7 +526,12 @@ export default function DashboardPage() {
 
  <Card padding="none">
  <div className="flex items-center justify-between px-4 py-3 border-b border-line-soft">
- <h2 className="text-[14px] font-semibold text-text-1">Recent runs</h2>
+ <div className="flex items-center gap-2.5">
+ <span className="w-6 h-6 flex items-center justify-center bg-bg-muted border border-line-1 rounded-md">
+ <Clock size={13} className="text-text-2" aria-hidden="true" />
+ </span>
+ <h2 className="text-[13.5px] font-semibold text-text-1">Recent runs</h2>
+ </div>
  <Button
  variant="ghost"
  size="sm"
@@ -552,8 +614,11 @@ export default function DashboardPage() {
  <AIInsightCard insight={insight} loading={insightLoading} />
 
  <Card padding="none">
- <div className="px-4 py-3 border-b border-line-soft">
- <h2 className="text-[14px] font-semibold text-text-1">
+ <div className="px-4 py-3 border-b border-line-soft flex items-center gap-2.5">
+ <span className="w-6 h-6 flex items-center justify-center bg-success-bg border border-success-border rounded-md">
+ <Activity size={13} className="text-success" aria-hidden="true" />
+ </span>
+ <h2 className="text-[13.5px] font-semibold text-text-1">
  Pipeline health
  </h2>
  </div>
@@ -569,8 +634,11 @@ export default function DashboardPage() {
  </Card>
 
  <Card padding="none">
- <div className="px-4 py-3 border-b border-line-soft">
- <h2 className="text-[14px] font-semibold text-text-1">Quick actions</h2>
+ <div className="px-4 py-3 border-b border-line-soft flex items-center gap-2.5">
+ <span className="w-6 h-6 flex items-center justify-center bg-blue-soft border border-blue-border rounded-md">
+ <Zap size={13} className="text-blue-primary" aria-hidden="true" />
+ </span>
+ <h2 className="text-[13.5px] font-semibold text-text-1">Quick actions</h2>
  </div>
  <div className="p-4">
  <QuickActions onNavigate={navigate} />
@@ -578,8 +646,11 @@ export default function DashboardPage() {
  </Card>
 
  <Card padding="none">
- <div className="px-4 py-3 border-b border-line-soft">
- <h2 className="text-[14px] font-semibold text-text-1">Team activity</h2>
+ <div className="px-4 py-3 border-b border-line-soft flex items-center gap-2.5">
+ <span className="w-6 h-6 flex items-center justify-center bg-violet-bg border border-violet-border rounded-md">
+ <Users size={13} className="text-violet" aria-hidden="true" />
+ </span>
+ <h2 className="text-[13.5px] font-semibold text-text-1">Team activity</h2>
  </div>
  {teamActivity.length === 0 ? (
  <EmptyState
