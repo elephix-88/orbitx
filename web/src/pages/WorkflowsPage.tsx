@@ -193,7 +193,7 @@ const WorkflowsPage = () => {
  <div className="w-16 h-16 flex items-center justify-center mx-auto mb-4 bg-error rounded-lg">
  <Activity className="w-8 h-8 text-white" />
  </div>
- <h2 className="text-xl font-semibold mb-2 text-text-1">Failed to load workflows</h2>
+ <h2 className="text-xl font-semibold mb-2 text-text-1">Failed to load pipelines</h2>
  <p className="mb-6 text-text-2">{error}</p>
  <button onClick={refreshWorkflows} className="px-6 py-2 text-white font-medium bg-blue-primary hover:bg-blue-primary-hover rounded-md transition-colors">
  Try Again
@@ -209,15 +209,39 @@ const WorkflowsPage = () => {
  <div className="min-h-screen pb-12">
  <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
  {/* Header */}
- <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+ <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
  <div>
- <div className="flex items-center gap-3 mb-2">
- <div className="w-12 h-1 bg-blue-primary" />
+ <div className="flex items-center gap-2 mb-2">
+ <span className="w-8 h-1 bg-blue-primary rounded-full" />
+ <span className="text-[10.5px] font-semibold uppercase tracking-[0.14em] text-text-3">
+ Workspace
+ </span>
  </div>
- <h1 className="text-2xl font-semibold text-text-1">Workflows</h1>
- <p className="text-sm mt-0.5 text-text-2">
- {workflows.length} workflows &#9632; {activeCount} active &#9632; {pausedCount} paused
+ <h1 className="text-[26px] font-semibold text-text-1 tracking-tight leading-tight">
+ Pipelines
+ </h1>
+ <p className="text-[13px] mt-1.5 text-text-2">
+ Every extract, transform, and load job in your workspace.
  </p>
+ <div className="flex items-center gap-3 mt-3 text-[11.5px]">
+ <span className="inline-flex items-center gap-1.5 text-text-2">
+ <span className="w-1.5 h-1.5 rounded-full bg-text-3" />
+ <span className="font-mono font-semibold text-text-1">{workflows.length}</span>
+ total
+ </span>
+ <span className="w-px h-3 bg-line-1" />
+ <span className="inline-flex items-center gap-1.5 text-text-2">
+ <span className="w-1.5 h-1.5 rounded-full bg-success" />
+ <span className="font-mono font-semibold text-text-1">{activeCount}</span>
+ active
+ </span>
+ <span className="w-px h-3 bg-line-1" />
+ <span className="inline-flex items-center gap-1.5 text-text-2">
+ <span className="w-1.5 h-1.5 rounded-full bg-warning" />
+ <span className="font-mono font-semibold text-text-1">{pausedCount}</span>
+ paused
+ </span>
+ </div>
  </div>
 
  <div className="flex items-center gap-2">
@@ -235,7 +259,7 @@ const WorkflowsPage = () => {
  className="h-9 px-4 flex items-center gap-2 text-sm font-medium text-white transition-colors bg-blue-primary hover:bg-blue-primary-hover rounded-md"
  >
  <Plus className="w-4 h-4" />
- New Workflow
+ New pipeline
  <ChevronDown className={cn("w-4 h-4 transition-transform", showNewWorkflowMenu && "rotate-180")} />
  </button>
 
@@ -258,7 +282,7 @@ const WorkflowsPage = () => {
  <FileText className="w-4 h-4 text-text-2" />
  </div>
  <div>
- <div className="text-sm font-medium text-text-1">Blank Workflow</div>
+ <div className="text-sm font-medium text-text-1">Blank pipeline</div>
  <div className="text-xs text-text-2">Start from scratch</div>
  </div>
  </button>
@@ -273,8 +297,8 @@ const WorkflowsPage = () => {
  <Sparkles className="w-4 h-4 text-white" />
  </div>
  <div>
- <div className="text-sm font-medium text-text-1">From Template</div>
- <div className="text-xs text-text-2">Use a pre-built workflow</div>
+ <div className="text-sm font-medium text-text-1">From template</div>
+ <div className="text-xs text-text-2">Use a pre-built pipeline</div>
  </div>
  </button>
  </div>
@@ -291,7 +315,7 @@ const WorkflowsPage = () => {
  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text-2" />
  <input
  type="text"
- placeholder="Search workflows..."
+ placeholder="Search pipelines..."
  value={searchTerm}
  onChange={(e) => setSearchTerm(e.target.value)}
  className="w-full h-9 pl-9 pr-9 text-sm focus:outline-none transition-all bg-bg-page border border-line-1 rounded-md text-text-1 placeholder:text-text-3 focus:border-blue-primary focus:ring-1 focus:ring-blue-primary"
@@ -424,23 +448,30 @@ const WorkflowsPage = () => {
  <motion.div
  initial={{ opacity: 0, scale: 0.95 }}
  animate={{ opacity: 1, scale: 1 }}
- className="p-12 text-center bg-bg-card border-2 border-dashed border-line-1 rounded-xl"
+ className="relative p-12 text-center bg-bg-card border border-line-1 rounded-xl overflow-hidden"
  >
- <div className="w-16 h-16 flex items-center justify-center mx-auto mb-4 bg-bg-muted rounded-lg">
- <Search className="w-8 h-8 text-text-2" />
- </div>
- <h3 className="text-lg font-medium mb-2 text-text-1">No workflows found</h3>
- <p className="text-sm mb-6 max-w-sm mx-auto text-text-2">
+ <div className="absolute inset-x-0 top-0 h-1 bg-blue-primary" />
+ <div className="w-12 h-12 rounded-xl bg-blue-soft border border-blue-border flex items-center justify-center mx-auto mb-4">
  {searchTerm || selectedCategory !== "All" || selectedStatus !== "All"
- ? "Try adjusting your filters to find what you're looking for."
- : "Get started by creating your first workflow."}
+ ? <Search className="w-5 h-5 text-blue-primary" />
+ : <Zap className="w-5 h-5 text-blue-primary" />}
+ </div>
+ <h3 className="text-[15px] font-semibold text-text-1">
+ {searchTerm || selectedCategory !== "All" || selectedStatus !== "All"
+ ? "No pipelines match your filters"
+ : "No pipelines yet"}
+ </h3>
+ <p className="text-[13px] mt-1.5 max-w-md mx-auto text-text-2">
+ {searchTerm || selectedCategory !== "All" || selectedStatus !== "All"
+ ? "Clear filters or try different search terms to find what you're looking for."
+ : "Build your first pipeline to start piping ad data into your warehouse. Takes about 5 minutes."}
  </p>
  <button
  onClick={() => navigate("/workflows/builder")}
- className="inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white transition-colors bg-blue-primary hover:bg-blue-primary-hover rounded-md"
+ className="mt-5 inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-white transition-colors bg-blue-primary hover:bg-blue-primary-hover rounded-md cursor-pointer"
  >
  <Plus className="w-4 h-4" />
- Create Workflow
+ Create pipeline
  </button>
  </motion.div>
  ) : isGridView ? (
@@ -591,11 +622,11 @@ const WorkflowsPage = () => {
  >
  {/* Table Header */}
  <div className="grid grid-cols-12 gap-4 px-4 py-3 text-xs font-medium bg-bg-muted border-b border-line-1 text-text-2">
- <div className="col-span-4">Workflow</div>
- <div className="col-span-2">Status</div>
- <div className="col-span-2">Schedule</div>
- <div className="col-span-2">Last Run</div>
- <div className="col-span-2 text-right">Actions</div>
+ <div className="col-span-4 uppercase tracking-[0.1em] text-[10.5px] text-text-3 font-semibold">Pipeline</div>
+ <div className="col-span-2 uppercase tracking-[0.1em] text-[10.5px] text-text-3 font-semibold">Status</div>
+ <div className="col-span-2 uppercase tracking-[0.1em] text-[10.5px] text-text-3 font-semibold">Schedule</div>
+ <div className="col-span-2 uppercase tracking-[0.1em] text-[10.5px] text-text-3 font-semibold">Last run</div>
+ <div className="col-span-2 uppercase tracking-[0.1em] text-[10.5px] text-text-3 font-semibold text-right">Actions</div>
  </div>
 
  {/* Table Body */}
@@ -700,10 +731,10 @@ const WorkflowsPage = () => {
 
  <ConfirmDialog
  isOpen={!!confirmTargetId}
- title="Delete Workflow?"
+ title="Delete pipeline?"
  message={
  <div className="space-y-2">
- <p>Are you sure you want to delete this workflow?</p>
+ <p>Are you sure you want to delete this pipeline?</p>
  <p className="text-sm text-text-3">
  This action cannot be undone and will stop all scheduled executions.
  </p>

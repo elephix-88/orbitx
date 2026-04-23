@@ -49,7 +49,7 @@ export function useWorkflows(): UseWorkflowsResult {
  } catch (err) {
  const errorMessage = getErrorMessage(err, 'Failed to fetch workflows');
  setError(errorMessage);
- notify.error('Error loading workflows', errorMessage);
+ notify.error('Failed to load pipelines', errorMessage);
  setWorkflows([]);
  } finally {
  setLoading(false);
@@ -66,7 +66,7 @@ export function useWorkflows(): UseWorkflowsResult {
  } catch (err) {
  const errorMessage = getErrorMessage(err, 'Failed to fetch workflows');
  setError(errorMessage);
- notify.error('Error loading workflows', errorMessage);
+ notify.error('Failed to load pipelines', errorMessage);
  } finally {
  setRefreshing(false);
  }
