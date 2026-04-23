@@ -44,7 +44,7 @@ def mock_mongo():
     mock_collection.insert_one = AsyncMock()
     mock_db = MagicMock()
     mock_db.__getitem__ = MagicMock(return_value=mock_collection)
-    with patch("server.services.oauth_base.database", mock_db):
+    with patch("server.services.oauth.base.database", mock_db):
         yield mock_collection
 
 

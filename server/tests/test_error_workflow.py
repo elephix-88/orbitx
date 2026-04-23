@@ -63,19 +63,19 @@ def make_trigger_request(
 
 class TestWorkflowHasErrorTriggerNode:
     def test_returns_true_when_node_present(self):
-        from server.services.error_workflow import workflow_has_error_trigger_node
+        from server.services.execution.error_workflow import workflow_has_error_trigger_node
 
         workflow = make_workflow(node_ids=["google_ads", "error_trigger", "bigquery"])
         assert workflow_has_error_trigger_node(workflow) is True
 
     def test_returns_false_when_node_absent(self):
-        from server.services.error_workflow import workflow_has_error_trigger_node
+        from server.services.execution.error_workflow import workflow_has_error_trigger_node
 
         workflow = make_workflow(node_ids=["google_ads", "bigquery"])
         assert workflow_has_error_trigger_node(workflow) is False
 
     def test_returns_false_for_empty_nodes(self):
-        from server.services.error_workflow import workflow_has_error_trigger_node
+        from server.services.execution.error_workflow import workflow_has_error_trigger_node
 
         workflow = make_workflow(node_ids=[])
         assert workflow_has_error_trigger_node(workflow) is False
@@ -88,7 +88,7 @@ class TestWorkflowHasErrorTriggerNode:
 
 class TestSerialiseErrorPayloadAsTags:
     def test_returns_dict_with_error_payload_key(self):
-        from server.services.error_workflow import (
+        from server.services.execution.error_workflow import (
             ERROR_PAYLOAD_TAG_KEY,
             serialise_error_payload_as_tags,
         )
@@ -99,7 +99,7 @@ class TestSerialiseErrorPayloadAsTags:
     def test_value_is_json_string(self):
         import json
 
-        from server.services.error_workflow import serialise_error_payload_as_tags
+        from server.services.execution.error_workflow import serialise_error_payload_as_tags
 
         tags = serialise_error_payload_as_tags(SAMPLE_ERROR_PAYLOAD)
         tag_value = list(tags.values())[0]
@@ -108,7 +108,7 @@ class TestSerialiseErrorPayloadAsTags:
         assert parsed["error_message"] == SAMPLE_ERROR_PAYLOAD.error_message
 
     def test_all_values_are_strings(self):
-        from server.services.error_workflow import serialise_error_payload_as_tags
+        from server.services.execution.error_workflow import serialise_error_payload_as_tags
 
         tags = serialise_error_payload_as_tags(SAMPLE_ERROR_PAYLOAD)
         for value in tags.values():
@@ -124,7 +124,7 @@ class TestTriggerErrorWorkflow:
     @pytest.fixture
     def mock_load_workflow(self):
         with patch(
-            "server.services.error_workflow.find_user_workflow",
+            "server.services.execution.error_workflow.find_user_workflow",
             new_callable=AsyncMock,
         ) as mock:
             yield mock
@@ -132,7 +132,7 @@ class TestTriggerErrorWorkflow:
     @pytest.fixture
     def mock_dagster(self):
         with patch(
-            "server.services.error_workflow.prefect_client"
+            "server.services.execution.error_workflow.prefect_client"
         ) as mock:
             mock.launch_run = AsyncMock(return_value="run_dagster_001")
             yield mock
@@ -147,7 +147,7 @@ class TestTriggerErrorWorkflow:
 
     @pytest.mark.asyncio
     async def test_raises_when_error_workflow_not_found(self, mock_load_workflow):
-        from server.services.error_workflow import trigger_error_workflow
+        from server.services.execution.error_workflow import trigger_error_workflow
         from server.services.exceptions import WorkflowNotFoundError
 
         mock_load_workflow.return_value = None
@@ -160,7 +160,7 @@ class TestTriggerErrorWorkflow:
     async def test_raises_when_error_workflow_has_no_error_trigger_node(
         self, mock_load_workflow, mock_dagster
     ):
-        from server.services.error_workflow import trigger_error_workflow
+        from server.services.execution.error_workflow import trigger_error_workflow
 
         error_workflow = make_workflow(
             workflow_id=WORKFLOW_ID, node_ids=["google_ads", "bigquery"]
@@ -179,7 +179,7 @@ class TestTriggerErrorWorkflow:
 
     @pytest.mark.asyncio
     async def test_raises_when_caller_workflow_not_found(self, mock_load_workflow):
-        from server.services.error_workflow import trigger_error_workflow
+        from server.services.execution.error_workflow import trigger_error_workflow
         from server.services.exceptions import WorkflowNotFoundError
 
         error_workflow = make_workflow(
@@ -196,7 +196,7 @@ class TestTriggerErrorWorkflow:
     async def test_raises_loop_prevention_when_caller_has_error_workflow_id(
         self, mock_load_workflow, mock_dagster
     ):
-        from server.services.error_workflow import trigger_error_workflow
+        from server.services.execution.error_workflow import trigger_error_workflow
 
         error_workflow = make_workflow(
             workflow_id=WORKFLOW_ID, node_ids=["error_trigger"]
@@ -218,7 +218,7 @@ class TestTriggerErrorWorkflow:
     async def test_launches_dagster_run_on_success(
         self, mock_load_workflow, mock_dagster
     ):
-        from server.services.error_workflow import trigger_error_workflow
+        from server.services.execution.error_workflow import trigger_error_workflow
 
         error_workflow = make_workflow(
             workflow_id=WORKFLOW_ID, node_ids=["error_trigger"]
@@ -246,7 +246,7 @@ class TestTriggerErrorWorkflow:
     async def test_returns_triggered_false_when_dagster_launch_fails(
         self, mock_load_workflow, mock_dagster
     ):
-        from server.services.error_workflow import trigger_error_workflow
+        from server.services.execution.error_workflow import trigger_error_workflow
 
         error_workflow = make_workflow(
             workflow_id=WORKFLOW_ID, node_ids=["error_trigger"]
@@ -271,7 +271,7 @@ class TestTriggerErrorWorkflow:
     ):
         import json
 
-        from server.services.error_workflow import (
+        from server.services.execution.error_workflow import (
             ERROR_PAYLOAD_TAG_KEY,
             trigger_error_workflow,
         )
@@ -299,7 +299,7 @@ class TestTriggerErrorWorkflow:
     async def test_loads_both_workflows_with_user_id(
         self, mock_load_workflow, mock_dagster
     ):
-        from server.services.error_workflow import trigger_error_workflow
+        from server.services.execution.error_workflow import trigger_error_workflow
 
         error_workflow = make_workflow(
             workflow_id=WORKFLOW_ID, node_ids=["error_trigger"]

@@ -5,7 +5,7 @@ import pytest
 
 from common.model.user import UserInDB
 from common.model.workflow import JobIdRequest, WorkflowData
-from server.services.workflow import (
+from server.services.workflow.service import (
     create_new_workflow,
     delete_workflow,
     get_all_workflows,
@@ -47,14 +47,14 @@ def make_mock_database(collection: MagicMock) -> MagicMock:
 
 @pytest.fixture
 def mock_user_context():
-    with patch("server.services.workflow.get_current_user") as mock:
+    with patch("server.services.workflow.service.get_current_user") as mock:
         mock.return_value = MOCK_USER
         yield mock
 
 
 @pytest.fixture
 def mock_prefect_client():
-    with patch("server.services.workflow.prefect_client") as mock:
+    with patch("server.services.workflow.service.prefect_client") as mock:
         mock.sync_deployment = AsyncMock()
         mock.delete_deployment = AsyncMock()
         mock.launch_run = AsyncMock(return_value="run_abc123")
@@ -138,7 +138,7 @@ class TestUpdateWorkflow:
 
         mock_db = make_mock_database(mock_collection)
         with patch("common.database.mongodb.database", mock_db), patch(
-            "server.services.workflow.database", mock_db
+            "server.services.workflow.service.database", mock_db
         ):
             result = await update_workflow(workflow)
 
@@ -171,7 +171,7 @@ class TestUpdateWorkflow:
 
         mock_db = make_mock_database(mock_collection)
         with patch("common.database.mongodb.database", mock_db), patch(
-            "server.services.workflow.database", mock_db
+            "server.services.workflow.service.database", mock_db
         ), pytest.raises(WorkflowNotFoundError):
             await update_workflow(workflow)
 
@@ -188,7 +188,7 @@ class TestDeleteWorkflow:
 
         mock_db = make_mock_database(mock_collection)
         with patch("common.database.mongodb.database", mock_db), patch(
-            "server.services.workflow.database", mock_db
+            "server.services.workflow.service.database", mock_db
         ):
             result = await delete_workflow("123")
 
@@ -206,7 +206,7 @@ class TestDeleteWorkflow:
 
         mock_db = make_mock_database(mock_collection)
         with patch("common.database.mongodb.database", mock_db), patch(
-            "server.services.workflow.database", mock_db
+            "server.services.workflow.service.database", mock_db
         ):
             result = await delete_workflow("123")
 
@@ -223,7 +223,7 @@ class TestCreateNewWorkflow:
 
         mock_db = make_mock_database(mock_collection)
         with patch("common.database.mongodb.database", mock_db), patch(
-            "server.services.workflow.database", mock_db
+            "server.services.workflow.service.database", mock_db
         ):
             result = await create_new_workflow(workflow)
 

@@ -4,12 +4,12 @@ from common.model.delivery import DeliveryConfig
 from common.model.user import UserInDB
 from server.models.delivery import DeleteDeliveryResponse, DeliveryConfigResponse
 from server.services.auth.dependencies import get_current_user
-from server.services.delivery import (
+from server.services.exceptions import WorkflowNotFoundError
+from server.services.workflow.delivery import (
     get_workflow_delivery,
     remove_workflow_delivery,
     set_workflow_delivery,
 )
-from server.services.exceptions import WorkflowNotFoundError
 
 router = APIRouter(prefix="/api/workflows", tags=["delivery"])
 

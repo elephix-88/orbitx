@@ -20,7 +20,7 @@ from common.model.connection import (
     ServiceName,
 )
 from server.configs.config import settings
-from server.services.oauth_utils import make_state
+from server.services.oauth.utils import make_state
 
 
 class BaseOAuthService(ABC):

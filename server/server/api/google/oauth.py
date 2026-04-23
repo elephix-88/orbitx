@@ -7,7 +7,7 @@ from common.model.connection import ConnectionKey
 from common.model.token import GoogleConnectionParams
 from server.configs.config import settings
 from server.services.google.oauth import save_to_mongo
-from server.services.oauth_utils import verify_state
+from server.services.oauth.utils import verify_state
 
 router = APIRouter()
 

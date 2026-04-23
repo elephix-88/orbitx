@@ -6,7 +6,7 @@ from common.database.mongodb import database, find_many
 from common.model.workflow import WorkflowData
 from server.configs.config import settings
 from server.services.auth.context import get_current_user
-from server.services.workflow_utils import find_user_workflow
+from server.services.workflow.utils import find_user_workflow
 
 
 async def get_dashboard_stats(

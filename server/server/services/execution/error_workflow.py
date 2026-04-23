@@ -3,9 +3,9 @@ from loguru import logger
 from common.model.error_trigger import ErrorPayload
 from common.model.workflow import WorkflowData
 from server.models.error_workflow import TriggerErrorRequest, TriggerErrorResponse
-from server.services import prefect_client
 from server.services.exceptions import WorkflowNotFoundError
-from server.services.workflow_utils import find_user_workflow
+from server.services.execution import prefect_client
+from server.services.workflow.utils import find_user_workflow
 
 ERROR_TRIGGER_NODE_ID = "error_trigger"
 ERROR_PAYLOAD_TAG_KEY = "error_payload"

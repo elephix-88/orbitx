@@ -3,7 +3,7 @@
 from common.model.connection import ConnectionKey
 from common.model.token import GoogleConnectionParams
 from server.configs.config import settings
-from server.services.oauth_base import BaseOAuthService, save_connection_to_mongo
+from server.services.oauth.base import BaseOAuthService, save_connection_to_mongo
 
 
 class GoogleOAuthService(BaseOAuthService):

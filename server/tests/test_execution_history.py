@@ -23,13 +23,13 @@ class TestGetDashboardStats:
     @pytest.fixture
     def mock_mongodb(self):
         """Mock MongoDB client."""
-        with patch("server.services.execution_history.mongodb_client") as mock:
+        with patch("server.services.execution.history.mongodb_client") as mock:
             yield mock
 
     @pytest.fixture
     def mock_settings(self):
         """Mock settings."""
-        with patch("server.services.execution_history.settings") as mock:
+        with patch("server.services.execution.history.settings") as mock:
             mock.workflow_collection = "workflows"
             mock.execution_history_collection = "execution_history"
             yield mock
@@ -85,7 +85,7 @@ class TestGetDashboardStats:
         self, mock_mongodb, mock_settings, sample_workflows, sample_aggregation_result
     ):
         """Test successful dashboard stats retrieval."""
-        from server.services.execution_history import get_dashboard_stats
+        from server.services.execution.history import get_dashboard_stats
 
         mock_mongodb.get_all_documents.return_value = sample_workflows
         mock_mongodb.aggregate.return_value = sample_aggregation_result
@@ -104,7 +104,7 @@ class TestGetDashboardStats:
 
     def test_get_dashboard_stats_no_workflows(self, mock_mongodb, mock_settings):
         """Test dashboard stats when user has no workflows."""
-        from server.services.execution_history import get_dashboard_stats
+        from server.services.execution.history import get_dashboard_stats
 
         mock_mongodb.get_all_documents.return_value = []
 
@@ -123,7 +123,7 @@ class TestGetDashboardStats:
         self, mock_mongodb, mock_settings, sample_workflows
     ):
         """Test dashboard stats when workflows have no executions."""
-        from server.services.execution_history import get_dashboard_stats
+        from server.services.execution.history import get_dashboard_stats
 
         mock_mongodb.get_all_documents.return_value = sample_workflows
         mock_mongodb.aggregate.return_value = []
@@ -138,7 +138,7 @@ class TestGetDashboardStats:
         self, mock_mongodb, mock_settings, sample_workflows
     ):
         """Test dashboard stats when aggregation returns empty stats."""
-        from server.services.execution_history import get_dashboard_stats
+        from server.services.execution.history import get_dashboard_stats
 
         mock_mongodb.get_all_documents.return_value = sample_workflows
         mock_mongodb.aggregate.return_value = [
@@ -159,7 +159,7 @@ class TestGetDashboardStats:
         self, mock_mongodb, mock_settings, sample_aggregation_result
     ):
         """Test dashboard stats with specific workflow IDs."""
-        from server.services.execution_history import get_dashboard_stats
+        from server.services.execution.history import get_dashboard_stats
 
         mock_mongodb.get_all_documents.return_value = [
             MagicMock(id="workflow_1", job_name="Workflow One"),
@@ -180,7 +180,7 @@ class TestGetDashboardStats:
         self, mock_mongodb, mock_settings, sample_aggregation_result
     ):
         """Test dashboard stats when both IDs and names are provided."""
-        from server.services.execution_history import get_dashboard_stats
+        from server.services.execution.history import get_dashboard_stats
 
         mock_mongodb.aggregate.return_value = sample_aggregation_result
 
@@ -198,7 +198,7 @@ class TestGetDashboardStats:
         self, mock_mongodb, mock_settings, sample_workflows
     ):
         """Test that zero division is handled properly."""
-        from server.services.execution_history import get_dashboard_stats
+        from server.services.execution.history import get_dashboard_stats
 
         mock_mongodb.get_all_documents.return_value = sample_workflows
         mock_mongodb.aggregate.return_value = [
@@ -228,7 +228,7 @@ class TestGetDashboardStats:
         self, mock_mongodb, mock_settings, sample_workflows
     ):
         """Test that workflow names are added to recent executions."""
-        from server.services.execution_history import get_dashboard_stats
+        from server.services.execution.history import get_dashboard_stats
 
         mock_mongodb.get_all_documents.return_value = sample_workflows
         mock_mongodb.aggregate.return_value = [
@@ -266,13 +266,13 @@ class TestGetExecutionHistoryByWorkflow:
     @pytest.fixture
     def mock_mongodb(self):
         """Mock MongoDB client."""
-        with patch("server.services.execution_history.mongodb_client") as mock:
+        with patch("server.services.execution.history.mongodb_client") as mock:
             yield mock
 
     @pytest.fixture
     def mock_settings(self):
         """Mock settings."""
-        with patch("server.services.execution_history.settings") as mock:
+        with patch("server.services.execution.history.settings") as mock:
             mock.workflow_collection = "workflows"
             mock.execution_history_collection = "execution_history"
             yield mock
@@ -280,7 +280,7 @@ class TestGetExecutionHistoryByWorkflow:
     @pytest.fixture
     def mock_user_context(self):
         """Mock the user context."""
-        with patch("server.services.execution_history.get_current_user") as mock:
+        with patch("server.services.execution.history.get_current_user") as mock:
             mock.return_value = _MOCK_USER
             yield mock
 
@@ -324,7 +324,7 @@ class TestGetExecutionHistoryByWorkflow:
         sample_execution_history,
     ):
         """Test successful execution history retrieval."""
-        from server.services.execution_history import get_execution_history_by_workflow
+        from server.services.execution.history import get_execution_history_by_workflow
 
         mock_mongodb.get_document.return_value = sample_workflow
         mock_mongodb.get_all_documents.return_value = sample_execution_history
@@ -341,7 +341,7 @@ class TestGetExecutionHistoryByWorkflow:
         self, mock_mongodb, mock_settings, mock_user_context
     ):
         """Test execution history when workflow not found."""
-        from server.services.execution_history import get_execution_history_by_workflow
+        from server.services.execution.history import get_execution_history_by_workflow
 
         mock_mongodb.get_document.return_value = None
 
@@ -355,7 +355,7 @@ class TestGetExecutionHistoryByWorkflow:
         self, mock_mongodb, mock_settings, mock_user_context
     ):
         """Test that ownership is verified when getting execution history."""
-        from server.services.execution_history import get_execution_history_by_workflow
+        from server.services.execution.history import get_execution_history_by_workflow
 
         mock_mongodb.get_document.return_value = None  # Workflow not owned by user
 
@@ -370,7 +370,7 @@ class TestGetExecutionHistoryByWorkflow:
         self, mock_mongodb, mock_settings, mock_user_context, sample_workflow
     ):
         """Test execution history when workflow has no executions."""
-        from server.services.execution_history import get_execution_history_by_workflow
+        from server.services.execution.history import get_execution_history_by_workflow
 
         mock_mongodb.get_document.return_value = sample_workflow
         mock_mongodb.get_all_documents.return_value = []
@@ -383,7 +383,7 @@ class TestGetExecutionHistoryByWorkflow:
         self, mock_mongodb, mock_settings, mock_user_context, sample_workflow
     ):
         """Test that execution history preserves nested output data."""
-        from server.services.execution_history import get_execution_history_by_workflow
+        from server.services.execution.history import get_execution_history_by_workflow
 
         execution_with_output = [
             {
@@ -410,7 +410,7 @@ class TestGetExecutionHistoryByWorkflow:
         self, mock_mongodb, mock_settings, mock_user_context, sample_workflow
     ):
         """Test that execution history returns raw dicts (not Pydantic models)."""
-        from server.services.execution_history import get_execution_history_by_workflow
+        from server.services.execution.history import get_execution_history_by_workflow
 
         mock_mongodb.get_document.return_value = sample_workflow
 

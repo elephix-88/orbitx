@@ -3,8 +3,8 @@ import urllib.parse
 from common.model.connection import ConnectionKey
 from common.model.token import TikTokConnectionParams
 from server.configs.config import settings
-from server.services.oauth_base import save_connection_to_mongo
-from server.services.oauth_utils import make_state
+from server.services.oauth.base import save_connection_to_mongo
+from server.services.oauth.utils import make_state
 
 
 def build_tiktok_oauth_url(

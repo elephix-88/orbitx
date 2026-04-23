@@ -9,7 +9,7 @@ from common.database.mongodb import database
 from common.model.connection import ConnectionItem, ConnectionStatus, ConnectionType
 from server.configs.config import settings
 from server.services.exceptions import ExternalAPIError
-from server.services.oauth_utils import make_state, verify_state
+from server.services.oauth.utils import make_state, verify_state
 
 SLACK_AUTHORIZE_URL = "https://slack.com/oauth/v2/authorize"
 SLACK_TOKEN_URL = "https://slack.com/api/oauth.v2.access"

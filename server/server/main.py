@@ -27,7 +27,6 @@ from server.api.tiktok.oauth import router as tiktok_oauth_router
 from server.api.tiktok.tiktok_fields import router as tiktok_fields_router
 from server.api.workflow import router as workflow_router
 from server.configs.config import settings
-from server.middleware.request_logging import RequestLoggingMiddleware
 from server.middleware import (
     AuthContextMiddleware,
     CSRFMiddleware,
@@ -35,8 +34,9 @@ from server.middleware import (
     limiter,
     rate_limit_exceeded_handler,
 )
-from server.services import prefect_client
+from server.middleware.request_logging import RequestLoggingMiddleware
 from server.services.exceptions import OrbitXError
+from server.services.execution import prefect_client
 
 logger.remove()
 logger.add(sys.stdout, colorize=True)

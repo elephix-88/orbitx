@@ -1,6 +1,6 @@
 from common.model.workflow import ScheduleConfig
 from server.services.auth.context import get_current_user
-from server.services.workflow_field import (
+from server.services.workflow.field import (
     get_workflow_field,
     remove_workflow_field,
     set_workflow_field,

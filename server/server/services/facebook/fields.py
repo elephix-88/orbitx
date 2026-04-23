@@ -1,6 +1,6 @@
 from common.model.facebook.fields import FacebookField
 from server.configs.config import settings
-from server.services.field_service import get_fields
+from server.services.connection.field import get_fields
 
 
 async def get_facebook_fields() -> list[FacebookField]:

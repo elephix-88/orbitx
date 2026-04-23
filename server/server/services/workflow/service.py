@@ -7,13 +7,13 @@ from common.model.execution import ExecutionHistory, ExecutionStep, Status
 from common.model.workflow import JobIdRequest, WorkflowData, WorkflowSummary
 from common.model.workflow_rules import validate_workflow_structure
 from server.configs.config import settings
-from server.services import prefect_client
 from server.services.auth.context import get_current_user
 from server.services.exceptions import (
     ValidationError,
     WorkflowNotFoundError,
     WorkflowStructureError,
 )
+from server.services.execution import prefect_client
 from server.services.utils import generate_uuid
 
 

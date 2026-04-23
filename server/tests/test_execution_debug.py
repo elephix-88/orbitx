@@ -70,7 +70,7 @@ def make_success_step(
 
 class TestExtractFailedNode:
     def test_returns_node_id_of_first_failed_step(self):
-        from server.services.execution_debug import extract_failed_node
+        from server.services.execution.debug import extract_failed_node
 
         document = make_execution_document(
             steps={
@@ -81,7 +81,7 @@ class TestExtractFailedNode:
         assert extract_failed_node(document) == "bigquery_loader"
 
     def test_returns_none_when_all_steps_succeed(self):
-        from server.services.execution_debug import extract_failed_node
+        from server.services.execution.debug import extract_failed_node
 
         document = make_execution_document(
             steps={"step_1": make_success_step()}
@@ -89,13 +89,13 @@ class TestExtractFailedNode:
         assert extract_failed_node(document) is None
 
     def test_returns_none_for_empty_steps(self):
-        from server.services.execution_debug import extract_failed_node
+        from server.services.execution.debug import extract_failed_node
 
         document = make_execution_document(steps={})
         assert extract_failed_node(document) is None
 
     def test_returns_first_failed_node_when_multiple_fail(self):
-        from server.services.execution_debug import extract_failed_node
+        from server.services.execution.debug import extract_failed_node
 
         document = make_execution_document(
             steps={
@@ -113,7 +113,7 @@ class TestExtractFailedNode:
 
 class TestDocumentToExecutionSummary:
     def test_maps_all_fields_correctly(self):
-        from server.services.execution_debug import document_to_execution_summary
+        from server.services.execution.debug import document_to_execution_summary
 
         document = make_execution_document(exec_status="SUCCESS")
         summary = document_to_execution_summary(document)
@@ -126,14 +126,14 @@ class TestDocumentToExecutionSummary:
         assert summary.triggered_by == "manual"
 
     def test_failed_node_is_none_when_no_failure(self):
-        from server.services.execution_debug import document_to_execution_summary
+        from server.services.execution.debug import document_to_execution_summary
 
         document = make_execution_document(steps={"step_1": make_success_step()})
         summary = document_to_execution_summary(document)
         assert summary.failed_node is None
 
     def test_failed_node_is_populated_when_step_failed(self):
-        from server.services.execution_debug import document_to_execution_summary
+        from server.services.execution.debug import document_to_execution_summary
 
         document = make_execution_document(
             exec_status="FAILED",
@@ -143,7 +143,7 @@ class TestDocumentToExecutionSummary:
         assert summary.failed_node == "facebook_ads"
 
     def test_end_time_is_none_for_running_execution(self):
-        from server.services.execution_debug import document_to_execution_summary
+        from server.services.execution.debug import document_to_execution_summary
 
         document = {
             "execution_id": EXECUTION_ID,
@@ -172,7 +172,7 @@ class TestVerifyWorkflowOwnership:
 
     @pytest.mark.asyncio
     async def test_returns_workflow_when_found(self, mock_database):
-        from server.services.workflow_utils import get_user_workflow
+        from server.services.workflow.utils import get_user_workflow
 
         workflow_doc = {
             "_id": WORKFLOW_ID,
@@ -193,7 +193,7 @@ class TestVerifyWorkflowOwnership:
     @pytest.mark.asyncio
     async def test_raises_workflow_not_found_error_when_absent(self, mock_database):
         from server.services.exceptions import WorkflowNotFoundError
-        from server.services.workflow_utils import get_user_workflow
+        from server.services.workflow.utils import get_user_workflow
 
         mock_database.find_one = AsyncMock(return_value=None)
 
@@ -210,7 +210,7 @@ class TestGetExecutionSummaries:
     @pytest.fixture
     def mock_verify(self):
         with patch(
-            "server.services.execution_debug.get_user_workflow",
+            "server.services.execution.debug.get_user_workflow",
             new_callable=AsyncMock,
         ) as mock:
             mock.return_value = MagicMock()
@@ -221,16 +221,16 @@ class TestGetExecutionSummaries:
         mock_collection = MagicMock()
         mock_db = MagicMock()
         mock_db.__getitem__ = MagicMock(return_value=mock_collection)
-        with patch("server.services.execution_debug.database", mock_db):
+        with patch("server.services.execution.debug.database", mock_db):
             yield mock_collection
 
     @pytest.mark.asyncio
     async def test_returns_empty_list_when_workflow_not_found(self):
         from server.services.exceptions import WorkflowNotFoundError
-        from server.services.execution_debug import get_execution_summaries
+        from server.services.execution.debug import get_execution_summaries
 
         with patch(
-            "server.services.execution_debug.get_user_workflow",
+            "server.services.execution.debug.get_user_workflow",
             new_callable=AsyncMock,
             side_effect=WorkflowNotFoundError(WORKFLOW_ID),
         ):
@@ -241,7 +241,7 @@ class TestGetExecutionSummaries:
     async def test_returns_summaries_sorted_newest_first(
         self, mock_verify, mock_database
     ):
-        from server.services.execution_debug import get_execution_summaries
+        from server.services.execution.debug import get_execution_summaries
 
         doc_old = make_execution_document(
             execution_id="exec_old", exec_status="SUCCESS"
@@ -268,7 +268,7 @@ class TestGetExecutionSummaries:
     async def test_returns_empty_list_when_no_executions(
         self, mock_verify, mock_database
     ):
-        from server.services.execution_debug import get_execution_summaries
+        from server.services.execution.debug import get_execution_summaries
 
         mock_cursor = MagicMock()
         mock_cursor.sort.return_value = mock_cursor
@@ -289,7 +289,7 @@ class TestGetExecutionDetail:
     @pytest.fixture
     def mock_verify(self):
         with patch(
-            "server.services.execution_debug.get_user_workflow",
+            "server.services.execution.debug.get_user_workflow",
             new_callable=AsyncMock,
         ) as mock:
             mock.return_value = MagicMock()
@@ -307,7 +307,7 @@ class TestGetExecutionDetail:
     async def test_raises_value_error_when_execution_not_found(
         self, mock_verify, mock_database
     ):
-        from server.services.execution_debug import get_execution_detail
+        from server.services.execution.debug import get_execution_detail
 
         mock_database.find_one = AsyncMock(return_value=None)
 
@@ -318,7 +318,7 @@ class TestGetExecutionDetail:
     async def test_returns_execution_history_with_normalised_id(
         self, mock_verify, mock_database
     ):
-        from server.services.execution_debug import get_execution_detail
+        from server.services.execution.debug import get_execution_detail
 
         document = make_execution_document()
         mock_database.find_one = AsyncMock(return_value=document)
@@ -333,7 +333,7 @@ class TestGetExecutionDetail:
     async def test_verifies_ownership_before_fetching(
         self, mock_verify, mock_database
     ):
-        from server.services.execution_debug import get_execution_detail
+        from server.services.execution.debug import get_execution_detail
 
         document = make_execution_document()
         mock_database.find_one = AsyncMock(return_value=document)
@@ -354,7 +354,7 @@ class TestRetryExecution:
         mock_workflow = MagicMock()
         mock_workflow.job_name = "My Pipeline"
         with patch(
-            "server.services.execution_debug.get_user_workflow",
+            "server.services.execution.debug.get_user_workflow",
             new_callable=AsyncMock,
             return_value=mock_workflow,
         ) as mock:
@@ -362,13 +362,13 @@ class TestRetryExecution:
 
     @pytest.fixture
     def mock_prefect(self):
-        with patch("server.services.execution_debug.prefect_client") as mock:
+        with patch("server.services.execution.debug.prefect_client") as mock:
             mock.launch_run = AsyncMock(return_value="run_retry_001")
             yield mock
 
     @pytest.mark.asyncio
     async def test_launches_prefect_run_on_success(self, mock_verify, mock_prefect):
-        from server.services.execution_debug import retry_execution
+        from server.services.execution.debug import retry_execution
 
         result = await retry_execution(WORKFLOW_ID, EXECUTION_ID, USER_ID)
 
@@ -379,7 +379,7 @@ class TestRetryExecution:
     async def test_launch_passes_workflow_id_and_user_id(
         self, mock_verify, mock_prefect
     ):
-        from server.services.execution_debug import retry_execution
+        from server.services.execution.debug import retry_execution
 
         await retry_execution(WORKFLOW_ID, EXECUTION_ID, USER_ID)
 
@@ -390,10 +390,10 @@ class TestRetryExecution:
     @pytest.mark.asyncio
     async def test_raises_when_workflow_not_owned(self, mock_prefect):
         from server.services.exceptions import WorkflowNotFoundError
-        from server.services.execution_debug import retry_execution
+        from server.services.execution.debug import retry_execution
 
         with patch(
-            "server.services.execution_debug.get_user_workflow",
+            "server.services.execution.debug.get_user_workflow",
             new_callable=AsyncMock,
             side_effect=WorkflowNotFoundError(WORKFLOW_ID),
         ), pytest.raises(WorkflowNotFoundError):

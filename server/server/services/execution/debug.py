@@ -7,9 +7,9 @@ from common.database.mongodb import database, find_one
 from common.model.execution import ExecutionHistory
 from server.configs.config import settings
 from server.models.execution_debug import ExecutionSummary, RetryResponse
-from server.services import prefect_client
 from server.services.exceptions import WorkflowNotFoundError
-from server.services.workflow_utils import get_user_workflow
+from server.services.execution import prefect_client
+from server.services.workflow.utils import get_user_workflow
 
 EXECUTION_LIST_DAYS = 30
 EXECUTION_LIST_LIMIT = 100

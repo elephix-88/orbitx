@@ -4,7 +4,7 @@ from common.database.mongodb import database, find_one
 from server.configs.config import settings
 from server.models.execution import DeliveryStatus, ExecutionDeliveryStatus
 from server.services.auth.context import get_current_user
-from server.services.workflow_utils import find_user_workflow
+from server.services.workflow.utils import find_user_workflow
 
 
 async def set_execution_delivery_status(

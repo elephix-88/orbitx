@@ -8,7 +8,7 @@ class TestGoogleOAuthServices:
     @pytest.mark.unit
     def test_make_state_success(self):
         """Test successful state creation."""
-        from server.services.oauth_utils import make_state
+        from server.services.oauth.utils import make_state
 
         # Act
         state = make_state("Source", "conn_123", "GoogleAds", "Test Connection")
@@ -20,7 +20,7 @@ class TestGoogleOAuthServices:
     @pytest.mark.unit
     def test_verify_state_success(self):
         """Test successful state verification."""
-        from server.services.oauth_utils import make_state, verify_state
+        from server.services.oauth.utils import make_state, verify_state
 
         # Arrange - create state using the same settings that conftest.py mocks
         original_state = make_state(
@@ -40,7 +40,7 @@ class TestGoogleOAuthServices:
     @pytest.mark.unit
     def test_verify_state_invalid_format(self):
         """Test state verification with invalid format."""
-        from server.services.oauth_utils import verify_state
+        from server.services.oauth.utils import verify_state
 
         # Act & Assert
         with pytest.raises(ValueError, match="Invalid state format"):

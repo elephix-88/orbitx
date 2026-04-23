@@ -3,9 +3,9 @@ import json
 
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from fastapi.responses import JSONResponse
-from sse_starlette.sse import EventSourceResponse
 from loguru import logger
 from pymongo.errors import DuplicateKeyError
+from sse_starlette.sse import EventSourceResponse
 
 from common.database.mongodb import database, find_one
 from common.model.execution import Status
@@ -15,21 +15,23 @@ from server.configs.config import settings
 from server.middleware import limiter
 from server.models.error_workflow import TriggerErrorRequest, TriggerErrorResponse
 from server.models.schedule import ScheduleConfig, ScheduleResponse
-from server.services.auth.dependencies import get_current_user, get_current_user_optional
-from server.services.error_workflow import trigger_error_workflow
+from server.services.auth.dependencies import (
+    get_current_user,
+    get_current_user_optional,
+)
 from server.services.exceptions import WorkflowNotFoundError, WorkflowStructureError
-from server.services.workflow_utils import get_user_workflow
-from server.services.preview import (
+from server.services.execution.error_workflow import trigger_error_workflow
+from server.services.execution.preview import (
     PreviewNodeRequest,
     PreviewNodeResponse,
     preview_node_data,
 )
-from server.services.schedule import (
+from server.services.workflow.schedule import (
     get_workflow_schedule,
     remove_workflow_schedule,
     set_workflow_schedule,
 )
-from server.services.workflow import (
+from server.services.workflow.service import (
     create_new_workflow,
     delete_workflow,
     execute_workflow,
@@ -37,6 +39,7 @@ from server.services.workflow import (
     get_workflow_builder,
     update_workflow,
 )
+from server.services.workflow.utils import get_user_workflow
 
 router = APIRouter(prefix="/api/workflows", tags=["workflows"])
 
