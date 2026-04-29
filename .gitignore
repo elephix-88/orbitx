@@ -38,6 +38,9 @@ web/dist/
 web/.next/
 web/stats.html
 
+# Claude Code skills
+.claude/skills/
+
 # OS
 .DS_Store
 Thumbs.db

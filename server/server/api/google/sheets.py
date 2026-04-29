@@ -32,7 +32,9 @@ async def login_google_sheets(
     connection_id = generate_uuid()
     # Combine Sheets and Drive scopes for full functionality
     combined_scope = (
-        f"{settings.google_oauth_sheets_scope} {settings.google_oauth_drive_scope}"
+        f"{settings.google_oauth_sheets_scope} "
+        f"{settings.google_oauth_drive_scope} "
+        f"{settings.google_oauth_drive_file_scope}"
     )
     oauth_url = build_google_oauth_url(
         scope=combined_scope,

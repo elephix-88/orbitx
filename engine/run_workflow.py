@@ -6,6 +6,7 @@ Usage:
 """
 
 import argparse
+import uuid
 
 from loguru import logger
 
@@ -14,7 +15,6 @@ from engine.orchestration.runner import (
     load_workflow,
     sanitize_name,
 )
-from server.services.utils import generate_uuid
 
 
 def main():
@@ -27,7 +27,7 @@ def main():
     )
     arguments = parser.parse_args()
 
-    execution_id = arguments.execution_id or generate_uuid()
+    execution_id = arguments.execution_id or str(uuid.uuid4())
     workflow = load_workflow(arguments.workflow_id)
     job_name = sanitize_name(workflow.job_name)
 

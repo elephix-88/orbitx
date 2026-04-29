@@ -9,16 +9,16 @@ from server.models.execution import ExecutionDeliveryStatus
 from server.models.execution_debug import ExecutionSummary, RetryResponse
 from server.services.auth.dependencies import get_current_user
 from server.services.exceptions import WorkflowNotFoundError
-from server.services.execution_debug import (
+from server.services.execution.debug import (
     get_execution_detail,
     get_execution_summaries,
     retry_execution,
 )
-from server.services.execution_delivery import (
+from server.services.execution.delivery import (
     get_execution_delivery_status,
     set_execution_delivery_status,
 )
-from server.services.execution_history import (
+from server.services.execution.history import (
     get_dashboard_stats,
     get_execution_history_by_workflow,
 )

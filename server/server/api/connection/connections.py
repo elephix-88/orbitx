@@ -3,9 +3,11 @@ from fastapi import APIRouter, Depends, HTTPException
 from common.model.connection import ConnectionItem, DeleteConnectionResponse
 from common.model.user import UserInDB
 from server.services.auth.dependencies import get_current_user
-from server.services.connection import delete_connection as delete_connection_service
-from server.services.connection import get_all_connections
-from server.services.connection import get_connection as get_connection_service
+from server.services.connection.service import (
+    delete_connection as delete_connection_service,
+)
+from server.services.connection.service import get_all_connections
+from server.services.connection.service import get_connection as get_connection_service
 
 router = APIRouter()
 

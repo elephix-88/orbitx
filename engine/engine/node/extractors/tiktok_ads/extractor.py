@@ -41,6 +41,7 @@ class TikTokAdsExtractor(Extractor):
         metrics: list[str],
         data_level: str,
         report_type: str,
+        row_limit: int | None = None,
     ) -> list[dict[str, Any]]:
         """Fetch report data for a single advertiser."""
         records: list[dict[str, Any]] = []
@@ -59,6 +60,10 @@ class TikTokAdsExtractor(Extractor):
                 report_type=report_type,
             )
             records.extend(rows)
+
+            if row_limit and len(records) >= row_limit:
+                records = records[:row_limit]
+                break
 
         return records
 
@@ -129,7 +134,7 @@ class TikTokAdsExtractor(Extractor):
 
         return merged_df
 
-    async def extract(self) -> ExtractorResult:
+    async def extract(self, row_limit: int | None = None) -> ExtractorResult:
         """Extract data from TikTok Ads API."""
         async with extraction_lifecycle(
             "TikTok Ads Extraction",
@@ -194,6 +199,9 @@ class TikTokAdsExtractor(Extractor):
             all_dfs = [df for df in results if not df.empty]
 
             df = pd.concat(all_dfs, ignore_index=True) if all_dfs else pd.DataFrame()
+
+            if row_limit:
+                df = df.head(row_limit)
 
             primary_keys = plan.primary_keys.copy()
             if "advertiser_id" not in primary_keys:

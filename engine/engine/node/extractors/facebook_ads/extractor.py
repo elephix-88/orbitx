@@ -29,7 +29,7 @@ class FacebookAdsExtractor(Extractor):
     def __init__(self, config: FacebookAdsConfig):
         self.config = config
 
-    async def extract(self) -> ExtractorResult:
+    async def extract(self, row_limit: int | None = None) -> ExtractorResult:
         """Extract data from Facebook Ads API."""
         async with extraction_lifecycle(
             "Facebook Ads Extraction",
@@ -84,6 +84,9 @@ class FacebookAdsExtractor(Extractor):
                 post_process_fields=list(post_process_fields),
                 access_token=access_token,
             )
+
+            if row_limit:
+                df = df.head(row_limit)
 
             return ExtractorResult(
                 data=df,

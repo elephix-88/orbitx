@@ -17,7 +17,7 @@ class BigQueryExtractor(Extractor):
     def __init__(self, config: BigQuerySourceConfig):
         self.config = config
 
-    async def extract(self) -> ExtractorResult:
+    async def extract(self, row_limit: int | None = None) -> ExtractorResult:
         """Execute SQL query and return results as DataFrame."""
         try:
             logger.info(
@@ -34,6 +34,9 @@ class BigQueryExtractor(Extractor):
                 client.query, self.config.query, location=self.config.location
             )
             df = await asyncio.to_thread(query_job.to_dataframe)
+
+            if row_limit:
+                df = df.head(row_limit)
 
             logger.success(
                 f"Extracted {len(df)} rows from BigQuery "

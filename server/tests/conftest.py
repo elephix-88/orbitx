@@ -113,6 +113,8 @@ mock_settings.google_oauth_client_id = "test_client_id"
 mock_settings.google_oauth_client_secret = "test_client_secret"
 mock_settings.google_oauth_redirect_uri = "http://localhost:8080/oauth2callback"
 mock_settings.google_oauth_sheets_scope = "https://www.googleapis.com/auth/spreadsheets"
+mock_settings.google_oauth_drive_scope = "https://www.googleapis.com/auth/drive.readonly"
+mock_settings.google_oauth_drive_file_scope = "https://www.googleapis.com/auth/drive.file"
 mock_settings.google_oauth_ads_scope = "https://www.googleapis.com/auth/adwords"
 mock_settings.google_oauth_bigquery_scope = "https://www.googleapis.com/auth/bigquery"
 mock_settings.oauth_state_secret = "test_oauth_state_secret_12345"
@@ -151,7 +153,7 @@ sys.modules["server.configs.config"] = mock_config_module
 # server.main calls await prefect_client.register_flow() in its lifespan,
 # which tries to reach the Prefect server. Patch this before server.main
 # is imported to ensure endpoint tests using the app TestClient don't fail.
-patch("server.services.prefect_client.register_flow", new_callable=AsyncMock).start()
+patch("server.services.execution.prefect_client.register_flow", new_callable=AsyncMock).start()
 
 
 # =============================================================================
@@ -181,7 +183,7 @@ def setup_test_environment() -> None:
     if hasattr(__import__("common.database.mongodb", fromlist=["close_mongodb"]), "close_mongodb"):
         patch("common.database.mongodb.close_mongodb", return_value=None).start()
     # Prevent app startup from connecting to Prefect server
-    patch("server.services.prefect_client.register_flow", new_callable=AsyncMock).start()
+    patch("server.services.execution.prefect_client.register_flow", new_callable=AsyncMock).start()
 
 
 # =============================================================================

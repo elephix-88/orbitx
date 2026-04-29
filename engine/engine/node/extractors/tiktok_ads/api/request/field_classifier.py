@@ -1,19 +1,18 @@
 """Field classification for TikTok Ads API request planning."""
 
-from dataclasses import dataclass, field
+from pydantic import BaseModel, Field
 
 from common.model.tiktok.fields import TikTokField, TikTokReportLevel
 
 
-@dataclass
-class ClassifiedFields:
+class ClassifiedFields(BaseModel):
     """Classified fields for request planning."""
 
-    basic_dimensions: list[str] = field(default_factory=list)
-    audience_dimensions: list[str] = field(default_factory=list)
-    metrics: list[str] = field(default_factory=list)
-    hierarchy_fields: list[TikTokField] = field(default_factory=list)
-    primary_keys: list[str] = field(default_factory=list)
+    basic_dimensions: list[str] = Field(default_factory=list)
+    audience_dimensions: list[str] = Field(default_factory=list)
+    metrics: list[str] = Field(default_factory=list)
+    hierarchy_fields: list[TikTokField] = Field(default_factory=list)
+    primary_keys: list[str] = Field(default_factory=list)
     report_level: TikTokReportLevel = TikTokReportLevel.AUCTION_CAMPAIGN
 
     @property

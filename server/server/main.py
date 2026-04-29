@@ -34,8 +34,9 @@ from server.middleware import (
     limiter,
     rate_limit_exceeded_handler,
 )
-from server.services import prefect_client
+from server.middleware.request_logging import RequestLoggingMiddleware
 from server.services.exceptions import OrbitXError
+from server.services.execution import prefect_client
 
 logger.remove()
 logger.add(sys.stdout, colorize=True)
@@ -87,6 +88,7 @@ app.add_middleware(
 app.add_middleware(SecurityHeadersMiddleware)
 app.add_middleware(CSRFMiddleware)
 app.add_middleware(AuthContextMiddleware)
+app.add_middleware(RequestLoggingMiddleware)
 
 app.include_router(auth_router)
 app.include_router(workflow_router)

@@ -1,6 +1,6 @@
 """Request planning for TikTok Ads API."""
 
-from dataclasses import dataclass, field
+from pydantic import BaseModel, Field
 
 from common.model.tiktok.fields import TikTokField, TikTokReportLevel
 from engine.configs.config import settings
@@ -10,8 +10,7 @@ from engine.node.extractors.tiktok_ads.api.request.field_classifier import (
 )
 
 
-@dataclass
-class ReportRequest:
+class ReportRequest(BaseModel):
     """A single report API request configuration."""
 
     report_type: str
@@ -26,8 +25,7 @@ class ReportRequest:
         )
 
 
-@dataclass
-class HierarchyRequest:
+class HierarchyRequest(BaseModel):
     """A hierarchy API request configuration."""
 
     endpoint: str
@@ -37,14 +35,13 @@ class HierarchyRequest:
         return f"HierarchyRequest({self.endpoint}, fields={self.fields})"
 
 
-@dataclass
-class RequestPlan:
+class RequestPlan(BaseModel):
     """Complete request plan for TikTok data extraction."""
 
     basic_request: ReportRequest | None = None
     audience_request: ReportRequest | None = None
-    hierarchy_requests: list[HierarchyRequest] = field(default_factory=list)
-    primary_keys: list[str] = field(default_factory=list)
+    hierarchy_requests: list[HierarchyRequest] = Field(default_factory=list)
+    primary_keys: list[str] = Field(default_factory=list)
     report_level: TikTokReportLevel = TikTokReportLevel.AUCTION_CAMPAIGN
     classified_fields: ClassifiedFields | None = None
 

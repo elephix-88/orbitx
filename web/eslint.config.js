@@ -6,7 +6,7 @@ import tseslint from '@typescript-eslint/eslint-plugin'
 import tsParser from '@typescript-eslint/parser'
 
 export default [
-  { ignores: ['dist'] },
+  { ignores: ['dist', '.next', 'node_modules', 'coverage'] },
   {
     files: ['**/*.{ts,tsx}'],
     languageOptions: {

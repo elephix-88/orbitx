@@ -11,11 +11,11 @@ from common.model.connection import (
     ServiceName,
 )
 from common.model.token import TikTokConnectionParams
+from common.model.user import UserInDB
 from server.configs.config import settings
 from server.middleware import limiter
-from common.model.user import UserInDB
 from server.services.auth.dependencies import get_current_user
-from server.services.oauth_utils import verify_state
+from server.services.oauth.utils import verify_state
 from server.services.tiktok.oauth import build_tiktok_oauth_url, save_to_mongo
 from server.services.utils import generate_uuid
 

@@ -8,44 +8,60 @@ module.exports = {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['Inter', 'ui-sans-serif', 'system-ui', '-apple-system', 'sans-serif'],
-        display: ['Inter', 'ui-sans-serif', 'system-ui', 'sans-serif'],
-        mono: ['JetBrains Mono', 'ui-monospace', 'monospace'],
+        sans: ['Geist Variable', 'Noto Sans Thai', 'ui-sans-serif', 'system-ui', '-apple-system', 'sans-serif'],
+        display: ['Geist Variable', 'ui-sans-serif', 'system-ui', 'sans-serif'],
+        mono: ['Geist Mono Variable', 'JetBrains Mono', 'ui-monospace', 'monospace'],
       },
       fontSize: {
-        xs: ['11px', { lineHeight: '1.5' }],
+        // Aligned with the hardcoded pixel sizes the redesigned pages use,
+        // so both Tailwind-scale classes (text-sm, text-base) and
+        // literal text-[13px]/text-[14px] values produce consistent sizing.
+        xs: ['12px', { lineHeight: '1.5' }],
         sm: ['13px', { lineHeight: '1.5' }],
-        base: ['14px', { lineHeight: '1.5' }],
+        base: ['14px', { lineHeight: '1.55' }],
         lg: ['16px', { lineHeight: '1.4' }],
         xl: ['20px', { lineHeight: '1.3' }],
         '2xl': ['24px', { lineHeight: '1.2' }],
         '3xl': ['30px', { lineHeight: '1.1' }],
       },
       colors: {
-        /* Raw neutral — zinc scale */
+        /* Raw neutral — slate scale */
         neutral: {
-          50: '#F5F5F5',
-          100: '#E8E8EC',
-          200: '#D4D4DB',
-          300: '#B0B0BC',
-          400: '#8A8A9A',
-          500: '#6B6B7A',
-          600: '#4A4A56',
-          700: '#373741',
-          800: '#282830',
-          900: '#1C1C21',
-          950: '#111114',
+          50: '#F8FAFC',
+          100: '#F1F5F9',
+          200: '#E2E8F0',
+          300: '#CBD5E1',
+          400: '#94A3B8',
+          500: '#64748B',
+          600: '#475569',
+          700: '#334155',
+          800: '#1E293B',
+          900: '#0F172A',
+          950: '#020617',
         },
-        /* Raw primary — yellow */
+        /* Raw primary — blue */
         primary: {
-          50: '#FEFCE8',
-          100: '#FEF9C3',
-          200: '#FEF08A',
-          300: '#FDE047',
-          400: '#FACC15',
-          500: '#EAB308',
-          600: '#CA8A04',
-          700: '#A16207',
+          50: '#EFF6FF',
+          100: '#DBEAFE',
+          200: '#BFDBFE',
+          300: '#93C5FD',
+          400: '#60A5FA',
+          500: '#3B82F6',
+          600: '#2563EB',
+          700: '#1D4ED8',
+          800: '#1E40AF',
+          900: '#1E3A8A',
+        },
+        /* Accent — amber */
+        accent: {
+          50: '#FFFBEB',
+          100: '#FEF3C7',
+          200: '#FDE68A',
+          300: '#FCD34D',
+          400: '#FBBF24',
+          500: '#F59E0B',
+          600: '#D97706',
+          700: '#B45309',
         },
         /* Backward compat — brand via CSS variables */
         brand: {
@@ -102,6 +118,40 @@ module.exports = {
           DEFAULT: 'rgb(var(--info) / <alpha-value>)',
           dark: 'rgb(var(--info-dark) / <alpha-value>)',
         },
+
+        /* ── Light Professional tokens ── */
+        // Function form supports Tailwind opacity modifiers (/50, /30 etc.)
+        'navy': ({ opacityValue }) => opacityValue !== undefined ? `rgba(11,26,94,${opacityValue})` : '#0B1A5E',
+        'blue-primary': ({ opacityValue }) => opacityValue !== undefined ? `rgba(24,72,243,${opacityValue})` : '#1848F3',
+        'blue-primary-hover': 'var(--blue-primary-hover)',
+        'blue-soft': ({ opacityValue }) => opacityValue !== undefined ? `rgba(238,242,254,${opacityValue})` : '#EEF2FE',
+        'blue-border': ({ opacityValue }) => opacityValue !== undefined ? `rgba(194,212,249,${opacityValue})` : '#C2D4F9',
+
+        'bg-page': ({ opacityValue }) => opacityValue !== undefined ? `rgba(247,249,252,${opacityValue})` : '#F7F9FC',
+        'bg-card': ({ opacityValue }) => opacityValue !== undefined ? `rgba(255,255,255,${opacityValue})` : '#FFFFFF',
+        'bg-row-alt': ({ opacityValue }) => opacityValue !== undefined ? `rgba(250,251,253,${opacityValue})` : '#FAFBFD',
+        'bg-row-hv': ({ opacityValue }) => opacityValue !== undefined ? `rgba(242,245,251,${opacityValue})` : '#F2F5FB',
+        'bg-muted': ({ opacityValue }) => opacityValue !== undefined ? `rgba(241,245,249,${opacityValue})` : '#F1F5F9',
+
+        'line-1': ({ opacityValue }) => opacityValue !== undefined ? `rgba(229,234,242,${opacityValue})` : '#E5EAF2',
+        'line-2': ({ opacityValue }) => opacityValue !== undefined ? `rgba(211,218,230,${opacityValue})` : '#D3DAE6',
+        'line-soft': ({ opacityValue }) => opacityValue !== undefined ? `rgba(238,242,247,${opacityValue})` : '#EEF2F7',
+
+        'text-1': ({ opacityValue }) => opacityValue !== undefined ? `rgba(14,23,42,${opacityValue})` : '#0E172A',
+        'text-2': ({ opacityValue }) => opacityValue !== undefined ? `rgba(59,69,87,${opacityValue})` : '#3B4557',
+        'text-3': ({ opacityValue }) => opacityValue !== undefined ? `rgba(100,116,139,${opacityValue})` : '#64748B',
+        'text-4': ({ opacityValue }) => opacityValue !== undefined ? `rgba(148,162,184,${opacityValue})` : '#94A2B8',
+
+        'success-bg': 'var(--success-bg)',
+        'success-border': 'var(--success-border)',
+        'warning-bg': 'var(--warning-bg)',
+        'warning-border': 'var(--warning-border)',
+        'danger': 'var(--danger)',
+        'danger-bg': 'var(--danger-bg)',
+        'danger-border': 'var(--danger-border)',
+        'violet': 'var(--violet)',
+        'violet-bg': 'var(--violet-bg)',
+        'violet-border': 'var(--violet-border)',
       },
       borderRadius: {
         'none': '0',
@@ -115,12 +165,16 @@ module.exports = {
       },
       boxShadow: {
         'none': 'none',
-        'sm': '0 1px 3px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.03)',
-        'DEFAULT': '0 2px 6px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.04)',
-        'md': '0 4px 16px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05)',
-        'lg': '0 8px 30px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.05)',
-        'glow': '0 0 20px rgba(250, 204, 21, 0.15)',
-        'glow-sm': '0 0 10px rgba(250, 204, 21, 0.1)',
+        'sm': 'var(--shadow-sm)',
+        'DEFAULT': 'var(--shadow-sm)',
+        'md': 'var(--shadow-md)',
+        'lg': 'var(--shadow-lg)',
+        'glow': '0 0 20px rgba(59, 130, 246, 0.15)',
+        'glow-sm': '0 0 10px rgba(59, 130, 246, 0.1)',
+        'dark-sm': '0 1px 3px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.03)',
+        'dark': '0 2px 6px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.04)',
+        'dark-md': '0 4px 16px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05)',
+        'dark-lg': '0 8px 30px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.05)',
       },
       spacing: {
         '18': '4.5rem',

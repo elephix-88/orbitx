@@ -98,18 +98,6 @@ class ValidationError(OrbitXError):
         self.field = field
 
 
-class TokenError(OrbitXError):
-    """Raised when token operations fail."""
-
-    status_code = 401
-
-    def __init__(self, reason: str):
-        super().__init__(
-            message="Token error",
-            details=reason,
-        )
-
-
 class WorkflowStructureError(OrbitXError):
     """Raised when workflow node connections violate structural rules."""
 

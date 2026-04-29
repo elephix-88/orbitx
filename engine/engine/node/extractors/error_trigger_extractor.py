@@ -11,13 +11,13 @@ class ErrorTriggerExtractor(Extractor):
 
     Unlike other extractors, this does not call an external API. The ErrorPayload
     is injected into the config at runtime by the trigger-error endpoint before
-    the workflow is submitted to Dagster.
+    the workflow is submitted to Prefect.
     """
 
     def __init__(self, config: ErrorTriggerConfig) -> None:
         self.config = config
 
-    async def extract(self) -> ExtractorResult:
+    async def extract(self, row_limit: int | None = None) -> ExtractorResult:
         logger.info("Extracting error trigger payload")
 
         if self.config.error_payload is None:

@@ -9,14 +9,10 @@ default:
   database: cron5
   workflow_collection: workflow
   connection_collection: connections
-  platform_tokens: platform_tokens
   facebook_fields: facebook_fields
   google_fields: google_fields
   tiktok_fields: tiktok_fields
   execution_history_collection: execution_history
-  pinned_data_collection: pinned_node_data
-  alert_history_collection: alert_history
-  share_tokens_collection: share_tokens
   users_collection: users
 
   # JWT Auth (MUST be set via environment variable in production)
@@ -48,6 +44,7 @@ default:
   google_oauth_analytics_scope: https://www.googleapis.com/auth/analytics.readonly
   google_oauth_sheets_scope: https://www.googleapis.com/auth/spreadsheets
   google_oauth_drive_scope: https://www.googleapis.com/auth/drive.readonly
+  google_oauth_drive_file_scope: https://www.googleapis.com/auth/drive.file
   google_oauth_bigquery_scope: https://www.googleapis.com/auth/bigquery
   google_oauth_token_url: https://oauth2.googleapis.com/token
   google_ads_developer_token:

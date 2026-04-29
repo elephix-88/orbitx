@@ -10,12 +10,12 @@ from common.model.connection import ConnectionItem
 from common.model.google.ads import GoogleAdsAccount, GoogleAdsField
 from common.model.token import GoogleConnectionParams
 from server.configs.config import settings
+from server.services.connection.field import get_fields
 from server.services.exceptions import (
     ConnectionAuthError,
     ConnectionNotFoundError,
     ExternalAPIError,
 )
-from server.services.field_service import get_fields
 
 
 async def get_google_ads_fields() -> list[GoogleAdsField]:

@@ -7,6 +7,7 @@ import { renameTransformSpec } from './node-specs/transform.rename';
 import { joinTransformSpec } from './node-specs/transform.join';
 import { columnEditorTransformSpec } from './node-specs/transform.column-editor';
 import { unifyTransformSpec } from './node-specs/transform.unify';
+import { anomalyDetectorSpec } from './node-specs/transform.anomaly-detector';
 import { ifNodeSpec } from './node-specs/logic.if';
 import { switchNodeSpec } from './node-specs/logic.switch';
 import { mysqlDestSpec } from './node-specs/dest.mysql';
@@ -17,29 +18,30 @@ import type { NodeSpec } from './node-specs/types';
 export type { NodeSpec } from './node-specs/types';
 
 export const nodeRegistry: Record<string, NodeSpec> = {
-  'facebook.ads': facebookAdsSpec,
-  'google.ads': googleAdsSourceSpec,
-  'tiktok.ads': tiktokAdsSpec,
-  'source.error-trigger': errorTriggerSourceSpec,
-  'transform.sql': sqlTransformSpec,
-  'transform.rename': renameTransformSpec,
-  'transform.join': joinTransformSpec,
-  'transform.column-editor': columnEditorTransformSpec,
-  'transform.unify': unifyTransformSpec,
-  'logic.if': ifNodeSpec,
-  'logic.switch': switchNodeSpec,
-  'dest.mysql': mysqlDestSpec,
-  'dest.bigquery': bigQueryDestSpec,
-  'dest.googlesheets': googleSheetsDestSpec,
+ 'facebook.ads': facebookAdsSpec,
+ 'google.ads': googleAdsSourceSpec,
+ 'tiktok.ads': tiktokAdsSpec,
+ 'source.error-trigger': errorTriggerSourceSpec,
+ 'transform.sql': sqlTransformSpec,
+ 'transform.rename': renameTransformSpec,
+ 'transform.join': joinTransformSpec,
+ 'transform.column-editor': columnEditorTransformSpec,
+ 'transform.unify': unifyTransformSpec,
+ 'transform.anomaly-detector': anomalyDetectorSpec,
+ 'logic.if': ifNodeSpec,
+ 'logic.switch': switchNodeSpec,
+ 'dest.mysql': mysqlDestSpec,
+ 'dest.bigquery': bigQueryDestSpec,
+ 'dest.googlesheets': googleSheetsDestSpec,
 };
 
 export function getNodeSpec(typeId: string): NodeSpec | undefined {
-  return nodeRegistry[typeId];
+ return nodeRegistry[typeId];
 }
 
 export function getNodeSpecByDisplayName(name: string): NodeSpec | undefined {
-  const entry = Object.values(nodeRegistry).find(s => s.displayName === name);
-  return entry;
+ const entry = Object.values(nodeRegistry).find(s => s.displayName === name);
+ return entry;
 }
 
 

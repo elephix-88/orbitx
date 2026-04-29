@@ -8,7 +8,10 @@
       "Bash(cd /Users/natthapon.sri/Desktop/NSR/elephix/orbitx/orbitx-monorepo/web/src __NEW_LINE_1efe7d1bf8abfdaf__ grep -r \"from.*types/api\\\\|from.*types.*api\\\\|import.*from.*api\" . --include=\"*.ts\" --include=\"*.tsx\")",
       "Bash(cd /Users/natthapon.sri/Desktop/NSR/elephix/orbitx/orbitx-monorepo/web/src __NEW_LINE_84309a268a9b34a4__ grep -r \"createNodeSpec\" . --include=\"*.ts\" --include=\"*.tsx\")",
       "Bash(__NEW_LINE_3cdc5e15705a00df__ grep:*)",
-      "Read(//Users/natthapon.sri/Desktop/NSR/elephix/orbitx/orbitx-monorepo/**)"
+      "Read(//Users/natthapon.sri/Desktop/NSR/elephix/orbitx/orbitx-monorepo/**)",
+      "Read(//Users/natthapon.sri/.claude/**)",
+      "Read(//Users/natthapon.sri/**)",
+      "Bash(claude mcp *)"
     ],
     "additionalDirectories": [
       "/tmp"

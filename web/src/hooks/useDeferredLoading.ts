@@ -9,32 +9,32 @@ import { useState, useEffect, useRef } from 'react';
  * @returns Whether to show the loading UI
  */
 export function useDeferredLoading(isLoading: boolean, delay: number = 150): boolean {
-  const [showLoading, setShowLoading] = useState(false);
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+ const [showLoading, setShowLoading] = useState(false);
+ const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  useEffect(() => {
-    if (isLoading) {
-      // Start timer to show loading after delay
-      timerRef.current = setTimeout(() => {
-        setShowLoading(true);
-      }, delay);
-    } else {
-      // Clear timer and hide loading immediately when done
-      if (timerRef.current) {
-        clearTimeout(timerRef.current);
-        timerRef.current = null;
-      }
-      setShowLoading(false);
-    }
+ useEffect(() => {
+ if (isLoading) {
+ // Start timer to show loading after delay
+ timerRef.current = setTimeout(() => {
+ setShowLoading(true);
+ }, delay);
+ } else {
+ // Clear timer and hide loading immediately when done
+ if (timerRef.current) {
+ clearTimeout(timerRef.current);
+ timerRef.current = null;
+ }
+ setShowLoading(false);
+ }
 
-    return () => {
-      if (timerRef.current) {
-        clearTimeout(timerRef.current);
-      }
-    };
-  }, [isLoading, delay]);
+ return () => {
+ if (timerRef.current) {
+ clearTimeout(timerRef.current);
+ }
+ };
+ }, [isLoading, delay]);
 
-  return showLoading;
+ return showLoading;
 }
 
 export default useDeferredLoading;

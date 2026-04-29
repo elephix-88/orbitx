@@ -1,4 +1,5 @@
 from abc import ABC, abstractmethod
+from datetime import datetime
 from typing import Any
 
 from common.model.common import BaseFieldSchema
@@ -12,8 +13,12 @@ class Extractor(ABC):
         pass
 
     @abstractmethod
-    async def extract(self) -> Any:
+    async def extract(self, row_limit: int | None = None) -> Any:
         """Extract data from source.
+
+        Args:
+            row_limit: When set, stop pagination early after reaching this many rows.
+                       Used for lightweight data previews.
 
         Returns:
             ExtractorResult containing the data
@@ -69,6 +74,8 @@ class Loader(ABC):
     config: Any  # Concrete loaders set this in __init__
     merge_keys: list[str] | None = None
     field_schemas: list[BaseFieldSchema] | None = None
+    execution_id: str | None = None
+    execution_datetime: datetime | None = None
 
     @abstractmethod
     def __init__(self, config: Any) -> None:
@@ -85,3 +92,10 @@ class Loader(ABC):
     def set_field_schemas(self, schemas: list[BaseFieldSchema] | None) -> None:
         """Set field schemas for type conversion."""
         self.field_schemas = schemas
+
+    def set_execution_context(
+        self, execution_id: str, execution_datetime: datetime
+    ) -> None:
+        """Set runtime execution context for template substitution."""
+        self.execution_id = execution_id
+        self.execution_datetime = execution_datetime

@@ -12,7 +12,7 @@ class TestWorkflowEndpoints:
 
     @pytest.fixture
     def mock_dagster(self):
-        with patch("server.services.workflow.dagster_client") as mock:
+        with patch("server.services.workflow.service.dagster_client") as mock:
             mock.reload_code_location.return_value = True
             mock.launch_run.return_value = "run_abc123"
             yield mock

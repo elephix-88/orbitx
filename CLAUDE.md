@@ -71,13 +71,32 @@ User clicks "Run" in web UI
   → Frontend SSE polls MongoDB for real-time status updates
 ```
 
-### Design System
+### Design System — Light Professional
 
-- Tailwind CSS with CSS variable tokens
-- Colors: indigo primary, cool gray neutrals, semantic status colors
-- Components: CVA-based variants in `web/src/components/shared/`
+**Palette:** navy `#0B1A5E` + electric-blue `#1848F3`. Light-only for v1.
+
+**CSS tokens** (defined in `web/src/index.css` `:root`):
+- Brand: `--navy`, `--blue-primary`, `--blue-primary-hover`, `--blue-soft`, `--blue-border`
+- Surfaces: `--bg-page`, `--bg-card`, `--bg-row-alt`, `--bg-row-hv`, `--bg-muted`
+- Hairlines: `--line-1`, `--line-2`, `--line-soft`
+- Text (4-tier): `--text-1` → `--text-4`
+- Semantic: `--success/bg/border`, `--warning/bg/border`, `--danger/bg/border`, `--violet/bg/border`
+- Shadows: `--shadow-sm`, `--shadow-md`, `--shadow-lg` (no glows)
+
+**Tailwind classes** (mapped from CSS tokens via `web/tailwind.config.js`):
+`bg-bg-card`, `bg-bg-page`, `bg-bg-muted`, `text-text-1`, `text-text-2`, `text-text-3`, `text-text-4`,
+`border-line-1`, `border-line-2`, `border-line-soft`, `text-blue-primary`, `bg-blue-primary`,
+`bg-blue-soft`, `border-blue-border`, `text-danger`, `bg-danger-bg`, `border-danger-border`, etc.
+
+**Fonts:** Inter 400/500/600/700 (body), IBM Plex Sans Thai (Thai fallback), JetBrains Mono (numbers/IDs/code)
+
+**Components:** CVA-based variants in `web/src/components/shared/`
+**Atoms:** Chip, Dot, Avatar, Sparkline, StatTile, SearchShell, SegmentedControl, Tabs, FlowChip, SelectionBar, FilterBar
+
 - Use `cn()` from `web/src/lib/utils.ts` for class merging
-- NO hardcoded hex colors in TSX files. Use token classes.
+- NO hardcoded hex colors in TSX files. Use token classes only.
+- NO gradient washes, NO colored glows — shadows only for elevation
+- English-only UI copy; stub unavailable data with `<EmptyState>` + `// FEATURE-TODO` markers
 
 ## Current Priorities
 

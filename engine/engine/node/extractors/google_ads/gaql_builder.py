@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from pydantic import BaseModel, ConfigDict
 
 from common.model.common import DateTimeConfig
 from common.model.google.ads import GoogleAdsBase
@@ -12,8 +12,9 @@ from engine.utils.datetime import get_time_range
 SelectedPair = tuple[str, str]
 
 
-@dataclass(frozen=True)
-class GaqlBuildResult:
+class GaqlBuildResult(BaseModel):
+    model_config = ConfigDict(frozen=True)
+
     query: str
     selected_pairs: list[SelectedPair]
     primary_keys: list[str]

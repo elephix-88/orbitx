@@ -21,6 +21,7 @@ dependencies = [
     "google-cloud-bigquery>=3.0.0",
     "slowapi>=0.1.9",
     "prefect==3.6.24",
+    "sse-starlette>=3.3.4",
 ]
 
 [tool.uv.sources]

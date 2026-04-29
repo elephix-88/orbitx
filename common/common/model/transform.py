@@ -9,6 +9,7 @@ class TransformType(Enum):
     JOIN = "join"
     COLUMN_EDITOR = "column_editor"
     UNIFY = "unify"
+    ANOMALY_DETECTOR = "anomaly_detector"
 
 
 class DataType(StrEnum):

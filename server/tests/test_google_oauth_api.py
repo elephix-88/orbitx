@@ -34,6 +34,7 @@ class TestGoogleOAuthEndpoints:
         assert (
             "spreadsheets" in result["oauth_url"] or "auth" in result["oauth_url"]
         )  # Check scope or general auth
+        assert "drive.file" in result["oauth_url"]
 
     @pytest.mark.unit
     def test_google_sheets_login_invalid_payload(self, client: TestClient):
@@ -113,7 +114,7 @@ class TestGoogleOAuthEndpoints:
         self, client: TestClient, mock_mongodb, mock_google_oauth
     ):
         """Test successful OAuth2 callback."""
-        with patch("server.services.oauth_utils.settings") as mock_oauth_settings:
+        with patch("server.services.oauth.utils.settings") as mock_oauth_settings:
             mock_oauth_settings.oauth_state_secret = "test_oauth_state_secret_12345"
             mock_oauth_settings.google_oauth_client_id = "test_client_id"
             mock_oauth_settings.google_oauth_client_secret = "test_client_secret"
@@ -338,7 +339,7 @@ class TestGoogleOAuthEndpoints:
     ):
         """Test complete OAuth flow integration."""
         with (
-            patch("server.services.oauth_utils.settings") as mock_utils_settings,
+            patch("server.services.oauth.utils.settings") as mock_utils_settings,
             patch("server.api.google.oauth.settings") as mock_api_settings,
             patch("server.api.google.sheets.settings") as mock_sheets_settings,
         ):
@@ -363,6 +364,9 @@ class TestGoogleOAuthEndpoints:
                 mock_settings.connection_collection = "connections"
                 mock_settings.google_oauth_drive_scope = (
                     "https://www.googleapis.com/auth/drive"
+                )
+                mock_settings.google_oauth_drive_file_scope = (
+                    "https://www.googleapis.com/auth/drive.file"
                 )
 
             # Step 1: Initiate OAuth login

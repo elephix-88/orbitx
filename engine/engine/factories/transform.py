@@ -1,5 +1,6 @@
 from typing import Any
 
+from common.model.anomaly import AnomalyDetectorConfig
 from common.model.conditional import IfNodeConfig, SwitchNodeConfig
 from common.model.transform import (
     ColumnEditorConfig,
@@ -11,6 +12,7 @@ from common.model.transform import (
 )
 from engine.interfaces.factory import TransformerFactory
 from engine.interfaces.node import Transformer
+from engine.node.transformers.anomaly_detector import AnomalyDetectorTransformer
 from engine.node.transformers.column_editor import ColumnEditorTransformer
 from engine.node.transformers.conditional_router import ConditionalRouter
 from engine.node.transformers.join import JoinTransformer
@@ -25,6 +27,7 @@ _CONFIG_CLASSES: dict[str, type[Any]] = {
     TransformType.JOIN.value: JoinTransformConfig,
     TransformType.COLUMN_EDITOR.value: ColumnEditorConfig,
     TransformType.UNIFY.value: UnifyTransformConfig,
+    TransformType.ANOMALY_DETECTOR.value: AnomalyDetectorConfig,
 }
 
 _ROUTER_CONFIG_CLASSES: dict[str, type[Any]] = {
@@ -47,6 +50,7 @@ class TransformFactory(TransformerFactory):
         TransformType.JOIN.value: JoinTransformer,
         TransformType.COLUMN_EDITOR.value: ColumnEditorTransformer,
         TransformType.UNIFY.value: UnifyTransformer,
+        TransformType.ANOMALY_DETECTOR.value: AnomalyDetectorTransformer,
     }
 
     def __init__(self, registry: dict[str, type[Transformer]] | None = None) -> None:
