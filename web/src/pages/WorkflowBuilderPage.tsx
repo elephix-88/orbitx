@@ -101,21 +101,11 @@ const WorkflowBuilderPage: React.FC = () => {
  const [metaOpen, setMetaOpen] = useState(false);
  const [scheduleDeliveryOpen, setScheduleDeliveryOpen] = useState(false);
 
- // Expanded (full-screen) mode — persisted to localStorage
- const [expanded, setExpanded] = useState<boolean>(() => {
- try {
- return JSON.parse(localStorage.getItem('orbitx.builder.expanded') || 'false') as boolean;
- } catch {
- return false;
- }
- });
+ // Expanded (full-screen) mode — always starts embedded; expand is per-session only
+ const [expanded, setExpanded] = useState(false);
 
  const handleToggleExpanded = useCallback(() => {
- setExpanded((prev) => {
- const next = !prev;
- try { localStorage.setItem('orbitx.builder.expanded', JSON.stringify(next)); } catch {}
- return next;
- });
+ setExpanded((prev) => !prev);
  }, []);
 
  // Schedule & delivery local state (saved via onSave)
@@ -1120,22 +1110,16 @@ const WorkflowBuilderPage: React.FC = () => {
  );
 
  return (
- <Layout
- breadcrumbs={[
- { label: 'Pipelines', href: '/workflows' },
- { label: workflowName },
- ]}
- noPadding
- >
- {/* Embedded builder */}
+ <Layout noPadding>
+ {/* ── Embedded view: sidebar stays visible, canvas fills content area ── */}
  {!expanded && (
  <div className="flex flex-col h-full overflow-hidden">
- <Toolbar {...sharedToolbarProps} showBackButton={false} expanded={false} />
+ <Toolbar {...sharedToolbarProps} showBackButton={true} expanded={false} />
  {builderGrid}
  </div>
  )}
 
- {/* Full-screen overlay with animation */}
+ {/* ── Full-screen overlay: covers everything including sidebar ── */}
  <AnimatePresence>
  {expanded && (
  <motion.div

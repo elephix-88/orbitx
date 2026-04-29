@@ -300,6 +300,17 @@
   }
 }
 
+/* ── Landing page scroll snap + smooth nav ── */
+html {
+  scroll-snap-type: y mandatory;
+  scroll-behavior: smooth;
+}
+
+.snap-section {
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+}
+
 /* ── Utilities ── */
 .text-gradient {
   color: rgb(var(--brand-500));
@@ -336,6 +347,28 @@
   66% { transform: translate(15px, -15px) scale(0.98); }
 }
 
+/* Bigger drifting orbs for page-wide ambient background */
+@keyframes orbDrift1 {
+  0%   { transform: translate(0px, 0px) scale(1); }
+  25%  { transform: translate(120px, -80px) scale(1.08); }
+  50%  { transform: translate(60px, 100px) scale(0.95); }
+  75%  { transform: translate(-80px, 40px) scale(1.04); }
+  100% { transform: translate(0px, 0px) scale(1); }
+}
+@keyframes orbDrift2 {
+  0%   { transform: translate(0px, 0px) scale(1); }
+  25%  { transform: translate(-100px, 60px) scale(1.06); }
+  50%  { transform: translate(-40px, -90px) scale(0.97); }
+  75%  { transform: translate(90px, -30px) scale(1.03); }
+  100% { transform: translate(0px, 0px) scale(1); }
+}
+@keyframes orbDrift3 {
+  0%   { transform: translate(0px, 0px) scale(1); }
+  33%  { transform: translate(70px, 80px) scale(1.05); }
+  66%  { transform: translate(-90px, -50px) scale(0.96); }
+  100% { transform: translate(0px, 0px) scale(1); }
+}
+
 @keyframes shimmer {
   0% { background-position: -200% 0; }
   100% { background-position: 200% 0; }
@@ -365,6 +398,16 @@
   50% { background-position: 100% 50%; }
 }
 
+@keyframes pricing-shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+@keyframes pricing-glow-pulse {
+  0%, 100% { opacity: 0.18; }
+  50%       { opacity: 0.32; }
+}
+
 .animate-float-slow { animation: floatSlow 14s ease-in-out infinite; }
 .animate-float-reverse { animation: floatReverse 18s ease-in-out infinite; }
 .animate-flow-dash { stroke-dasharray: 6 4; animation: flowDash 1.1s linear infinite; }
@@ -377,6 +420,58 @@
   background-clip: text;
   -webkit-text-fill-color: transparent;
   animation: gradientShift 6s ease-in-out infinite;
+}
+
+@keyframes gradientMarquee {
+  0%   { background-position: 0% 50%; }
+  100% { background-position: -300% 50%; }
+}
+
+.gradient-marquee-text {
+  background-image: linear-gradient(
+    90deg,
+    #0B1A5E 0%,
+    #1848F3 12%,
+    #60A5FA 22%,
+    #1848F3 32%,
+    #6D28D9 45%,
+    #C084FC 55%,
+    #6D28D9 65%,
+    #1848F3 78%,
+    #60A5FA 88%,
+    #0B1A5E 100%
+  );
+  background-size: 300% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: gradientMarquee 10s linear infinite;
+}
+
+@keyframes logoMarquee {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.animate-logo-marquee {
+  animation: logoMarquee 40s linear infinite;
+}
+
+.logo-marquee-mask {
+  mask-image: linear-gradient(
+    90deg,
+    transparent 0%,
+    black 8%,
+    black 92%,
+    transparent 100%
+  );
+  -webkit-mask-image: linear-gradient(
+    90deg,
+    transparent 0%,
+    black 8%,
+    black 92%,
+    transparent 100%
+  );
 }
 
 .popular-ring {
@@ -399,6 +494,8 @@
   .animate-flow-dash,
   .animate-pulse-glow,
   .hero-gradient-text,
+  .gradient-marquee-text,
+  .animate-logo-marquee,
   .popular-ring::before { animation: none !important; }
 }
 

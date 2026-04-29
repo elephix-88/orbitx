@@ -27,7 +27,7 @@ export const Topbar: React.FC<TopbarProps> = ({
 }) => (
  <header
  className={cn(
- 'sticky top-0 z-30 flex items-center gap-4 h-[52px] px-6 bg-bg-card border-b border-line-1',
+ 'sticky top-0 z-30 flex items-center gap-4 h-[56px] px-6 bg-bg-card shadow-sm',
  className
  )}
  >

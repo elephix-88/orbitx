@@ -30,7 +30,7 @@ export const StatTile = React.forwardRef<HTMLDivElement, StatTileProps>(
  <div
  ref={ref}
  className={cn(
- 'px-4 py-[14px] bg-bg-card border border-line-1 rounded-xl',
+ 'px-4 py-[14px] bg-bg-card border border-line-1 rounded-xl shadow-sm',
  className
  )}
  {...props}

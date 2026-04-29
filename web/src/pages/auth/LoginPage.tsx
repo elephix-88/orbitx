@@ -1,18 +1,7 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import {
-  Loader2,
-  AlertCircle,
-  ArrowLeft,
-  Check,
-  Sparkles,
-  Zap,
-  Database,
-  Search,
-  Table,
-  CircleCheck,
-} from 'lucide-react';
+import { Loader2, AlertCircle, ArrowLeft, Zap, Search, Table, Database } from 'lucide-react';
 import { FacebookIcon } from '@/components/icons/BrandIcons';
 import { useAuthStore } from '@/store/authStore';
 
@@ -27,367 +16,250 @@ const GoogleIcon = () => (
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '';
 
-// Miniature product mockup matching the landing hero style
-const LoginMockup = () => (
-  <div className="relative w-full h-full">
-    {/* dot-grid backdrop */}
-    <div
-      className="absolute inset-0 opacity-60"
-      style={{
-        backgroundImage: 'radial-gradient(circle, #D3DAE6 1px, transparent 1px)',
-        backgroundSize: '20px 20px',
-      }}
-    />
+const PLATFORMS = [
+  { label: 'Facebook Ads', icon: <FacebookIcon size={13} className="text-white" />, bg: '#1877F2' },
+  { label: 'Google Ads',   icon: <Search className="w-3 h-3 text-white" />,          bg: '#4285F4' },
+  { label: 'TikTok Ads',  icon: <Zap className="w-3 h-3 text-white" />,             bg: '#010101' },
+];
 
-    <div className="relative h-full w-full px-6 py-6">
-      {/* Facebook source */}
-      <div className="absolute left-[4%] top-[20%] w-[160px] bg-bg-card border border-line-1 rounded-lg shadow-md">
-        <div className="flex items-center gap-2 px-3 py-2 border-b border-line-1">
-          <div className="w-6 h-6 flex items-center justify-center rounded-md" style={{ backgroundColor: '#1877F2' }}>
-            <FacebookIcon size={12} className="text-white" />
-          </div>
-          <div className="min-w-0">
-            <div className="text-[10px] font-semibold text-text-1 truncate">Facebook Ads</div>
-            <div className="text-[9px] text-text-3">Source</div>
-          </div>
-        </div>
-        <div className="px-3 py-1.5 flex items-center justify-between">
-          <span className="text-[9px] text-text-3 font-mono">12 campaigns</span>
-          <span className="inline-flex items-center gap-1 text-[9px] text-success font-medium">
-            <span className="w-1 h-1 rounded-full bg-success" /> Live
-          </span>
-        </div>
-      </div>
+const DESTINATIONS = [
+  { label: 'BigQuery',      icon: <Database className="w-3 h-3 text-white" />, bg: '#4285F4' },
+  { label: 'Google Sheets', icon: <Table className="w-3 h-3 text-white" />,   bg: '#0F9D58' },
+];
 
-      {/* Google source */}
-      <div className="absolute left-[4%] top-[58%] w-[160px] bg-bg-card border border-line-1 rounded-lg shadow-md">
-        <div className="flex items-center gap-2 px-3 py-2 border-b border-line-1">
-          <div className="w-6 h-6 flex items-center justify-center rounded-md bg-bg-muted">
-            <Search className="w-3 h-3 text-text-1" />
-          </div>
-          <div className="min-w-0">
-            <div className="text-[10px] font-semibold text-text-1 truncate">Google Ads</div>
-            <div className="text-[9px] text-text-3">Source</div>
-          </div>
-        </div>
-        <div className="px-3 py-1.5 flex items-center justify-between">
-          <span className="text-[9px] text-text-3 font-mono">8 campaigns</span>
-          <span className="inline-flex items-center gap-1 text-[9px] text-success font-medium">
-            <span className="w-1 h-1 rounded-full bg-success" /> Live
-          </span>
-        </div>
-      </div>
-
-      {/* Transform */}
-      <div className="absolute left-1/2 top-[36%] -translate-x-1/2 w-[170px] bg-bg-card border-2 border-blue-primary rounded-lg shadow-lg">
-        <div className="flex items-center gap-2 px-3 py-2 border-b border-blue-border bg-blue-soft">
-          <div className="w-6 h-6 flex items-center justify-center rounded-md bg-blue-primary">
-            <Zap className="w-3 h-3 text-white" />
-          </div>
-          <div className="min-w-0">
-            <div className="text-[10px] font-semibold text-text-1 truncate">Unify Schema</div>
-            <div className="text-[9px] text-blue-primary font-medium">Transform</div>
-          </div>
-        </div>
-        <div className="px-3 py-1.5 space-y-0.5">
-          <div className="flex items-center gap-1 text-[9px] text-text-2">
-            <Check className="w-2 h-2 text-success" /> Normalize IDs
-          </div>
-          <div className="flex items-center gap-1 text-[9px] text-text-2">
-            <Check className="w-2 h-2 text-success" /> Convert to USD
-          </div>
-        </div>
-      </div>
-
-      {/* BigQuery destination */}
-      <div className="absolute right-[4%] top-[20%] w-[160px] bg-bg-card border border-line-1 rounded-lg shadow-md">
-        <div className="flex items-center gap-2 px-3 py-2 border-b border-line-1">
-          <div className="w-6 h-6 flex items-center justify-center rounded-md" style={{ backgroundColor: '#4285F4' }}>
-            <Database className="w-3 h-3 text-white" />
-          </div>
-          <div className="min-w-0">
-            <div className="text-[10px] font-semibold text-text-1 truncate">BigQuery</div>
-            <div className="text-[9px] text-text-3">Destination</div>
-          </div>
-        </div>
-        <div className="px-3 py-1.5 flex items-center justify-between">
-          <span className="text-[9px] text-text-3 font-mono">2.4M rows</span>
-          <span className="inline-flex items-center gap-1 text-[9px] text-success font-medium">
-            <CircleCheck className="w-2.5 h-2.5" /> Synced
-          </span>
-        </div>
-      </div>
-
-      {/* Sheets destination */}
-      <div className="absolute right-[4%] top-[58%] w-[160px] bg-bg-card border border-line-1 rounded-lg shadow-md">
-        <div className="flex items-center gap-2 px-3 py-2 border-b border-line-1">
-          <div className="w-6 h-6 flex items-center justify-center rounded-md" style={{ backgroundColor: '#0F9D58' }}>
-            <Table className="w-3 h-3 text-white" />
-          </div>
-          <div className="min-w-0">
-            <div className="text-[10px] font-semibold text-text-1 truncate">Google Sheets</div>
-            <div className="text-[9px] text-text-3">Destination</div>
-          </div>
-        </div>
-        <div className="px-3 py-1.5 flex items-center justify-between">
-          <span className="text-[9px] text-text-3 font-mono">180K rows</span>
-          <span className="inline-flex items-center gap-1 text-[9px] text-success font-medium">
-            <CircleCheck className="w-2.5 h-2.5" /> Synced
-          </span>
-        </div>
-      </div>
-
-      {/* Animated connection lines */}
-      <svg className="absolute inset-0 w-full h-full pointer-events-none" viewBox="0 0 100 100" preserveAspectRatio="none">
-        <path d="M 22 25 C 35 25, 38 40, 48 40" stroke="#1848F3" strokeWidth="0.3" fill="none" opacity="0.4" vectorEffect="non-scaling-stroke" />
-        <path d="M 22 63 C 35 63, 38 44, 48 44" stroke="#1848F3" strokeWidth="0.3" fill="none" opacity="0.4" vectorEffect="non-scaling-stroke" />
-        <path d="M 62 40 C 72 40, 75 25, 82 25" stroke="#1848F3" strokeWidth="0.3" fill="none" opacity="0.4" vectorEffect="non-scaling-stroke" />
-        <path d="M 62 44 C 72 44, 75 63, 82 63" stroke="#1848F3" strokeWidth="0.3" fill="none" opacity="0.4" vectorEffect="non-scaling-stroke" />
-        <circle r="0.8" fill="#1877F2">
-          <animateMotion dur="2.4s" repeatCount="indefinite" path="M 22 25 C 35 25, 38 40, 48 40" />
-        </circle>
-        <circle r="0.8" fill="#4285F4">
-          <animateMotion dur="2.4s" begin="0.6s" repeatCount="indefinite" path="M 22 63 C 35 63, 38 44, 48 44" />
-        </circle>
-        <circle r="0.8" fill="#1848F3">
-          <animateMotion dur="2.4s" begin="1.2s" repeatCount="indefinite" path="M 62 40 C 72 40, 75 25, 82 25" />
-        </circle>
-        <circle r="0.8" fill="#0F9D58">
-          <animateMotion dur="2.4s" begin="1.8s" repeatCount="indefinite" path="M 62 44 C 72 44, 75 63, 82 63" />
-        </circle>
-      </svg>
-
-      {/* Running toolbar */}
-      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2 px-3 py-1.5 bg-bg-card border border-line-1 rounded-full shadow-md">
-        <span className="inline-flex items-center gap-1.5 text-[10px] text-text-2">
-          <span className="pulse-ring w-1.5 h-1.5 rounded-full bg-blue-primary" />
-          <span className="font-medium">Running</span>
-        </span>
-        <span className="w-px h-3 bg-line-1" />
-        <span className="text-[10px] text-text-3 font-mono">1,248 rows/sec</span>
-      </div>
-    </div>
-  </div>
-);
+const fadeUp = (delay = 0) => ({
+  initial: { opacity: 0, y: 14 },
+  animate: { opacity: 1, y: 0 },
+  transition: { duration: 0.45, delay },
+});
 
 const LoginPage = () => {
-  const navigate = useNavigate();
-  const location = useLocation();
+  const navigate   = useNavigate();
+  const location   = useLocation();
   const { googleAuth, isAuthenticated, isLoading, error, clearError } = useAuthStore();
-
   const from = (location.state as any)?.from?.pathname || '/dashboard';
+  const initialized = useRef(false);
 
   useEffect(() => {
-    if (isAuthenticated) {
-      navigate(from, { replace: true });
-    }
+    if (isAuthenticated) navigate(from, { replace: true });
   }, [isAuthenticated, navigate, from]);
 
   useEffect(() => {
-    if (!GOOGLE_CLIENT_ID) {
-      console.warn('Google Client ID not configured');
-      return;
-    }
+    if (!GOOGLE_CLIENT_ID) return;
+    if (initialized.current) return; // Guard against React StrictMode double-invoke
+    initialized.current = true;
 
     const script = document.createElement('script');
-    script.src = 'https://accounts.google.com/gsi/client';
+    script.src   = 'https://accounts.google.com/gsi/client';
     script.async = true;
     script.defer = true;
     document.body.appendChild(script);
-
     script.onload = () => {
-      if (window.google) {
-        window.google.accounts.id.initialize({
-          client_id: GOOGLE_CLIENT_ID,
-          callback: handleGoogleCallback,
-        });
-
-        window.google.accounts.id.renderButton(document.getElementById('google-signin-button'), {
-          theme: 'outline',
-          size: 'large',
-          width: 360,
-          text: 'continue_with',
-        });
-      }
+      window.google?.accounts.id.initialize({
+        client_id: GOOGLE_CLIENT_ID,
+        callback: handleGoogleCallback,
+      });
+      // renderButton is the most reliable path — works with or without FedCM
+      window.google?.accounts.id.renderButton(
+        document.getElementById('google-signin-button'),
+        { theme: 'outline', size: 'large', width: 300, text: 'continue_with' }
+      );
     };
-
-    return () => {
-      if (script.parentNode) {
-        script.parentNode.removeChild(script);
-      }
-    };
+    return () => { script.parentNode?.removeChild(script); };
   }, []);
 
   const handleGoogleCallback = async (response: any) => {
     try {
       await googleAuth(response.credential);
       navigate(from, { replace: true });
-    } catch {
-      // handled in store
-    }
+    } catch { /* handled in store */ }
   };
 
   return (
-    <div className="min-h-screen flex bg-bg-page">
-      {/* Left — branded product preview */}
-      <div className="hidden lg:flex lg:w-1/2 relative overflow-hidden bg-bg-card border-r border-line-1">
-        <div className="relative z-10 flex flex-col justify-between p-12 w-full">
-          <Link to="/" className="flex items-center gap-2.5 w-fit">
-            <div className="w-9 h-9 flex items-center justify-center bg-blue-primary rounded-md">
-              <span className="text-lg font-semibold text-white">O</span>
-            </div>
-            <span className="text-lg font-semibold text-text-1 tracking-tight">OrbitX</span>
-          </Link>
+    <div className="min-h-screen bg-bg-page flex flex-col">
+      {/* Dot-grid texture */}
+      <div
+        className="fixed inset-0 pointer-events-none"
+        style={{
+          backgroundImage: 'radial-gradient(circle, #D3DAE6 1px, transparent 1px)',
+          backgroundSize: '24px 24px',
+          opacity: 0.45,
+        }}
+      />
+      {/* Ambient glow */}
+      <div
+        className="fixed pointer-events-none"
+        style={{
+          top: '-180px', left: '50%', transform: 'translateX(-50%)',
+          width: '900px', height: '500px', borderRadius: '50%',
+          background: 'radial-gradient(ellipse, rgba(24,72,243,0.07) 0%, transparent 70%)',
+        }}
+      />
 
-          {/* Product preview card */}
-          <div className="relative">
-            <div className="inline-flex items-center gap-2 px-3 py-1 mb-5 bg-blue-soft border border-blue-border rounded-full">
-              <Sparkles className="w-3.5 h-3.5 text-blue-primary" />
-              <span className="text-xs font-medium text-blue-primary">Public Beta</span>
-            </div>
-
-            <h1 className="text-3xl xl:text-4xl font-semibold text-text-1 tracking-tight leading-[1.15] mb-4">
-              Marketing data,
-              <br />
-              <span className="text-blue-primary">unified and automated.</span>
-            </h1>
-
-            <p className="text-sm text-text-2 leading-relaxed max-w-md mb-8">
-              Sign in to build your first pipeline. Pipe Facebook, Google, and TikTok ad data into your warehouse — no code required.
-            </p>
-
-            <div className="relative aspect-[16/10] bg-bg-page border border-line-1 rounded-xl shadow-md overflow-hidden">
-              <div className="absolute inset-x-0 top-0 h-7 flex items-center gap-1.5 px-3 border-b border-line-1 bg-bg-muted">
-                <span className="w-2 h-2 rounded-full bg-line-2" />
-                <span className="w-2 h-2 rounded-full bg-line-2" />
-                <span className="w-2 h-2 rounded-full bg-line-2" />
-                <span className="ml-2 text-[10px] font-mono text-text-3">workflows / unified-marketing</span>
-              </div>
-              <div className="absolute inset-x-0 top-7 bottom-0">
-                <LoginMockup />
-              </div>
-            </div>
+      {/* Nav */}
+      <motion.header {...fadeUp(0)} className="relative z-10 flex items-center justify-between px-8 py-5">
+        <Link to="/" className="flex items-center gap-2.5">
+          <div
+            className="w-8 h-8 flex items-center justify-center rounded-md"
+            style={{ background: 'linear-gradient(135deg, #1848F3 0%, #6D28D9 100%)' }}
+          >
+            <span className="text-sm font-bold text-white">O</span>
           </div>
+          <span className="text-base font-semibold text-text-1 tracking-tight">OrbitX</span>
+        </Link>
+        <Link to="/" className="inline-flex items-center gap-1.5 text-sm text-text-3 hover:text-text-1 transition-colors">
+          <ArrowLeft className="w-3.5 h-3.5" />
+          Back to home
+        </Link>
+      </motion.header>
 
-          <div className="flex items-center justify-between text-xs text-text-3">
-            <span>© {new Date().getFullYear()} OrbitX</span>
-            <div className="flex items-center gap-4">
-              <Link to="#" className="hover:text-text-1 transition-colors">Privacy</Link>
-              <Link to="#" className="hover:text-text-1 transition-colors">Terms</Link>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Right — login form */}
-      <div className="flex-1 flex items-center justify-center p-6 sm:p-10">
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
-          className="w-full max-w-md"
-        >
-          {/* Mobile logo */}
-          <div className="lg:hidden mb-10">
-            <Link to="/" className="inline-flex items-center gap-2.5">
-              <div className="w-9 h-9 flex items-center justify-center bg-blue-primary rounded-md">
-                <span className="text-lg font-semibold text-white">O</span>
-              </div>
-              <span className="text-lg font-semibold text-text-1 tracking-tight">OrbitX</span>
-            </Link>
-          </div>
-
-          {/* Header */}
-          <div className="mb-8">
-            <div className="w-10 h-1 bg-blue-primary rounded-full mb-5" />
-            <h2 className="text-3xl font-semibold text-text-1 tracking-tight mb-2">
-              Welcome back
-            </h2>
-            <p className="text-sm text-text-2">
-              Sign in with your Google account to continue to OrbitX.
-            </p>
-          </div>
-
-          {/* Error alert */}
-          {error && (
-            <motion.div
-              initial={{ opacity: 0, y: -6 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="mb-6 p-3.5 flex items-start gap-3 bg-danger-bg border border-danger-border rounded-lg"
-            >
-              <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5 text-danger" />
-              <p className="text-sm text-danger flex-1">{error}</p>
-              <button
-                onClick={clearError}
-                aria-label="Dismiss"
-                className="text-danger hover:text-danger/80 cursor-pointer text-lg leading-none"
-              >
-                ×
-              </button>
-            </motion.div>
-          )}
+      {/* Main */}
+      <div className="relative z-10 flex-1 flex items-center justify-center px-4 py-8">
+        <motion.div {...fadeUp(0.08)} className="w-full max-w-3xl">
 
           {/* Card */}
-          <div className="bg-bg-card border border-line-1 rounded-xl p-6 shadow-sm mb-6">
-            {isLoading ? (
-              <div className="flex items-center justify-center py-8">
-                <Loader2 className="w-6 h-6 animate-spin text-blue-primary" />
-              </div>
-            ) : GOOGLE_CLIENT_ID ? (
-              <div id="google-signin-button" className="flex justify-center" />
-            ) : (
-              <button
-                onClick={() => navigate('/dashboard')}
-                className="w-full flex items-center justify-center gap-2.5 px-4 py-3 bg-blue-primary hover:bg-blue-primary-hover text-white font-medium text-sm rounded-lg transition-colors cursor-pointer"
-              >
-                <GoogleIcon />
-                Continue with Google
-              </button>
-            )}
+          <div className="bg-bg-card border border-line-1 rounded-2xl shadow-lg shadow-black/[0.06] overflow-hidden flex">
 
-            <div className="flex items-center gap-3 my-5">
-              <div className="flex-1 h-px bg-line-1" />
-              <span className="text-[10px] uppercase tracking-wider text-text-4 font-semibold">
-                Trusted sign-in
-              </span>
-              <div className="flex-1 h-px bg-line-1" />
+            {/* ── Left panel ── */}
+            <div className="hidden md:flex flex-col justify-between w-[42%] flex-shrink-0 p-8 border-r border-line-1 bg-bg-muted">
+
+              <motion.div {...fadeUp(0.18)}>
+                <div className="w-6 h-0.5 bg-blue-primary rounded-full mb-5" />
+                <p className="text-lg font-bold text-text-1 tracking-tight leading-snug mb-2">
+                  All your ad data,<br />
+                  <span className="text-blue-primary">one pipeline.</span>
+                </p>
+                <p className="text-sm text-text-2 leading-relaxed">
+                  Connect Facebook, Google, and TikTok to your warehouse in minutes.
+                </p>
+              </motion.div>
+
+              {/* Animated platform flow */}
+              <div className="space-y-2.5 my-6">
+                {/* Sources */}
+                <p className="text-[10px] font-bold uppercase tracking-widest text-text-4 mb-2">Sources</p>
+                {PLATFORMS.map((p, i) => (
+                  <motion.div
+                    key={p.label}
+                    initial={{ opacity: 0, x: -12 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.35, delay: 0.28 + i * 0.09 }}
+                    className="flex items-center gap-2.5"
+                  >
+                    <div
+                      className="w-6 h-6 rounded-md flex items-center justify-center flex-shrink-0"
+                      style={{ backgroundColor: p.bg }}
+                    >
+                      {p.icon}
+                    </div>
+                    <span className="text-xs font-medium text-text-2">{p.label}</span>
+                  </motion.div>
+                ))}
+
+                {/* Connector */}
+                <motion.div
+                  initial={{ opacity: 0, scaleX: 0 }}
+                  animate={{ opacity: 1, scaleX: 1 }}
+                  transition={{ duration: 0.4, delay: 0.58 }}
+                  className="flex items-center gap-2 py-1 origin-left"
+                >
+                  <div className="flex-1 h-px bg-line-2" />
+                  <motion.div
+                    animate={{ rotate: [0, 10, -10, 0] }}
+                    transition={{ duration: 2.4, repeat: Infinity, ease: 'easeInOut', delay: 1 }}
+                    className="w-5 h-5 rounded-full bg-blue-soft border border-blue-border flex items-center justify-center"
+                  >
+                    <Zap className="w-3 h-3 text-blue-primary" />
+                  </motion.div>
+                  <div className="flex-1 h-px bg-line-2" />
+                </motion.div>
+
+                {/* Destinations */}
+                <p className="text-[10px] font-bold uppercase tracking-widest text-text-4 mb-2">Destinations</p>
+                {DESTINATIONS.map((d, i) => (
+                  <motion.div
+                    key={d.label}
+                    initial={{ opacity: 0, x: -12 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.35, delay: 0.64 + i * 0.09 }}
+                    className="flex items-center gap-2.5"
+                  >
+                    <div
+                      className="w-6 h-6 rounded-md flex items-center justify-center flex-shrink-0"
+                      style={{ backgroundColor: d.bg }}
+                    >
+                      {d.icon}
+                    </div>
+                    <span className="text-xs font-medium text-text-2">{d.label}</span>
+                  </motion.div>
+                ))}
+              </div>
+
+              <motion.div {...fadeUp(0.72)}>
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-success-bg border border-success-border">
+                  <span className="w-1.5 h-1.5 rounded-full bg-success" />
+                  <span className="text-[11px] font-medium text-success">Free during Public Beta</span>
+                </div>
+              </motion.div>
             </div>
 
-            <ul className="space-y-2.5">
-              <li className="flex items-start gap-2.5 text-xs text-text-2">
-                <Check className="w-3.5 h-3.5 mt-0.5 text-blue-primary flex-shrink-0" />
-                OAuth tokens encrypted at rest, never exposed to the browser
-              </li>
-              <li className="flex items-start gap-2.5 text-xs text-text-2">
-                <Check className="w-3.5 h-3.5 mt-0.5 text-blue-primary flex-shrink-0" />
-                No credit card required during Public Beta
-              </li>
-              <li className="flex items-start gap-2.5 text-xs text-text-2">
-                <Check className="w-3.5 h-3.5 mt-0.5 text-blue-primary flex-shrink-0" />
-                Your data flows directly to your warehouse — we never keep a copy
-              </li>
-            </ul>
+            {/* ── Right — form ── */}
+            <div className="flex-1 flex flex-col justify-center p-8 sm:p-10">
+
+              <motion.div {...fadeUp(0.2)} className="mb-7">
+                <h1 className="text-2xl font-bold text-text-1 tracking-tight mb-1.5">
+                  Sign in to OrbitX
+                </h1>
+                <p className="text-sm text-text-2">One click to get started.</p>
+              </motion.div>
+
+              {/* Error */}
+              {error && (
+                <motion.div
+                  initial={{ opacity: 0, y: -6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="mb-5 p-3.5 flex items-start gap-3 bg-danger-bg border border-danger-border rounded-xl"
+                >
+                  <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5 text-danger" />
+                  <p className="text-sm text-danger flex-1">{error}</p>
+                  <button onClick={clearError} aria-label="Dismiss" className="text-danger hover:text-danger/80 cursor-pointer text-lg leading-none">×</button>
+                </motion.div>
+              )}
+
+              {/* Google sign-in */}
+              <motion.div {...fadeUp(0.3)} className="mb-8">
+                {isLoading ? (
+                  <div className="flex items-center justify-center py-5">
+                    <Loader2 className="w-5 h-5 animate-spin text-blue-primary" />
+                  </div>
+                ) : GOOGLE_CLIENT_ID ? (
+                  /* Google renders its button here — single instance, no prompt() conflicts */
+                  <div id="google-signin-button" className="flex justify-center" />
+                ) : (
+                  /* Dev fallback when no client ID configured */
+                  <button
+                    onClick={() => navigate('/dashboard')}
+                    className="w-full flex items-center justify-center gap-3 px-4 py-3 bg-bg-card border border-line-1 text-text-1 font-medium text-sm rounded-xl hover:bg-bg-row-hv transition-colors cursor-pointer shadow-sm"
+                  >
+                    <GoogleIcon />
+                    Continue with Google
+                  </button>
+                )}
+              </motion.div>
+
+              {/* Terms */}
+              <motion.p {...fadeUp(0.4)} className="text-[11px] text-text-4 leading-relaxed">
+                By continuing, you agree to our{' '}
+                <Link to="/terms" className="text-text-3 underline underline-offset-2 hover:text-blue-primary transition-colors">Terms</Link>{' '}
+                and{' '}
+                <Link to="/privacy" className="text-text-3 underline underline-offset-2 hover:text-blue-primary transition-colors">Privacy Policy</Link>.
+              </motion.p>
+            </div>
           </div>
 
-          <p className="text-xs text-text-3 mb-6 leading-relaxed">
-            By continuing, you agree to our{' '}
-            <Link to="/terms" className="font-medium text-text-2 underline hover:text-blue-primary">
-              Terms
-            </Link>{' '}
-            and{' '}
-            <Link to="/privacy" className="font-medium text-text-2 underline hover:text-blue-primary">
-              Privacy Policy
-            </Link>
-            .
-          </p>
-
-          <Link
-            to="/"
-            className="inline-flex items-center gap-1.5 text-sm font-medium text-blue-primary hover:text-blue-primary-hover transition-colors cursor-pointer"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Back to home
-          </Link>
+          <motion.p {...fadeUp(0.45)} className="text-center text-xs text-text-4 mt-5">
+            © {new Date().getFullYear()} OrbitX · All rights reserved
+          </motion.p>
         </motion.div>
       </div>
     </div>

@@ -413,7 +413,7 @@ export default function SettingsPage() {
   const activeMeta = allSections.find((s) => s.id === activeSection);
 
   return (
-    <Layout title="Settings">
+    <Layout>
       <div className="space-y-6">
         {/* Header */}
         <div>
